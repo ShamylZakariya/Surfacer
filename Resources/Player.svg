@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+	 id="Layer_1" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" inkscape:version="0.48.2 r9819" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" sodipodi:docname="Player-1.svg"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="500px" height="500px"
+	 viewBox="0 0 500 500" enable-background="new 0 0 500 500" xml:space="preserve">
+<sodipodi:namedview  gridtolerance="10" objecttolerance="10" inkscape:window-y="0" id="namedview52" inkscape:window-width="1124" inkscape:pageshadow="2" inkscape:pageopacity="0" inkscape:zoom="0.944" inkscape:cx="260.71593" inkscape:cy="195.17691" borderopacity="1" inkscape:window-x="0" bordercolor="#666666" pagecolor="#ffffff" inkscape:window-maximized="0" showgrid="false" inkscape:window-height="763" inkscape:current-layer="Body" guidetolerance="10">
+	</sodipodi:namedview>
+<g id="Body">
+	<g id="Hindleg">
+		<g id="Hindshin">
+			<polygon id="polygon6" fill="#0D0D0D" points="227.299,375.167 172.992,398.15 187.833,495.167 242.744,509.167 283.833,495.833 
+				290.363,410.612 249.5,375.167 			"/>
+			<circle id="origin_hindshin" fill="#800000" cx="234.226" cy="401.502" r="6.667"/>
+		</g>
+		<polygon id="polygon9" fill="#0D0D0D" points="158.358,321.659 172.992,398.15 227.299,435.167 290.363,410.612 296.239,312.855 
+			258.68,273.791 203.546,277.727 		"/>
+		<circle id="origin_hindleg" fill="#7EC242" cx="229.641" cy="305.731" r="13.104"/>
+	</g>
+	<g id="Torso">
+		<polygon id="polygon19" fill="#0D0D0D" points="181.241,160.307 171.071,109.459 110.452,109.459 94.797,143.685 94.797,263.964 
+			127.545,285.266 		"/>
+		<polygon id="polygon21" fill="#1A1A1A" points="301.13,119.237 351.977,169.109 368.422,299.834 318.5,387.833 166.034,361.778 
+			150.534,312.855 141.186,188.483 207.251,100.657 		"/>
+		<g id="Helmet">
+			<polygon id="polygon13" fill="#0D0D0D" points="316.854,126.961 355.968,90.78 349.559,36.164 337.258,21.352 308.032,-0.094 
+				246.367,0.004 202.363,31.226 181.241,136.482 			"/>
+			<polygon id="polygon15" fill="#00E3FF" points="268.857,59.784 264.047,89.804 319.709,143.685 355.968,90.78 349.559,36.164 			
+				"/>
+			<circle id="origin_helmet" fill="#00FFFF" cx="251.261" cy="123.381" r="13.104"/>
+		</g>
+	</g>
+	<g id="Foreleg">
+		<polygon id="polygon24" fill="#1A1A1A" points="354.007,285.266 363.095,311.955 370.715,357.914 356.251,403.874 
+			304.251,412.282 257.486,403.874 169.248,342.585 181.241,309.171 227.3,258.066 308.789,262.489 		"/>
+		<circle id="origin_2_" fill="#0000FF" cx="254.21" cy="297.869" r="13.105"/>
+		<g id="Foreshin">
+			<polygon id="polygon28" fill="#1A1A1A" points="363.833,344.5 384.5,388.5 391.833,489.5 355.968,507.833 310.008,500 
+				247.435,385.799 286.5,349.167 324.5,335.174 			"/>
+			<circle id="origin_3" fill="#000080" cx="317.34" cy="369.833" r="7.334"/>
+		</g>
+	</g>
+	<g id="Gun">
+		<circle id="circle32" fill="#1A1A1A" cx="252.244" cy="231.04" r="141.792"/>
+		<polygon id="polygon34" fill="#1A1A1A" points="483.189,234.233 483.189,228.179 496.188,228.179 484.396,189.419 
+			433.573,189.419 426.727,197.354 205.295,197.354 205.295,266.785 424.773,266.785 432.597,274.627 484.396,274.627 
+			496.188,234.233 		"/>
+		<circle id="circle36" fill="#4D4D4D" cx="252.244" cy="231.04" r="93.409"/>
+		<circle id="circle38" fill="#1A1A1A" cx="252.244" cy="231.04" r="80.915"/>
+		<circle id="origin_1_" fill="#F4D7D7" cx="252.244" cy="231.04" r="13.104"/>
+		<g id="BarrelEndpoint">
+			<rect id="rect46" x="455.5" y="219.801" fill="#1A1A1A" width="20.5" height="24.444"/>
+		</g>
+	</g>
+	<g id="Arm">
+		<polyline id="armshape" fill="#333333" points="223.368,165.797 184.48,188.782 187.428,236.937 212.489,300.438 325.297,340.174 
+			364.326,346.024 384.964,295.411 317.152,270.842 303.887,224.162 300.926,185.342 252.293,159.409 223.368,165.797 		"/>
+		<circle id="origin" fill="#FFFF00" cx="244.382" cy="209.42" r="13.104"/>
+	</g>
+</g>
+<circle id="origin_body" fill="#7EC242" cx="250" cy="250" r="13.104"/>
+</svg>

@@ -1,0 +1,243 @@
+{
+	"events" : 
+	{
+		"WelcomeMessage" : 
+		{
+			"class" : "MessageBoxAction",
+			"initializer" : 
+			{
+				"message" : "<p>This is a <strong>welcome</strong> message</p>",
+				"type" : "info"
+			}
+		},
+		"BatteryHighlight" : 
+		{
+			"class" : "MessageBoxAction",
+			"initializer" : 
+			{
+				"message" : "<p>This should tag one of the batteries</p>",
+				"type" : "tag",
+				"targetIdentifier" : "Battery0"
+			}
+		}
+	},
+	"objects" : 
+	[
+		{
+			"class" : "Player",
+			"enabled" : true,
+			"initializer" : 
+			{
+				"position" : 
+				{
+					"x" : 226,
+					"y" : 160
+				}
+			}
+		},
+		{
+			"class" : "Terrain",
+			"initializer" : 
+			{
+				"materialColor" : "rgb(51,51,51)",
+				"greebleTextureAtlas" : "GreebleAtlas.png",
+				"levelImage" : "Terrain.png",
+				"materialTexture" : "TerrainMaterial.png",
+				"scale" : 0.5
+			}
+		},
+		{
+			"class" : "Background",
+			"initializer" : 
+			{
+				"layers" : 
+				[
+					{
+						"texture" : "Background.png",
+						"scale" : 1.5
+					},
+					{
+						"texture" : "Background.png",
+						"scale" : 2.25,
+						"color" : "rgba(255,255,255,0.5)"
+					}
+				]
+			}
+		},
+		{
+			"class" : "PowerPlatform",
+			"initializer" : 
+			{
+				"maxChargeLevel" : 20,
+				"size" : 
+				{
+					"x" : 4,
+					"y" : 2
+				},
+				"position" : 
+				{
+					"x" : 211,
+					"y" : 144
+				}
+			}
+		},
+		{
+			"class" : "PowerCell",
+			"enabled" : true,
+			"initializer" : 
+			{
+				"charge" : 10,
+				"position" : 
+				{
+					"x" : 205,
+					"y" : 145
+				}
+			}
+		},
+		{
+			"class" : "PowerCell",
+			"enabled" : true,
+			"initializer" : 
+			{
+				"charge" : 10,
+				"position" : 
+				{
+					"x" : 205,
+					"y" : 148
+				}
+			}
+		},
+		{
+			"class" : "Fluid",
+			"initializer" : 
+			{
+				"fluidParticleTexture" : "LavaParticle.png",
+				"fluidToneMapTexture" : "LavaToneMap.png",
+				"clumpingForce" : 50,
+				"boundingVolumePosition" : 
+				{
+					"x" : 216,
+					"y" : 85
+				},
+				"particle" : 
+				{
+					"visualRadiusScale" : 4,
+					"density" : 200,
+					"entranceDuration" : 5,
+					"radius" : 0.4
+				},
+				"attackStrength" : 1,
+				"boundingVolumeRadius" : 5,
+				"injuryType" : "LAVA"
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "PowerUp",
+			"initializer" : 
+			{
+				"amount" : 10,
+				"type" : "MEDIKIT",
+				"position" : 
+				{
+					"x" : 202,
+					"y" : 143
+				}
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "PowerUp",
+			"initializer" : 
+			{
+				"amount" : 10,
+				"type" : "BATTERY",
+				"identifier" : "Battery0",
+				"position" : 
+				{
+					"x" : 199,
+					"y" : 144
+				}
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "Centipede",
+			"initializer" : 
+			{
+				"position" : 
+				{
+					"x" : 146,
+					"y" : 145
+				}
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "Barnacle",
+			"initializer" : 
+			{
+				"position" : 
+				{
+					"x" : 146,
+					"y" : 85
+				}
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "Sensor",
+			"initializer" : 
+			{
+				"height" : 16,
+				"once" : true,
+				"targetType" : "PLAYER",
+				"eventName" : "WelcomeMessage",
+				"position" : 
+				{
+					"x" : 220,
+					"y" : 150
+				},
+				"width" : 16
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "Sensor",
+			"initializer" : 
+			{
+				"height" : 16,
+				"targetType" : "PLAYER",
+				"eventName" : "BatteryHighlight",
+				"position" : 
+				{
+					"x" : 200,
+					"y" : 150
+				},
+				"width" : 16
+			}
+		},
+		{
+			"enabled" : true,
+			"class" : "ViewportFitSensor",
+			"initializer" : 
+			{
+				"targetType" : "PLAYER",
+				"width" : 16,
+				"position" : 
+				{
+					"x" : 240,
+					"y" : 155
+				},
+				"height" : 16
+			}
+		}
+	],
+	"name" : "Test Level 0",
+	"gravity" : 
+	{
+		"x" : 0,
+		"y" : -9.8
+	},
+	"defaultZoom" : 15
+}

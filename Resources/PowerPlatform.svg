@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" id="Platform" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="512px" height="256px" viewBox="0 0 512 256" enable-background="new 0 0 512 256" xml:space="preserve">
+<g id="Halo" transform="matrix(0.49999998,0,0,0.49999998,50.847464,49.152544)">
+	<path id="path2996" fill="#A5E5FF" d="M1037.846-101.438c0.051-344.156-278.908-623.192-623.061-623.241
+		c-344.156-0.052-623.191,278.901-623.242,623.06c0,0.062,0,0.121,0,0.185c-0.053,344.149,278.903,623.19,623.061,623.239
+		c344.156,0.051,623.191-278.902,623.242-623.061C1037.846-101.316,1037.846-101.377,1037.846-101.438z"/>
+	<path id="path4341" fill="#C1EDFF" d="M856.598-95.502c0.033,239.272-193.904,433.271-433.18,433.303
+		C184.152,337.836-9.843,143.896-9.879-95.371c0-0.045,0-0.09,0-0.131c-0.035-239.271,193.901-433.266,433.176-433.302
+		c239.268-0.036,433.268,193.902,433.301,433.172C856.598-95.587,856.598-95.544,856.598-95.502z"/>
+	<path id="path4347" fill="#EBF9FF" d="M605.676-95.502C605.686,9.388,520.668,94.422,415.782,94.43
+		C310.898,94.441,225.863,9.42,225.852-95.464c0-0.014,0-0.023,0-0.038c-0.012-104.888,85.006-189.923,189.891-189.932
+		c104.889-0.01,189.924,85.009,189.928,189.895C605.676-95.53,605.676-95.516,605.676-95.502z"/>
+</g>
+<circle id="origin_1_" fill="#00BF09" cx="256" cy="128" r="23.027"/>
+<rect x="141.5" y="256" fill="#333333" width="51" height="112.5"/>
+<rect x="229.5" y="275.5" fill="#333333" width="147" height="170"/>
+<rect x="400.5" y="224.5" fill="#333333" width="53" height="126"/>
+<rect x="67.5" y="224.5" fill="#333333" width="11" height="112"/>
+<rect x="124" y="272.5" fill="#333333" width="35" height="64"/>
+<rect x="472.5" y="231.5" fill="#333333" width="14" height="49"/>
+<rect x="325.5" y="355.5" fill="#333333" width="23" height="147"/>
+<rect x="290.764" y="355.5" fill="#333333" width="23" height="147"/>
+<rect x="256.027" y="355.5" fill="#333333" width="23" height="252"/>
+<polygon fill="#333333" points="300.21,314 212.005,314 0.521,256 0.521,36.858 43.185,-0.094 469.03,-0.094 511.693,37.68 
+	511.693,256 "/>
+<g id="Light3">
+	<rect x="14.613" y="40.5" fill="#B5E9FF" width="27.446" height="40"/>
+	<rect x="87.06" y="40.5" fill="#B5E9FF" width="54.882" height="40"/>
+	<rect x="370.06" y="40.5" fill="#B5E9FF" width="54.882" height="40"/>
+	<rect x="208.181" y="40.5" fill="#B5E9FF" width="94.819" height="40"/>
+	<rect x="468.5" y="40.5" fill="#B5E9FF" width="27.441" height="40"/>
+</g>
+<g id="Light2">
+	<rect x="14.929" y="80.5" fill="#78D7FF" width="27.441" height="40"/>
+	<rect x="87.37" y="80.5" fill="#78D7FF" width="54.882" height="40"/>
+	<rect x="370.37" y="80.5" fill="#78D7FF" width="54.882" height="40"/>
+	<rect x="208.491" y="80.5" fill="#78D7FF" width="94.819" height="40"/>
+	<rect x="468.811" y="80.5" fill="#78D7FF" width="27.441" height="40"/>
+</g>
+<g id="Light1">
+	<rect x="14.926" y="120.5" fill="#3BC5FF" width="27.446" height="40"/>
+	<rect x="87.373" y="120.5" fill="#3BC5FF" width="54.882" height="40"/>
+	<rect x="370.373" y="120.5" fill="#3BC5FF" width="54.882" height="40"/>
+	<rect x="208.494" y="120.5" fill="#3BC5FF" width="94.819" height="40"/>
+	<rect x="468.813" y="120.5" fill="#3BC5FF" width="27.441" height="40"/>
+</g>
+<g id="Light0">
+	<rect x="14.923" y="160.5" fill="#00B5FF" width="27.446" height="81"/>
+	<rect x="87.375" y="160.5" fill="#00B5FF" width="54.882" height="81"/>
+	<rect x="370.375" y="160.5" fill="#00B5FF" width="54.883" height="81"/>
+	<rect x="208.497" y="160.5" fill="#00B5FF" width="94.82" height="81"/>
+	<rect x="468.816" y="160.5" fill="#00B5FF" width="27.441" height="81"/>
+</g>
+</svg>
