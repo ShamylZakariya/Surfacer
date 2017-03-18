@@ -22,7 +22,6 @@ namespace core {
 		{
 			GAME,
 			DEVELOPMENT,
-			TEST,
 			COUNT
 		};
 
@@ -32,7 +31,6 @@ namespace core {
 			{
 				case GAME: return "RenderMode::GAME"; break;
 				case DEVELOPMENT: return "RenderMode::DEVELOPMENT"; break;
-				case TEST: return "RenderMode::TEST"; break;
 				case COUNT: return "RenderMode::COUNT"; break;
 			}
 

@@ -22,6 +22,8 @@
 
 #include "ContourSimplification.hpp"
 
+using namespace core;
+
 namespace island {
 
 	namespace {
@@ -106,13 +108,13 @@ namespace island {
 		};
 
 		PolyLine2f optimize(PolyLine2f p) {
-			return core::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
+			return simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
 		}
 
 		vector<Shape::contour_pair> optimize(vector<PolyLine2f> ps) {
 			vector<Shape::contour_pair> ret;
 			for (auto &p : ps) {
-				ret.push_back(core::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
+				ret.push_back(simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
 			}
 
 			return ret;
@@ -476,7 +478,6 @@ namespace island {
 	{}
 
 	World::~World() {
-		CI_LOG_D("World::dtor");
 	}
 
 	void World::build(const vector<ShapeRef> &shapes) {
@@ -579,56 +580,28 @@ namespace island {
 		}
 	}
 	
-	void World::draw(const core::render_state &renderState) {
-		for (const auto &body : _bodies) {
-			{
-				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(body->getModelview());
+	void World::draw(const render_state &renderState) {
+		switch(renderState.mode) {
+			case RenderMode::GAME:
+				drawGame(renderState);
+				break;
 
-				for (const auto &shape : body->getShapes()) {
-					gl::color(shape->getColor() * 0.25);
-					gl::draw(*shape->getTriMesh());
+			case RenderMode::DEVELOPMENT:
+				drawDebug(renderState);
+				break;
 
-					gl::lineWidth(1);
-					gl::color(shape->getColor());
-					gl::draw(shape->getOuterContour().model);
-
-					for (auto &holeContour : shape->getHoleContours()) {
-						gl::draw(holeContour.model);
-					}
-
-					{
-						float rScale = renderState.viewport.getReciprocalScale();
-						float angle = body->getAngle();
-						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
-						gl::ScopedModelMatrix smm2;
-						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
-						gl::drawString(shape->getName(), vec2(0,0), shape->getColor());
-					}
-				}
-			}
-
-			body->draw(renderState);
-		}
-
-		for (const auto &anchor : _anchors) {
-			// anchors are already in world space so we just draw them
-			gl::color(ColorA(1,1,1,0.25));
-			gl::draw(*anchor->getTriMesh());
-
-			gl::lineWidth(1);
-			gl::color(Color(1,1,1));
-			gl::draw(anchor->getContour());
+			case RenderMode::COUNT:
+				break;
 		}
 	}
 
-	void World::step(const core::time_state &timeState) {
+	void World::step(const time_state &timeState) {
 		for (auto &body : _bodies) {
 			body->step(timeState);
 		}
 	}
 
-	void World::update(const core::time_state &timeState) {
+	void World::update(const time_state &timeState) {
 		for (auto &body : _bodies) {
 			body->update(timeState);
 		}
@@ -668,7 +641,7 @@ namespace island {
 
 		if (UseSpatialIndex) {
 
-			core::SpatialIndex<ShapeRef> broadphase(100);
+			SpatialIndex<ShapeRef> broadphase(100);
 
 			for (auto shape : shapes) {
 				broadphase.insert(shape->getWorldSpaceContourEdgesBB(), shape);
@@ -760,6 +733,77 @@ namespace island {
 		}
 	}
 
+	void World::drawGame(const render_state &renderState) {
+		const cpBB frustum = renderState.viewport.getFrustum();
+		for (const auto &body : _bodies) {
+			if (cpBBIntersects(frustum, body->getBB())) {
+				gl::ScopedModelMatrix smm;
+				gl::multModelMatrix(body->getModelview());
+
+				for (const auto &shape : body->getShapes()) {
+					gl::color(shape->getColor());
+					gl::draw(*shape->getTriMesh());
+				}
+			}
+		}
+
+		for (const auto &anchor : _anchors) {
+			if (cpBBIntersects(frustum, anchor->getBB())) {
+				// anchors are already in world space so we just draw them
+				gl::color(ColorA(1,1,1));
+				gl::draw(*anchor->getTriMesh());
+			}
+		}
+	}
+
+	void World::drawDebug(const render_state &renderState) {
+		const cpBB frustum = renderState.viewport.getFrustum();
+		for (const auto &body : _bodies) {
+			if (cpBBIntersects(frustum, body->getBB())) {
+				gl::ScopedModelMatrix smm;
+				gl::multModelMatrix(body->getModelview());
+
+				for (const auto &shape : body->getShapes()) {
+					gl::color(shape->getColor() * 0.25);
+					gl::draw(*shape->getTriMesh());
+
+					gl::lineWidth(1);
+					gl::color(shape->getColor());
+					gl::draw(shape->getOuterContour().model);
+
+					for (auto &holeContour : shape->getHoleContours()) {
+						gl::draw(holeContour.model);
+					}
+
+					{
+						float rScale = renderState.viewport.getReciprocalScale();
+						float angle = body->getAngle();
+						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
+						gl::ScopedModelMatrix smm2;
+						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
+						gl::drawString(shape->getName(), vec2(0,0), shape->getColor());
+					}
+				}
+			}
+
+			// body draws some debug data - note that game render pass ignores Body::draw
+			body->draw(renderState);
+		}
+
+		for (const auto &anchor : _anchors) {
+			if (cpBBIntersects(frustum, anchor->getBB())) {
+				// anchors are already in world space so we just draw them
+				gl::color(ColorA(1,1,1,0.25));
+				gl::draw(*anchor->getTriMesh());
+
+				gl::lineWidth(1);
+				gl::color(Color(1,1,1));
+				gl::draw(anchor->getContour());
+			}
+		}
+	}
+
+
 #pragma mark - Body
 
 	/*
@@ -795,12 +839,9 @@ namespace island {
 	_modelviewInverse(1),
 	_name(nextId()) {
 		_hash = hash<string>{}(_name);
-		CI_LOG_D("Body[" << getName() << "::ctor");
 	}
 
 	Body::~Body() {
-		CI_LOG_D("Body[" << getName() << "]::dtor");
-
 		_shapes.clear(); // will run Shape::dtor freeing cpShapes
 		cpCleanupAndFree(_body);
 	}
@@ -815,20 +856,22 @@ namespace island {
 		return ss.str();
 	}
 
-	void Body::draw(const core::render_state &renderState) {
-		const float rScale = renderState.viewport.getReciprocalScale();
+	void Body::draw(const render_state &renderState) {
+		if (renderState.mode == RenderMode::DEVELOPMENT) {
+			const float rScale = renderState.viewport.getReciprocalScale();
 
-		gl::ScopedModelMatrix smm2;
-		gl::multModelMatrix(translate(vec3(getPosition() + vec2(0,20),0)) * scale(vec3(rScale, -rScale, 1)));
+			gl::ScopedModelMatrix smm2;
+			gl::multModelMatrix(translate(vec3(getPosition() + vec2(0,20),0)) * scale(vec3(rScale, -rScale, 1)));
 
-		gl::drawString(getName(), vec2(0,0), Color(1,1,1));
+			gl::drawString(getName(), vec2(0,0), Color(1,1,1));
+		}
 	}
 
-	void Body::step(const core::time_state &timeState) {
+	void Body::step(const time_state &timeState) {
 		syncToCpBody();
 	}
 
-	void Body::update(const core::time_state &timeState) {
+	void Body::update(const time_state &timeState) {
 	}
 
 	bool Body::build(set<ShapeRef> shapes, const BodyRef parentBody, const vector<AnchorRef> &anchors) {
@@ -874,8 +917,6 @@ namespace island {
 			shouldSearchForAnchors = false;
 		}
 
-		CI_LOG_D("Body[" << getName() << "] -- should search for anchors: " << boolalpha << shouldSearchForAnchors );
-
 		if (shouldSearchForAnchors) {
 			bool found = false;
 			for (auto &shape : shapes) {
@@ -896,8 +937,6 @@ namespace island {
 					break;
 				}
 			}
-
-			CI_LOG_D("Body[" << getName() << "] - found anchor: " << boolalpha << found );
 
 			_dynamic = !found;
 
@@ -1262,7 +1301,6 @@ namespace island {
 	}
 
 	Shape::~Shape() {
-		CI_LOG_D("Shape[" << getName() << "]::dtor");
 		destroyCollisionShapes();
 		_body.reset();
 	}

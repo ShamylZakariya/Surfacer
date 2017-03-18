@@ -104,21 +104,40 @@ namespace std {
 
 namespace island {
 
-
+	/**
+	 Describes basic physics material properties for a collision shape
+	*/
 	struct material {
 		float density;
 		float friction;
 		cpShapeFilter filter;
 	};
 
+
+	/**
+	@class World
+	World "owns" and manages Body instances, which in turn own and manage Shape instances.
+	*/
 	class World {
 	public:
 		World(cpSpace *space, material m);
 		~World();
 
+		/**
+		 Build a world of dynamic shapes.
+		 */
 		void build(const vector<ShapeRef> &shapes);
+
+		/**
+		 Build a world of dynamic and static shapes. Any shape overlapping an Anchor will be static. 
+		 Pieces cut off a static shape will become dynamic provided they don't overlap another anchor.
+		 */
+
 		void build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors);
 
+		/**
+		Perform a cut in world space from a to b, with half-thickness of radius
+		 */
 		void cut(vec2 a, vec2 b, float radius);
 
 		void draw(const core::render_state &renderState);
@@ -131,6 +150,9 @@ namespace island {
 	protected:
 
 		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,BodyRef> &parentage);
+
+		void drawGame(const core::render_state &renderState);
+		void drawDebug(const core::render_state &renderState);
 
 	private:
 
