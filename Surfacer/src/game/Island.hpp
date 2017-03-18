@@ -33,7 +33,7 @@ namespace island {
 	 contour at a given level of precision.
 	 */
 	struct poly_edge {
-		static const int PRECISION = 1;
+		static const int PRECISION = 0;
 		ivec2 a, b;
 
 		poly_edge(vec2 m, vec2 n) {
