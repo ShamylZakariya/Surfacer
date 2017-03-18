@@ -1,7 +1,7 @@
 vendor/*
 
 # Exclude the build directory
-build/*
+build/
  
 # Exclude temp nibs and swap files
 *~.nib
