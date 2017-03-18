@@ -17,9 +17,20 @@
 		00B9955A1B128DF400A5C623 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
 		00B9955B1B128DF400A5C623 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
+		632623161E7D9A630051ABE2 /* Exception.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F11E7D9A630051ABE2 /* Exception.cpp */; };
+		632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
+		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
+		632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622FF1E7D9A630051ABE2 /* Viewport.cpp */; };
+		6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623011E7D9A630051ABE2 /* ViewportController.cpp */; };
+		6326231B1E7D9A630051ABE2 /* GameApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623041E7D9A630051ABE2 /* GameApp.cpp */; };
+		6326231C1E7D9A630051ABE2 /* Island.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623061E7D9A630051ABE2 /* Island.cpp */; };
+		6326231D1E7D9A630051ABE2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623081E7D9A630051ABE2 /* main.cpp */; };
+		632623201E7D9A630051ABE2 /* IslandTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6326230E1E7D9A630051ABE2 /* IslandTestScenario.cpp */; };
+		632623211E7D9A630051ABE2 /* ContourSimplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623111E7D9A630051ABE2 /* ContourSimplification.cpp */; };
+		632623221E7D9A630051ABE2 /* SvgParsing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623131E7D9A630051ABE2 /* SvgParsing.cpp */; };
 		639DBF5F1E33EA840008D5BF /* NOTES.md in Sources */ = {isa = PBXBuildFile; fileRef = 639DBF5E1E33EA840008D5BF /* NOTES.md */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		BC936529B88B4557ADF61221 /* SurfacerApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99B28B13A717479ABB2E2E1C /* SurfacerApp.cpp */; };
 		C268CB28315B4D8CA1F329A4 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 25DBEB1187074B2580185053 /* CinderApp.icns */; };
 /* End PBXBuildFile section */
 
@@ -40,9 +51,40 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkHelpers.cpp; sourceTree = "<group>"; };
+		632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ChipmunkHelpers.hpp; sourceTree = "<group>"; };
+		632622F01E7D9A630051ABE2 /* Core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Core.hpp; sourceTree = "<group>"; };
+		632622F11E7D9A630051ABE2 /* Exception.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Exception.cpp; sourceTree = "<group>"; };
+		632622F21E7D9A630051ABE2 /* Exception.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Exception.hpp; sourceTree = "<group>"; };
+		632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputDispatcher.cpp; sourceTree = "<group>"; };
+		632622F41E7D9A630051ABE2 /* InputDispatcher.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = InputDispatcher.hpp; sourceTree = "<group>"; };
+		632622F51E7D9A630051ABE2 /* LineSegment.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = LineSegment.hpp; sourceTree = "<group>"; };
+		632622F61E7D9A630051ABE2 /* MathHelpers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MathHelpers.hpp; sourceTree = "<group>"; };
+		632622F71E7D9A630051ABE2 /* RenderState.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = RenderState.hpp; sourceTree = "<group>"; };
+		632622F81E7D9A630051ABE2 /* Scenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Scenario.cpp; sourceTree = "<group>"; };
+		632622F91E7D9A630051ABE2 /* Scenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Scenario.hpp; sourceTree = "<group>"; };
+		632622FA1E7D9A630051ABE2 /* Signals.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Signals.hpp; sourceTree = "<group>"; };
+		632622FB1E7D9A630051ABE2 /* SpatialIndex.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SpatialIndex.hpp; sourceTree = "<group>"; };
+		632622FC1E7D9A630051ABE2 /* StopWatch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = StopWatch.hpp; sourceTree = "<group>"; };
+		632622FD1E7D9A630051ABE2 /* Strings.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Strings.hpp; sourceTree = "<group>"; };
+		632622FE1E7D9A630051ABE2 /* TimeState.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = TimeState.hpp; sourceTree = "<group>"; };
+		632622FF1E7D9A630051ABE2 /* Viewport.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Viewport.cpp; sourceTree = "<group>"; };
+		632623001E7D9A630051ABE2 /* Viewport.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Viewport.hpp; sourceTree = "<group>"; };
+		632623011E7D9A630051ABE2 /* ViewportController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ViewportController.cpp; sourceTree = "<group>"; };
+		632623021E7D9A630051ABE2 /* ViewportController.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ViewportController.hpp; sourceTree = "<group>"; };
+		632623041E7D9A630051ABE2 /* GameApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameApp.cpp; sourceTree = "<group>"; };
+		632623051E7D9A630051ABE2 /* GameApp.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameApp.hpp; sourceTree = "<group>"; };
+		632623061E7D9A630051ABE2 /* Island.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Island.cpp; sourceTree = "<group>"; };
+		632623071E7D9A630051ABE2 /* Island.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Island.hpp; sourceTree = "<group>"; };
+		632623081E7D9A630051ABE2 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		6326230E1E7D9A630051ABE2 /* IslandTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IslandTestScenario.cpp; sourceTree = "<group>"; };
+		6326230F1E7D9A630051ABE2 /* IslandTestScenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = IslandTestScenario.hpp; sourceTree = "<group>"; };
+		632623111E7D9A630051ABE2 /* ContourSimplification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ContourSimplification.cpp; sourceTree = "<group>"; };
+		632623121E7D9A630051ABE2 /* ContourSimplification.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ContourSimplification.hpp; sourceTree = "<group>"; };
+		632623131E7D9A630051ABE2 /* SvgParsing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SvgParsing.cpp; sourceTree = "<group>"; };
+		632623141E7D9A630051ABE2 /* SvgParsing.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SvgParsing.hpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Surfacer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Surfacer.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		99B28B13A717479ABB2E2E1C /* SurfacerApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = SurfacerApp.cpp; path = ../src/SurfacerApp.cpp; sourceTree = "<group>"; };
 		B91D377257F74A9D8692D6AD /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -68,21 +110,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		01B97315FEAEA392516A2CEA /* Blocks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Blocks;
-			sourceTree = "<group>";
-		};
-		080E96DDFE201D6D7F000001 /* Source */ = {
-			isa = PBXGroup;
-			children = (
-				99B28B13A717479ABB2E2E1C /* SurfacerApp.cpp */,
-			);
-			name = Source;
-			sourceTree = "<group>";
-		};
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -122,9 +149,8 @@
 			isa = PBXGroup;
 			children = (
 				639DBF5E1E33EA840008D5BF /* NOTES.md */,
-				01B97315FEAEA392516A2CEA /* Blocks */,
+				632622EC1E7D9A630051ABE2 /* src */,
 				29B97315FDCFA39411CA2CEA /* Headers */,
-				080E96DDFE201D6D7F000001 /* Source */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
@@ -157,6 +183,78 @@
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		632622EC1E7D9A630051ABE2 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				632622ED1E7D9A630051ABE2 /* core */,
+				632623031E7D9A630051ABE2 /* game */,
+				632623081E7D9A630051ABE2 /* main.cpp */,
+				632623091E7D9A630051ABE2 /* scenarios */,
+				632623101E7D9A630051ABE2 /* util */,
+			);
+			name = src;
+			path = ../src;
+			sourceTree = "<group>";
+		};
+		632622ED1E7D9A630051ABE2 /* core */ = {
+			isa = PBXGroup;
+			children = (
+				632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */,
+				632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */,
+				632622F01E7D9A630051ABE2 /* Core.hpp */,
+				632622F11E7D9A630051ABE2 /* Exception.cpp */,
+				632622F21E7D9A630051ABE2 /* Exception.hpp */,
+				632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */,
+				632622F41E7D9A630051ABE2 /* InputDispatcher.hpp */,
+				632622F51E7D9A630051ABE2 /* LineSegment.hpp */,
+				632622F61E7D9A630051ABE2 /* MathHelpers.hpp */,
+				632622F71E7D9A630051ABE2 /* RenderState.hpp */,
+				632622F81E7D9A630051ABE2 /* Scenario.cpp */,
+				632622F91E7D9A630051ABE2 /* Scenario.hpp */,
+				632622FA1E7D9A630051ABE2 /* Signals.hpp */,
+				632622FB1E7D9A630051ABE2 /* SpatialIndex.hpp */,
+				632622FC1E7D9A630051ABE2 /* StopWatch.hpp */,
+				632622FD1E7D9A630051ABE2 /* Strings.hpp */,
+				632622FE1E7D9A630051ABE2 /* TimeState.hpp */,
+				632622FF1E7D9A630051ABE2 /* Viewport.cpp */,
+				632623001E7D9A630051ABE2 /* Viewport.hpp */,
+				632623011E7D9A630051ABE2 /* ViewportController.cpp */,
+				632623021E7D9A630051ABE2 /* ViewportController.hpp */,
+			);
+			path = core;
+			sourceTree = "<group>";
+		};
+		632623031E7D9A630051ABE2 /* game */ = {
+			isa = PBXGroup;
+			children = (
+				632623041E7D9A630051ABE2 /* GameApp.cpp */,
+				632623051E7D9A630051ABE2 /* GameApp.hpp */,
+				632623061E7D9A630051ABE2 /* Island.cpp */,
+				632623071E7D9A630051ABE2 /* Island.hpp */,
+			);
+			path = game;
+			sourceTree = "<group>";
+		};
+		632623091E7D9A630051ABE2 /* scenarios */ = {
+			isa = PBXGroup;
+			children = (
+				6326230E1E7D9A630051ABE2 /* IslandTestScenario.cpp */,
+				6326230F1E7D9A630051ABE2 /* IslandTestScenario.hpp */,
+			);
+			path = scenarios;
+			sourceTree = "<group>";
+		};
+		632623101E7D9A630051ABE2 /* util */ = {
+			isa = PBXGroup;
+			children = (
+				632623111E7D9A630051ABE2 /* ContourSimplification.cpp */,
+				632623121E7D9A630051ABE2 /* ContourSimplification.hpp */,
+				632623131E7D9A630051ABE2 /* SvgParsing.cpp */,
+				632623141E7D9A630051ABE2 /* SvgParsing.hpp */,
+			);
+			path = util;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -222,8 +320,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */,
+				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
+				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
+				632623161E7D9A630051ABE2 /* Exception.cpp in Sources */,
+				6326231C1E7D9A630051ABE2 /* Island.cpp in Sources */,
 				639DBF5F1E33EA840008D5BF /* NOTES.md in Sources */,
-				BC936529B88B4557ADF61221 /* SurfacerApp.cpp in Sources */,
+				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
+				632623211E7D9A630051ABE2 /* ContourSimplification.cpp in Sources */,
+				632623221E7D9A630051ABE2 /* SvgParsing.cpp in Sources */,
+				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
+				6326231D1E7D9A630051ABE2 /* main.cpp in Sources */,
+				632623201E7D9A630051ABE2 /* IslandTestScenario.cpp in Sources */,
+				6326231B1E7D9A630051ABE2 /* GameApp.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,6 +342,7 @@
 		C01FCF4B08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
@@ -246,12 +356,20 @@
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"\"$(CINDER_PATH)/include\"",
+					"$(CHIPMUNK_PATH)/include\"",
+				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				OTHER_LDFLAGS = "\"$(CINDER_PATH)/lib/libcinder_d.a\"";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.libcinder.${PRODUCT_NAME:rfc1034identifier}";
+				OTHER_LDFLAGS = (
+					"\"$(CINDER_PATH)/lib/libcinder_d.a\"",
+					"$(CHIPMUNK_PATH)/xcode/build/Debug/libChipmunk-Mac.a",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.zakariya.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = Surfacer;
 				SYMROOT = ./build;
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" $(CHIPMUNK_PATH)/include\" ../include";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -259,6 +377,7 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -273,13 +392,21 @@
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"\"$(CINDER_PATH)/include\"",
+					"$(CHIPMUNK_PATH)/include\"",
+				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				OTHER_LDFLAGS = "\"$(CINDER_PATH)/lib/libcinder.a\"";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.libcinder.${PRODUCT_NAME:rfc1034identifier}";
+				OTHER_LDFLAGS = (
+					"\"$(CINDER_PATH)/lib/libcinder.a\"",
+					"$(CHIPMUNK_PATH)/xcode/build/Release/libChipmunk-Mac.a",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.zakariya.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = Surfacer;
 				STRIP_INSTALLED_PRODUCT = YES;
 				SYMROOT = ./build;
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" $(CHIPMUNK_PATH)/include\" ../include";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
