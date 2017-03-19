@@ -29,8 +29,8 @@ namespace {
 		return rect(center.x - size.x/2, center.y - size.y/2, center.x + size.x/2, center.y + size.y/2);
 	}
 
-	island::ShapeRef boxShape(vec2 center, vec2 size) {
-		return island::Shape::fromContour(rect(center.x - size.x/2, center.y - size.y/2, center.x + size.x/2, center.y + size.y/2));
+	terrain::ShapeRef boxShape(vec2 center, vec2 size) {
+		return terrain::Shape::fromContour(rect(center.x - size.x/2, center.y - size.y/2, center.x + size.x/2, center.y + size.y/2));
 	}
 
 	namespace Categories {
@@ -56,7 +56,7 @@ namespace {
 
 	ViewportController _cameraController;
  
-	island::WorldRef _islandWorld;
+	terrain::WorldRef _terrainWorld;
 
 	cpSpace *_space;
 	cpBody *_mouseBody, *_draggingBody;
@@ -91,7 +91,7 @@ void IslandTestScenario::setup() {
 }
 
 void IslandTestScenario::cleanup() {
-	_islandWorld.reset();
+	_terrainWorld.reset();
 
 	_cutting = false;
 
@@ -117,15 +117,15 @@ void IslandTestScenario::step( const time_state &time ) {
 	cpBodySetVelocity(_mouseBody, cpvmult(cpvsub(newMouseBodyPos, cpBodyGetPosition(_mouseBody)), time.deltaT));
 	cpBodySetPosition(_mouseBody, newMouseBodyPos);
 
-	if (_islandWorld) {
-		_islandWorld->step(time);
+	if (_terrainWorld) {
+		_terrainWorld->step(time);
 	}
 }
 
 void IslandTestScenario::update( const time_state &time ) {
 	_cameraController.step(time);
-	if (_islandWorld) {
-		_islandWorld->update(time);
+	if (_terrainWorld) {
+		_terrainWorld->update(time);
 	}
 }
 
@@ -139,8 +139,8 @@ void IslandTestScenario::draw( const render_state &state ) {
 
 		drawWorldCoordinateSystem(state);
 
-		if (_islandWorld) {
-			_islandWorld->draw(state);
+		if (_terrainWorld) {
+			_terrainWorld->draw(state);
 		}
 
 		if (_cutting) {
@@ -202,7 +202,7 @@ bool IslandTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
 		if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
-			island::Body *islandBody = (island::Body*) cpBodyGetUserData(pickBody);
+			terrain::Body *islandBody = (terrain::Body*) cpBodyGetUserData(pickBody);
 			CI_LOG_D("Attaching mouse joint to body: " << pickBody << " shape: " << islandBody->getName());
 
 			cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
@@ -229,9 +229,9 @@ bool IslandTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	if (_cutting) {
-		if (_islandWorld) {
+		if (_terrainWorld) {
 			const float radius = (CUT_WIDTH/2) / _cameraController.getScale();
-			_islandWorld->cut(_cutterStart, _cutterEnd, radius);
+			_terrainWorld->cut(_cutterStart, _cutterEnd, radius);
 		}
 
 		_cutting = false;
@@ -295,42 +295,42 @@ void IslandTestScenario::reset() {
 void IslandTestScenario::testBasicIslandSetup() {
 	_cameraController.lookAt(vec2(0,0));
 
-	island::material mat;
+	terrain::material mat;
 	mat.density = 1;
 	mat.friction = 0.5;
 	mat.filter = Filters::ISLAND;
 
-	_islandWorld = make_shared<island::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,mat);
 
-	vector<island::ShapeRef> shapes = {
-//		island::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
-//		island::Shape::fromContour(rect(100,0, 150, 50)),		// 1 to right of 0 - binds to 0
-//		island::Shape::fromContour(rect(-100,0, 0, 50)),		// 2 to left of 0 - binds to 0
-		island::Shape::fromContour(rect(-10, 50, 110, 100)),	// 3 above 0, but wider
-		island::Shape::fromContour(rect(-10, 100, 110, 200)), // 4 above 3, binds to 3
+	vector<terrain::ShapeRef> shapes = {
+//		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
+//		terrain::Shape::fromContour(rect(100,0, 150, 50)),		// 1 to right of 0 - binds to 0
+//		terrain::Shape::fromContour(rect(-100,0, 0, 50)),		// 2 to left of 0 - binds to 0
+		terrain::Shape::fromContour(rect(-10, 50, 110, 100)),	// 3 above 0, but wider
+		terrain::Shape::fromContour(rect(-10, 100, 110, 200)), // 4 above 3, binds to 3
 
-		//island::Shape::fromContour(rect(200,0,210,0)),		// empty rect - should be garbage collected
+		//terrain::Shape::fromContour(rect(200,0,210,0)),		// empty rect - should be garbage collected
 	};
 
-	_islandWorld->build(shapes);
+	_terrainWorld->build(shapes);
 }
 
 void IslandTestScenario::testComplexIslandSetup() {
 	_cameraController.lookAt(vec2(0,0));
 
-	island::material mat;
+	terrain::material mat;
 	mat.density = 1;
 	mat.friction = 0.5;
 	mat.filter = Filters::ISLAND;
 
-	_islandWorld = make_shared<island::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,mat);
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
 		return vec2(x * boxSize.x + boxSize.x/2,y * boxSize.y + boxSize.y/2);
 	};
 
-	vector<island::ShapeRef> shapes = {
+	vector<terrain::ShapeRef> shapes = {
 		boxShape(boxPos(0,0),boxSize),
 		boxShape(boxPos(1,0),boxSize),
 		boxShape(boxPos(2,0),boxSize),
@@ -345,49 +345,49 @@ void IslandTestScenario::testComplexIslandSetup() {
 		boxShape(boxPos(0,1),boxSize),
 	};
 
-	_islandWorld->build(shapes);
+	_terrainWorld->build(shapes);
 }
 
 void IslandTestScenario::testSimpleAnchors() {
 	_cameraController.lookAt(vec2(0,0));
 
-	island::material mat;
+	terrain::material mat;
 	mat.density = 1;
 	mat.friction = 0.5;
 	mat.filter = Filters::ISLAND;
 
-	_islandWorld = make_shared<island::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,mat);
 
-	vector<island::ShapeRef> shapes = {
-		island::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
-		island::Shape::fromContour(rect(100,0, 150, 50)),		// 1 to right of 0 - binds to 0
-		island::Shape::fromContour(rect(-100,0, 0, 50)),		// 2 to left of 0 - binds to 0
+	vector<terrain::ShapeRef> shapes = {
+		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
+		terrain::Shape::fromContour(rect(100,0, 150, 50)),		// 1 to right of 0 - binds to 0
+		terrain::Shape::fromContour(rect(-100,0, 0, 50)),		// 2 to left of 0 - binds to 0
 	};
 
-	vector<island::AnchorRef> anchors = {
-		island::Anchor::fromContour(rect(40,20,60,30))
+	vector<terrain::AnchorRef> anchors = {
+		terrain::Anchor::fromContour(rect(40,20,60,30))
 	};
 
-	_islandWorld->build(shapes, anchors);
+	_terrainWorld->build(shapes, anchors);
 }
 
 void IslandTestScenario::testComplexAnchors() {
 	_cameraController.lookAt(vec2(0,0));
 
-	island::material mat;
+	terrain::material mat;
 	mat.density = 1;
 	mat.friction = 0.5;
 	mat.filter = Filters::ISLAND;
 
 	cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
-	_islandWorld = make_shared<island::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,mat);
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
 		return vec2(x * boxSize.x + boxSize.x/2,y * boxSize.y + boxSize.y/2);
 	};
 
-	vector<island::ShapeRef> shapes = {
+	vector<terrain::ShapeRef> shapes = {
 		boxShape(boxPos(0,0),boxSize),
 		boxShape(boxPos(1,0),boxSize),
 		boxShape(boxPos(2,0),boxSize),
@@ -404,11 +404,11 @@ void IslandTestScenario::testComplexAnchors() {
 		boxShape(boxSize * 2.f, boxSize)
 	};
 
-	vector<island::AnchorRef> anchors = {
-		island::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)))
+	vector<terrain::AnchorRef> anchors = {
+		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)))
 	};
 
-	_islandWorld->build(shapes, anchors);
+	_terrainWorld->build(shapes, anchors);
 }
 
 void IslandTestScenario::timeSpatialIndex() {

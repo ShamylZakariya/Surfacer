@@ -6,7 +6,7 @@
 //
 //
 
-#include "Island.hpp"
+#include "Terrain.hpp"
 
 #include <cinder/Log.h>
 #include <cinder/Triangulate.h>
@@ -24,7 +24,7 @@
 
 using namespace core;
 
-namespace island {
+namespace terrain {
 
 	namespace {
 
@@ -99,12 +99,6 @@ namespace island {
 			for (; ai != end; ++ai, ++bi) {
 				*bi = m * (*ai);
 			}
-
-//			b.getPoints().clear();
-//			b.getPoints().reserve(a.getPoints().size());
-//			for (auto &p : a) {
-//				b.push_back(m * p);
-//			}
 		};
 
 		PolyLine2f optimize(PolyLine2f p) {

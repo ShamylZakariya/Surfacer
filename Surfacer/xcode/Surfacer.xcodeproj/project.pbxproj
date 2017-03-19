@@ -24,7 +24,7 @@
 		632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622FF1E7D9A630051ABE2 /* Viewport.cpp */; };
 		6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623011E7D9A630051ABE2 /* ViewportController.cpp */; };
 		6326231B1E7D9A630051ABE2 /* GameApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623041E7D9A630051ABE2 /* GameApp.cpp */; };
-		6326231C1E7D9A630051ABE2 /* Island.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623061E7D9A630051ABE2 /* Island.cpp */; };
+		6326231C1E7D9A630051ABE2 /* Terrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623061E7D9A630051ABE2 /* Terrain.cpp */; };
 		6326231D1E7D9A630051ABE2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623081E7D9A630051ABE2 /* main.cpp */; };
 		632623201E7D9A630051ABE2 /* IslandTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6326230E1E7D9A630051ABE2 /* IslandTestScenario.cpp */; };
 		632623211E7D9A630051ABE2 /* ContourSimplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623111E7D9A630051ABE2 /* ContourSimplification.cpp */; };
@@ -74,8 +74,8 @@
 		632623021E7D9A630051ABE2 /* ViewportController.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ViewportController.hpp; sourceTree = "<group>"; };
 		632623041E7D9A630051ABE2 /* GameApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameApp.cpp; sourceTree = "<group>"; };
 		632623051E7D9A630051ABE2 /* GameApp.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameApp.hpp; sourceTree = "<group>"; };
-		632623061E7D9A630051ABE2 /* Island.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Island.cpp; sourceTree = "<group>"; };
-		632623071E7D9A630051ABE2 /* Island.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Island.hpp; sourceTree = "<group>"; };
+		632623061E7D9A630051ABE2 /* Terrain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Terrain.cpp; sourceTree = "<group>"; };
+		632623071E7D9A630051ABE2 /* Terrain.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Terrain.hpp; sourceTree = "<group>"; };
 		632623081E7D9A630051ABE2 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		6326230E1E7D9A630051ABE2 /* IslandTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IslandTestScenario.cpp; sourceTree = "<group>"; };
 		6326230F1E7D9A630051ABE2 /* IslandTestScenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = IslandTestScenario.hpp; sourceTree = "<group>"; };
@@ -231,8 +231,8 @@
 			children = (
 				632623041E7D9A630051ABE2 /* GameApp.cpp */,
 				632623051E7D9A630051ABE2 /* GameApp.hpp */,
-				632623061E7D9A630051ABE2 /* Island.cpp */,
-				632623071E7D9A630051ABE2 /* Island.hpp */,
+				632623061E7D9A630051ABE2 /* Terrain.cpp */,
+				632623071E7D9A630051ABE2 /* Terrain.hpp */,
 			);
 			path = game;
 			sourceTree = "<group>";
@@ -324,7 +324,7 @@
 				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
 				632623161E7D9A630051ABE2 /* Exception.cpp in Sources */,
-				6326231C1E7D9A630051ABE2 /* Island.cpp in Sources */,
+				6326231C1E7D9A630051ABE2 /* Terrain.cpp in Sources */,
 				639DBF5F1E33EA840008D5BF /* NOTES.md in Sources */,
 				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
 				632623211E7D9A630051ABE2 /* ContourSimplification.cpp in Sources */,

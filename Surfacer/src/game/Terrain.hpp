@@ -1,6 +1,6 @@
 //
-//  Island.hpp
-//  Milestone6
+//  Terrain.hpp
+//  Surfacer
 //
 //  Created by Shamyl Zakariya on 3/1/17.
 //
@@ -18,7 +18,7 @@
 using namespace ci;
 using namespace std;
 
-namespace island {
+namespace terrain {
 
 	SMART_PTR(World);
 	SMART_PTR(Body);
@@ -84,10 +84,10 @@ namespace island {
 namespace std {
 
 	template <>
-	struct hash<island::poly_edge> {
+	struct hash<terrain::poly_edge> {
 
 		// make island::poly_edge hashable
-		std::size_t operator()(const island::poly_edge& e) const {
+		std::size_t operator()(const terrain::poly_edge& e) const {
 			std::size_t seed = 0;
 			boost::hash_combine(seed, e.a.x);
 			boost::hash_combine(seed, e.a.y);
@@ -102,7 +102,7 @@ namespace std {
 
 #pragma mark -
 
-namespace island {
+namespace terrain {
 
 	/**
 	 Describes basic physics material properties for a collision shape

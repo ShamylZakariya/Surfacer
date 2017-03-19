@@ -9,7 +9,7 @@
 #ifndef IslandTestScenario_hpp
 #define IslandTestScenario_hpp
 
-#include "Island.hpp"
+#include "Terrain.hpp"
 #include "Scenario.hpp"
 
 using namespace ci;
@@ -57,7 +57,7 @@ private:
 
 	ViewportController _cameraController;
 
-	island::WorldRef _islandWorld;
+	terrain::WorldRef _terrainWorld;
 
 	cpSpace *_space;
 	cpBody *_mouseBody, *_draggingBody;
