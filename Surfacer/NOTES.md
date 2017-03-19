@@ -7,7 +7,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 ✓ Need to prevent accidental stitching
 	- this can happen if two shapes touch and their edges align perfectly
 
-Need to make Anchors physical enties
+✓ Need to make Anchors physical enties
 
 Need to verify stitching of a large environment works. 
 	- Use ring generator to make a large "world" of discrete contours.
