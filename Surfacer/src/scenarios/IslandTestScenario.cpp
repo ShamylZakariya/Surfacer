@@ -202,8 +202,8 @@ bool IslandTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
 		if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
-			terrain::Body *islandBody = (terrain::Body*) cpBodyGetUserData(pickBody);
-			CI_LOG_D("Attaching mouse joint to body: " << pickBody << " shape: " << islandBody->getName());
+			terrain::Group *group = (terrain::Group*) cpBodyGetUserData(pickBody);
+			CI_LOG_D("Attaching mouse joint to terrain group: " << group->getName());
 
 			cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
 

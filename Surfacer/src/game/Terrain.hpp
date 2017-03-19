@@ -21,7 +21,7 @@ using namespace std;
 namespace terrain {
 
 	SMART_PTR(World);
-	SMART_PTR(Body);
+	SMART_PTR(Group);
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
 
@@ -116,7 +116,7 @@ namespace terrain {
 
 	/**
 	@class World
-	World "owns" and manages Body instances, which in turn own and manage Shape instances.
+	World "owns" and manages Group instances, which in turn own and manage Shape instances.
 	*/
 	class World {
 	public:
@@ -144,12 +144,12 @@ namespace terrain {
 		void step(const core::time_state &timeState);
 		void update(const core::time_state &timeState);
 
-		const set<BodyRef> getBodies() const { return _bodies; }
+		const set<GroupRef> getGroups() const { return _groups; }
 		const vector<AnchorRef> getAnchors() const { return _anchors; }
 
 	protected:
 
-		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,BodyRef> &parentage);
+		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupRef> &parentage);
 
 		void drawGame(const core::render_state &renderState);
 		void drawDebug(const core::render_state &renderState);
@@ -158,16 +158,16 @@ namespace terrain {
 
 		material _material;
 		cpSpace *_space;
-		set<BodyRef> _bodies;
+		set<GroupRef> _groups;
 		vector<AnchorRef> _anchors;
 	};
 
 
 
-	class Body : public enable_shared_from_this<Body>{
+	class Group : public enable_shared_from_this<Group>{
 	public:
-		Body(cpSpace *space, material m);
-		~Body();
+		Group(cpSpace *space, material m);
+		~Group();
 
 		string getName() const;
 		const cpHashValue getHash() const { return _hash; }
@@ -204,7 +204,7 @@ namespace terrain {
 		friend class World;
 
 		string nextId();
-		bool build(set<ShapeRef> shapes, const BodyRef parentBody, const vector<AnchorRef> &anchors);
+		bool build(set<ShapeRef> shapes, const GroupRef parentGroup, const vector<AnchorRef> &anchors);
 		void syncToCpBody();
 
 	private:
@@ -253,8 +253,6 @@ namespace terrain {
 		cpBB _bb;
 		PolyLine2f _contour;
 		TriMeshRef _trimesh;
-
-
 	};
 
 
@@ -287,27 +285,27 @@ namespace terrain {
 		const contour_pair &getOuterContour() const { return _outerContour; }
 		const vector<contour_pair> &getHoleContours() const { return _holeContours; }
 
-		BodyRef getBody() const { return _body.lock(); }
+		GroupRef getGroup() const { return _group.lock(); }
 
 		const mat4 getModelview() const {
-			if (BodyRef body = _body.lock()) {
-				return body->getModelview();
+			if (GroupRef group = _group.lock()) {
+				return group->getModelview();
 			} else {
 				return mat4();
 			}
 		}
 
 		const mat4 getModelviewInverse() const {
-			if (BodyRef body = _body.lock()) {
-				return body->getModelviewInverse();
+			if (GroupRef group = _group.lock()) {
+				return group->getModelviewInverse();
 			} else {
 				return mat4();
 			}
 		}
 
 		cpSpace *getSpace() const {
-			if (BodyRef body = _body.lock()) {
-				return body->getSpace();
+			if (GroupRef group = _group.lock()) {
+				return group->getSpace();
 			} else {
 				return nullptr;
 			}
@@ -323,12 +321,12 @@ namespace terrain {
 
 	protected:
 
-		friend class Body;
+		friend class Group;
 		friend class World;
 
 		string nextId();
 		void updateWorldSpaceContourAndBB();
-		void setIslandBody(BodyRef body);
+		void setGroup(GroupRef group);
 
 		// build the trimesh, returning true iff we got > 0 triangles
 		bool triangulate();
@@ -352,7 +350,7 @@ namespace terrain {
 		vec2 _modelCentroid;
 
 		vector<cpShape*> _shapes;
-		BodyWeakRef _body;
+		GroupWeakRef _group;
 
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
@@ -360,4 +358,4 @@ namespace terrain {
 
 }
 
-#endif /* Island_hpp */
+#endif /* Group_hpp */

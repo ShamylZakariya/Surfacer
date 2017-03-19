@@ -461,7 +461,7 @@ namespace terrain {
 	/*
 		material _material;
 		cpSpace *_space;
-		set<BodyRef> _bodies;
+		set<GroupRef> _groups;
 		set<Anchor> _anchors;
 
 	 */
@@ -475,7 +475,7 @@ namespace terrain {
 	}
 
 	void World::build(const vector<ShapeRef> &shapes) {
-		build(shapes, map<ShapeRef,BodyRef>());
+		build(shapes, map<ShapeRef,GroupRef>());
 	}
 
 	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors) {
@@ -483,7 +483,7 @@ namespace terrain {
 		_anchors.insert(_anchors.end(), anchors.begin(), anchors.end());
 
 		// now build
-		build(shapes, map<ShapeRef,BodyRef>());
+		build(shapes, map<ShapeRef,GroupRef>());
 	}
 
 	void World::cut(vec2 a, vec2 b, float radius) {
@@ -515,11 +515,11 @@ namespace terrain {
 
 			struct cut_collector {
 				set<ShapeRef> shapes;
-				set<BodyRef> bodies;
+				set<GroupRef> groups;
 
 				void clear() {
 					shapes.clear();
-					bodies.clear();
+					groups.clear();
 				}
 			};
 
@@ -529,17 +529,17 @@ namespace terrain {
 									cut_collector *collector = static_cast<cut_collector*>(data);
 									ShapeRef shape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
 									collector->shapes.insert(shape);
-									collector->bodies.insert(shape->getBody());
+									collector->groups.insert(shape->getGroup());
 								}, &collector);
 
-			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.bodies.size() << " bodies) to cut" );
+			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.groups.size() << " bodies) to cut" );
 
 			//
 			// Build vector of Shapes affected by this cut (because of group stuff) but not directly cut
 			//
 
 			vector<ShapeRef> affectedShapes;
-			for (auto &body : collector.bodies) {
+			for (auto &body : collector.groups) {
 				for (auto &shape : body->getShapes()) {
 					if (collector.shapes.find(shape) == collector.shapes.end()) {
 						affectedShapes.push_back(shape);
@@ -552,18 +552,18 @@ namespace terrain {
 			//	so we can apply lin/ang vel to new bodies
 			//
 
-			map<ShapeRef,BodyRef> parentage;
+			map<ShapeRef,GroupRef> parentage;
 			for (auto &shapeToCut : collector.shapes) {
-				BodyRef parentBody = shapeToCut->getBody();
+				GroupRef parentGroup = shapeToCut->getGroup();
 
 				auto result = shapeToCut->subtract(contour);
 				affectedShapes.insert(end(affectedShapes), begin(result), end(result));
 
 				for (auto &newShape : result) {
-					parentage[newShape] = parentBody;
+					parentage[newShape] = parentGroup;
 				}
 
-				_bodies.erase(parentBody);
+				_groups.erase(parentGroup);
 			}
 
 			collector.clear();
@@ -590,28 +590,28 @@ namespace terrain {
 	}
 
 	void World::step(const time_state &timeState) {
-		for (auto &body : _bodies) {
+		for (auto &body : _groups) {
 			body->step(timeState);
 		}
 	}
 
 	void World::update(const time_state &timeState) {
-		for (auto &body : _bodies) {
+		for (auto &body : _groups) {
 			body->update(timeState);
 		}
 	}
 
-	void World::build(const vector<ShapeRef> &shapes, const map<ShapeRef,BodyRef> &parentage) {
+	void World::build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupRef> &parentage) {
 
-		vector<set<ShapeRef>> groups;
+		vector<set<ShapeRef>> shapeGroups;
 		set<sorted_ref_pair<Shape>> handledPairs;
 
 		//
 		// finds the first set in groups which has either `a or `b, and adds the other to it. if none exists, creates a new one
 		//
 
-		auto engroup = [&groups](const ShapeRef &a, const ShapeRef &b) {
-			for (auto &group : groups) {
+		auto engroup = [&shapeGroups](const ShapeRef &a, const ShapeRef &b) {
+			for (auto &group : shapeGroups) {
 				if (group.find(a) != group.end()) {
 					group.insert(b);
 					return;
@@ -623,7 +623,7 @@ namespace terrain {
 
 			// if we're here, make a new group
 			set<ShapeRef> newGroup = { a, b };
-			groups.push_back(newGroup);
+			shapeGroups.push_back(newGroup);
 		};
 
 		//
@@ -659,7 +659,7 @@ namespace terrain {
 				if (!hasGroup) {
 					// so lonely
 					set<ShapeRef> singletonGroup = { queryShape };
-					groups.push_back(singletonGroup);
+					shapeGroups.push_back(singletonGroup);
 				}
 
 			}
@@ -682,7 +682,7 @@ namespace terrain {
 				if (!hasNeighbors) {
 					// so lonely
 					set<ShapeRef> singletonGroup = { queryShape };
-					groups.push_back(singletonGroup);
+					shapeGroups.push_back(singletonGroup);
 				}
 			}
 		}
@@ -692,44 +692,44 @@ namespace terrain {
 		// groups which need to be merged to supergroups.
 		//
 
-		groups = merge(groups);
+		shapeGroups = merge(shapeGroups);
 
 		//
 		//	Each group repfesents an Body, so build them
 		//
 
-		for (auto &group : groups) {
+		for (auto &shapeGroup : shapeGroups) {
 
 			//
 			// find the parent body for the new body (if there is one)
 			//
 
-			BodyRef parentBody;
+			GroupRef parentGroup;
 			if (!parentage.empty()) {
-				for (auto &shape : group) {
+				for (auto &shape : shapeGroup) {
 					auto search = parentage.find(shape);
 					if (search != parentage.end()) {
-						parentBody = search->second;
+						parentGroup = search->second;
 						break;
 					}
 				}
 			}
 
-			if (parentBody) {
+			if (parentGroup) {
 				// sanity check: parent should have been removed from our active bodies set
-				assert(_bodies.find(parentBody) == _bodies.end());
+				assert(_groups.find(parentGroup) == _groups.end());
 			}
 
-			BodyRef body = make_shared<Body>(_space, _material);
-			if (body->build(group, parentBody, _anchors)) {
-				_bodies.insert(body);
+			GroupRef group = make_shared<Group>(_space, _material);
+			if (group->build(shapeGroup, parentGroup, _anchors)) {
+				_groups.insert(group);
 			}
 		}
 	}
 
 	void World::drawGame(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
-		for (const auto &body : _bodies) {
+		for (const auto &body : _groups) {
 			if (cpBBIntersects(frustum, body->getBB())) {
 				gl::ScopedModelMatrix smm;
 				gl::multModelMatrix(body->getModelview());
@@ -752,7 +752,7 @@ namespace terrain {
 
 	void World::drawDebug(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
-		for (const auto &body : _bodies) {
+		for (const auto &body : _groups) {
 			if (cpBBIntersects(frustum, body->getBB())) {
 				gl::ScopedModelMatrix smm;
 				gl::multModelMatrix(body->getModelview());
@@ -780,7 +780,7 @@ namespace terrain {
 				}
 			}
 
-			// body draws some debug data - note that game render pass ignores Body::draw
+			// body draws some debug data - note that game render pass ignores Group::draw
 			body->draw(renderState);
 		}
 
@@ -818,9 +818,9 @@ namespace terrain {
 		cpHashValue _hash;
 	 */
 
-	size_t Body::_count = 0;
+	size_t Group::_count = 0;
 
-	Body::Body(cpSpace *space, material m):
+	Group::Group(cpSpace *space, material m):
 	_dynamic(false),
 	_material(m),
 	_space(space),
@@ -835,12 +835,12 @@ namespace terrain {
 		_hash = hash<string>{}(_name);
 	}
 
-	Body::~Body() {
+	Group::~Group() {
 		_shapes.clear(); // will run Shape::dtor freeing cpShapes
 		cpCleanupAndFree(_body);
 	}
 
-	string Body::getName() const {
+	string Group::getName() const {
 		stringstream ss;
 		ss << "Body[" << _name << "](";
 		for (auto &shape : _shapes) {
@@ -850,7 +850,7 @@ namespace terrain {
 		return ss.str();
 	}
 
-	void Body::draw(const render_state &renderState) {
+	void Group::draw(const render_state &renderState) {
 		if (renderState.mode == RenderMode::DEVELOPMENT) {
 			const float rScale = renderState.viewport.getReciprocalScale();
 
@@ -861,19 +861,19 @@ namespace terrain {
 		}
 	}
 
-	void Body::step(const time_state &timeState) {
+	void Group::step(const time_state &timeState) {
 		syncToCpBody();
 	}
 
-	void Body::update(const time_state &timeState) {
+	void Group::update(const time_state &timeState) {
 	}
 
-	bool Body::build(set<ShapeRef> shapes, const BodyRef parentBody, const vector<AnchorRef> &anchors) {
+	bool Group::build(set<ShapeRef> shapes, const GroupRef parentGroup, const vector<AnchorRef> &anchors) {
 
 		set<ShapeRef> garbage;
 		auto emptyGarbage = [&garbage, &shapes]() {
 			for (auto &s : garbage) {
-				s->setIslandBody(nullptr);
+				s->setGroup(nullptr);
 				shapes.erase(s);
 			}
 			garbage.clear();
@@ -886,7 +886,7 @@ namespace terrain {
 		// to have its world contours updated from the model and transform, and then reassigned to model
 		for (auto &shape : shapes) {
 			// check if this object has a parent (and that the parent isn't us)
-			BodyRef body = shape->getBody();
+			GroupRef body = shape->getGroup();
 			if (body && body.get() != this) {
 
 				const mat4 T = shape->getModelview();
@@ -900,14 +900,14 @@ namespace terrain {
 			}
 
 			// assign parentage AFTER accessing shape's modelview
-			shape->setIslandBody(shared_from_this());
+			shape->setGroup(shared_from_this());
 		}
 
 
 		// the static-dynamic rule is this: a body may check to see if its static
 		// if has NOT been dynamic in previous parentage
 		bool shouldSearchForAnchors = true;
-		if (parentBody && parentBody->isDynamic()) {
+		if (parentGroup && parentGroup->isDynamic()) {
 			shouldSearchForAnchors = false;
 		}
 
@@ -1047,14 +1047,14 @@ namespace terrain {
 					cpSpaceAddBody(_space, _body);
 					syncToCpBody();
 
-					if (parentBody) {
+					if (parentGroup) {
 
 						//
 						//	Compute world linearvel and angularvel for parent and apply to self
 						//
 
-						const float angularVel = cpBodyGetAngularVelocity(parentBody->getBody());
-						const cpVect linearVel = cpBodyGetVelocityAtWorldPoint(parentBody->getBody(), cpv(getPosition()));
+						const float angularVel = cpBodyGetAngularVelocity(parentGroup->getBody());
+						const cpVect linearVel = cpBodyGetVelocityAtWorldPoint(parentGroup->getBody(), cpv(getPosition()));
 						cpBodySetVelocity(_body, linearVel);
 						cpBodySetAngularVelocity(_body, angularVel);
 					}
@@ -1156,7 +1156,7 @@ namespace terrain {
 		}
 	}
 
-	void Body::syncToCpBody() {
+	void Group::syncToCpBody() {
 		if (_dynamic) {
 			// extract position and rotation from body and apply to _modelview
 			cpVect position = cpBodyGetPosition(_body);
@@ -1260,7 +1260,7 @@ namespace terrain {
 		vec2 _modelCentroid;
 
 		vector<cpShape*> _shapes;
-		BodyWeakRef _body;
+		GroupWeakRef _body;
 
 		set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
@@ -1296,7 +1296,7 @@ namespace terrain {
 
 	Shape::~Shape() {
 		destroyCollisionShapes();
-		_body.reset();
+		_group.reset();
 	}
 
 	const unordered_set<poly_edge> &Shape::getWorldSpaceContourEdges() {
@@ -1348,7 +1348,7 @@ namespace terrain {
 		return result;
 	}
 
-	string Body::nextId() {
+	string Group::nextId() {
 		stringstream ss;
 		ss << _count++;
 		return ss.str();
@@ -1381,8 +1381,8 @@ namespace terrain {
 		}
 	}
 
-	void Shape::setIslandBody(BodyRef body) {
-		_body = body;
+	void Shape::setGroup(GroupRef group) {
+		_group = group;
 	}
 
 	bool Shape::triangulate() {
