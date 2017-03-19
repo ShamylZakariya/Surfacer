@@ -120,7 +120,7 @@ namespace terrain {
 
 		typedef boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > polygon;
 
-		std::vector<ShapeRef> convertBoostGeometryToIslandShapes( std::vector<polygon> &polygons, const mat4 &modelview) {
+		std::vector<ShapeRef> convertBoostGeometryToTerrainShapes( std::vector<polygon> &polygons, const mat4 &modelview) {
 			const float Dist2Epsilon = 1e-2;
 			std::vector<ShapeRef> result;
 
@@ -209,14 +209,14 @@ namespace terrain {
 			return result;
 		}
 
-		polygon convertIslandShapeToBoostGeometry( const Shape &a ) {
+		polygon convertTerrainShapeToBoostGeometry( ShapeRef shape ) {
 			polygon result;
 
-			for (auto &p : a.getOuterContour().model.getPoints()) {
+			for (auto &p : shape->getOuterContour().model.getPoints()) {
 				result.outer().push_back( boost::geometry::make<boost::geometry::model::d2::point_xy<double> >( p.x, p.y ) );
 			}
 
-			for (auto &holeContour : a.getHoleContours()) {
+			for (auto &holeContour : shape->getHoleContours()) {
 				polygon::ring_type ring;
 				for( auto &p : holeContour.model.getPoints() ) {
 					ring.push_back( boost::geometry::make<boost::geometry::model::d2::point_xy<double> >( p.x, p.y ) );
@@ -228,11 +228,11 @@ namespace terrain {
 			return result;
 		}
 
-		polygon convertPolyLineToBoostGeometry( const PolyLine2f &a )
+		polygon convertPolyLineToBoostGeometry( const PolyLine2f &polyLine )
 		{
 			polygon result;
 
-			for (auto &p : a.getPoints()) {
+			for (auto &p : polyLine.getPoints()) {
 				result.outer().push_back( boost::geometry::make<boost::geometry::model::d2::point_xy<double> >( p.x, p.y ) );
 			}
 
@@ -458,6 +458,61 @@ namespace terrain {
 	
 #pragma mark - World
 
+	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, vec2 partitionOrigin, float partitionSize) {
+
+		// first compute the march area
+		cpBB bounds = cpBBInvalid;
+		for (auto shape : shapes) {
+			cpBBExpand(bounds, shape->getWorldSpaceContourEdgesBB());
+		}
+
+		const int marchLeft = static_cast<int>(floor((bounds.l - partitionOrigin.x) / partitionSize));
+		const int marchRight = static_cast<int>(ceil((bounds.r - partitionOrigin.x) / partitionSize));
+		const int marchBottom = static_cast<int>(floor((bounds.b - partitionOrigin.y) / partitionSize));
+		const int marchTop = static_cast<int>(ceil((bounds.t - partitionOrigin.y) / partitionSize));
+
+		const mat4 identity(1);
+		cpBB quadBB = cpBBInvalid;
+
+		PolyLine2f quad;
+		quad.getPoints().resize(4);
+
+		vector<ShapeRef> result;
+
+		for (auto shape : shapes) {
+			polygon testPolygon = convertTerrainShapeToBoostGeometry( shape );
+
+			for (int marchY = marchBottom; marchY <= marchTop; marchY++) {
+
+				quadBB.b = marchY * partitionSize;
+				quadBB.t = quadBB.b + partitionSize;
+
+				for (int marchX = marchLeft; marchX <= marchRight; marchX++) {
+					quadBB.l = marchX * partitionSize;
+					quadBB.r = quadBB.l + partitionSize;
+
+					if (cpBBIntersects(quadBB, shape->getWorldSpaceContourEdgesBB())) {
+						// generate the test quad
+						quad.getPoints()[0] = vec2(quadBB.l, quadBB.b);
+						quad.getPoints()[1] = vec2(quadBB.l, quadBB.t);
+						quad.getPoints()[2] = vec2(quadBB.r, quadBB.t);
+						quad.getPoints()[3] = vec2(quadBB.r, quadBB.b);
+
+						auto polygonToIntersect = convertPolyLineToBoostGeometry( quad );
+
+						std::vector<polygon> output;
+						boost::geometry::intersection( testPolygon, polygonToIntersect, output );
+
+						auto newShapes = convertBoostGeometryToTerrainShapes( output, identity );
+						result.insert(result.end(), newShapes.begin(), newShapes.end());
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
 	/*
 		material _material;
 		cpSpace *_space;
@@ -472,10 +527,6 @@ namespace terrain {
 	{}
 
 	World::~World() {
-	}
-
-	void World::build(const vector<ShapeRef> &shapes) {
-		build(shapes, map<ShapeRef,GroupRef>());
 	}
 
 	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors) {
@@ -1412,7 +1463,7 @@ namespace terrain {
 			// convert self (outerContour & holeContours) to a boost poly in model space
 			//
 
-			polygon thisPoly = convertIslandShapeToBoostGeometry( *this );
+			polygon thisPoly = convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this() );
 
 			//
 			// now subtract - results are in model space
@@ -1425,10 +1476,10 @@ namespace terrain {
 			// convert output to Shapes - they need to have our modelview applied to them to move them back to world space
 			//
 
-			vector<ShapeRef> newIslandShapes = convertBoostGeometryToIslandShapes( output, getModelview() );
+			vector<ShapeRef> newShapes = convertBoostGeometryToTerrainShapes( output, getModelview() );
 
-			if (!newIslandShapes.empty()) {
-				return newIslandShapes;
+			if (!newShapes.empty()) {
+				return newShapes;
 			}
 		}
 

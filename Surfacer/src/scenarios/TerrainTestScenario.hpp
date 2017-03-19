@@ -45,6 +45,10 @@ private:
 	void testComplexTerrainSetup();
 	void testSimpleAnchors();
 	void testComplexAnchors();
+
+	void testSimplePartitionedTerrain();
+
+
 	void timeSpatialIndex();
 
 	void drawWorldCoordinateSystem(const render_state &state);

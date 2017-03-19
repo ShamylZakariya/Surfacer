@@ -88,8 +88,9 @@ void TerrainTestScenario::setup() {
 
 	//testBasicTerrainSetup();
 	//testComplexTerrainSetup();
-	testSimpleAnchors();
+	//testSimpleAnchors();
 	//testComplexAnchors();
+	testSimplePartitionedTerrain();
 }
 
 void TerrainTestScenario::cleanup() {
@@ -403,6 +404,41 @@ void TerrainTestScenario::testComplexAnchors() {
 	};
 
 	_terrainWorld->build(shapes, anchors);
+}
+
+void TerrainTestScenario::testSimplePartitionedTerrain() {
+
+	ci::Rand rng;
+
+	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
+		PolyLine2f polyLine;
+		for (int i = 0; i < subdivisions; i++) {
+			float j = static_cast<float>(i)/static_cast<float>(subdivisions);
+			float r = j * M_PI * 2;
+			vec2 p = center + (vec2(cos(r), sin(r)) * (radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
+			polyLine.push_back(p);
+		}
+		polyLine.setClosed();
+		return polyLine;
+	};
+
+	_cameraController.lookAt(vec2(0,0));
+
+	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
+	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
+
+	auto rings = vector<PolyLine2f> {
+		ring(vec2(0,0), 500, 600, 0),
+		ring(vec2(0,0), 400, 600, 0)
+	};
+
+	//	auto shapes = terrain::Shape::fromContours(rings);
+	auto shapes = vector<terrain::ShapeRef> { boxShape(vec2(0,0), vec2(500,500)) };
+
+	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 100);
+
+	_terrainWorld->build(partitionedShapes);
+
 }
 
 void TerrainTestScenario::timeSpatialIndex() {

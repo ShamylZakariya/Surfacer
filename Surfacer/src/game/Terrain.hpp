@@ -126,20 +126,24 @@ namespace terrain {
 	*/
 	class World {
 	public:
-		World(cpSpace *space, material m);
-		~World();
 
 		/**
-		 Build a world of dynamic shapes.
+		 Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.
+		 The purpose of this is simple: You might have a large level. You want to divide the geometry of the level into manageable
+		 chunks for visibility culling and collision/physics performance.
 		 */
-		void build(const vector<ShapeRef> &shapes);
+		static vector<ShapeRef> partition(const vector<ShapeRef> &shapes, vec2 partitionOrigin, float partitionSize);
+
+	public:
+		World(cpSpace *space, material m);
+		~World();
 
 		/**
 		 Build a world of dynamic and static shapes. Any shape overlapping an Anchor will be static. 
 		 Pieces cut off a static shape will become dynamic provided they don't overlap another anchor.
 		 */
 
-		void build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors);
+		void build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors = vector<AnchorRef>());
 
 		/**
 		Perform a cut in world space from a to b, with half-thickness of radius
