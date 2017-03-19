@@ -479,14 +479,19 @@ namespace terrain {
 	}
 
 	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors) {
-		// copy over the anchors
-		_anchors.insert(_anchors.end(), anchors.begin(), anchors.end());
+
+		// build the anchors, adding all that triangulated and made physics representations
+		for (auto anchor : anchors) {
+			if (anchor->build(_space)) {
+				_anchors.push_back(anchor);
+			}
+		}
 
 		// now build
 		build(shapes, map<ShapeRef,GroupRef>());
 	}
 
-	void World::cut(vec2 a, vec2 b, float radius) {
+	void World::cut(vec2 a, vec2 b, float radius, cpShapeFilter filter) {
 		const float MinLength = 1e-2;
 		const float MinRadius = 1e-2;
 
@@ -524,7 +529,7 @@ namespace terrain {
 			};
 
 			cut_collector collector;
-			cpSpaceSegmentQuery(_space, cpv(a), cpv(b), radius, _material.filter,
+			cpSpaceSegmentQuery(_space, cpv(a), cpv(b), radius, filter,
 								[](cpShape *collisionShape, cpVect point, cpVect normal, cpFloat alpha, void *data){
 									cut_collector *collector = static_cast<cut_collector*>(data);
 									ShapeRef shape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
@@ -539,8 +544,8 @@ namespace terrain {
 			//
 
 			vector<ShapeRef> affectedShapes;
-			for (auto &body : collector.groups) {
-				for (auto &shape : body->getShapes()) {
+			for (auto &group : collector.groups) {
+				for (auto &shape : group->getShapes()) {
 					if (collector.shapes.find(shape) == collector.shapes.end()) {
 						affectedShapes.push_back(shape);
 					}
@@ -626,8 +631,22 @@ namespace terrain {
 			shapeGroups.push_back(newGroup);
 		};
 
+		auto getParentGroup = [&parentage](const ShapeRef &shape) -> GroupRef {
+			if (shape->getGroup()) {
+				return shape->getGroup();
+			} else {
+				auto pos = parentage.find(shape);
+				if (pos != parentage.end()) {
+					return pos->second;
+				}
+			}
+
+			return nullptr;
+		};
+
 		//
 		// find which shapes are neighbors and must be stitched.
+		// Only stitch two shapes IFF they both have no parent (e.g., first pass) or both already have the same parent.
 		// Did some timing measurements and found that brute force is faster until the shapes count gets pretty big.
 		//
 
@@ -642,11 +661,18 @@ namespace terrain {
 			}
 
 			for (auto queryShape : shapes) {
+				const auto queryShapeParent = getParentGroup(queryShape);
 				const auto &queryShapeEdges = queryShape->getWorldSpaceContourEdges();
 				auto neighbors = broadphase.sweep(queryShape->getWorldSpaceContourEdgesBB());
 				bool hasGroup = false;
 
 				for (auto neighbor : neighbors) {
+
+					// only check for shared edges if our shapes have same parentage (that includes nullptr for first pass)
+					if (getParentGroup(neighbor) != queryShapeParent) {
+						continue;
+					}
+
 					const auto &neighborShapeEdges = neighbor->getWorldSpaceContourEdges();
 					for (const auto &pe : neighborShapeEdges) {
 						if (queryShapeEdges.find(pe) != queryShapeEdges.end()) {
@@ -654,6 +680,7 @@ namespace terrain {
 							hasGroup = true;
 						}
 					}
+
 				}
 
 				if (!hasGroup) {
@@ -667,9 +694,13 @@ namespace terrain {
 		} else {
 			// this is the brute-force approach
 			for (auto queryShape : shapes) {
+				const auto queryShapeParent = getParentGroup(queryShape);
 				bool hasNeighbors = false;
+
 				for (auto testShape : shapes) {
-					if (testShape != queryShape) {
+
+					// only test for shared edges if the two shapes have same group parentage (or null parentage)
+					if (testShape != queryShape && (queryShapeParent == getParentGroup(testShape))) {
 						const sorted_ref_pair<Shape> pair(queryShape,testShape);
 						if (handledPairs.find(pair) == end(handledPairs) && shared_edges(queryShape,testShape)) {
 							engroup(queryShape, testShape);
@@ -716,7 +747,7 @@ namespace terrain {
 			}
 
 			if (parentGroup) {
-				// sanity check: parent should have been removed from our active bodies set
+				// sanity check: parent should have been removed from our active groups set
 				assert(_groups.find(parentGroup) == _groups.end());
 			}
 
@@ -1192,13 +1223,19 @@ namespace terrain {
 #pragma mark - Anchor
 
 	/*
+		cpBody *_staticBody;
+		vector<cpShape*> _shapes;
+
 		cpBB _bb;
+		material _material;
 		PolyLine2f _contour;
 		TriMeshRef _trimesh;
 	 */
 
-	Anchor::Anchor(const PolyLine2f &contour):
+	Anchor::Anchor(const PolyLine2f &contour, material m):
+	_staticBody(nullptr),
 	_bb(cpBBInvalid),
+	_material(m),
 	_contour(contour) {
 
 		for (auto &p : _contour.getPoints()) {
@@ -1210,7 +1247,59 @@ namespace terrain {
 		_trimesh = triangulator.createMesh();
 	}
 
+	Anchor::~Anchor() {
+		for (auto s : _shapes) {
+			cpCleanupAndFree(s);
+		}
+		_shapes.clear();
+		cpCleanupAndFree(_staticBody);
+	}
 
+	bool Anchor::build(cpSpace *space) {
+		assert(_shapes.empty());
+
+		_staticBody = cpBodyNewStatic();
+
+		cpVect triangle[3];
+		for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
+			vec2 a,b,c;
+			_trimesh->getTriangleVertices(i, &a, &b, &c);
+			triangle[0] = cpv(a);
+			triangle[1] = cpv(b);
+			triangle[2] = cpv(c);
+
+			float area = cpAreaForPoly(3, triangle, 0);
+			if (area < 0) {
+				triangle[0] = cpv(c);
+				triangle[1] = cpv(b);
+				triangle[2] = cpv(a);
+				area = cpAreaForPoly(3, triangle, 0);
+			}
+
+			if (area >= MIN_TRIANGLE_AREA) {
+				_shapes.push_back(cpPolyShapeNew(_staticBody, 3, triangle, cpTransformIdentity, 0));
+			}
+		}
+
+		if (!_shapes.empty()) {
+
+			//
+			// looks like we got some valid collision hulls, set them up
+			//
+
+			cpSpaceAddBody(space, _staticBody);
+			for (auto shape : _shapes) {
+				cpSpaceAddShape(space, shape);
+				cpShapeSetUserData(shape, this);
+				cpShapeSetFilter(shape, _material.filter);
+				cpShapeSetFriction(shape, _material.friction);
+			}
+
+			return true;
+		}
+
+		return false;
+	}
 
 #pragma mark - Shape
 

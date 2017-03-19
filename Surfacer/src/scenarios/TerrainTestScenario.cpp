@@ -1,12 +1,12 @@
 //
-//  IslandTestScenario.cpp
+//  TerrainTestScenario.cpp
 //  Milestone6
 //
 //  Created by Shamyl Zakariya on 3/5/17.
 //
 //
 
-#include "IslandTestScenario.hpp"
+#include "TerrainTestScenario.hpp"
 #include "GameApp.hpp"
 
 #include <cinder/Rand.h>
@@ -35,16 +35,18 @@ namespace {
 
 	namespace Categories {
 		enum Categories {
-			ISLAND = 1 << 30,
+			TERRAIN = 1 << 30,
 			CUTTER = 1 << 29,
-			PICK = 1 << 28
+			PICK = 1 << 28,
+			ANCHOR = 1 << 27
 		};
 	};
 
 	namespace Filters {
-		cpShapeFilter ISLAND = cpShapeFilterNew(CP_NO_GROUP, Categories::ISLAND, Categories::ISLAND | Categories::CUTTER | Categories::PICK);
-		cpShapeFilter CUTTER = cpShapeFilterNew(CP_NO_GROUP, Categories::CUTTER, Categories::ISLAND);
-		cpShapeFilter PICK = cpShapeFilterNew(CP_NO_GROUP, Categories::PICK, Categories::ISLAND);
+		cpShapeFilter TERRAIN = cpShapeFilterNew(CP_NO_GROUP, Categories::TERRAIN, Categories::TERRAIN | Categories::CUTTER | Categories::PICK | Categories::ANCHOR);
+		cpShapeFilter ANCHOR = cpShapeFilterNew(CP_NO_GROUP, Categories::ANCHOR, Categories::TERRAIN);
+		cpShapeFilter CUTTER = cpShapeFilterNew(CP_NO_GROUP, Categories::CUTTER, Categories::TERRAIN);
+		cpShapeFilter PICK = cpShapeFilterNew(CP_NO_GROUP, Categories::PICK, Categories::TERRAIN);
 	}
 
 
@@ -63,7 +65,7 @@ namespace {
 	cpConstraint *_mouseJoint;
 */
 
-IslandTestScenario::IslandTestScenario():
+TerrainTestScenario::TerrainTestScenario():
 _cameraController(camera()),
 _cutting(false),
 _space(nullptr),
@@ -74,9 +76,9 @@ _mouseJoint(nullptr)
 	_cameraController.setConstraintMask( ViewportController::ConstrainPan | ViewportController::ConstrainScale );
 }
 
-IslandTestScenario::~IslandTestScenario(){}
+TerrainTestScenario::~TerrainTestScenario(){}
 
-void IslandTestScenario::setup() {
+void TerrainTestScenario::setup() {
 
 	//timeSpatialIndex();
 
@@ -84,13 +86,13 @@ void IslandTestScenario::setup() {
 	cpSpaceSetDamping(_space, 0.95);
 	_mouseBody = cpBodyNewKinematic();
 
-	//testBasicIslandSetup();
-	//testComplexIslandSetup();
-	//testSimpleAnchors();
-	testComplexAnchors();
+	//testBasicTerrainSetup();
+	//testComplexTerrainSetup();
+	testSimpleAnchors();
+	//testComplexAnchors();
 }
 
-void IslandTestScenario::cleanup() {
+void TerrainTestScenario::cleanup() {
 	_terrainWorld.reset();
 
 	_cutting = false;
@@ -106,9 +108,9 @@ void IslandTestScenario::cleanup() {
 	cpSpaceFree(_space);
 }
 
-void IslandTestScenario::resize( ivec2 size ){}
+void TerrainTestScenario::resize( ivec2 size ){}
 
-void IslandTestScenario::step( const time_state &time ) {
+void TerrainTestScenario::step( const time_state &time ) {
 	cpSpaceStep(_space, time.deltaT);
 
 	cpVect mouseBodyPos = cpv(_mouseWorld);
@@ -122,14 +124,14 @@ void IslandTestScenario::step( const time_state &time ) {
 	}
 }
 
-void IslandTestScenario::update( const time_state &time ) {
+void TerrainTestScenario::update( const time_state &time ) {
 	_cameraController.step(time);
 	if (_terrainWorld) {
 		_terrainWorld->update(time);
 	}
 }
 
-void IslandTestScenario::draw( const render_state &state ) {
+void TerrainTestScenario::draw( const render_state &state ) {
 	//const ivec2 screenSize = getWindowSize();
 	gl::clear( Color( 0.2, 0.2, 0.2 ) );
 
@@ -179,7 +181,7 @@ void IslandTestScenario::draw( const render_state &state ) {
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 }
 
-bool IslandTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
+bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	_mouseScreen = event.getPos();
@@ -225,13 +227,13 @@ bool IslandTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	return true;
 }
 
-bool IslandTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
+bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	if (_cutting) {
 		if (_terrainWorld) {
 			const float radius = (CUT_WIDTH/2) / _cameraController.getScale();
-			_terrainWorld->cut(_cutterStart, _cutterEnd, radius);
+			_terrainWorld->cut(_cutterStart, _cutterEnd, radius, Filters::CUTTER);
 		}
 
 		_cutting = false;
@@ -240,7 +242,7 @@ bool IslandTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 	return true;
 }
 
-bool IslandTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
+bool TerrainTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
 	float zoom = _cameraController.getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
@@ -250,13 +252,13 @@ bool IslandTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
 	return true;
 }
 
-bool IslandTestScenario::mouseMove( const ci::app::MouseEvent &event, const vec2 &delta ) {
+bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const vec2 &delta ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = camera().screenToWorld(_mouseScreen);
 	return true;
 }
 
-bool IslandTestScenario::mouseDrag( const ci::app::MouseEvent &event, const vec2 &delta ) {
+bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const vec2 &delta ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = camera().screenToWorld(_mouseScreen);
 
@@ -275,7 +277,7 @@ bool IslandTestScenario::mouseDrag( const ci::app::MouseEvent &event, const vec2
 	return true;
 }
 
-bool IslandTestScenario::keyDown( const ci::app::KeyEvent &event ) {
+bool TerrainTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 	if (event.getChar() == 'r') {
 		reset();
 		return true;
@@ -283,24 +285,21 @@ bool IslandTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 	return false;
 }
 
-bool IslandTestScenario::keyUp( const ci::app::KeyEvent &event ) {
+bool TerrainTestScenario::keyUp( const ci::app::KeyEvent &event ) {
 	return false;
 }
 
-void IslandTestScenario::reset() {
+void TerrainTestScenario::reset() {
 	cleanup();
 	setup();
 }
 
-void IslandTestScenario::testBasicIslandSetup() {
+void TerrainTestScenario::testBasicTerrainSetup() {
 	_cameraController.lookAt(vec2(0,0));
 
-	terrain::material mat;
-	mat.density = 1;
-	mat.friction = 0.5;
-	mat.filter = Filters::ISLAND;
+	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 
-	_terrainWorld = make_shared<terrain::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	vector<terrain::ShapeRef> shapes = {
 //		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -315,15 +314,13 @@ void IslandTestScenario::testBasicIslandSetup() {
 	_terrainWorld->build(shapes);
 }
 
-void IslandTestScenario::testComplexIslandSetup() {
+void TerrainTestScenario::testComplexTerrainSetup() {
 	_cameraController.lookAt(vec2(0,0));
 
-	terrain::material mat;
-	mat.density = 1;
-	mat.friction = 0.5;
-	mat.filter = Filters::ISLAND;
+	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
-	_terrainWorld = make_shared<terrain::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -348,15 +345,13 @@ void IslandTestScenario::testComplexIslandSetup() {
 	_terrainWorld->build(shapes);
 }
 
-void IslandTestScenario::testSimpleAnchors() {
+void TerrainTestScenario::testSimpleAnchors() {
 	_cameraController.lookAt(vec2(0,0));
 
-	terrain::material mat;
-	mat.density = 1;
-	mat.friction = 0.5;
-	mat.filter = Filters::ISLAND;
+	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
-	_terrainWorld = make_shared<terrain::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -365,22 +360,21 @@ void IslandTestScenario::testSimpleAnchors() {
 	};
 
 	vector<terrain::AnchorRef> anchors = {
-		terrain::Anchor::fromContour(rect(40,20,60,30))
+		terrain::Anchor::fromContour(rect(40,20,60,30), anchorMaterial),
+		terrain::Anchor::fromContour(rect(200,20,260,30), anchorMaterial)
 	};
 
 	_terrainWorld->build(shapes, anchors);
 }
 
-void IslandTestScenario::testComplexAnchors() {
+void TerrainTestScenario::testComplexAnchors() {
 	_cameraController.lookAt(vec2(0,0));
 
-	terrain::material mat;
-	mat.density = 1;
-	mat.friction = 0.5;
-	mat.filter = Filters::ISLAND;
+	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
 	cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
-	_terrainWorld = make_shared<terrain::World>(_space,mat);
+	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -405,13 +399,13 @@ void IslandTestScenario::testComplexAnchors() {
 	};
 
 	vector<terrain::AnchorRef> anchors = {
-		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)))
+		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)), anchorMaterial)
 	};
 
 	_terrainWorld->build(shapes, anchors);
 }
 
-void IslandTestScenario::timeSpatialIndex() {
+void TerrainTestScenario::timeSpatialIndex() {
 
 	ci::Rand rng;
 
@@ -502,7 +496,7 @@ void IslandTestScenario::timeSpatialIndex() {
 
 }
 
-void IslandTestScenario::drawWorldCoordinateSystem(const render_state &state) {
+void TerrainTestScenario::drawWorldCoordinateSystem(const render_state &state) {
 
 	const cpBB frustum = camera().getFrustum();
 	const int gridSize = 10;
@@ -541,7 +535,7 @@ void IslandTestScenario::drawWorldCoordinateSystem(const render_state &state) {
 
 }
 
-void IslandTestScenario::releaseMouseDragConstraint() {
+void TerrainTestScenario::releaseMouseDragConstraint() {
 	if (_mouseJoint) {
 		cpSpaceRemoveConstraint(_space, _mouseJoint);
 		cpConstraintFree(_mouseJoint);

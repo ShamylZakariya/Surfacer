@@ -4,6 +4,11 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##Currently
 
+✓ Need to prevent accidental stitching
+	- this can happen if two shapes touch and their edges align perfectly
+
+Need to make Anchors physical enties
+
 Need to verify stitching of a large environment works. 
 	- Use ring generator to make a large "world" of discrete contours.
 	- Intersect these contours with a checkerboard type pattern to divide it into a grid.
@@ -13,5 +18,4 @@ Need to verify stitching of a large environment works.
 Then I need to design a basic component system. Can adopt some of my old Surfacer code here. But:
 	- Needs a collect() method where components can deliver their draw components to be passed through visibility determination/culling. 
 	This needs to be flexible enough that World can vend a list of island::Shape instances to draw and the culler can efficiently pick the visible subset 
-
-
+ 

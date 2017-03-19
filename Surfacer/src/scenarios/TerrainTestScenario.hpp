@@ -1,5 +1,5 @@
 //
-//  IslandTestScenario.hpp
+//  TerrainTestScenario.hpp
 //  Milestone6
 //
 //  Created by Shamyl Zakariya on 3/5/17.
@@ -15,11 +15,11 @@
 using namespace ci;
 using namespace core;
 
-class IslandTestScenario : public Scenario {
+class TerrainTestScenario : public Scenario {
 public:
 
-	IslandTestScenario();
-	virtual ~IslandTestScenario();
+	TerrainTestScenario();
+	virtual ~TerrainTestScenario();
 
 	virtual void setup() override;
 	virtual void cleanup() override;
@@ -41,8 +41,8 @@ public:
 
 private:
 
-	void testBasicIslandSetup();
-	void testComplexIslandSetup();
+	void testBasicTerrainSetup();
+	void testComplexTerrainSetup();
 	void testSimpleAnchors();
 	void testComplexAnchors();
 	void timeSpatialIndex();

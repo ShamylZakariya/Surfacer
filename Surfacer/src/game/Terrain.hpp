@@ -111,6 +111,12 @@ namespace terrain {
 		float density;
 		float friction;
 		cpShapeFilter filter;
+
+		material(float d, float f, cpShapeFilter flt):
+		density(d),
+		friction(f),
+		filter(flt)
+		{}
 	};
 
 
@@ -138,7 +144,7 @@ namespace terrain {
 		/**
 		Perform a cut in world space from a to b, with half-thickness of radius
 		 */
-		void cut(vec2 a, vec2 b, float radius);
+		void cut(vec2 a, vec2 b, float radius, cpShapeFilter filter);
 
 		void draw(const core::render_state &renderState);
 		void step(const core::time_state &timeState);
@@ -236,21 +242,31 @@ namespace terrain {
 	class Anchor : public enable_shared_from_this<Anchor> {
 	public:
 
-		static AnchorRef fromContour(const PolyLine2f &contour) {
-			return make_shared<Anchor>(contour);
+		static AnchorRef fromContour(const PolyLine2f &contour, material m) {
+			return make_shared<Anchor>(contour, m);
 		}
 
 	public:
 
-		Anchor(const PolyLine2f &contour);
+		Anchor(const PolyLine2f &contour, material m);
+		~Anchor();
 
 		const PolyLine2f &getContour() const { return _contour; }
 		const cpBB getBB() const { return _bb; }
 		const TriMeshRef &getTriMesh() const { return _trimesh; }
 
+	protected:
+
+		friend class World;
+		bool build(cpSpace *space);
+
 	private:
 
+		cpBody *_staticBody;
+		vector<cpShape*> _shapes;
+
 		cpBB _bb;
+		material _material;
 		PolyLine2f _contour;
 		TriMeshRef _trimesh;
 	};

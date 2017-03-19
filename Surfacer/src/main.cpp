@@ -9,7 +9,7 @@
 #include "cinder/app/RendererGl.h"
 #include "GameApp.hpp"
 
-#include "IslandTestScenario.hpp"
+#include "TerrainTestScenario.hpp"
 
 class DemoApp : public core::GameApp {
 public:
@@ -25,7 +25,7 @@ public:
 
 	virtual void setup() override {
 		GameApp::setup();
-		setScenario(make_shared<IslandTestScenario>());
+		setScenario(make_shared<TerrainTestScenario>());
 	}
 
 };
