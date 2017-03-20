@@ -80,6 +80,9 @@ TerrainTestScenario::~TerrainTestScenario(){}
 
 void TerrainTestScenario::setup() {
 
+	// go debug for rendering
+	setRenderMode(RenderMode::DEVELOPMENT);
+
 	//timeSpatialIndex();
 
 	_space = cpSpaceNew();
@@ -91,6 +94,7 @@ void TerrainTestScenario::setup() {
 	//testSimpleAnchors();
 	//testComplexAnchors();
 	testSimplePartitionedTerrain();
+
 }
 
 void TerrainTestScenario::cleanup() {
@@ -432,8 +436,8 @@ void TerrainTestScenario::testSimplePartitionedTerrain() {
 		ring(vec2(0,0), 400, 600, 0)
 	};
 
-	//	auto shapes = terrain::Shape::fromContours(rings);
-	auto shapes = vector<terrain::ShapeRef> { boxShape(vec2(0,0), vec2(500,500)) };
+	auto shapes = terrain::Shape::fromContours(rings);
+	//auto shapes = vector<terrain::ShapeRef> { boxShape(vec2(0,0), vec2(500,500)) };
 
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 100);
 

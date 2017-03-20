@@ -180,6 +180,7 @@ namespace terrain {
 		~Group();
 
 		string getName() const;
+		Color getColor() const { return _color; }
 		const cpHashValue getHash() const { return _hash; }
 		bool isDynamic() const { return _dynamic; }
 
@@ -233,6 +234,7 @@ namespace terrain {
 
 		string _name;
 		cpHashValue _hash;
+		Color _color;
 	};
 
 
@@ -273,6 +275,7 @@ namespace terrain {
 		material _material;
 		PolyLine2f _contour;
 		TriMeshRef _trimesh;
+
 	};
 
 
@@ -301,7 +304,6 @@ namespace terrain {
 
 		const string &getName() const { return _name; }
 		const cpHashValue getHash() const { return _hash; }
-		Color getColor() const { return _color; }
 		const contour_pair &getOuterContour() const { return _outerContour; }
 		const vector<contour_pair> &getHoleContours() const { return _holeContours; }
 
@@ -358,12 +360,12 @@ namespace terrain {
 		const vector<cpShape*> &createCollisionShapes(cpBody *body, cpBB &modelBB);
 
 	private:
+
 		static size_t _count;
 
 		bool _worldSpaceShapeContourEdgesDirty;
 		cpHashValue _hash;
 		string _name;
-		Color _color;
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
 		TriMeshRef _trimesh;

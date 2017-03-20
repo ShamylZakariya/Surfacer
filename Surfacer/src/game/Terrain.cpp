@@ -811,13 +811,13 @@ namespace terrain {
 
 	void World::drawGame(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
-		for (const auto &body : _groups) {
-			if (cpBBIntersects(frustum, body->getBB())) {
+		for (const auto &group : _groups) {
+			if (cpBBIntersects(frustum, group->getBB())) {
 				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(body->getModelview());
+				gl::multModelMatrix(group->getModelview());
 
-				for (const auto &shape : body->getShapes()) {
-					gl::color(shape->getColor());
+				for (const auto &shape : group->getShapes()) {
+					gl::color(group->getColor());
 					gl::draw(*shape->getTriMesh());
 				}
 			}
@@ -834,17 +834,19 @@ namespace terrain {
 
 	void World::drawDebug(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
-		for (const auto &body : _groups) {
-			if (cpBBIntersects(frustum, body->getBB())) {
+		for (const auto &group : _groups) {
+			if (cpBBIntersects(frustum, group->getBB())) {
 				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(body->getModelview());
+				gl::multModelMatrix(group->getModelview());
 
-				for (const auto &shape : body->getShapes()) {
-					gl::color(shape->getColor() * 0.25);
+				Color color = group->getColor();
+
+				for (const auto &shape : group->getShapes()) {
+					gl::color(color * 0.25);
 					gl::draw(*shape->getTriMesh());
 
 					gl::lineWidth(1);
-					gl::color(shape->getColor());
+					gl::color(color);
 					gl::draw(shape->getOuterContour().model);
 
 					for (auto &holeContour : shape->getHoleContours()) {
@@ -853,17 +855,17 @@ namespace terrain {
 
 					{
 						float rScale = renderState.viewport.getReciprocalScale();
-						float angle = body->getAngle();
+						float angle = group->getAngle();
 						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
 						gl::ScopedModelMatrix smm2;
 						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
-						gl::drawString(shape->getName(), vec2(0,0), shape->getColor());
+						gl::drawString(shape->getName(), vec2(0,0), color);
 					}
 				}
 			}
 
 			// body draws some debug data - note that game render pass ignores Group::draw
-			body->draw(renderState);
+			group->draw(renderState);
 		}
 
 		for (const auto &anchor : _anchors) {
@@ -898,6 +900,7 @@ namespace terrain {
 
 		string _name;
 		cpHashValue _hash;
+		Color _color;
 	 */
 
 	size_t Group::_count = 0;
@@ -913,7 +916,8 @@ namespace terrain {
 	_modelBB(cpBBInvalid),
 	_modelview(1),
 	_modelviewInverse(1),
-	_name(nextId()) {
+	_name(nextId()),
+	_color(next_random_color()) {
 		_hash = hash<string>{}(_name);
 	}
 
@@ -1393,7 +1397,6 @@ namespace terrain {
 		bool _worldSpaceShapeContourEdgesDirty;
 		cpHashValue _hash;
 		string _name;
-		Color _color;
 		PolyLine2f _worldSpaceOuterContour, _modelSpaceOuterContour;
 		vector<PolyLine2f> _worldSpaceHoleContours, _modelSpaceHoleContours;
 		TriMeshRef _trimesh;
@@ -1410,7 +1413,6 @@ namespace terrain {
 	Shape::Shape(const PolyLine2f &sc):
 	_worldSpaceShapeContourEdgesDirty(true),
 	_name(nextId()),
-	_color(next_random_color()),
 	_outerContour(optimize(sc)),
 	_modelCentroid(0,0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
@@ -1421,7 +1423,6 @@ namespace terrain {
 	Shape::Shape(const PolyLine2f &sc, const std::vector<PolyLine2f> &hcs):
 	_worldSpaceShapeContourEdgesDirty(true),
 	_name(nextId()),
-	_color(next_random_color()),
 	_outerContour(optimize(sc)),
 	_holeContours(optimize(hcs)),
 	_modelCentroid(0,0),
