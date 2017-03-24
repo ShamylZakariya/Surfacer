@@ -23,7 +23,6 @@
 #include <boost/geometry/multi/multi.hpp>
 
 #include "ContourSimplification.hpp"
-#include "SetUtils.hpp"
 
 using namespace core;
 
@@ -939,24 +938,30 @@ namespace terrain {
 			float area = shape->computeArea();
 			if (area >= MIN_SHAPE_AREA) {
 
+				shape->setGroup(shared_from_this());
 				_shapes.insert(shape);
 
 				// TODO: Static group should be able to skip destruction of collision shapes since shapes are already in world space
 
 				cpBB modelBB = cpBBInvalid;
 				vector<cpShape*> collisionShapes = shape->getShapes(modelBB);
+				bool didCreateNewShapes = false;
 				if (collisionShapes.empty()) {
 					collisionShapes = shape->createCollisionShapes(_body, modelBB);
+					didCreateNewShapes = true;
 				}
 
 				if (!collisionShapes.empty() && cpBBIsValid(modelBB)) {
 					cpBBExpand(_worldBB, modelBB);
 
-					for (cpShape *collisionShape : collisionShapes) {
-						cpShapeSetFilter(collisionShape, _material.filter);
-						cpShapeSetFriction(collisionShape, _material.friction);
-						cpSpaceAddShape(_space, collisionShape);
+					if (didCreateNewShapes) {
+						for (cpShape *collisionShape : collisionShapes) {
+							cpShapeSetFilter(collisionShape, _material.filter);
+							cpShapeSetFriction(collisionShape, _material.friction);
+							cpSpaceAddShape(_space, collisionShape);
+						}
 					}
+
 				} else {
 					cpCleanupAndFree(collisionShapes);
 					_shapes.erase(shape);
@@ -966,8 +971,10 @@ namespace terrain {
 	}
 
 	void StaticGroup::removeShape(ShapeRef shape) {
-		_shapes.erase(shape);
-		_worldBB = cpBBInvalid;
+		if (_shapes.erase(shape)) {
+			shape->setGroup(nullptr);
+			_worldBB = cpBBInvalid;
+		}
 	}
 
 
