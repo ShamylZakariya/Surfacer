@@ -82,6 +82,7 @@
 		632623121E7D9A630051ABE2 /* ContourSimplification.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ContourSimplification.hpp; sourceTree = "<group>"; };
 		632623131E7D9A630051ABE2 /* SvgParsing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SvgParsing.cpp; sourceTree = "<group>"; };
 		632623141E7D9A630051ABE2 /* SvgParsing.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SvgParsing.hpp; sourceTree = "<group>"; };
+		632623231E82BEAA0051ABE2 /* SetUtils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SetUtils.hpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Surfacer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Surfacer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B91D377257F74A9D8692D6AD /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
@@ -252,6 +253,7 @@
 				632623121E7D9A630051ABE2 /* ContourSimplification.hpp */,
 				632623131E7D9A630051ABE2 /* SvgParsing.cpp */,
 				632623141E7D9A630051ABE2 /* SvgParsing.hpp */,
+				632623231E82BEAA0051ABE2 /* SetUtils.hpp */,
 			);
 			path = util;
 			sourceTree = "<group>";

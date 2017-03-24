@@ -21,7 +21,9 @@ using namespace std;
 namespace terrain {
 
 	SMART_PTR(World);
-	SMART_PTR(Group);
+	SMART_PTR(GroupBase);
+	SMART_PTR(StaticGroup);
+	SMART_PTR(DynamicGroup);
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
 
@@ -33,15 +35,14 @@ namespace terrain {
 	 contour at a given level of precision.
 	 */
 	struct poly_edge {
-		static const int PRECISION = 0;
+		static const int SNAP_CELL_SIZE = 2;
 		ivec2 a, b;
 
 		poly_edge(vec2 m, vec2 n) {
-			const int power = powi(10, PRECISION);
-			a.x = static_cast<int>(lround(m.x * power));
-			a.y = static_cast<int>(lround(m.y * power));
-			b.x = static_cast<int>(lround(n.x * power));
-			b.y = static_cast<int>(lround(n.y * power));
+			a.x = static_cast<int>(lround(m.x / SNAP_CELL_SIZE));
+			a.y = static_cast<int>(lround(m.y / SNAP_CELL_SIZE));
+			b.x = static_cast<int>(lround(n.x / SNAP_CELL_SIZE));
+			b.y = static_cast<int>(lround(n.y / SNAP_CELL_SIZE));
 
 			// we want consistent ordering
 			if (a.x == b.x) {
@@ -71,8 +72,7 @@ namespace terrain {
 		}
 
 		friend std::ostream& operator<<( std::ostream& lhs, const poly_edge& rhs ) {
-			float scale = powi(10, PRECISION);
-			return lhs << "(poly_edge " << vec2(rhs.a.x/scale, rhs.a.y/scale) << " : " << vec2(rhs.b.x/scale, rhs.b.y/scale) << ")";
+			return lhs << "(poly_edge " << vec2(rhs.a.x * SNAP_CELL_SIZE, rhs.a.y * SNAP_CELL_SIZE) << " : " << vec2(rhs.b.x * SNAP_CELL_SIZE, rhs.b.y * SNAP_CELL_SIZE) << ")";
 		}
 	};
 
@@ -100,9 +100,10 @@ namespace std {
 }
 
 
-#pragma mark -
 
 namespace terrain {
+
+#pragma mark - Material
 
 	/**
 	 Describes basic physics material properties for a collision shape
@@ -118,6 +119,8 @@ namespace terrain {
 		filter(flt)
 		{}
 	};
+
+#pragma mark - World
 
 
 	/**
@@ -154,12 +157,15 @@ namespace terrain {
 		void step(const core::time_state &timeState);
 		void update(const core::time_state &timeState);
 
-		const set<GroupRef> getGroups() const { return _groups; }
+		const set<DynamicGroupRef> getDynamicGroups() const { return _dynamicGroups; }
+		StaticGroupRef getStaticGroup() const { return _staticGroup; }
 		const vector<AnchorRef> getAnchors() const { return _anchors; }
 
 	protected:
 
-		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupRef> &parentage);
+		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
+		vector<set<ShapeRef>> findShapeGroups(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
+		bool isShapeGroupStatic(const set<ShapeRef> shapeGroup, const GroupBaseRef &parentGroup);
 
 		void drawGame(const core::render_state &renderState);
 		void drawDebug(const core::render_state &renderState);
@@ -168,60 +174,118 @@ namespace terrain {
 
 		material _material;
 		cpSpace *_space;
-		set<GroupRef> _groups;
+		StaticGroupRef _staticGroup;
+		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
 	};
 
 
+#pragma mark - GroupBase
 
-	class Group : public enable_shared_from_this<Group>{
+
+	class GroupBase {
 	public:
-		Group(cpSpace *space, material m);
-		~Group();
+		virtual ~GroupBase();
 
-		string getName() const;
-		Color getColor() const { return _color; }
-		const cpHashValue getHash() const { return _hash; }
-		bool isDynamic() const { return _dynamic; }
+		virtual string getName() const { return _name; }
+		virtual Color getColor() const { return _color; }
+		virtual const cpHashValue getHash() const { return _hash; }
 
-		set<ShapeRef> getShapes() const { return _shapes; }
+		virtual cpBody* getBody() const = 0;
+		virtual cpBB getBB() const = 0;
+		virtual mat4 getModelview() const = 0;
+		virtual mat4 getModelviewInverse() const = 0;
+		virtual vec2 getPosition() const = 0;
+		virtual float getAngle() const = 0;
+		virtual set<ShapeRef> getShapes() const = 0;
+		virtual void draw(const core::render_state &renderState) = 0;
+		virtual void step(const core::time_state &timeState) = 0;
+		virtual void update(const core::time_state &timeState) = 0;
 
-		const mat4 getModelview() const { return _modelview; }
-
-		const cpTransform getModelviewTransform() const {
-			return cpTransform { _modelview[0].x, _modelview[0].y, _modelview[1].x, _modelview[1].y, _modelview[3].x, _modelview[3].y };
+		cpTransform getModelviewTransform() const {
+			mat4 mv = getModelview();
+			return cpTransform { mv[0].x, mv[0].y, mv[1].x, mv[1].y, mv[3].x, mv[3].y };
 		}
 
-		const mat4 getModelviewInverse() const { return _modelviewInverse; }
-
-		const cpTransform getModelviewInverseTransform() const {
-			return cpTransform { _modelviewInverse[0].x, _modelviewInverse[0].y, _modelviewInverse[1].x, _modelviewInverse[1].y, _modelviewInverse[3].x, _modelviewInverse[3].y };
+		cpTransform getModelviewInverseTransform() const {
+			mat4 mvi = getModelviewInverse();
+			return cpTransform { mvi[0].x, mvi[0].y, mvi[1].x, mvi[1].y, mvi[3].x, mvi[3].y };
 		}
 
+	protected:
+		string _name;
+		Color _color;
+		cpHashValue _hash;
 
-		vec2 getPosition() const { return v2(_position); }
-		float getAngle() const { return static_cast<float>(_angle); }
+	};
 
-		cpSpace *getSpace() const { return _space; }
-		cpBody* getBody() const { return _body; }
-		cpBB getBB() const { return _worldBB; }
+#pragma mark - StaticGroup
 
-		void draw(const core::render_state &renderState);
-		void step(const core::time_state &timeState);
-		void update(const core::time_state &timeState);
+	class StaticGroup : public GroupBase, public enable_shared_from_this<StaticGroup> {
+	public:
+		StaticGroup(cpSpace *space, material m);
+		virtual ~StaticGroup();
+
+		virtual cpBody* getBody() const override { return _body; }
+		virtual cpBB getBB() const override;
+		virtual mat4 getModelview() const override { return mat4(1); }
+		virtual mat4 getModelviewInverse() const override { return mat4(1); }
+		virtual vec2 getPosition() const override { return vec2(0); }
+		virtual float getAngle() const override { return 0; }
+		virtual set<ShapeRef> getShapes() const override { return _shapes; }
+
+		virtual void draw(const core::render_state &renderState) override {}
+		virtual void step(const core::time_state &timeState) override {}
+		virtual void update(const core::time_state &timeState) override {}
+
+		void addShape(ShapeRef shape);
+		void removeShape(ShapeRef shape);
+
+	protected:
+
+		void updateWorldBB();
+
+	protected:
+		cpSpace *_space;
+		cpBody *_body;
+		material _material;
+		set<ShapeRef> _shapes;		
+		mutable cpBB _worldBB;
+	};
+
+
+#pragma mark - DynamicGroup
+
+
+	class DynamicGroup : public GroupBase, public enable_shared_from_this<DynamicGroup>{
+	public:
+		DynamicGroup(cpSpace *space, material m);
+		virtual ~DynamicGroup();
+
+		virtual string getName() const override;
+		virtual cpBody* getBody() const override { return _body; }
+		cpBB getBB() const override { return _worldBB; }
+		virtual mat4 getModelview() const override { return _modelview; }
+		virtual mat4 getModelviewInverse() const override { return _modelviewInverse; }
+		virtual vec2 getPosition() const override { return v2(_position); }
+		virtual float getAngle() const override { return static_cast<float>(_angle); }
+		virtual set<ShapeRef> getShapes() const override { return _shapes; }
+
+		virtual void draw(const core::render_state &renderState) override;
+		virtual void step(const core::time_state &timeState) override;
+		virtual void update(const core::time_state &timeState) override;
 
 
 	protected:
 		friend class World;
 
 		string nextId();
-		bool build(set<ShapeRef> shapes, const GroupRef parentGroup, const vector<AnchorRef> &anchors);
+		bool build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup);
 		void syncToCpBody();
 
 	private:
 		static size_t _count;
 
-		bool _dynamic;
 		material _material;
 		cpSpace *_space;
 		cpBody *_body;
@@ -231,13 +295,10 @@ namespace terrain {
 		mat4 _modelview, _modelviewInverse;
 
 		set<ShapeRef> _shapes;
-
-		string _name;
-		cpHashValue _hash;
-		Color _color;
 	};
 
 
+#pragma mark - Anchor
 
 	/**
 	@class Anchor
@@ -278,6 +339,7 @@ namespace terrain {
 
 	};
 
+#pragma mark - Shape
 
 	class Shape : public enable_shared_from_this<Shape>{
 	public:
@@ -307,10 +369,10 @@ namespace terrain {
 		const contour_pair &getOuterContour() const { return _outerContour; }
 		const vector<contour_pair> &getHoleContours() const { return _holeContours; }
 
-		GroupRef getGroup() const { return _group.lock(); }
+		GroupBaseRef getGroup() const { return _group.lock(); }
 
 		const mat4 getModelview() const {
-			if (GroupRef group = _group.lock()) {
+			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelview();
 			} else {
 				return mat4();
@@ -318,22 +380,18 @@ namespace terrain {
 		}
 
 		const mat4 getModelviewInverse() const {
-			if (GroupRef group = _group.lock()) {
+			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelviewInverse();
 			} else {
 				return mat4();
 			}
 		}
 
-		cpSpace *getSpace() const {
-			if (GroupRef group = _group.lock()) {
-				return group->getSpace();
-			} else {
-				return nullptr;
-			}
+		const vector<cpShape*> &getShapes(cpBB &shapesModelBB) const {
+			shapesModelBB = _shapesBB;
+			return _shapes;
 		}
 
-		const vector<cpShape*> &getShapes() const { return _shapes; }
 		const TriMeshRef &getTriMesh() const { return _trimesh; }
 
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
@@ -343,12 +401,13 @@ namespace terrain {
 
 	protected:
 
-		friend class Group;
+		friend class StaticGroup;
+		friend class DynamicGroup;
 		friend class World;
 
 		string nextId();
 		void updateWorldSpaceContourAndBB();
-		void setGroup(GroupRef group);
+		void setGroup(GroupBaseRef group) { _group = group; }
 
 		// build the trimesh, returning true iff we got > 0 triangles
 		bool triangulate();
@@ -357,7 +416,7 @@ namespace terrain {
 		void computeMassAndMoment(float density, float &mass, float &moment, float &area);
 
 		void destroyCollisionShapes();
-		const vector<cpShape*> &createCollisionShapes(cpBody *body, cpBB &modelBB);
+		const vector<cpShape*> &createCollisionShapes(cpBody *body, cpBB &shapesModelBB);
 
 	private:
 
@@ -371,8 +430,9 @@ namespace terrain {
 		TriMeshRef _trimesh;
 		vec2 _modelCentroid;
 
+		cpBB _shapesBB;
 		vector<cpShape*> _shapes;
-		GroupWeakRef _group;
+		GroupBaseWeakRef _group;
 
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;

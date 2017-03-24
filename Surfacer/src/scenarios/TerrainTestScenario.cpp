@@ -91,10 +91,10 @@ void TerrainTestScenario::setup() {
 
 	//testBasicTerrainSetup();
 	//testComplexTerrainSetup();
-	//testSimpleAnchors();
+	testSimpleAnchors();
 	//testComplexAnchors();
-	testSimplePartitionedTerrain();
-
+	//testSimplePartitionedTerrain();
+	//exploitGroupingBug();
 }
 
 void TerrainTestScenario::cleanup() {
@@ -209,7 +209,7 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
 		if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
-			terrain::Group *group = (terrain::Group*) cpBodyGetUserData(pickBody);
+			terrain::DynamicGroup *group = (terrain::DynamicGroup*) cpBodyGetUserData(pickBody);
 			CI_LOG_D("Attaching mouse joint to terrain group: " << group->getName());
 
 			cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
@@ -286,6 +286,9 @@ bool TerrainTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 	if (event.getChar() == 'r') {
 		reset();
 		return true;
+	} else if (event.getCode() == ci::app::KeyEvent::KEY_SPACE) {
+		//testExplicitCut();
+		return true;
 	}
 	return false;
 }
@@ -307,9 +310,9 @@ void TerrainTestScenario::testBasicTerrainSetup() {
 	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	vector<terrain::ShapeRef> shapes = {
-//		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
-//		terrain::Shape::fromContour(rect(100,0, 150, 50)),		// 1 to right of 0 - binds to 0
-//		terrain::Shape::fromContour(rect(-100,0, 0, 50)),		// 2 to left of 0 - binds to 0
+		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
+		terrain::Shape::fromContour(rect(100,0, 150, 50)),		// 1 to right of 0 - binds to 0
+		terrain::Shape::fromContour(rect(-100,0, 0, 50)),		// 2 to left of 0 - binds to 0
 		terrain::Shape::fromContour(rect(-10, 50, 110, 100)),	// 3 above 0, but wider
 		terrain::Shape::fromContour(rect(-10, 100, 110, 200)), // 4 above 3, binds to 3
 
@@ -439,10 +442,32 @@ void TerrainTestScenario::testSimplePartitionedTerrain() {
 	auto shapes = terrain::Shape::fromContours(rings);
 	//auto shapes = vector<terrain::ShapeRef> { boxShape(vec2(0,0), vec2(500,500)) };
 
-	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 100);
+	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
 	_terrainWorld->build(partitionedShapes);
+}
 
+void TerrainTestScenario::exploitGroupingBug() {
+	testSimplePartitionedTerrain();
+
+	vec2 a = vec2(661.073, -155.975);
+	vec2 b = vec2(-680.986,  240.205);
+	float radius = 4.94281;
+	_terrainWorld->cut(a, b, radius, Filters::CUTTER);
+//
+//
+//	_cameraController.lookAt(vec2(0,0));
+//
+//	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+//	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
+//
+//
+//	auto partitionedShapes = terrain::World::partition({
+//		boxShape(vec2(0,0), vec2(900,100))
+//	}, vec2(0,0), 130);
+//
+//
+//	_terrainWorld->build(partitionedShapes);
 }
 
 void TerrainTestScenario::timeSpatialIndex() {
@@ -529,11 +554,6 @@ void TerrainTestScenario::timeSpatialIndex() {
 
 	app::console() << "------------------------------------" << endl << "PERFORMING PERF MEASUREMENTS" << endl;
 	performTimingRun(450);
-
-//	for (int i = 4; i < 100; i+= 4) {
-//		performTimingRun(i);
-//	}
-
 }
 
 void TerrainTestScenario::drawWorldCoordinateSystem(const render_state &state) {
