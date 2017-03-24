@@ -728,8 +728,19 @@ namespace terrain {
 			} else {
 
 				//
+				//	This cut promoted static shapes to dynamic - got to remove them from _staticGroup
+				//
+
+				if (parentGroup == _staticGroup) {
+					for (const auto &shape : shapeGroup) {
+						_staticGroup->removeShape(shape);
+					}
+				}
+
+				//
 				//	Build a dynamic group
 				//
+
 
 				DynamicGroupRef group = make_shared<DynamicGroup>(_space, _material);
 				if (group->build(shapeGroup, parentGroup)) {
@@ -935,6 +946,9 @@ namespace terrain {
 
 	void StaticGroup::addShape(ShapeRef shape) {
 		if (shape->triangulate()) {
+
+			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
+
 			float area = shape->computeArea();
 			if (area >= MIN_SHAPE_AREA) {
 
@@ -1491,6 +1505,11 @@ namespace terrain {
 	}
 
 	bool Shape::triangulate() {
+
+		//
+		// note that when a shape is static, its world and model contours are the same
+		//
+
 		Triangulator triangulator;
 		triangulator.addPolyLine(_outerContour.model);
 

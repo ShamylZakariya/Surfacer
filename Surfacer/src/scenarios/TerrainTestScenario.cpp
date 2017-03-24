@@ -91,8 +91,8 @@ void TerrainTestScenario::setup() {
 
 	//testBasicTerrainSetup();
 	//testComplexTerrainSetup();
-	testSimpleAnchors();
-	//testComplexAnchors();
+	//testSimpleAnchors();
+	testComplexAnchors();
 	//testSimplePartitionedTerrain();
 	//exploitGroupingBug();
 }
@@ -289,6 +289,8 @@ bool TerrainTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 	} else if (event.getCode() == ci::app::KeyEvent::KEY_SPACE) {
 		//testExplicitCut();
 		return true;
+	} else if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
+		setRenderMode( RenderMode::mode( (int(renderMode()) + 1) % RenderMode::COUNT ));
 	}
 	return false;
 }

@@ -347,6 +347,7 @@ namespace terrain {
 		struct contour_pair {
 			PolyLine2f world, model;
 
+			// when constructed model and world are both equal
 			contour_pair(const PolyLine2f &w):
 			world(w),
 			model(w)
