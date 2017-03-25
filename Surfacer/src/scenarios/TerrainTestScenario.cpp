@@ -504,6 +504,9 @@ void TerrainTestScenario::testSimplePartitionedTerrain() {
 }
 
 void TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
+
+	//cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
+
 	ci::Rand rng;
 
 	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
@@ -546,25 +549,24 @@ void TerrainTestScenario::testFail() {
 
 	// this sequence of cuts causes trouble
 	string cutDescriptions = R"(
-	[  108.862, -361.603] to [  183.284, -489.372] radius: 1.31691
-	[  -76.677,   74.429] to [ -606.778,  703.783] radius: 4.5204
-	[  110.855, -368.143] to [  195.308, -505.379] radius: 1.11092
-	[  101.965, -368.698] to [  176.972, -497.600] radius: 1.11092
-	[   89.186, -373.699] to [  165.305, -500.378] radius: 1.11092
-	[   84.185, -380.366] to [  146.969, -494.267] radius: 1.11092
-	[   74.740, -379.255] to [  136.968, -510.935] radius: 1.11092
-	[   65.850, -379.811] to [  119.189, -503.712] radius: 1.11092
-	[   54.738, -380.366] to [  106.965, -511.491] radius: 1.11092
-	[  185.307, -345.918] to [  271.426, -452.596] radius: 1.11092
-	[  176.175, -378.322] to [  -69.610, -531.648] radius: 1.54005
-	[  222.628, -282.505] to [  766.382,  580.182] radius: 10.4801
-	[  -12.650,  653.380] to [  165.115,  -57.683] radius: 10.4801
-	[  855.265, -366.159] to [ -389.096,  627.238] radius: 10.4801
-	[  410.851,-1071.994] to [  442.221, 1045.510] radius: 10.4801
-	[ -290.007,  121.236] to [ -409.640,  334.291] radius: 1.3437
-	[ -341.758,  131.989] to [ -432.491,  297.997] radius: 1.3437
-	[ -358.561,  112.498] to [ -470.129,  295.981] radius: 1.3437
-	[ -371.330,  101.745] to [ -472.145,  238.853] radius: 1.3437
+	[ -155.994,   84.944] to [ -483.285,  336.033] radius: 2.49663
+	[ -269.808,  242.250] to [ -417.349,  337.285] radius: 1.04977
+	[ -282.409,  262.727] to [ -387.420,  333.609] radius: 1.04977
+	[ -273.484,  267.452] to [ -384.795,  360.387] radius: 1.04977
+	[ -258.257,  279.004] to [ -382.695,  379.289] radius: 1.04977
+	[ -238.839,  283.203] to [ -354.876,  391.365] radius: 1.04977
+	[ -242.515,  270.077] to [ -318.648,  404.491] radius: 1.04977
+	[ -244.090,  291.604] to [ -319.173,  461.722] radius: 1.04977
+	[ -229.388,  295.805] to [ -280.319,  426.018] radius: 1.04977
+	[ -219.937,  313.656] to [ -261.417,  435.994] radius: 1.04977
+	[ -217.312,  325.208] to [ -256.166,  439.145] radius: 1.04977
+	[ -209.961,  324.158] to [ -250.916,  442.295] radius: 1.04977
+	[ -204.710,  325.727] to [ -245.139,  445.965] radius: 1.04977
+	[ -201.462,  334.242] to [ -238.086,  443.261] radius: 0.852035
+	[ -197.629,  340.204] to [ -232.550,  456.889] radius: 0.852035
+	[ -189.538,  335.093] to [ -221.903,  460.722] radius: 0.852035
+	[ -333.052,  208.613] to [ -432.703,  278.028] radius: 0.852035
+	[ -339.440,  203.503] to [ -448.034,  272.492] radius: 0.852035
 	)";
 
 	auto cuts = cut::parse(cutDescriptions);
@@ -576,6 +578,10 @@ void TerrainTestScenario::testFail() {
 
 	cut lastCut = cuts[cuts.size()-1];
 	_terrainWorld->cut(lastCut.a, lastCut.b, lastCut.radius, Filters::CUTTER);
+
+
+//	// this leaves shape 31 improperly cut - there's a tiny tab on lower left which should be excised but isn't
+//	_terrainWorld->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, Filters::CUTTER);
 }
 
 void TerrainTestScenario::timeSpatialIndex() {

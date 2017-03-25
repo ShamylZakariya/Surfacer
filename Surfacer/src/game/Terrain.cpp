@@ -603,13 +603,24 @@ namespace terrain {
 			};
 
 			cut_collector collector;
-			cpSpaceSegmentQuery(_space, cpv(a), cpv(b), radius, filter,
-								[](cpShape *collisionShape, cpVect point, cpVect normal, cpFloat alpha, void *data){
-									cut_collector *collector = static_cast<cut_collector*>(data);
-									ShapeRef shape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
-									collector->shapes.insert(shape);
-									collector->groups.insert(shape->getGroup());
-								}, &collector);
+
+			//
+			// while intuition would have us use a segment query, the cpSegmentQuery call seemed to miss
+			// literal "corner cases" where a TINY corner of a shape, even if it was WELL INSIDE the segment,
+			// would be missed. My guess is segment queries use some sort of stepping algorithm and miss
+			// tiny overhangs. So we're building a cpShape explicitly.
+			//
+
+			cpVect verts[] = { cpv(cd), cpv(cc), cpv(cb), cpv(ca) };
+			cpShape *cuttingShape = cpPolyShapeNew(cpSpaceGetStaticBody(_space), 4, verts, cpTransformIdentity, radius * 2);
+			cpSpaceShapeQuery(_space, cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
+				cut_collector *collector = static_cast<cut_collector*>(data);
+				ShapeRef terrainShape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
+				collector->shapes.insert(terrainShape);
+				collector->groups.insert(terrainShape->getGroup());
+			}, &collector);
+
+			cpShapeFree(cuttingShape);
 
 			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.groups.size() << " bodies) to cut" );
 
@@ -849,19 +860,17 @@ namespace terrain {
 	void World::drawDebug(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
 
-		auto drawGroup = [frustum, &renderState](GroupBaseRef group, Color textColor) {
+		auto drawGroup = [frustum, &renderState](GroupBaseRef group, Color fillColor, Color strokeColor) {
 			if (cpBBIntersects(frustum, group->getBB())) {
 				gl::ScopedModelMatrix smm;
 				gl::multModelMatrix(group->getModelview());
 
-				Color color = group->getColor();
-
 				for (const auto &shape : group->getShapes()) {
-					gl::color(color * 0.25);
+					gl::color(fillColor);
 					gl::draw(*shape->getTriMesh());
 
 					gl::lineWidth(1);
-					gl::color(color);
+					gl::color(strokeColor);
 					gl::draw(shape->getOuterContour().model);
 
 					for (auto &holeContour : shape->getHoleContours()) {
@@ -874,7 +883,7 @@ namespace terrain {
 						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
 						gl::ScopedModelMatrix smm2;
 						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
-						gl::drawString(shape->getName(), vec2(0,0), textColor);
+						gl::drawString(shape->getName(), vec2(0,0), strokeColor);
 					}
 				}
 			}
@@ -884,10 +893,10 @@ namespace terrain {
 		};
 
 		for (const auto &group : _dynamicGroups) {
-			drawGroup(group, group->getColor().lerp(0.5, Color::white()));
+			drawGroup(group, group->getColor(), group->getColor().lerp(0.5, Color::white()));
 		}
 
-		drawGroup(_staticGroup, Color::white());
+		drawGroup(_staticGroup, _staticGroup->getColor(), _staticGroup->getColor().lerp(0.75, Color::white()));
 
 		for (const auto &anchor : _anchors) {
 			if (cpBBIntersects(frustum, anchor->getBB())) {
