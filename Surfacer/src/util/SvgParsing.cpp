@@ -31,7 +31,7 @@ namespace core { namespace util { namespace svg {
 		{
 			if ( node.hasAttribute( attrName ))
 			{
-				return std::strtod( node.getAttribute( attrName ).getValue().c_str(), NULL );
+				return std::strtod( node.getAttribute( attrName ).getValue().c_str(), nullptr );
 			}
 
 			return defaultValue;
@@ -209,7 +209,7 @@ namespace core { namespace util { namespace svg {
 					float v[2];
 					for ( int i = 0; i < 2; i++ )
 					{
-						char *end = NULL;
+						char *end = nullptr;
 						v[i] = std::strtod( current, &end );
 						current = end;
 
@@ -290,7 +290,7 @@ namespace core { namespace util { namespace svg {
 
 		PathParser::PathParser() :
 		_pathOpen(false),
-		_shape(NULL)
+		_shape(nullptr)
 		{}
 
 		PathParser::~PathParser(){}
@@ -403,7 +403,7 @@ namespace core { namespace util { namespace svg {
 
 					for ( unsigned int i = 0; i < toRead; i++ )
 					{
-						char *end = NULL;
+						char *end = nullptr;
 						v[i] = std::strtod( current, &end );
 						current = end;
 
@@ -919,7 +919,7 @@ namespace core { namespace util { namespace svg {
 
 	float parseNumericAttribute( const std::string &numericAttributeValue )
 	{
-		return std::strtod( numericAttributeValue.c_str(), NULL );
+		return std::strtod( numericAttributeValue.c_str(), nullptr );
 	}
 
 	namespace {
@@ -1068,9 +1068,9 @@ namespace core { namespace util { namespace svg {
 				green = colorValue.substr( 3,2 ),
 				blue = colorValue.substr( 5,2 );
 
-				color.r = saturate(float(std::strtol( red.c_str(), NULL, 16 )) / 255);
-				color.g = saturate(float(std::strtol( green.c_str(), NULL, 16 )) / 255);
-				color.b = saturate(float(std::strtol( blue.c_str(), NULL, 16 )) / 255);
+				color.r = saturate(float(std::strtol( red.c_str(), nullptr, 16 )) / 255);
+				color.g = saturate(float(std::strtol( green.c_str(), nullptr, 16 )) / 255);
+				color.b = saturate(float(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
 				color.a = 1;
 
 				return true;
@@ -1083,10 +1083,10 @@ namespace core { namespace util { namespace svg {
 				green = colorValue.substr( 5,2 ),
 				blue = colorValue.substr( 7,2 );
 
-				color.r = saturate(float(std::strtol( red.c_str(), NULL, 16 )) / 255);
-				color.g = saturate(float(std::strtol( green.c_str(), NULL, 16 )) / 255);
-				color.b = saturate(float(std::strtol( blue.c_str(), NULL, 16 )) / 255);
-				color.a = saturate(float(std::strtol( alpha.c_str(), NULL, 16 )) / 255);
+				color.r = saturate(float(std::strtol( red.c_str(), nullptr, 16 )) / 255);
+				color.g = saturate(float(std::strtol( green.c_str(), nullptr, 16 )) / 255);
+				color.b = saturate(float(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
+				color.a = saturate(float(std::strtol( alpha.c_str(), nullptr, 16 )) / 255);
 
 				return true;
 			}
@@ -1109,12 +1109,12 @@ namespace core { namespace util { namespace svg {
 			{
 				if ( token.find("%") != std::string::npos )
 				{
-					float value = 255 * saturate(std::strtod( token.c_str(), NULL ) / 100);
+					float value = 255 * saturate(std::strtod( token.c_str(), nullptr ) / 100);
 					components.push_back( value );
 				}
 				else
 				{
-					float value = std::strtod( token.c_str(), NULL );
+					float value = std::strtod( token.c_str(), nullptr );
 					components.push_back( saturate( value / 255 ));
 				}
 			}
