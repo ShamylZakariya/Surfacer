@@ -179,8 +179,8 @@ namespace terrain {
 					shapeContour.getPoints().pop_back();
 				}
 
-				if (shapeContour.getPoints().empty() || shapeContour.calcArea() < MIN_SHAPE_AREA) {
-					CI_LOG_E("Polygon is sane, but empty, or area too small to justify creating a PolyShape");
+				if (shapeContour.getPoints().empty()) {
+					CI_LOG_E("Polygon is empty");
 					break;
 				}
 
@@ -758,6 +758,8 @@ namespace terrain {
 		// note: A singleton shape (no neighbors) still becomes a group
 		//
 
+		// TODO: Speed up findGroup with a spatial index when the search space > ~400
+
 		set<ShapeRef> affectedShapesSet(affectedShapes.begin(), affectedShapes.end());
 		vector<set<ShapeRef>> shapeGroups;
 
@@ -847,7 +849,7 @@ namespace terrain {
 	void World::drawDebug(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
 
-		auto drawGroup = [frustum, &renderState](GroupBaseRef group) {
+		auto drawGroup = [frustum, &renderState](GroupBaseRef group, Color textColor) {
 			if (cpBBIntersects(frustum, group->getBB())) {
 				gl::ScopedModelMatrix smm;
 				gl::multModelMatrix(group->getModelview());
@@ -872,7 +874,7 @@ namespace terrain {
 						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
 						gl::ScopedModelMatrix smm2;
 						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
-						gl::drawString(shape->getName(), vec2(0,0), color);
+						gl::drawString(shape->getName(), vec2(0,0), textColor);
 					}
 				}
 			}
@@ -882,10 +884,10 @@ namespace terrain {
 		};
 
 		for (const auto &group : _dynamicGroups) {
-			drawGroup(group);
+			drawGroup(group, group->getColor().lerp(0.5, Color::white()));
 		}
 
-		drawGroup(_staticGroup);
+		drawGroup(_staticGroup, Color::white());
 
 		for (const auto &anchor : _anchors) {
 			if (cpBBIntersects(frustum, anchor->getBB())) {
@@ -922,7 +924,7 @@ namespace terrain {
 	_material(m),
 	_worldBB(cpBBInvalid) {
 		_name = "StaticGroup";
-		_color = Color(0.2,0.2,0.2);
+		_color = Color(0.1,0.1,0.1);
 		_body = cpBodyNewStatic();
 		cpBodySetUserData(_body, this);
 		cpSpaceAddBody(space,_body);
@@ -945,7 +947,14 @@ namespace terrain {
 	}
 
 	void StaticGroup::addShape(ShapeRef shape) {
-		if (shape->triangulate()) {
+
+		if (!shape->hasValidTriMesh()) {
+			if (!shape->triangulate()) {
+				return;
+			}
+		}
+
+		if (shape->hasValidTriMesh()) {
 
 			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
 
@@ -955,7 +964,12 @@ namespace terrain {
 				shape->setGroup(shared_from_this());
 				_shapes.insert(shape);
 
-				// TODO: Static group should be able to skip destruction of collision shapes since shapes are already in world space
+
+				//
+				//	Create new collision shapes if needed. Note, since static shapes can only stay static or become dynamic
+				// but never can go from dynamic to static, we can trust that the shapes are in world space here. As such,
+				// we can re-use existing collision shapes, etc.
+				//
 
 				cpBB modelBB = cpBBInvalid;
 				vector<cpShape*> collisionShapes = shape->getShapes(modelBB);

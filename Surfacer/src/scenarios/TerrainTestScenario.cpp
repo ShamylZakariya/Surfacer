@@ -11,6 +11,8 @@
 
 #include <cinder/Rand.h>
 
+#include "Strings.hpp"
+
 namespace {
 
 	const float CUT_WIDTH = 4;
@@ -32,6 +34,55 @@ namespace {
 	terrain::ShapeRef boxShape(vec2 center, vec2 size) {
 		return terrain::Shape::fromContour(rect(center.x - size.x/2, center.y - size.y/2, center.x + size.x/2, center.y + size.y/2));
 	}
+
+	struct cut {
+		vec2 a,b;
+		float radius;
+
+		cut(vec2 A, vec2 B, float R):
+		a(A),
+		b(B),
+		radius(R)
+		{}
+
+		cut(string desc) {
+			desc = core::strings::removeSet(desc, "\t[]toradius:,");
+
+			const char* it = desc.c_str();
+			char* end = nullptr;
+			int idx = 0;
+			for (float f = strtod(it,&end);; f = strtod(it, &end)) {
+				if (it == end) {
+					break;
+				}
+
+				switch(idx) {
+					case 0: a.x = f; break;
+					case 1: a.y = f; break;
+					case 2: b.x = f; break;
+					case 3: b.y = f; break;
+					case 4: radius = f; break;
+				}
+
+				it = end;
+				idx++;
+			}
+		}
+
+		static vector<cut> parse(string cutsDesc) {
+			auto cutDescs = core::strings::split(cutsDesc, "\n");
+			vector<cut> cuts;
+			for (auto cutDesc : cutDescs) {
+				cutDesc = strings::strip(cutDesc);
+				if (!cutDesc.empty()) {
+					cuts.emplace_back(cutDesc);
+				}
+			}
+			return cuts;
+		}
+
+	};
+
 
 	namespace Categories {
 		enum Categories {
@@ -92,9 +143,12 @@ void TerrainTestScenario::setup() {
 	//testBasicTerrainSetup();
 	//testComplexTerrainSetup();
 	//testSimpleAnchors();
-	testComplexAnchors();
+	//testComplexAnchors();
 	//testSimplePartitionedTerrain();
 	//exploitGroupingBug();
+
+	//testComplexPartitionedTerrainWithAnchors();
+	testFail();
 }
 
 void TerrainTestScenario::cleanup() {
@@ -449,27 +503,79 @@ void TerrainTestScenario::testSimplePartitionedTerrain() {
 	_terrainWorld->build(partitionedShapes);
 }
 
-void TerrainTestScenario::exploitGroupingBug() {
-	testSimplePartitionedTerrain();
+void TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
+	ci::Rand rng;
 
-	vec2 a = vec2(661.073, -155.975);
-	vec2 b = vec2(-680.986,  240.205);
-	float radius = 4.94281;
-	_terrainWorld->cut(a, b, radius, Filters::CUTTER);
-//
-//
-//	_cameraController.lookAt(vec2(0,0));
-//
-//	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-//	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
-//
-//
-//	auto partitionedShapes = terrain::World::partition({
-//		boxShape(vec2(0,0), vec2(900,100))
-//	}, vec2(0,0), 130);
-//
-//
-//	_terrainWorld->build(partitionedShapes);
+	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
+		PolyLine2f polyLine;
+		for (int i = 0; i < subdivisions; i++) {
+			float j = static_cast<float>(i)/static_cast<float>(subdivisions);
+			float r = j * M_PI * 2;
+			vec2 p = center + (vec2(cos(r), sin(r)) * (radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
+			polyLine.push_back(p);
+		}
+		polyLine.setClosed();
+		return polyLine;
+	};
+
+	_cameraController.lookAt(vec2(0,0));
+
+	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
+	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
+
+	auto rings = vector<PolyLine2f> {
+		ring(vec2(0,0), 500, 600, 0),
+		ring(vec2(0,0), 400, 600, 0)
+	};
+
+	auto shapes = terrain::Shape::fromContours(rings);
+	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
+
+	vector<terrain::AnchorRef> anchors = {
+		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)), anchorMaterial)
+	};
+
+	_terrainWorld->build(partitionedShapes, anchors);
+
+}
+
+void TerrainTestScenario::testFail() {
+	testComplexPartitionedTerrainWithAnchors();
+
+	// this sequence of cuts causes trouble
+	string cutDescriptions = R"(
+	[  108.862, -361.603] to [  183.284, -489.372] radius: 1.31691
+	[  -76.677,   74.429] to [ -606.778,  703.783] radius: 4.5204
+	[  110.855, -368.143] to [  195.308, -505.379] radius: 1.11092
+	[  101.965, -368.698] to [  176.972, -497.600] radius: 1.11092
+	[   89.186, -373.699] to [  165.305, -500.378] radius: 1.11092
+	[   84.185, -380.366] to [  146.969, -494.267] radius: 1.11092
+	[   74.740, -379.255] to [  136.968, -510.935] radius: 1.11092
+	[   65.850, -379.811] to [  119.189, -503.712] radius: 1.11092
+	[   54.738, -380.366] to [  106.965, -511.491] radius: 1.11092
+	[  185.307, -345.918] to [  271.426, -452.596] radius: 1.11092
+	[  176.175, -378.322] to [  -69.610, -531.648] radius: 1.54005
+	[  222.628, -282.505] to [  766.382,  580.182] radius: 10.4801
+	[  -12.650,  653.380] to [  165.115,  -57.683] radius: 10.4801
+	[  855.265, -366.159] to [ -389.096,  627.238] radius: 10.4801
+	[  410.851,-1071.994] to [  442.221, 1045.510] radius: 10.4801
+	[ -290.007,  121.236] to [ -409.640,  334.291] radius: 1.3437
+	[ -341.758,  131.989] to [ -432.491,  297.997] radius: 1.3437
+	[ -358.561,  112.498] to [ -470.129,  295.981] radius: 1.3437
+	[ -371.330,  101.745] to [ -472.145,  238.853] radius: 1.3437
+	)";
+
+	auto cuts = cut::parse(cutDescriptions);
+
+	// we know the last cut causes weirdness so cut all but the last
+	for (int i = 0; i < cuts.size() - 1; i++) {
+		_terrainWorld->cut(cuts[i].a, cuts[i].b, cuts[i].radius, Filters::CUTTER);
+	}
+
+	cut lastCut = cuts[cuts.size()-1];
+	_terrainWorld->cut(lastCut.a, lastCut.b, lastCut.radius, Filters::CUTTER);
 }
 
 void TerrainTestScenario::timeSpatialIndex() {

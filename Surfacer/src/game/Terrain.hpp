@@ -395,6 +395,10 @@ namespace terrain {
 
 		const TriMeshRef &getTriMesh() const { return _trimesh; }
 
+		bool hasValidTriMesh() const {
+			return _trimesh && _trimesh->getNumTriangles() > 0;
+		}
+
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
 

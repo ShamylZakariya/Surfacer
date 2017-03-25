@@ -45,10 +45,11 @@ private:
 	void testComplexTerrainSetup();
 	void testSimpleAnchors();
 	void testComplexAnchors();
-	void exploitGroupingBug();
 
 	void testSimplePartitionedTerrain();
+	void testComplexPartitionedTerrainWithAnchors();
 
+	void testFail();
 
 	void timeSpatialIndex();
 
