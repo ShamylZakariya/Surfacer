@@ -35,6 +35,7 @@ namespace terrain {
 
 		const float MIN_SHAPE_AREA = 1.f;
 		const float MIN_TRIANGLE_AREA = 1.f;
+		const float COLLISION_SHAPE_RADIUS = 0.05;
 
 #pragma mark - Helpers
 
@@ -1649,7 +1650,7 @@ namespace terrain {
 			}
 
 			if (area >= MIN_TRIANGLE_AREA) {
-				cpShape *polyShape = cpPolyShapeNew(body, 3, triangle, cpTransformIdentity, 0);
+				cpShape *polyShape = cpPolyShapeNew(body, 3, triangle, cpTransformIdentity, COLLISION_SHAPE_RADIUS);
 				cpShapeSetUserData(polyShape, this);
 				_shapes.push_back(polyShape);
 
