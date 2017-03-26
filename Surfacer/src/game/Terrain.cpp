@@ -31,7 +31,7 @@ namespace terrain {
 	namespace {
 
 		// TODO: Optimization is disabled since it seems to break edge stitching. The question is, how?
-		const float RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0;
+		const float RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.5;
 
 		const float MIN_SHAPE_AREA = 1.f;
 		const float MIN_TRIANGLE_AREA = 1.f;

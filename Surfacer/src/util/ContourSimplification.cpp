@@ -8,8 +8,6 @@
 
 #include "ContourSimplification.hpp"
 
-#include <cinder/Log.h>
-
 namespace core {
 
 	void simplify( const vector<vec2> &in, vector<vec2> &out, float threshold ) {
@@ -75,10 +73,6 @@ namespace core {
 	PolyLine2f simplify( const PolyLine2f &contour, float threshold ) {
 		vector<vec2> result;
 		simplify(contour.getPoints(), result, threshold);
-
-		if (result.size() < contour.size()) {
-			CI_LOG_D("Optimized contour from: " << contour.size() << " to: " << result.size());
-		}
 
 		PolyLine2f pl(result);
 		pl.setClosed();
