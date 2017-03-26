@@ -264,15 +264,11 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 
 		if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
 			terrain::DynamicGroup *group = (terrain::DynamicGroup*) cpBodyGetUserData(pickBody);
-			CI_LOG_D("Attaching mouse joint to terrain group: " << group->getName());
 
 			cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
 
 			_draggingBody = pickBody;
 			_mouseJoint = cpPivotJointNew2(_mouseBody, _draggingBody, cpvzero, cpBodyWorldToLocal(_draggingBody,nearest));
-
-			//cpConstraintSetMaxForce(_mouseJoint, cpBodyGetMass(_draggingBody) * length(v2(cpSpaceGetGravity(_space))) * 1000);
-			//cpConstraintSetMaxBias(_mouseJoint, cpfpow(1.0f - 0.15f, 60.0f)); // magic numbers from ChipmunkDemo.c
 
 			cpSpaceAddConstraint(_space, _mouseJoint);
 
