@@ -117,7 +117,7 @@ namespace {
 */
 
 TerrainTestScenario::TerrainTestScenario():
-_cameraController(camera()),
+_cameraController(getCamera()),
 _cutting(false),
 _space(nullptr),
 _mouseBody(nullptr),
@@ -196,7 +196,7 @@ void TerrainTestScenario::draw( const render_state &state ) {
 
 	{
 		// apply camera modelview
-		Viewport::ScopedState cameraState(camera());
+		Viewport::ScopedState cameraState(getCamera());
 
 		drawWorldCoordinateSystem(state);
 
@@ -224,7 +224,7 @@ void TerrainTestScenario::draw( const render_state &state ) {
 
 		if (_mouseJoint) {
 			// we're dragging, so draw mouse body
-			const float radius = 2 * camera().getReciprocalScale();
+			const float radius = 2 * getCamera().getReciprocalScale();
 			gl::color(Color(1,0,1));
 			gl::drawSolidCircle(v2(cpBodyGetPosition(_mouseBody)), radius);
 		}
@@ -244,7 +244,7 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	_mouseScreen = event.getPos();
-	_mouseWorld = camera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
 
 	if ( event.isAltDown() )
 	{
@@ -263,8 +263,6 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
 		if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
-			terrain::DynamicGroup *group = (terrain::DynamicGroup*) cpBodyGetUserData(pickBody);
-
 			cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
 
 			_draggingBody = pickBody;
@@ -309,13 +307,13 @@ bool TerrainTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
 
 bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const vec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = camera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
 	return true;
 }
 
 bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const vec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = camera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
@@ -340,7 +338,7 @@ bool TerrainTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 		//testExplicitCut();
 		return true;
 	} else if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
-		setRenderMode( RenderMode::mode( (int(renderMode()) + 1) % RenderMode::COUNT ));
+		setRenderMode( RenderMode::mode( (int(getRenderMode()) + 1) % RenderMode::COUNT ));
 	}
 	return false;
 }
@@ -668,7 +666,7 @@ void TerrainTestScenario::timeSpatialIndex() {
 
 void TerrainTestScenario::drawWorldCoordinateSystem(const render_state &state) {
 
-	const cpBB frustum = camera().getFrustum();
+	const cpBB frustum = state.viewport.getFrustum();
 	const int gridSize = 10;
 	const int majorGridSize = 100;
 	const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
@@ -679,7 +677,7 @@ void TerrainTestScenario::drawWorldCoordinateSystem(const render_state &state) {
 	const auto MinorLineColor = ColorA(1,1,1,0.05);
 	const auto MajorLineColor = ColorA(1,1,1,0.25);
 	const auto AxisColor = ColorA(1,0,0,1);
-	gl::lineWidth(1.0 / camera().getScale());
+	gl::lineWidth(1.0 / state.viewport.getScale());
 
 	for (int y = firstY; y <= lastY; y+= gridSize) {
 		if (y == 0) {

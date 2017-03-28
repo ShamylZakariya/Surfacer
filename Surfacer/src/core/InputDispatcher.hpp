@@ -15,7 +15,8 @@
 #include <cinder/app/KeyEvent.h>
 #include <cinder/app/FileDropEvent.h>
 
-#include "Core.hpp"
+#include "Common.hpp"
+#include "MathHelpers.hpp"
 
 using namespace ci;
 using namespace ci::app;
@@ -38,7 +39,7 @@ namespace core {
 	/**
 	 @class InputDispatcher
 	 */
-	class InputDispatcher : public enable_shared_from_this<InputDispatcher>
+	class InputDispatcher : public std::enable_shared_from_this<InputDispatcher>
 	{
 	public:
 

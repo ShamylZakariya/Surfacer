@@ -9,9 +9,9 @@
 #ifndef Core_h
 #define Core_h
 
-#define CLASS_NAME(ptr)		((typeid(*(ptr))).name())
-#define SMART_PTR(cname)	class cname; typedef std::shared_ptr< class cname > cname ## Ref; typedef std::weak_ptr< class cname > cname ## WeakRef;
+// base stuff
 
+#include "Common.hpp"
 #include "Exception.hpp"
 #include "MathHelpers.hpp"
 #include "Strings.hpp"
@@ -26,5 +26,11 @@
 #include "LineSegment.hpp"
 #include "SpatialIndex.hpp"
 #include "StopWatch.hpp"
+
+// higher level stuff
+
+#include "Level.hpp"
+#include "GameObject.hpp"
+#include "Scenario.hpp"
 
 #endif /* Core_h */

@@ -9,13 +9,17 @@
 #ifndef Scenario_hpp
 #define Scenario_hpp
 
-#include "Core.hpp"
+#include "InputDispatcher.hpp"
+#include "Viewport.hpp"
+#include "RenderState.hpp"
+#include "TimeState.hpp"
+#include "Level.hpp"
 
 namespace core {
 
 	SMART_PTR(Scenario)
 
-	class Scenario : public InputListener, public signals::receiver {
+	class Scenario : public InputListener, public signals::receiver, public enable_shared_from_this<Scenario> {
 	public:
 
 		Scenario();
@@ -28,24 +32,27 @@ namespace core {
 		virtual void update( const time_state &time );
 		virtual void draw( const render_state &state );
 
-		const Viewport& camera() const { return _camera; }
-		Viewport& camera() { return _camera; }
+		const Viewport& getCamera() const { return _camera; }
+		Viewport& getCamera() { return _camera; }
 
 		// time state used for animation
-		const time_state &time() const { return _time; }
+		const time_state &getTime() const { return _time; }
 
 		// time state used for physics
-		const time_state &stepTime() const { return _stepTime; }
+		const time_state &getStepTime() const { return _stepTime; }
 
-		const render_state &renderState() const { return _renderState; }
+		const render_state &getRenderState() const { return _renderState; }
 
 		void setRenderMode( RenderMode::mode mode );
-		RenderMode::mode renderMode() const { return _renderState.mode; }
+		RenderMode::mode getRenderMode() const { return _renderState.mode; }
 
 		/**
 		 Save a screenshot as PNG to @a path
 		 */
 		void screenshot( const ci::fs::path &folderPath, const std::string &namingPrefix, const std::string format = "png" );
+
+		void setLevel(LevelRef level);
+		LevelRef getLevel() const { return _level; }
 
 	protected:
 		friend class GameApp;
@@ -63,6 +70,7 @@ namespace core {
 		Viewport _camera;
 		time_state _time, _stepTime;
 		render_state _renderState;
+		LevelRef _level;
 		
 	};
 	

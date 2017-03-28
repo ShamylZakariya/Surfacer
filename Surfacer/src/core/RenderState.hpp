@@ -78,4 +78,9 @@ namespace core {
 	
 }
 
+inline ostream &operator << ( ostream &os, core::RenderMode::mode mode )
+{
+	return os << core::RenderMode::toString(mode);
+}
+
 #endif /* RenderState_h */

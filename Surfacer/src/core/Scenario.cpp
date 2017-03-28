@@ -10,7 +10,7 @@
 
 #include <cinder/gl/gl.h>
 
-#include "Strings.h"
+#include "Strings.hpp"
 
 using namespace ci;
 namespace core {
@@ -22,8 +22,8 @@ namespace core {
 		void update_time( time_state &time )
 		{
 			const seconds_t
-			Now = app::getElapsedSeconds(),
-			Elapsed = Now - time.time;
+				Now = app::getElapsedSeconds(),
+				Elapsed = Now - time.time;
 
 			//
 			// We're using a variable timestep, but I'm damping its changes heavily
@@ -66,12 +66,12 @@ namespace core {
 	void Scenario::setRenderMode( RenderMode::mode mode )
 	{
 		_renderState.mode = mode;
-		app::console() << "Scenario[" << this << "]::setRenderMode: " << RenderMode::toString( renderMode() ) << std::endl;
+		app::console() << "Scenario[" << this << "]::setRenderMode: " << RenderMode::toString( getRenderMode() ) << endl;
 	}
 
-	void Scenario::screenshot( const ci::fs::path &folderPath, const std::string &namingPrefix, const std::string format )
+	void Scenario::screenshot( const ci::fs::path &folderPath, const string &namingPrefix, const string format )
 	{
-		std::size_t index = 0;
+		size_t index = 0;
 		ci::fs::path fullPath;
 
 		do {
@@ -80,6 +80,16 @@ namespace core {
 
 		Surface s = app::copyWindowSurface();
 		writeImage( fullPath.string(), s, ImageTarget::Options(), format );
+	}
+
+	void Scenario::setLevel(LevelRef level) {
+		if (_level) {
+			_level->removeFromScenario();
+		}
+		_level = level;
+		if (_level) {
+			_level->addedToScenario(shared_from_this());
+		}
 	}
 
 	void Scenario::_dispatchSetup()
@@ -95,6 +105,9 @@ namespace core {
 	void Scenario::_dispatchResize( const ivec2 &size )
 	{
 		_camera.setViewport(size.x, size.y);
+		if (_level) {
+			_level->resize(size);
+		}
 		resize(size);
 	}
 
@@ -102,12 +115,18 @@ namespace core {
 	{
 		update_time( _stepTime );
 		_stepTime.deltaT = clamp<seconds_t>(_stepTime.deltaT, STEP_INTERVAL * 0.9, STEP_INTERVAL * 1.1 );
+		if (_level) {
+			_level->step(_stepTime);
+		}
 		step( _stepTime );
 	}
 
 	void Scenario::_dispatchUpdate()
 	{
 		update_time( _time );
+		if (_level) {
+			_level->step(_time);
+		}
 		update( _time );
 	}
 
@@ -117,6 +136,9 @@ namespace core {
 		_renderState.pass = 0;
 		_renderState.time = _time.time;
 		_renderState.deltaT = _time.deltaT;
+		if (_level) {
+			_level->draw(_renderState);
+		}
 		draw( _renderState );
 	}
 
