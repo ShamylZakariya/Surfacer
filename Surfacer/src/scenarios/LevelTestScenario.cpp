@@ -31,6 +31,7 @@ namespace {
 		}
 
 		void onReady(GameObjectRef parent, LevelRef level) override{
+			Component::onReady(parent, level);
 			CI_LOG_D("onReady");
 			_drawComponent = getSibling<DrawComponent>();
 		}
@@ -69,6 +70,7 @@ namespace {
 		}
 
 		void onReady(GameObjectRef parent, LevelRef level) override{
+			DrawComponent::onReady(parent, level);
 			CI_LOG_D("onReady");
 			_orbitMovement = getSibling<OrbitMovement>();
 		}
@@ -94,10 +96,30 @@ namespace {
 		OrbitMovementWeakRef _orbitMovement;
 	};
 
+	class ArrowKeyComponent : public InputComponent {
+	public:
+		ArrowKeyComponent(){
+			monitorKey(app::KeyEvent::KEY_UP);
+			monitorKey(app::KeyEvent::KEY_RIGHT);
+			monitorKey(app::KeyEvent::KEY_DOWN);
+			monitorKey(app::KeyEvent::KEY_LEFT);
+		}
+
+		void monitoredKeyDown( int keyCode ) override {
+			CI_LOG_D("keyCode: " << keyCode);
+		}
+
+		void monitoredKeyUp( int keyCode ) override {
+			CI_LOG_D("keyCode: " << keyCode);
+		}
+
+	};
+
 	GameObjectRef make_shape_object(string name, vec2 size, vec2 orbitCenter, float orbitRadius, float radsPerSecond) {
 		GameObjectRef obj = make_shared<GameObject>(name);
 		obj->addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0)));
 		obj->addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
+		obj->addComponent(make_shared<ArrowKeyComponent>());
 		return obj;
 	}
 

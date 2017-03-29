@@ -19,6 +19,9 @@ namespace core {
 
 	SMART_PTR(Scenario);
 	SMART_PTR(Level);
+	SMART_PTR(DrawDispatcher);
+
+	
 
 	class Level : public enable_shared_from_this<Level> {
 	public:

@@ -21,8 +21,65 @@ namespace core {
 #pragma mark - DrawComponent
 
 	void DrawComponent::notifyMoved() {
-
+		CI_LOG_D("Would notify level->drawDispatcher");
 	}
+
+#pragma mark - InputComponent
+
+	/*
+	 map< int, bool > _monitoredKeyStates;
+	 */
+
+	void InputComponent::onReady(GameObjectRef parent, LevelRef level) {
+		takeFocus();
+	}
+
+	void InputComponent::monitorKey( int keyCode ) {
+		_monitoredKeyStates[keyCode] = false;
+	}
+
+	void InputComponent::ignoreKey( int keyCode ) {
+		_monitoredKeyStates.erase( keyCode );
+	}
+
+	bool InputComponent::isKeyDown( int keyCode ) const {
+		auto pos = _monitoredKeyStates.find( keyCode );
+		if ( pos != _monitoredKeyStates.end() )
+		{
+			return pos->second;
+		}
+
+		return false;
+	}
+
+	bool InputComponent::keyDown( const ci::app::KeyEvent &event ) {
+		// if this is a key code we're monitoring, consume the event
+		int keyCode = event.getCode();
+		auto pos = _monitoredKeyStates.find( keyCode );
+		if ( pos != _monitoredKeyStates.end() )
+		{
+			pos->second = true;
+			monitoredKeyDown(keyCode);
+			return true;
+		}
+
+		return false;
+	}
+
+	bool InputComponent::keyUp( const ci::app::KeyEvent &event ) {
+		// if this is a key code we're monitoring, consume the event
+		int keyCode = event.getCode();
+		auto pos = _monitoredKeyStates.find( keyCode );
+		if ( pos != _monitoredKeyStates.end() )
+		{
+			pos->second = false;
+			monitoredKeyUp(keyCode);
+			return true;
+		}
+
+		return false;
+	}
+
 
 #pragma mark - GameObject
 

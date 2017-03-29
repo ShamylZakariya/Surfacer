@@ -10,6 +10,7 @@
 #define GameObject_hpp
 
 #include "Common.hpp"
+#include "InputDispatcher.hpp"
 #include "RenderState.hpp"
 #include "TimeState.hpp"
 
@@ -85,6 +86,43 @@ namespace core {
 		virtual void notifyMoved();
 
 	};
+
+
+	SMART_PTR(InputComponent);
+	class InputComponent : public Component, public InputListener{
+	public:
+		InputComponent(){}
+		virtual ~InputComponent(){}
+
+		virtual void onReady(GameObjectRef parent, LevelRef level) override;
+
+		void monitorKey( int keyCode );
+		void ignoreKey( int keyCode );
+
+		/**
+			Called when a monitored key is pressed
+		 */
+		virtual void monitoredKeyDown( int keyCode ){}
+
+		/**
+			Called when a monitored key is released
+		 */
+		virtual void monitoredKeyUp( int keyCode ){}
+
+		/**
+			return true if any monitored keys are pressed.
+			this ignores any keys that haven't been registered for monitoring by monitorKey()
+		 */
+		bool isKeyDown( int keyCode ) const override;
+
+		virtual bool keyDown( const ci::app::KeyEvent &event ) override;
+		virtual bool keyUp( const ci::app::KeyEvent &event ) override;
+
+	private:
+
+		map< int, bool > _monitoredKeyStates;
+	};
+
 
 	class GameObject : public enable_shared_from_this<GameObject>{
 	public:
