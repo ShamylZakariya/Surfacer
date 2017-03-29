@@ -77,7 +77,7 @@ namespace core {
 #else
 
 		_scenario->_dispatchStep();
-		_averageStepsPerSecond = lrp<double>(0.1, _averageStepsPerSecond, 1.0/_scenario->stepTime().deltaT );
+		_averageStepsPerSecond = lrp<double>(0.1, _averageStepsPerSecond, 1.0/_scenario->getStepTime().deltaT );
 
 #endif
 	}

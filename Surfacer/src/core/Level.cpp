@@ -120,12 +120,21 @@ namespace core {
 
 	void Level::addGameObject(GameObjectRef obj) {
 		CI_ASSERT_MSG(!obj->getLevel(), "Can't add a GameObject that already has been added to this or another Level");
+
 		_objects.insert(obj);
 		_objectsById[obj->getId()] = obj;
+		obj->onAddedToLevel(shared_from_this());
+
+		if (_ready) {
+			obj->onReady(shared_from_this());
+		}
 	}
 
 	void Level::removeGameObject(GameObjectRef obj) {
 		CI_ASSERT_MSG(obj->getLevel().get() == this, "Can't remove a GameObject which isn't a child of this Level");
+		_objects.erase(obj);
+		_objectsById.erase(obj->getId());
+		obj->onRemovedFromLevel();
 	}
 
 	GameObjectRef Level::getGameObjectById(size_t id) const {
@@ -165,8 +174,10 @@ namespace core {
 
 	void Level::onReady() {
 		CI_ASSERT_MSG(!_ready, "Can't call onReady() on Level that is already ready");
+
+		const auto self = shared_from_this();
 		for (auto &obj : _objects) {
-			obj->onReady();
+			obj->onReady(self);
 		}
 		_ready = true;
 	}

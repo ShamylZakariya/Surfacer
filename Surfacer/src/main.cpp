@@ -10,13 +10,14 @@
 #include "GameApp.hpp"
 
 #include "TerrainTestScenario.hpp"
+#include "LevelTestScenario.hpp"
 
 class DemoApp : public core::GameApp {
 public:
 
 	static void prepareSettings(Settings *settings) {
 		GameApp::prepareSettings(settings);
-		settings->setTitle( "DemoApp - Milestone 6" );
+		settings->setTitle( "DemoApp - LevelTestScenario" );
 	}
 
 public:
@@ -25,7 +26,7 @@ public:
 
 	virtual void setup() override {
 		GameApp::setup();
-		setScenario(make_shared<TerrainTestScenario>());
+		setScenario(make_shared<LevelTestScenario>());
 	}
 
 };

@@ -26,8 +26,12 @@ namespace core {
 		virtual ~Component(){}
 
 		GameObjectRef getGameObject() const { return _gameObject.lock(); }
+		LevelRef getLevel() const;
 
-		virtual void onReady(){}
+		template<typename T>
+		shared_ptr<T> getSibling() const;
+
+		virtual void onReady(GameObjectRef parent, LevelRef level){}
 		virtual void step(const time_state &timeState){}
 		virtual void update(const time_state &timeState){}
 
@@ -77,6 +81,9 @@ namespace core {
 		virtual void draw(const core::render_state &renderState) = 0;
 		virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
 
+		// call this to notify the draw dispatch system that this DrawComponent has an updated BB
+		virtual void notifyMoved();
+
 	};
 
 	class GameObject : public enable_shared_from_this<GameObject>{
@@ -112,7 +119,7 @@ namespace core {
 
 		LevelRef getLevel() const { return _level.lock(); }
 
-		virtual void onReady();
+		virtual void onReady(LevelRef level);
 
 		virtual void step(const time_state &timeState);
 		virtual void update(const time_state &timeState);
@@ -120,8 +127,8 @@ namespace core {
 	protected:
 
 		friend class Level;
-		virtual void addedToLevel(LevelRef level) { _level = level; }
-		virtual void removeFromLevel() { _level.reset(); }
+		virtual void onAddedToLevel(LevelRef level) { _level = level; }
+		virtual void onRemovedFromLevel() { _level.reset(); }
 
 	private:
 
@@ -136,6 +143,14 @@ namespace core {
 
 
 	};
+
+#pragma mark - Impls
+
+	template<typename T>
+	shared_ptr<T> Component::getSibling() const {
+		return getGameObject()->getComponent<T>();
+	}
+
 
 }
 

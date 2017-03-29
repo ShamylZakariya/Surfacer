@@ -12,6 +12,20 @@
 
 namespace core {
 
+#pragma mark - Component	
+
+	LevelRef Component::getLevel() const {
+		return getGameObject()->getLevel();
+	}
+
+#pragma mark - DrawComponent
+
+	void DrawComponent::notifyMoved() {
+
+	}
+
+#pragma mark - GameObject
+
 	/*
 		static size_t _idCounter;
 		size_t _id;
@@ -43,7 +57,7 @@ namespace core {
 		}
 
 		if (_ready) {
-			component->onReady();
+			component->onReady(shared_from_this(),getLevel());
 		}
 	}
 
@@ -58,9 +72,10 @@ namespace core {
 		}
 	}
 
-	void GameObject::onReady(){
+	void GameObject::onReady(LevelRef level){
+		const auto self = shared_from_this();
 		for (auto &component : _components) {
-			component->onReady();
+			component->onReady(self, level);
 		}
 		_ready = true;
 	}

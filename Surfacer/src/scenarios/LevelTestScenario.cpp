@@ -11,6 +11,98 @@
 #include "GameApp.hpp"
 #include "Strings.hpp"
 
+namespace {
+
+	SMART_PTR(BoxDrawComponent);
+	SMART_PTR(OrbitMovement);
+	SMART_PTR(ShapeGameObject);
+
+
+	class OrbitMovement : public core::Component {
+	public:
+		OrbitMovement(vec2 orbitCenter, float orbitRadius, float radsPerSecond):
+		_orbitCenter(orbitCenter),
+		_orbitRadius(orbitRadius),
+		_radsPerSecond(radsPerSecond),
+		_rads(0) {}
+
+		virtual ~OrbitMovement() {
+			CI_LOG_D("dtor");
+		}
+
+		void onReady(GameObjectRef parent, LevelRef level) override{
+			CI_LOG_D("onReady");
+			_drawComponent = getSibling<DrawComponent>();
+		}
+
+		void step(const time_state &timeState) override{
+		}
+
+		void update(const time_state &timeState) override{
+			_rads += _radsPerSecond * timeState.deltaT;
+			if (DrawComponentRef dc = _drawComponent.lock()) {
+				dc->notifyMoved();
+			}
+		}
+
+		vec2 getCurrentPosition() const {
+			return vec2(_orbitCenter.x + cos(_rads) * _orbitRadius, _orbitCenter.y + sin(_rads) * _orbitRadius);
+		}
+
+
+	private:
+		vec2 _orbitCenter;
+		float _orbitRadius;
+		float _radsPerSecond, _rads;
+		DrawComponentWeakRef _drawComponent;
+	};
+
+	class BoxDrawComponent : public DrawComponent {
+	public:
+		BoxDrawComponent(vec2 size, Color color):
+		_size(size),
+		_color(color)
+		{}
+
+		virtual ~BoxDrawComponent() {
+			CI_LOG_D("dtor");
+		}
+
+		void onReady(GameObjectRef parent, LevelRef level) override{
+			CI_LOG_D("onReady");
+			_orbitMovement = getSibling<OrbitMovement>();
+		}
+
+		cpBB getBB() const override {
+			return cpBBNewForExtents(cpv(_orbitMovement.lock()->getCurrentPosition()), _size.x, _size.y);
+		}
+
+		void draw(const core::render_state &renderState) override {
+			gl::color(Color(1,0,1));
+			cpBB bb = getBB();
+			Rectf aabbRect(bb.l, bb.b, bb.r, bb.t);
+			gl::drawStrokedRect(aabbRect);
+		}
+
+		VisibilityDetermination::style getVisibilityDetermination() const override {
+			return VisibilityDetermination::FRUSTUM_CULLING;
+		}
+
+	private:
+		vec2 _size;
+		Color _color;
+		OrbitMovementWeakRef _orbitMovement;
+	};
+
+	GameObjectRef make_shape_object(string name, vec2 size, vec2 orbitCenter, float orbitRadius, float radsPerSecond) {
+		GameObjectRef obj = make_shared<GameObject>(name);
+		obj->addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0)));
+		obj->addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
+		return obj;
+	}
+
+}
+
 LevelTestScenario::LevelTestScenario():
 _cameraController(getCamera())
 {
@@ -25,6 +117,7 @@ void LevelTestScenario::setup() {
 	LevelRef level = make_shared<Level>("Hello Levels!");
 
 	// add some game objects, etc
+	level->addGameObject(make_shape_object("Shape0", vec2(50,50), vec2(0,0), 100, 0.05));
 
 	setLevel(level);
 }
@@ -42,7 +135,7 @@ void LevelTestScenario::step( const time_state &time ) {
 }
 
 void LevelTestScenario::update( const time_state &time ) {
-
+	_cameraController.step(time);
 }
 
 void LevelTestScenario::draw( const render_state &state ) {
