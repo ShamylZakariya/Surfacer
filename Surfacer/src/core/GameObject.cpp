@@ -113,14 +113,15 @@ namespace core {
 		CI_ASSERT_MSG(component->getGameObject() == nullptr, "Cannot add a component that already has been added to another GameObject");
 
 		_components.insert(component);
-		component->attachedToGameObject(shared_from_this());
 
 		if (DrawComponentRef dc = dynamic_pointer_cast<DrawComponent>(component)) {
 			_drawComponent = dc;
 		}
 
 		if (_ready) {
-			component->onReady(shared_from_this(),getLevel());
+			const auto self = shared_from_this();
+			component->attachedToGameObject(self);
+			component->onReady(self,getLevel());
 		}
 	}
 
@@ -138,6 +139,7 @@ namespace core {
 	void GameObject::onReady(LevelRef level){
 		const auto self = shared_from_this();
 		for (auto &component : _components) {
+			component->attachedToGameObject(self);
 			component->onReady(self, level);
 		}
 		_ready = true;

@@ -60,11 +60,25 @@ namespace {
 		DrawComponentWeakRef _drawComponent;
 	};
 
+	class BoxBatchDrawDelegate : public DrawComponent::BatchDrawDelegate {
+	public:
+
+		void prepareForBatchDraw( const render_state &, const DrawComponentRef &firstInBatch ){
+			CI_LOG_D("start box draw batch");
+		}
+
+		void cleanupAfterBatchDraw( const render_state &, const DrawComponentRef &firstInBatch, const DrawComponentRef &lastInBatch ){
+			CI_LOG_D("END box draw batch");
+		}
+
+	};
+
 	class BoxDrawComponent : public DrawComponent {
 	public:
-		BoxDrawComponent(vec2 size, Color color):
+		BoxDrawComponent(vec2 size, Color color, BatchDrawDelegateRef dd):
 		_size(size),
-		_color(color)
+		_color(color),
+		_drawDelegate(dd)
 		{}
 
 		virtual ~BoxDrawComponent() {
@@ -98,10 +112,13 @@ namespace {
 
 		int getLayer() const override { return 0; }
 
+		BatchDrawDelegateRef getBatchDrawDelegate() const override { return _drawDelegate; }
+
 	private:
 		vec2 _size;
 		Color _color;
 		OrbitMovementWeakRef _orbitMovement;
+		BatchDrawDelegateRef _drawDelegate;
 	};
 
 	class OrbitSpeedControlComponent : public InputComponent {
@@ -136,9 +153,19 @@ namespace {
 
 	};
 
-	GameObjectRef make_shape_object(string name, vec2 size, vec2 orbitCenter, float orbitRadius, float radsPerSecond) {
+	class BoxObject : public GameObject {
+	public:
+		BoxObject(string name, vec2 size, vec2 orbitCenter, float orbitRadius, float radsPerSecond, DrawComponent::BatchDrawDelegateRef dd):
+		GameObject(name){
+			addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0), dd));
+			addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
+			addComponent(make_shared<OrbitSpeedControlComponent>());
+		}
+	};
+
+	GameObjectRef make_shape_object(string name, vec2 size, vec2 orbitCenter, float orbitRadius, float radsPerSecond, DrawComponent::BatchDrawDelegateRef dd) {
 		GameObjectRef obj = make_shared<GameObject>(name);
-		obj->addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0)));
+		obj->addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0), dd));
 		obj->addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
 		obj->addComponent(make_shared<OrbitSpeedControlComponent>());
 		return obj;
@@ -159,8 +186,14 @@ LevelTestScenario::~LevelTestScenario() {
 void LevelTestScenario::setup() {
 	LevelRef level = make_shared<Level>("Hello Levels!");
 
+	shared_ptr<BoxBatchDrawDelegate> drawDelegate = make_shared<BoxBatchDrawDelegate>();
+
 	// add some game objects, etc
-	level->addGameObject(make_shape_object("Shape0", vec2(50,50), vec2(0,0), 100, 0.05));
+	level->addGameObject(make_shared<BoxObject>("Shape0", vec2(50,50), vec2(0,0), 100, 0.05, drawDelegate));
+	level->addGameObject(make_shared<BoxObject>("Shape1", vec2(20,20), vec2(100,0), 90, 0.07, drawDelegate));
+	level->addGameObject(make_shared<BoxObject>("Shape2", vec2(50,10), vec2(200,0), 80, 0.09, drawDelegate));
+	level->addGameObject(make_shared<BoxObject>("Shape3", vec2(10,50), vec2(300,0), 50, 0.11, drawDelegate));
+	level->addGameObject(make_shared<BoxObject>("Shape4", vec2(10,10), vec2(400,0), 20, 0.13, drawDelegate));
 
 	setLevel(level);
 }
@@ -186,8 +219,6 @@ void LevelTestScenario::clear( const render_state &state ) {
 }
 
 void LevelTestScenario::draw( const render_state &state ) {
-	//const ivec2 screenSize = getWindowSize();
-
 	{
 		// apply camera modelview
 		Viewport::ScopedState cameraState(getCamera());
