@@ -20,11 +20,23 @@ namespace core {
 	SMART_PTR(Level);
 
 	SMART_PTR(Component);
-	class Component {
+	class Component : public enable_shared_from_this<Component>{
 	public:
 
 		Component(){}
 		virtual ~Component(){}
+
+		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this<FooComponent>();
+		template<typename T>
+		shared_ptr<T> shared_from_this() const {
+			return dynamic_pointer_cast<T>(enable_shared_from_this<Component>::shared_from_this());
+		}
+
+		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this<FooComponent>();
+		template<typename T>
+		shared_ptr<T> shared_from_this() {
+			return dynamic_pointer_cast<T>(enable_shared_from_this<Component>::shared_from_this());
+		}
 
 		GameObjectRef getGameObject() const { return _gameObject.lock(); }
 		LevelRef getLevel() const;
@@ -72,8 +84,44 @@ namespace core {
 	}
 
 
+	#pragma mark - BatchDrawDelegate
+
 	SMART_PTR(DrawComponent);
+
+
+
 	class DrawComponent : public Component {
+	public:
+
+		/**
+		 @class BatchDrawDelegate
+
+		 Some DrawComponents are part of a larger whole ( terrain::Shape, or a swarm of identical enemies, 
+		 for example ) and it is a great help to efficiency to mark them as being part of a single batch 
+		 to be rendered contiguously. In this case, the render system will group the batch together and 
+		 then when drawing them, will for the first call prepareForBatchDraw on the first's batchDrawDelegate, 
+		 draw each, and then call cleanupAfterBatchDraw on the last of the contiguous set.
+		 Note: if these items are on different layers, the draw system will prioritize layer ordering over batching.
+		 */
+		class BatchDrawDelegate
+		{
+		public:
+
+			BatchDrawDelegate(){}
+			virtual ~BatchDrawDelegate(){}
+
+			/**
+			 Called before a batch of like objects are rendered.
+			 Passes the render_state, and the first object in the series. This is to simplify
+			 situations where a single object is BatchDrawDelegate to multiple target batches.
+			 */
+			virtual void prepareForBatchDraw( const render_state &, const DrawComponentRef &firstInBatch ){}
+			virtual void cleanupAfterBatchDraw( const render_state &, const DrawComponentRef &firstInBatch, const DrawComponentRef &lastInBatch ){}
+			
+		};
+
+		typedef shared_ptr<BatchDrawDelegate> BatchDrawDelegateRef;
+
 	public:
 		DrawComponent(){}
 		virtual ~DrawComponent(){}
@@ -81,6 +129,9 @@ namespace core {
 		virtual cpBB getBB() const = 0;
 		virtual void draw(const core::render_state &renderState) = 0;
 		virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
+		virtual int getLayer() const = 0;
+		virtual int getDrawPasses() const { return 1; }
+		virtual BatchDrawDelegateRef getBatchDrawDelegate() const { return nullptr; }
 
 		// call this to notify the draw dispatch system that this DrawComponent has an updated BB
 		virtual void notifyMoved();

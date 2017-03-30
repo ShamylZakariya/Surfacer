@@ -9,8 +9,7 @@
 #ifndef LevelTestScenario_hpp
 #define LevelTestScenario_hpp
 
-#include "Scenario.hpp"
-#include "ViewportController.hpp"
+#include "Core.hpp"
 
 using namespace ci;
 using namespace core;
@@ -27,6 +26,7 @@ public:
 
 	virtual void step( const time_state &time ) override;
 	virtual void update( const time_state &time ) override;
+	virtual void clear( const render_state &state ) override;
 	virtual void draw( const render_state &state ) override;
 
 	virtual bool mouseDown( const ci::app::MouseEvent &event ) override;

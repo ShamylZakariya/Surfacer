@@ -10,6 +10,8 @@
 
 #include <cinder/CinderAssert.h>
 
+#include "Level.hpp"
+
 namespace core {
 
 #pragma mark - Component	
@@ -21,7 +23,7 @@ namespace core {
 #pragma mark - DrawComponent
 
 	void DrawComponent::notifyMoved() {
-		CI_LOG_D("Would notify level->drawDispatcher");
+		getGameObject()->getLevel()->getDrawDispatcher()->moved(this);
 	}
 
 #pragma mark - InputComponent
@@ -56,10 +58,11 @@ namespace core {
 		// if this is a key code we're monitoring, consume the event
 		int keyCode = event.getCode();
 		auto pos = _monitoredKeyStates.find( keyCode );
-		if ( pos != _monitoredKeyStates.end() )
-		{
-			pos->second = true;
-			monitoredKeyDown(keyCode);
+		if ( pos != _monitoredKeyStates.end() ) {
+			if (!pos->second){
+				pos->second = true;
+				monitoredKeyDown(keyCode);
+			}
 			return true;
 		}
 
@@ -70,10 +73,11 @@ namespace core {
 		// if this is a key code we're monitoring, consume the event
 		int keyCode = event.getCode();
 		auto pos = _monitoredKeyStates.find( keyCode );
-		if ( pos != _monitoredKeyStates.end() )
-		{
-			pos->second = false;
-			monitoredKeyUp(keyCode);
+		if ( pos != _monitoredKeyStates.end() ) {
+			if (pos->second) {
+				pos->second = false;
+				monitoredKeyUp(keyCode);
+			}
 			return true;
 		}
 
@@ -101,7 +105,9 @@ namespace core {
 	_ready(false)
 	{}
 
-	GameObject::~GameObject(){}
+	GameObject::~GameObject(){
+		CI_LOG_D("destructor - id: " << _id << " name: " << _name);
+	}
 
 	void GameObject::addComponent(ComponentRef component) {
 		CI_ASSERT_MSG(component->getGameObject() == nullptr, "Cannot add a component that already has been added to another GameObject");

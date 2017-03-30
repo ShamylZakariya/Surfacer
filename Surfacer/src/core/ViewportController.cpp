@@ -9,6 +9,7 @@
 #include "ViewportController.hpp"
 
 #include <algorithm>
+
 #include "ChipmunkHelpers.hpp"
 
 namespace {

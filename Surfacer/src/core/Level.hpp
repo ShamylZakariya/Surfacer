@@ -21,7 +21,60 @@ namespace core {
 	SMART_PTR(Level);
 	SMART_PTR(DrawDispatcher);
 
-	
+#pragma mark - DrawDispatcher
+
+	class DrawDispatcher {
+	public:
+
+		struct collector
+		{
+			set<DrawComponentRef> visible;
+			vector<DrawComponentRef> sorted;
+
+			// remove a game object from the collection
+			void remove( const DrawComponentRef &dc  )
+			{
+				visible.erase(dc);
+				sorted.erase(std::remove(sorted.begin(),sorted.end(),dc), sorted.end());
+			}
+		};
+
+		DrawDispatcher();
+		virtual ~DrawDispatcher();
+
+		void add( const DrawComponentRef & );
+		void remove( const DrawComponentRef & );
+		void moved( const DrawComponentRef & );
+		void moved( DrawComponent* );
+
+		void cull( const render_state & );
+		void draw( const render_state & );
+
+		/**
+			Check if @a obj was visible in the last call to cull()
+		 */
+		bool visible( const DrawComponentRef &dc ) const {
+			return _alwaysVisible.find(dc) != _alwaysVisible.end() || _collector.visible.find(dc) != _collector.visible.end();
+		}
+
+	private:
+
+		/**
+			render a run of delegates
+			returns iterator to last object drawn
+		 */
+		vector<DrawComponentRef>::iterator _drawDelegateRun( vector<DrawComponentRef>::iterator first, vector<DrawComponentRef>::iterator storageEnd, const render_state &state );
+
+	private:
+
+		cpSpatialIndex *_index;
+		std::set< DrawComponentRef > _alwaysVisible;
+		collector _collector;
+
+	};
+
+
+#pragma mark - Level
 
 	class Level : public enable_shared_from_this<Level> {
 	public:
@@ -53,6 +106,7 @@ namespace core {
 		virtual GameObjectRef getGameObjectById(size_t id) const;
 		virtual vector<GameObjectRef> getGameObjectsByName(string name) const;
 
+		const DrawDispatcherRef &getDrawDispatcher() const { return _drawDispatcher; }
 		const time_state &time() const { return _time; }
 		const Viewport &camera() const;
 		Viewport &camera();
@@ -73,6 +127,7 @@ namespace core {
 		map<size_t,GameObjectRef> _objectsById;
 		time_state _time;
 		string _name;
+		DrawDispatcherRef _drawDispatcher;
 
 	};
 

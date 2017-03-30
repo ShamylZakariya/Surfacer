@@ -10,6 +10,7 @@
 
 #include <cinder/gl/gl.h>
 
+#include "Level.hpp"
 #include "Strings.hpp"
 
 using namespace ci;
@@ -58,6 +59,9 @@ namespace core {
 	{}
 
 	void Scenario::update( const time_state &time )
+	{}
+
+	void Scenario::clear( const render_state &state )
 	{}
 
 	void Scenario::draw( const render_state &state )
@@ -115,19 +119,19 @@ namespace core {
 	{
 		update_time( _stepTime );
 		_stepTime.deltaT = clamp<seconds_t>(_stepTime.deltaT, STEP_INTERVAL * 0.9, STEP_INTERVAL * 1.1 );
+		step( _stepTime );
 		if (_level) {
 			_level->step(_stepTime);
 		}
-		step( _stepTime );
 	}
 
 	void Scenario::_dispatchUpdate()
 	{
 		update_time( _time );
-		if (_level) {
-			_level->step(_time);
-		}
 		update( _time );
+		if (_level) {
+			_level->update(_time);
+		}
 	}
 
 	void Scenario::_dispatchDraw()
@@ -136,9 +140,14 @@ namespace core {
 		_renderState.pass = 0;
 		_renderState.time = _time.time;
 		_renderState.deltaT = _time.deltaT;
+
+		clear(_renderState);
+
 		if (_level) {
+			Viewport::ScopedState cameraState(getCamera());
 			_level->draw(_renderState);
 		}
+
 		draw( _renderState );
 	}
 

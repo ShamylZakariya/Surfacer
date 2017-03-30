@@ -50,6 +50,8 @@ namespace {
 			return vec2(_orbitCenter.x + cos(_rads) * _orbitRadius, _orbitCenter.y + sin(_rads) * _orbitRadius);
 		}
 
+		float getRadiansPerSecond() const { return _radsPerSecond; }
+		void setRadiansPerSecond(float rps) { _radsPerSecond = rps; }
 
 	private:
 		vec2 _orbitCenter;
@@ -76,19 +78,25 @@ namespace {
 		}
 
 		cpBB getBB() const override {
-			return cpBBNewForExtents(cpv(_orbitMovement.lock()->getCurrentPosition()), _size.x, _size.y);
+			if (OrbitMovementRef movement = _orbitMovement.lock()) {
+				return cpBBNewForExtents(cpv(movement->getCurrentPosition()), _size.x/2, _size.y/2);
+			} else {
+				return cpBBNew(0, 0, 0, 0);
+			}
 		}
 
 		void draw(const core::render_state &renderState) override {
 			gl::color(Color(1,0,1));
 			cpBB bb = getBB();
 			Rectf aabbRect(bb.l, bb.b, bb.r, bb.t);
-			gl::drawStrokedRect(aabbRect);
+			gl::drawSolidRect(aabbRect);
 		}
 
 		VisibilityDetermination::style getVisibilityDetermination() const override {
 			return VisibilityDetermination::FRUSTUM_CULLING;
 		}
+
+		int getLayer() const override { return 0; }
 
 	private:
 		vec2 _size;
@@ -96,21 +104,34 @@ namespace {
 		OrbitMovementWeakRef _orbitMovement;
 	};
 
-	class ArrowKeyComponent : public InputComponent {
+	class OrbitSpeedControlComponent : public InputComponent {
 	public:
-		ArrowKeyComponent(){
+		OrbitSpeedControlComponent(){
 			monitorKey(app::KeyEvent::KEY_UP);
-			monitorKey(app::KeyEvent::KEY_RIGHT);
 			monitorKey(app::KeyEvent::KEY_DOWN);
-			monitorKey(app::KeyEvent::KEY_LEFT);
+			monitorKey(app::KeyEvent::KEY_ESCAPE);
 		}
 
 		void monitoredKeyDown( int keyCode ) override {
-			CI_LOG_D("keyCode: " << keyCode);
-		}
 
-		void monitoredKeyUp( int keyCode ) override {
-			CI_LOG_D("keyCode: " << keyCode);
+			const float deltaRadiansPerSecond = 10 * M_PI / 180;
+
+			switch(keyCode){
+				case app::KeyEvent::KEY_ESCAPE:
+					CI_LOG_D("KEY_ESCAPE - Committing suicide :" << getGameObject()->getId());
+					getGameObject()->setFinished();
+					break;
+				case app::KeyEvent::KEY_UP: {
+					OrbitMovementRef mover = getSibling<OrbitMovement>();
+					mover->setRadiansPerSecond(mover->getRadiansPerSecond()+deltaRadiansPerSecond);
+					break;
+				}
+				case app::KeyEvent::KEY_DOWN: {
+					OrbitMovementRef mover = getSibling<OrbitMovement>();
+					mover->setRadiansPerSecond(mover->getRadiansPerSecond()-deltaRadiansPerSecond);
+					break;
+				}
+			}
 		}
 
 	};
@@ -119,7 +140,7 @@ namespace {
 		GameObjectRef obj = make_shared<GameObject>(name);
 		obj->addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0)));
 		obj->addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
-		obj->addComponent(make_shared<ArrowKeyComponent>());
+		obj->addComponent(make_shared<OrbitSpeedControlComponent>());
 		return obj;
 	}
 
@@ -160,9 +181,12 @@ void LevelTestScenario::update( const time_state &time ) {
 	_cameraController.step(time);
 }
 
+void LevelTestScenario::clear( const render_state &state ) {
+	gl::clear( Color( 0.2, 0.2, 0.2 ) );
+}
+
 void LevelTestScenario::draw( const render_state &state ) {
 	//const ivec2 screenSize = getWindowSize();
-	gl::clear( Color( 0.2, 0.2, 0.2 ) );
 
 	{
 		// apply camera modelview

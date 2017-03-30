@@ -13,10 +13,10 @@
 #include "Viewport.hpp"
 #include "RenderState.hpp"
 #include "TimeState.hpp"
-#include "Level.hpp"
 
 namespace core {
 
+	SMART_PTR(Level)
 	SMART_PTR(Scenario)
 
 	class Scenario : public InputListener, public signals::receiver, public enable_shared_from_this<Scenario> {
@@ -30,6 +30,7 @@ namespace core {
 		virtual void resize( ivec2 size );
 		virtual void step( const time_state &time );
 		virtual void update( const time_state &time );
+		virtual void clear( const render_state &state );
 		virtual void draw( const render_state &state );
 
 		const Viewport& getCamera() const { return _camera; }

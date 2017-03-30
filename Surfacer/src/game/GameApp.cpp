@@ -41,12 +41,14 @@ namespace core {
 	}
 
 	void GameApp::update() {
+		// run physics step()
 #if USE_PHYSICS_LOOP
 		_physicsLoop->step();
 #else
 		step();
 #endif
 
+		// update is always called after physics step()
 		_scenario->_dispatchUpdate();
 	}
 
