@@ -175,7 +175,18 @@ namespace core {
 	};
 
 
-	class GameObject : public enable_shared_from_this<GameObject>{
+	class GameObject : public enable_shared_from_this<GameObject> {
+	public:
+
+		static GameObjectRef with(string name, const initializer_list<ComponentRef> &components) {
+			auto obj = make_shared<GameObject>(name);
+			for (auto &component : components) {
+				obj->addComponent(component);
+			}
+
+			return obj;
+		}
+
 	public:
 
 		GameObject(string name);

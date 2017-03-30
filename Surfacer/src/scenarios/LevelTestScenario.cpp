@@ -64,11 +64,11 @@ namespace {
 	public:
 
 		void prepareForBatchDraw( const render_state &, const DrawComponentRef &firstInBatch ){
-			CI_LOG_D("start box draw batch");
+			//CI_LOG_D("start box draw batch");
 		}
 
 		void cleanupAfterBatchDraw( const render_state &, const DrawComponentRef &firstInBatch, const DrawComponentRef &lastInBatch ){
-			CI_LOG_D("END box draw batch");
+			//CI_LOG_D("END box draw batch");
 		}
 
 	};
@@ -161,15 +161,73 @@ namespace {
 			addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
 			addComponent(make_shared<OrbitSpeedControlComponent>());
 		}
+		virtual ~BoxObject() {
+			CI_LOG_D("destructor - id: " << getId() << " name: " << getName());
+		}
 	};
 
-	GameObjectRef make_shape_object(string name, vec2 size, vec2 orbitCenter, float orbitRadius, float radsPerSecond, DrawComponent::BatchDrawDelegateRef dd) {
-		GameObjectRef obj = make_shared<GameObject>(name);
-		obj->addComponent(make_shared<BoxDrawComponent>(size, Color(1,0,0), dd));
-		obj->addComponent(make_shared<OrbitMovement>(orbitCenter, orbitRadius, radsPerSecond));
-		obj->addComponent(make_shared<OrbitSpeedControlComponent>());
-		return obj;
-	}
+	class WorldCoordinateSystemDrawComponent : public DrawComponent {
+	public:
+
+		WorldCoordinateSystemDrawComponent(int gridSize = 10):
+		_gridSize(gridSize){}
+
+		void onReady(GameObjectRef parent, LevelRef level) override{
+			DrawComponent::onReady(parent, level);
+		}
+
+		cpBB getBB() const override {
+			return cpBBInfinity;
+		}
+
+		void draw(const core::render_state &state) override {
+			const cpBB frustum = state.viewport.getFrustum();
+			const int gridSize = _gridSize;
+			const int majorGridSize = _gridSize * 10;
+			const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
+			const int lastY = static_cast<int>(floor(frustum.t / gridSize) * gridSize) + gridSize;
+			const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
+			const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
+
+			const auto MinorLineColor = ColorA(1,1,1,0.05);
+			const auto MajorLineColor = ColorA(1,1,1,0.25);
+			const auto AxisColor = ColorA(1,0,0,1);
+			gl::lineWidth(1.0 / state.viewport.getScale());
+
+			for (int y = firstY; y <= lastY; y+= gridSize) {
+				if (y == 0) {
+					gl::color(AxisColor);
+				} else if ( y % majorGridSize == 0) {
+					gl::color(MajorLineColor);
+				} else {
+					gl::color(MinorLineColor);
+				}
+				gl::drawLine(vec2(firstX, y), vec2(lastX, y));
+			}
+
+			for (int x = firstX; x <= lastX; x+= gridSize) {
+				if (x == 0) {
+					gl::color(AxisColor);
+				} else if ( x % majorGridSize == 0) {
+					gl::color(MajorLineColor);
+				} else {
+					gl::color(MinorLineColor);
+				}
+				gl::drawLine(vec2(x, firstY), vec2(x, lastY));
+			}
+		}
+
+		VisibilityDetermination::style getVisibilityDetermination() const override {
+			return VisibilityDetermination::ALWAYS_DRAW;
+		}
+
+		int getLayer() const override { return -1; }
+
+	private:
+
+		int _gridSize;
+
+	};
 
 }
 
@@ -186,9 +244,19 @@ LevelTestScenario::~LevelTestScenario() {
 void LevelTestScenario::setup() {
 	LevelRef level = make_shared<Level>("Hello Levels!");
 
-	shared_ptr<BoxBatchDrawDelegate> drawDelegate = make_shared<BoxBatchDrawDelegate>();
+	// add background renderer
+//	GameObjectRef background = make_shared<GameObject>("Background");
+//	background->addComponent(make_shared<WorldCoordinateSystemDrawComponent>());
 
-	// add some game objects, etc
+	auto background = GameObject::with("Background", {
+		make_shared<WorldCoordinateSystemDrawComponent>()
+	});
+
+	level->addGameObject(background);
+
+
+	// add some game objects sharing the drawDelegate
+	shared_ptr<BoxBatchDrawDelegate> drawDelegate = make_shared<BoxBatchDrawDelegate>();
 	level->addGameObject(make_shared<BoxObject>("Shape0", vec2(50,50), vec2(0,0), 100, 0.05, drawDelegate));
 	level->addGameObject(make_shared<BoxObject>("Shape1", vec2(20,20), vec2(100,0), 90, 0.07, drawDelegate));
 	level->addGameObject(make_shared<BoxObject>("Shape2", vec2(50,10), vec2(200,0), 80, 0.09, drawDelegate));
@@ -219,12 +287,6 @@ void LevelTestScenario::clear( const render_state &state ) {
 }
 
 void LevelTestScenario::draw( const render_state &state ) {
-	{
-		// apply camera modelview
-		Viewport::ScopedState cameraState(getCamera());
-
-		drawWorldCoordinateSystem(state);
-	}
 
 	//
 	// now we're in screen space - draw fpf/sps
@@ -308,43 +370,3 @@ void LevelTestScenario::reset() {
 	cleanup();
 	setup();
 }
-
-void LevelTestScenario::drawWorldCoordinateSystem(const render_state &state) {
-
-	const cpBB frustum = state.viewport.getFrustum();
-	const int gridSize = 10;
-	const int majorGridSize = 100;
-	const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
-	const int lastY = static_cast<int>(floor(frustum.t / gridSize) * gridSize) + gridSize;
-	const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
-	const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
-
-	const auto MinorLineColor = ColorA(1,1,1,0.05);
-	const auto MajorLineColor = ColorA(1,1,1,0.25);
-	const auto AxisColor = ColorA(1,0,0,1);
-	gl::lineWidth(1.0 / state.viewport.getScale());
-
-	for (int y = firstY; y <= lastY; y+= gridSize) {
-		if (y == 0) {
-			gl::color(AxisColor);
-		} else if ( y % majorGridSize == 0) {
-			gl::color(MajorLineColor);
-		} else {
-			gl::color(MinorLineColor);
-		}
-		gl::drawLine(vec2(firstX, y), vec2(lastX, y));
-	}
-
-	for (int x = firstX; x <= lastX; x+= gridSize) {
-		if (x == 0) {
-			gl::color(AxisColor);
-		} else if ( x % majorGridSize == 0) {
-			gl::color(MajorLineColor);
-		} else {
-			gl::color(MinorLineColor);
-		}
-		gl::drawLine(vec2(x, firstY), vec2(x, lastY));
-	}
-	
-}
-

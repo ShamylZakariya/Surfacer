@@ -105,9 +105,7 @@ namespace core {
 	_ready(false)
 	{}
 
-	GameObject::~GameObject(){
-		CI_LOG_D("destructor - id: " << _id << " name: " << _name);
-	}
+	GameObject::~GameObject(){}
 
 	void GameObject::addComponent(ComponentRef component) {
 		CI_ASSERT_MSG(component->getGameObject() == nullptr, "Cannot add a component that already has been added to another GameObject");
