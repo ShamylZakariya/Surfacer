@@ -9,7 +9,7 @@
 #ifndef IslandTestScenario_hpp
 #define IslandTestScenario_hpp
 
-#include "Terrain.hpp"
+#include "TerrainWorld.hpp"
 #include "Scenario.hpp"
 
 using namespace ci;

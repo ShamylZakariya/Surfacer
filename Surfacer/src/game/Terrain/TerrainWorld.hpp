@@ -1,13 +1,13 @@
 //
-//  Terrain.hpp
+//  TerrainWorld.hpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 3/1/17.
 //
 //
 
-#ifndef Island_hpp
-#define Island_hpp
+#ifndef TerrainWorld_hpp
+#define TerrainWorld_hpp
 
 #include <cinder/app/App.h>
 #include <boost/functional/hash.hpp>
@@ -107,7 +107,7 @@ namespace terrain {
 
 	/**
 	 Describes basic physics material properties for a collision shape
-	*/
+	 */
 	struct material {
 		float density;
 		float friction;
@@ -124,9 +124,9 @@ namespace terrain {
 
 
 	/**
-	@class World
-	World "owns" and manages Group instances, which in turn own and manage Shape instances.
-	*/
+	 @class World
+	 World "owns" and manages Group instances, which in turn own and manage Shape instances.
+	 */
 	class World {
 	public:
 
@@ -142,14 +142,14 @@ namespace terrain {
 		~World();
 
 		/**
-		 Build a world of dynamic and static shapes. Any shape overlapping an Anchor will be static. 
+		 Build a world of dynamic and static shapes. Any shape overlapping an Anchor will be static.
 		 Pieces cut off a static shape will become dynamic provided they don't overlap another anchor.
 		 */
 
 		void build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors = vector<AnchorRef>());
 
 		/**
-		Perform a cut in world space from a to b, with half-thickness of radius
+		 Perform a cut in world space from a to b, with half-thickness of radius
 		 */
 		void cut(vec2 a, vec2 b, float radius, cpShapeFilter filter);
 
@@ -249,7 +249,7 @@ namespace terrain {
 		cpSpace *_space;
 		cpBody *_body;
 		material _material;
-		set<ShapeRef> _shapes;		
+		set<ShapeRef> _shapes;
 		mutable cpBB _worldBB;
 	};
 
@@ -301,7 +301,7 @@ namespace terrain {
 #pragma mark - Anchor
 
 	/**
-	@class Anchor
+	 @class Anchor
 	 An Anchor is a single contour in world space which "anchors" shapes to be static and not dynamic bodies.
 	 A body is static if one of its shapes overlaps an anchor, and if the body's parentage has never been dynamic.
 	 This is to say, once a shape is severed from a static body and becomes dynamic, it can never be static again.
@@ -438,11 +438,11 @@ namespace terrain {
 		cpBB _shapesBB;
 		vector<cpShape*> _shapes;
 		GroupBaseWeakRef _group;
-
+		
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
 	};
-
+	
 }
 
-#endif /* Group_hpp */
+#endif /* TerrainWorld_hpp */

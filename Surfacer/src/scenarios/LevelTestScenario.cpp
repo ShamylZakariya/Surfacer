@@ -245,9 +245,6 @@ void LevelTestScenario::setup() {
 	LevelRef level = make_shared<Level>("Hello Levels!");
 
 	// add background renderer
-//	GameObjectRef background = make_shared<GameObject>("Background");
-//	background->addComponent(make_shared<WorldCoordinateSystemDrawComponent>());
-
 	auto background = GameObject::with("Background", {
 		make_shared<WorldCoordinateSystemDrawComponent>()
 	});
@@ -289,7 +286,7 @@ void LevelTestScenario::clear( const render_state &state ) {
 void LevelTestScenario::draw( const render_state &state ) {
 
 	//
-	// now we're in screen space - draw fpf/sps
+	// NOTE: we're in screen space, with coordinate system origin at top left
 	//
 
 	float fps = core::GameApp::get()->getAverageFps();
