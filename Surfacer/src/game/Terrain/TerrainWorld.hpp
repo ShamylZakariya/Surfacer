@@ -24,6 +24,7 @@ namespace terrain {
 	SMART_PTR(GroupBase);
 	SMART_PTR(StaticGroup);
 	SMART_PTR(DynamicGroup);
+	SMART_PTR(Drawable);
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
 
@@ -127,10 +128,10 @@ namespace terrain {
 
 		struct collector
 		{
-			set<ShapeRef> visible;
-			vector<ShapeRef> sorted;
+			set<DrawableRef> visible;
+			vector<DrawableRef> sorted;
 
-			void remove( const ShapeRef &s  )
+			void remove( const DrawableRef &s  )
 			{
 				visible.erase(s);
 				sorted.erase(std::remove(sorted.begin(),sorted.end(),s), sorted.end());
@@ -140,10 +141,10 @@ namespace terrain {
 		DrawDispatcher();
 		virtual ~DrawDispatcher();
 
-		void add( const ShapeRef & );
-		void remove( const ShapeRef & );
-		void moved( const ShapeRef & );
-		void moved( Shape* );
+		void add( const DrawableRef & );
+		void remove( const DrawableRef & );
+		void moved( const DrawableRef & );
+		void moved( Drawable* );
 
 		void cull( const core::render_state & );
 		void draw( const core::render_state & );
@@ -159,12 +160,12 @@ namespace terrain {
 			render a run of shapes belonging to a common group
 			returns iterator to last shape drawn
 		 */
-		vector<ShapeRef>::iterator _drawGroupRun( vector<ShapeRef>::iterator first, vector<ShapeRef>::iterator storageEnd, const core::render_state &state );
+		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const core::render_state &state );
 
 	private:
 
 		cpSpatialIndex *_index;
-		set<ShapeRef> _all;
+		set<DrawableRef> _all;
 		collector _collector;
 		size_t _drawPasses;
 		
@@ -363,6 +364,38 @@ namespace terrain {
 		set<ShapeRef> _shapes;
 	};
 
+#pragma mark - Drawable
+
+	class Drawable : public enable_shared_from_this<Drawable> {
+	public:
+		Drawable();
+		virtual ~Drawable();
+
+		size_t getId() const { return _id; }
+
+		virtual cpBB getBB() const = 0;
+		virtual size_t getDrawingBatchId() const = 0;
+		virtual mat4 getModelview() const = 0;
+		virtual const TriMeshRef &getTriMesh() const = 0;
+		virtual Color getColor() const = 0;
+
+		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
+		template<typename T>
+		shared_ptr<T> shared_from_this() const {
+			return dynamic_pointer_cast<T>(enable_shared_from_this<Drawable>::shared_from_this());
+		}
+
+		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
+		template<typename T>
+		shared_ptr<T> shared_from_this() {
+			return dynamic_pointer_cast<T>(enable_shared_from_this<Drawable>::shared_from_this());
+		}
+
+	private:
+		static size_t _count;
+		size_t _id;
+	};
+
 
 #pragma mark - Anchor
 
@@ -407,7 +440,7 @@ namespace terrain {
 
 #pragma mark - Shape
 
-	class Shape : public enable_shared_from_this<Shape>{
+	class Shape : public Drawable {
 	public:
 
 		struct contour_pair {
@@ -431,18 +464,13 @@ namespace terrain {
 
 		~Shape();
 
-		/**
-		 Get the unique id for this shape
-		 */
-
-		size_t getId() const { return _id; }
 		const contour_pair &getOuterContour() const { return _outerContour; }
 		const vector<contour_pair> &getHoleContours() const { return _holeContours; }
 
 		GroupBaseRef getGroup() const { return _group.lock(); }
 		cpHashValue getGroupHash() const { return _groupHash; }
 
-		mat4 getModelview() const {
+		mat4 getModelview() const override {
 			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelview();
 			} else {
@@ -463,21 +491,25 @@ namespace terrain {
 			return _shapes;
 		}
 
-		const TriMeshRef &getTriMesh() const { return _trimesh; }
-
 		bool hasValidTriMesh() const {
 			return _trimesh && _trimesh->getNumTriangles() > 0;
 		}
 
-		/**
-		 Get the world-space bounding box for this shape
-		 */
-		cpBB getBB() const;
+		cpBB getBB() const override;
+
+		size_t getDrawingBatchId() const override {
+			return reinterpret_cast<size_t>(_groupHash);
+		}
+
+		const TriMeshRef &getTriMesh() const override { return _trimesh; }
+
+		Color getColor() const override { return getGroup()->getColor(); }
 
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
 
 		vector<ShapeRef> subtract(const PolyLine2f &contourToSubtract) const;
+
 
 	protected:
 
@@ -500,10 +532,7 @@ namespace terrain {
 
 	private:
 
-		static size_t _count;
-
 		bool _worldSpaceShapeContourEdgesDirty;
-		size_t _id;
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
 		TriMeshRef _trimesh;

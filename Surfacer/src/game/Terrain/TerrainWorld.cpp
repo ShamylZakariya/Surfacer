@@ -28,23 +28,22 @@ namespace terrain {
 
 	namespace {
 
-		cpHashValue getCPHashValue(const ShapeRef &s) {
-			return reinterpret_cast<cpHashValue>(s->getId());
+		cpHashValue getCPHashValue(const DrawableRef &d) {
+			return reinterpret_cast<cpHashValue>(d->getId());
 		}
 
-		cpHashValue getCPHashValue(Shape *s) {
-			return reinterpret_cast<cpHashValue>(s->getId());
+		cpHashValue getCPHashValue(Drawable *d) {
+			return reinterpret_cast<cpHashValue>(d->getId());
 		}
 
 		cpBB gameObjectBBFunc( void *obj )
 		{
-			Shape *shape = static_cast<Shape*>(obj);
-			return shape->getBB();
+			return static_cast<Drawable*>(obj)->getBB();
 		}
 
 		cpCollisionID visibleObjectCollector(void *obj1, void *obj2, cpCollisionID id, void *data) {
 			//DrawDispatcher *dispatcher = static_cast<DrawDispatcher*>(obj1);
-			ShapeRef shape = static_cast<Shape*>(obj2)->shared_from_this();
+			DrawableRef drawable = static_cast<Drawable*>(obj2)->shared_from_this<Drawable>();
 			DrawDispatcher::collector *collector = static_cast<DrawDispatcher::collector*>(data);
 
 			//
@@ -52,17 +51,17 @@ namespace terrain {
 			//	the shape made it into the set
 			//
 
-			if( collector->visible.insert(shape).second )
+			if( collector->visible.insert(drawable).second )
 			{
-				collector->sorted.push_back(shape);
+				collector->sorted.push_back(drawable);
 			}
 
 			return id;
 		}
 
-		bool visibleShapeDisplaySorter( const ShapeRef &a, const ShapeRef &b )
+		bool visibleDrawableDisplaySorter( const DrawableRef &a, const DrawableRef &b )
 		{
-			return a->getGroupHash() < b->getGroupHash();
+			return a->getDrawingBatchId() < b->getDrawingBatchId();
 		}
 
 	}
@@ -82,27 +81,27 @@ namespace terrain {
 		cpSpatialIndexFree( _index );
 	}
 
-	void DrawDispatcher::add( const ShapeRef &shape ) {
-		if (_all.insert(shape).second) {
-			//CI_LOG_D("adding " << shape->getId());
-			cpSpatialIndexInsert( _index, shape.get(), getCPHashValue(shape) );
+	void DrawDispatcher::add( const DrawableRef &d ) {
+		if (_all.insert(d).second) {
+			//CI_LOG_D("adding " << d->getId());
+			cpSpatialIndexInsert( _index, d.get(), getCPHashValue(d) );
 		}
 	}
 
-	void DrawDispatcher::remove( const ShapeRef &shape ) {
-		if (_all.erase(shape)) {
-			//CI_LOG_D("removing " << shape->getId());
-			cpSpatialIndexRemove( _index, shape.get(), getCPHashValue(shape) );
-			_collector.remove(shape);
+	void DrawDispatcher::remove( const DrawableRef &d ) {
+		if (_all.erase(d)) {
+			//CI_LOG_D("removing " << d->getId());
+			cpSpatialIndexRemove( _index, d.get(), getCPHashValue(d) );
+			_collector.remove(d);
 		}
 	}
 
-	void DrawDispatcher::moved( const ShapeRef &shape ) {
-		moved(shape.get());
+	void DrawDispatcher::moved( const DrawableRef &d ) {
+		moved(d.get());
 	}
 
-	void DrawDispatcher::moved( Shape *shape ) {
-		cpSpatialIndexReindexObject( _index, shape, getCPHashValue(shape));
+	void DrawDispatcher::moved( Drawable *d ) {
+		cpSpatialIndexReindexObject( _index, d, getCPHashValue(d));
 	}
 
 	void DrawDispatcher::cull( const render_state &state ) {
@@ -121,15 +120,15 @@ namespace terrain {
 		//	Sort them all
 		//
 
-		std::sort(_collector.sorted.begin(), _collector.sorted.end(), visibleShapeDisplaySorter );
+		std::sort(_collector.sorted.begin(), _collector.sorted.end(), visibleDrawableDisplaySorter );
 	}
 
 	void DrawDispatcher::draw( const render_state &state ) {
 		render_state renderState = state;
 		const size_t drawPasses = _drawPasses;
 
-		for( vector<ShapeRef>::iterator it(_collector.sorted.begin()), end(_collector.sorted.end()); it != end; ++it ) {
-			vector<ShapeRef>::iterator groupRunIt = it;
+		for( vector<DrawableRef>::iterator it(_collector.sorted.begin()), end(_collector.sorted.end()); it != end; ++it ) {
+			vector<DrawableRef>::iterator groupRunIt = it;
 			for( renderState.pass = 0; renderState.pass < drawPasses; ++renderState.pass ) {
 				groupRunIt = _drawGroupRun(it, end, renderState );
 			}
@@ -138,36 +137,35 @@ namespace terrain {
 		}
 	}
 
-	vector<ShapeRef>::iterator
-	DrawDispatcher::_drawGroupRun(vector<ShapeRef>::iterator firstInRun, vector<ShapeRef>::iterator storageEnd, const render_state &state ) {
-		vector<ShapeRef>::iterator dcIt = firstInRun;
-		ShapeRef dc = *dcIt;
-		GroupBaseRef group = dc->getGroup();
-		cpHashValue groupHash = group->getHash();
+	vector<DrawableRef>::iterator
+	DrawDispatcher::_drawGroupRun(vector<DrawableRef>::iterator firstInRun, vector<DrawableRef>::iterator storageEnd, const render_state &state ) {
+
+		vector<DrawableRef>::iterator it = firstInRun;
+		DrawableRef drawable = *it;
+		const size_t batchId = drawable->getDrawingBatchId();
 
 		gl::ScopedModelMatrix smm;
-		gl::multModelMatrix(group->getModelview());
+		gl::multModelMatrix(drawable->getModelview());
 
-		gl::color(group->getColor());
-
-		for( ; dcIt != storageEnd; ++dcIt )
+		for( ; it != storageEnd; ++it )
 		{
 			//
 			//	If the delegate run has completed, clean up after our run
 			//	and return the current iterator.
 			//
 
-			if ( (*dcIt)->getGroupHash() != groupHash )
+			if ( (*it)->getDrawingBatchId() != batchId )
 			{
-				return dcIt - 1;
+				return it - 1;
 			}
 
-			dc = *dcIt;
+			drawable = *it;
 
-			gl::draw(*(dc->getTriMesh()));
+			gl::color(drawable->getColor());
+			gl::draw(*(drawable->getTriMesh()));
 		}
 
-		return dcIt - 1;
+		return it - 1;
 	}
 
 
@@ -321,7 +319,8 @@ namespace terrain {
 			cpSpaceShapeQuery(_space, cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
 				cut_collector *collector = static_cast<cut_collector*>(data);
 				if (!cpShapeFilterReject(collector->filter, cpShapeGetFilter(collisionShape))) {
-					ShapeRef terrainShape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
+					Shape *terrainShapePtr = static_cast<Shape*>(cpShapeGetUserData(collisionShape));
+					ShapeRef terrainShape = terrainShapePtr->shared_from_this<Shape>();
 					collector->shapes.insert(terrainShape);
 					collector->groups.insert(terrainShape->getGroup());
 				}
@@ -1228,8 +1227,6 @@ namespace terrain {
 
 #pragma mark - Shape
 
-	size_t Shape::_count = 0;
-
 	ShapeRef Shape::fromContour(const PolyLine2f outerContour) {
 		return make_shared<Shape>(outerContour);
 	}
@@ -1279,7 +1276,6 @@ namespace terrain {
 
 	Shape::Shape(const PolyLine2f &sc):
 	_worldSpaceShapeContourEdgesDirty(true),
-	_id(_count++),
 	_outerContour(detail::optimize(sc)),
 	_modelCentroid(0,0),
 	_groupHash(0),
@@ -1289,7 +1285,6 @@ namespace terrain {
 
 	Shape::Shape(const PolyLine2f &sc, const std::vector<PolyLine2f> &hcs):
 	_worldSpaceShapeContourEdgesDirty(true),
-	_id(_count++),
 	_outerContour(detail::optimize(sc)),
 	_holeContours(detail::optimize(hcs)),
 	_modelCentroid(0,0),
@@ -1334,7 +1329,7 @@ namespace terrain {
 			// convert self (outerContour & holeContours) to a boost poly in model space
 			//
 
-			detail::polygon thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this() );
+			detail::polygon thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this<Shape>() );
 
 			//
 			// now subtract - results are in model space
@@ -1355,7 +1350,7 @@ namespace terrain {
 		}
 
 		// handle failure case
-		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this() };
+		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this<Shape>() };
 		return result;
 	}
 
