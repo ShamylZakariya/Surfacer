@@ -405,8 +405,10 @@ namespace terrain {
 	 A body is static if one of its shapes overlaps an anchor, and if the body's parentage has never been dynamic.
 	 This is to say, once a shape is severed from a static body and becomes dynamic, it can never be static again.
 	 */
-	class Anchor : public enable_shared_from_this<Anchor> {
+	class Anchor : public Drawable {
 	public:
+
+		static const size_t DRAWING_BATCH_ID = ~0;
 
 		static AnchorRef fromContour(const PolyLine2f &contour, material m) {
 			return make_shared<Anchor>(contour, m);
@@ -418,8 +420,12 @@ namespace terrain {
 		~Anchor();
 
 		const PolyLine2f &getContour() const { return _contour; }
-		const cpBB getBB() const { return _bb; }
-		const TriMeshRef &getTriMesh() const { return _trimesh; }
+
+		cpBB getBB() const override { return _bb; }
+		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
+		mat4 getModelview() const override { return mat4(1); } // identity
+		const TriMeshRef &getTriMesh() const override { return _trimesh; }
+		Color getColor() const override { return Color(1,1,1); }
 
 	protected:
 

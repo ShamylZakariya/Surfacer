@@ -258,6 +258,7 @@ namespace terrain {
 		for (auto anchor : anchors) {
 			if (anchor->build(_space)) {
 				_anchors.push_back(anchor);
+				_drawDispatcher.add(anchor);
 			}
 		}
 
@@ -419,12 +420,6 @@ namespace terrain {
 //		for (const auto &shape : _staticGroup->getShapes()) {
 //			drawBB(shape->getBB(), Color(0,1,1));
 //		}
-
-
-		// TODO: Figure out how to use DrawDispatcher to display anchors
-		// Probably want a separate dispatcher, since anchors are static and never move, and the run will be homogeneous
-		// ALTERNATELY: Consider a common base class for Anchor and Shape, say, "Drawable', which has layer info (anchors above shapes)
-		// and so on.
 
 //		switch(renderState.mode) {
 //			case RenderMode::GAME:
