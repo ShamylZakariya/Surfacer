@@ -23,6 +23,154 @@
 using namespace core;
 
 namespace terrain {
+
+#pragma mark - DrawDispatcher
+
+	namespace {
+
+		cpHashValue getCPHashValue(const ShapeRef &s) {
+			return reinterpret_cast<cpHashValue>(s->getId());
+		}
+
+		cpHashValue getCPHashValue(Shape *s) {
+			return reinterpret_cast<cpHashValue>(s->getId());
+		}
+
+		cpBB gameObjectBBFunc( void *obj )
+		{
+			Shape *shape = static_cast<Shape*>(obj);
+			return shape->getBB();
+		}
+
+		cpCollisionID visibleObjectCollector(void *obj1, void *obj2, cpCollisionID id, void *data) {
+			//DrawDispatcher *dispatcher = static_cast<DrawDispatcher*>(obj1);
+			ShapeRef shape = static_cast<Shape*>(obj2)->shared_from_this();
+			DrawDispatcher::collector *collector = static_cast<DrawDispatcher::collector*>(data);
+
+			//
+			//	We don't want dupes in sorted vector, so filter based on whether
+			//	the shape made it into the set
+			//
+
+			if( collector->visible.insert(shape).second )
+			{
+				collector->sorted.push_back(shape);
+			}
+
+			return id;
+		}
+
+		bool visibleShapeDisplaySorter( const ShapeRef &a, const ShapeRef &b )
+		{
+			return a->getGroupHash() < b->getGroupHash();
+		}
+
+	}
+
+	/*
+		cpSpatialIndex *_index;
+		set<ShapeRef> _all;
+		collector _collector;
+		size_t _drawPasses;
+	 */
+	DrawDispatcher::DrawDispatcher():
+	_index(cpBBTreeNew( gameObjectBBFunc, NULL )),
+	_drawPasses(1)
+	{}
+
+	DrawDispatcher::~DrawDispatcher() {
+		cpSpatialIndexFree( _index );
+	}
+
+	void DrawDispatcher::add( const ShapeRef &shape ) {
+		if (_all.insert(shape).second) {
+			//CI_LOG_D("adding " << shape->getId());
+			cpSpatialIndexInsert( _index, shape.get(), getCPHashValue(shape) );
+		}
+	}
+
+	void DrawDispatcher::remove( const ShapeRef &shape ) {
+		if (_all.erase(shape)) {
+			//CI_LOG_D("removing " << shape->getId());
+			cpSpatialIndexRemove( _index, shape.get(), getCPHashValue(shape) );
+			_collector.remove(shape);
+		}
+	}
+
+	void DrawDispatcher::moved( const ShapeRef &shape ) {
+		moved(shape.get());
+	}
+
+	void DrawDispatcher::moved( Shape *shape ) {
+		cpSpatialIndexReindexObject( _index, shape, getCPHashValue(shape));
+	}
+
+	void DrawDispatcher::cull( const render_state &state ) {
+
+		//
+		//	clear storage - note: std::vector doesn't free, it keeps space reserved.
+		//	then let cpSpatialIndex do its magic
+		//
+
+		_collector.visible.clear();
+		_collector.sorted.clear();
+
+		cpSpatialIndexQuery( _index, this, state.viewport.getFrustum(), visibleObjectCollector, &_collector );
+
+		//
+		//	Sort them all
+		//
+
+		std::sort(_collector.sorted.begin(), _collector.sorted.end(), visibleShapeDisplaySorter );
+	}
+
+	void DrawDispatcher::draw( const render_state &state ) {
+		render_state renderState = state;
+		const size_t drawPasses = _drawPasses;
+
+		for( vector<ShapeRef>::iterator it(_collector.sorted.begin()), end(_collector.sorted.end()); it != end; ++it ) {
+			vector<ShapeRef>::iterator groupRunIt = it;
+			for( renderState.pass = 0; renderState.pass < drawPasses; ++renderState.pass ) {
+				groupRunIt = _drawGroupRun(it, end, renderState );
+			}
+
+			it = groupRunIt;
+		}
+	}
+
+	vector<ShapeRef>::iterator
+	DrawDispatcher::_drawGroupRun(vector<ShapeRef>::iterator firstInRun, vector<ShapeRef>::iterator storageEnd, const render_state &state ) {
+		vector<ShapeRef>::iterator dcIt = firstInRun;
+		ShapeRef dc = *dcIt;
+		GroupBaseRef group = dc->getGroup();
+		cpHashValue groupHash = group->getHash();
+
+		gl::ScopedModelMatrix smm;
+		gl::multModelMatrix(group->getModelview());
+
+		gl::color(group->getColor());
+
+		for( ; dcIt != storageEnd; ++dcIt )
+		{
+			//
+			//	If the delegate run has completed, clean up after our run
+			//	and return the current iterator.
+			//
+
+			if ( (*dcIt)->getGroupHash() != groupHash )
+			{
+				return dcIt - 1;
+			}
+
+			dc = *dcIt;
+
+			gl::draw(*(dc->getTriMesh()));
+		}
+
+		return dcIt - 1;
+	}
+
+
 	
 #pragma mark - World
 
@@ -87,15 +235,23 @@ namespace terrain {
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
+
+		DrawDispatcher _drawDispatcher;
 	 */
 	
 	World::World(cpSpace *space, material m):
 	_material(m),
-	_space(space),
-	_staticGroup(make_shared<StaticGroup>(space,m))
+	_space(space)
 	{}
 
 	World::~World() {
+		//
+		// we want these destructors run before the drawDispatcher is destroyed
+		//
+
+		_staticGroup.reset();
+		_dynamicGroups.clear();
+		_anchors.clear();
 	}
 
 	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors) {
@@ -139,8 +295,11 @@ namespace terrain {
 			CI_LOG_D("Performing cut from " << a << " to " << b << " radius: " << radius);
 
 			struct cut_collector {
+				cpShapeFilter filter;
 				set<ShapeRef> shapes;
 				set<GroupBaseRef> groups;
+
+				cut_collector(cpShapeFilter f):filter(f){}
 
 				void clear() {
 					shapes.clear();
@@ -148,7 +307,7 @@ namespace terrain {
 				}
 			};
 
-			cut_collector collector;
+			cut_collector collector(filter);
 
 			//
 			// while intuition would have us use a segment query, the cpSegmentQuery call seemed to miss
@@ -161,14 +320,16 @@ namespace terrain {
 			cpShape *cuttingShape = cpPolyShapeNew(cpSpaceGetStaticBody(_space), 4, verts, cpTransformIdentity, radius * 2);
 			cpSpaceShapeQuery(_space, cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
 				cut_collector *collector = static_cast<cut_collector*>(data);
-				ShapeRef terrainShape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
-				collector->shapes.insert(terrainShape);
-				collector->groups.insert(terrainShape->getGroup());
+				if (!cpShapeFilterReject(collector->filter, cpShapeGetFilter(collisionShape))) {
+					ShapeRef terrainShape = static_cast<Shape*>(cpShapeGetUserData(collisionShape))->shared_from_this();
+					collector->shapes.insert(terrainShape);
+					collector->groups.insert(terrainShape->getGroup());
+				}
 			}, &collector);
 
 			cpShapeFree(cuttingShape);
 
-			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.groups.size() << " bodies) to cut" );
+			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.groups.size() << " groups) to cut" );
 
 			//
 			// Collect all shapes which are in groups affected by the cut
@@ -195,9 +356,22 @@ namespace terrain {
 				auto result = shapeToCut->subtract(contour);
 				affectedShapes.insert(end(affectedShapes), begin(result), end(result));
 
+				//
+				//	Update parentage map for use in build() - maps a shape to its previous parent group
+				//
+
 				for (auto &newShape : result) {
 					parentage[newShape] = parentGroup;
 				}
+
+				//
+				//	Release the parent group's shapes. we do this because the group's
+				//	destructors would remove the shapes from the draw dispatcher, and that
+				//	would run right after build() completes, which would result in active shapes
+				//	not being in the draw dispatcher!
+				//
+
+				parentGroup->releaseShapes();
 
 				//
 				// if the shape belonged to the static group, just remove it
@@ -223,35 +397,81 @@ namespace terrain {
 	}
 	
 	void World::draw(const render_state &renderState) {
-		switch(renderState.mode) {
-			case RenderMode::GAME:
-				drawGame(renderState);
-				break;
 
-			case RenderMode::DEVELOPMENT:
-				drawDebug(renderState);
-				break;
+		_drawDispatcher.cull(renderState);
+		_drawDispatcher.draw(renderState);
 
-			case RenderMode::COUNT:
-				break;
-		}
+//		//
+//		// draw ALL bbs
+//		//
+//
+//		auto drawBB = [](cpBB bb, Color color) {
+//			gl::lineWidth(1);
+//			gl::color(color);
+//			gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
+//		};
+//
+//		for (const auto &group : _dynamicGroups) {
+//			for (const auto &shape : group->getShapes()) {
+//				drawBB(shape->getBB(),Color(1,0,1));
+//			}
+//		}
+//
+//		for (const auto &shape : _staticGroup->getShapes()) {
+//			drawBB(shape->getBB(), Color(0,1,1));
+//		}
+
+
+		// TODO: Figure out how to use DrawDispatcher to display anchors
+		// Probably want a separate dispatcher, since anchors are static and never move, and the run will be homogeneous
+		// ALTERNATELY: Consider a common base class for Anchor and Shape, say, "Drawable', which has layer info (anchors above shapes)
+		// and so on.
+
+//		switch(renderState.mode) {
+//			case RenderMode::GAME:
+//				drawGame(renderState);
+//				break;
+//
+//			case RenderMode::DEVELOPMENT:
+//				drawDebug(renderState);
+//				break;
+//
+//			case RenderMode::COUNT:
+//				break;
+//		}
 	}
 
 	void World::step(const time_state &timeState) {
-		_staticGroup->step(timeState);
+
+		if (_staticGroup) {
+			_staticGroup->step(timeState);
+		}
+
 		for (auto &body : _dynamicGroups) {
 			body->step(timeState);
 		}
 	}
 
 	void World::update(const time_state &timeState) {
-		_staticGroup->update(timeState);
+
+		if (_staticGroup) {
+			_staticGroup->update(timeState);
+		}
+
 		for (auto &body : _dynamicGroups) {
 			body->update(timeState);
 		}
 	}
 
 	void World::build(const vector<ShapeRef> &affectedShapes, const map<ShapeRef,GroupBaseRef> &parentage) {
+
+		//
+		//	Build the static group if we haven't already
+		//
+
+		if (!_staticGroup) {
+			_staticGroup = make_shared<StaticGroup>(_space, _material, _drawDispatcher);
+		}
 
 		//
 		// given the new shapes, their parentage, and existing shapes, find the groups they make up
@@ -299,7 +519,7 @@ namespace terrain {
 				//
 
 
-				DynamicGroupRef group = make_shared<DynamicGroup>(_space, _material);
+				DynamicGroupRef group = make_shared<DynamicGroup>(_space, _material, _drawDispatcher);
 				if (group->build(shapeGroup, parentGroup)) {
 					_dynamicGroups.insert(group);
 				}
@@ -406,6 +626,12 @@ namespace terrain {
 	void World::drawDebug(const render_state &renderState) {
 		const cpBB frustum = renderState.viewport.getFrustum();
 
+		auto drawBB = [](cpBB bb, Color color) {
+			gl::lineWidth(1);
+			gl::color(color);
+			gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
+		};
+
 		auto drawGroup = [frustum, &renderState](GroupBaseRef group, Color fillColor, Color strokeColor) {
 			if (cpBBIntersects(frustum, group->getBB())) {
 				gl::ScopedModelMatrix smm;
@@ -429,7 +655,7 @@ namespace terrain {
 						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
 						gl::ScopedModelMatrix smm2;
 						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
-						gl::drawString(shape->getName(), vec2(0,0), strokeColor);
+						gl::drawString(strings::str(shape->getId()), vec2(0,0), strokeColor);
 					}
 				}
 			}
@@ -437,6 +663,7 @@ namespace terrain {
 			// body draws some debug data - note that game render pass ignores Group::draw
 			group->draw(renderState);
 		};
+
 
 		for (const auto &group : _dynamicGroups) {
 			drawGroup(group, group->getColor(), group->getColor().lerp(0.5, Color::white()));
@@ -455,10 +682,38 @@ namespace terrain {
 				gl::draw(anchor->getContour());
 			}
 		}
+
+		//
+		//	Now draw ALL bbs
+		//
+
+		for (const auto &group : _dynamicGroups) {
+			for (const auto &shape : group->getShapes()) {
+				drawBB(shape->getBB(),Color(1,0,1));
+			}
+		}
+
+		for (const auto &shape : _staticGroup->getShapes()) {
+			drawBB(shape->getBB(), Color(0,1,1));
+		}
 	}
 
 #pragma mark - GroupBase
 
+	/*
+		DrawDispatcher &_drawDispatcher;
+		cpSpace *_space;
+		material _material;
+		string _name;
+		Color _color;
+		cpHashValue _hash;
+	 */
+
+	GroupBase::GroupBase(cpSpace *space, material m, DrawDispatcher &dispatcher):
+	_drawDispatcher(dispatcher),
+	_space(space),
+	_material(m)
+	{}
 
 	GroupBase::~GroupBase(){}
 
@@ -466,17 +721,14 @@ namespace terrain {
 #pragma mark - StaticGroup
 
 	/*
-		cpSpace *_space;
 		cpBody *_body;
-		material _material;
 		set<ShapeRef> _shapes;
-		cpBB _worldBB;
+		mutable cpBB _worldBB;
 	 */
 
-	StaticGroup::StaticGroup(cpSpace *space, material m):
-	_space(space),
+	StaticGroup::StaticGroup(cpSpace *space, material m, DrawDispatcher &dispatcher):
+	terrain::GroupBase(space, m, dispatcher),
 	_body(nullptr),
-	_material(m),
 	_worldBB(cpBBInvalid) {
 		_name = "StaticGroup";
 		_color = Color(0.1,0.1,0.1);
@@ -486,7 +738,7 @@ namespace terrain {
 	}
 	
 	StaticGroup::~StaticGroup() {
-		_shapes.clear();
+		releaseShapes();
 		cpCleanupAndFree(_body);
 	}
 
@@ -499,6 +751,14 @@ namespace terrain {
 		}
 
 		return _worldBB;
+	}
+
+	void StaticGroup::releaseShapes() {
+		// remove shapes from draw dispatcher
+		for (auto &shape : _shapes) {
+			_drawDispatcher.remove(shape);
+		}
+		_shapes.clear();
 	}
 
 	void StaticGroup::addShape(ShapeRef shape) {
@@ -519,7 +779,6 @@ namespace terrain {
 				shape->setGroup(shared_from_this());
 				_shapes.insert(shape);
 
-
 				//
 				//	Create new collision shapes if needed. Note, since static shapes can only stay static or become dynamic
 				// but never can go from dynamic to static, we can trust that the shapes are in world space here. As such,
@@ -533,6 +792,15 @@ namespace terrain {
 					collisionShapes = shape->createCollisionShapes(_body, modelBB);
 					didCreateNewShapes = true;
 				}
+
+				//
+				//	Register this shape with the world's draw dispatcher. Note, we do this AFTER
+				//	calling getShapes/createCollisionShapes because adding a shape requires the BB
+				//	to be valid, and it's not computed until the collision geometry is created.
+				//
+
+				getDrawDispatcher().add(shape);
+
 
 				if (!collisionShapes.empty() && cpBBIsValid(modelBB)) {
 					cpBBExpand(_worldBB, modelBB);
@@ -557,6 +825,12 @@ namespace terrain {
 		if (_shapes.erase(shape)) {
 			shape->setGroup(nullptr);
 			_worldBB = cpBBInvalid;
+
+			//
+			//	Unregister this shape with the world's draw dispatcher
+			//
+
+			getDrawDispatcher().remove(shape);
 		}
 	}
 
@@ -584,9 +858,8 @@ namespace terrain {
 
 	size_t DynamicGroup::_count = 0;
 
-	DynamicGroup::DynamicGroup(cpSpace *space, material m):
-	_material(m),
-	_space(space),
+	DynamicGroup::DynamicGroup(cpSpace *space, material m, DrawDispatcher &dispatcher):
+	GroupBase(space, m, dispatcher),
 	_body(nullptr),
 	_position(cpv(0,0)),
 	_angle(0),
@@ -600,7 +873,7 @@ namespace terrain {
 	}
 
 	DynamicGroup::~DynamicGroup() {
-		_shapes.clear(); // will run Shape::dtor freeing cpShapes
+		releaseShapes();
 		cpCleanupAndFree(_body);
 	}
 
@@ -608,10 +881,18 @@ namespace terrain {
 		stringstream ss;
 		ss << "Body[" << _name << "](";
 		for (auto &shape : _shapes) {
-			ss << shape->getName() << ":";
+			ss << shape->getId() << ":";
 		}
 		ss << ")";
 		return ss.str();
+	}
+
+	void DynamicGroup::releaseShapes() {
+		// remove shapes from draw dispatcher
+		for (auto &shape : getShapes()) {
+			_drawDispatcher.remove(shape);
+		}
+		_shapes.clear();
 	}
 
 	void DynamicGroup::draw(const render_state &renderState) {
@@ -686,12 +967,11 @@ namespace terrain {
 		//
 
 		vec2 averageModelSpaceCentroid(0,0);
+		const float averagingScale = 1.f / shapes.size();
 		for (auto &shape : shapes) {
 			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
-			averageModelSpaceCentroid += shape->_modelCentroid;
+			averageModelSpaceCentroid += shape->_modelCentroid * averagingScale;
 		}
-
-		averageModelSpaceCentroid /= shapes.size();
 
 		//
 		// move contours from their own private model space to shared model space
@@ -775,7 +1055,18 @@ namespace terrain {
 				//
 
 				_shapes = shapes;
+
+				//
+				//	Add the shapes to the draw dispatcher
+				//
+
+				DrawDispatcher &drawDispatcher = getDrawDispatcher();
+				for (const auto &shape : _shapes) {
+					drawDispatcher.add(shape);
+				}
+
 				cpSpaceAddBody(_space, _body);
+
 				syncToCpBody();
 
 				if (parentGroup && cpBodyGetType(parentGroup->getBody()) == CP_BODY_TYPE_DYNAMIC) {
@@ -825,12 +1116,34 @@ namespace terrain {
 		// update our world BB
 		_worldBB = cpTransformbBB(getModelviewTransform(), _modelBB);
 
+		//
+		//	If this shape moved we need to mark our edges as dirty (so world space edges and bounds
+		//	can be correctly recomputed, and we need to notify the draw dispatcher
+		//
 		if (moved) {
+			DrawDispatcher &drawDispatcher = getDrawDispatcher();
 			for (auto &shape : _shapes) {
 				shape->_worldSpaceShapeContourEdgesDirty = true;
+				drawDispatcher.moved(shape);
 			}
 		}
 	}
+
+#pragma mark - Drawable
+
+	/*
+	 static size_t _count;
+	 size_t _id;
+	 */
+
+	size_t Drawable::_count = 0;
+
+	Drawable::Drawable():
+	_id(_count++)
+	{}
+
+	Drawable::~Drawable(){}
+
 
 #pragma mark - Anchor
 
@@ -917,12 +1230,6 @@ namespace terrain {
 
 	size_t Shape::_count = 0;
 
-	string Shape::nextId() {
-		stringstream ss;
-		ss << _count++;
-		return ss.str();
-	}
-
 	ShapeRef Shape::fromContour(const PolyLine2f outerContour) {
 		return make_shared<Shape>(outerContour);
 	}
@@ -951,41 +1258,43 @@ namespace terrain {
 	}
 
 	/*
+		static size_t _count;
+
 		bool _worldSpaceShapeContourEdgesDirty;
-		cpHashValue _hash;
-		string _name;
-		PolyLine2f _worldSpaceOuterContour, _modelSpaceOuterContour;
-		vector<PolyLine2f> _worldSpaceHoleContours, _modelSpaceHoleContours;
+		size_t _id;
+		contour_pair _outerContour;
+		vector<contour_pair> _holeContours;
 		TriMeshRef _trimesh;
 		vec2 _modelCentroid;
 
+		cpBB _shapesModelBB;
 		vector<cpShape*> _shapes;
-		GroupWeakRef _body;
+		GroupBaseWeakRef _group;
+		cpHashValue _groupHash;
 
-		set<poly_edge> _worldSpaceContourEdges;
+		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
 	 */
 
 
 	Shape::Shape(const PolyLine2f &sc):
 	_worldSpaceShapeContourEdgesDirty(true),
-	_name(nextId()),
+	_id(_count++),
 	_outerContour(detail::optimize(sc)),
 	_modelCentroid(0,0),
+	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
-		_hash = hash<string>{}(_name);
 		detail::wind_clockwise(_outerContour.world);
 	}
 
 	Shape::Shape(const PolyLine2f &sc, const std::vector<PolyLine2f> &hcs):
 	_worldSpaceShapeContourEdgesDirty(true),
-	_name(nextId()),
+	_id(_count++),
 	_outerContour(detail::optimize(sc)),
 	_holeContours(detail::optimize(hcs)),
 	_modelCentroid(0,0),
+	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
-		_hash = hash<string>{}(_name);
-
 		detail::wind_clockwise(_outerContour.world);
 		for (auto &hc : _holeContours) {
 			detail::wind_counter_clockwise(hc.world);
@@ -1000,6 +1309,10 @@ namespace terrain {
 	const unordered_set<poly_edge> &Shape::getWorldSpaceContourEdges() {
 		updateWorldSpaceContourAndBB();
 		return _worldSpaceContourEdges;
+	}
+
+	cpBB Shape::getBB() const {
+		return cpBBTransform(_shapesModelBB, getModelview());
 	}
 
 	cpBB Shape::getWorldSpaceContourEdgesBB() {
@@ -1070,6 +1383,15 @@ namespace terrain {
 
 			_worldSpaceContourEdgesBB = bb;
 			_worldSpaceShapeContourEdgesDirty = false;
+		}
+	}
+
+	void Shape::setGroup(GroupBaseRef group) {
+		_group = group;
+		if (group) {
+			_groupHash = group->getHash();
+		} else {
+			_groupHash = 0;
 		}
 	}
 
@@ -1206,7 +1528,7 @@ namespace terrain {
 			}
 		}
 
-		modelBB = _shapesBB = bb;
+		modelBB = _shapesModelBB = bb;
 		return _shapes;
 	}
 	

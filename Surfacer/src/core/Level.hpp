@@ -68,6 +68,7 @@ namespace core {
 	private:
 
 		cpSpatialIndex *_index;
+		std::set< DrawComponentRef > _all;
 		std::set< DrawComponentRef > _alwaysVisible;
 		collector _collector;
 

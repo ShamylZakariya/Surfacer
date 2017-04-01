@@ -81,6 +81,13 @@ namespace core {
 		
 	}
 
+	/*
+		cpSpatialIndex *_index;
+		std::set< DrawComponentRef > _all;
+		std::set< DrawComponentRef > _alwaysVisible;
+		collector _collector;
+	 */
+
 	DrawDispatcher::DrawDispatcher():
 	_index(cpBBTreeNew( gameObjectBBFunc, NULL ))
 	{}
@@ -92,46 +99,46 @@ namespace core {
 
 	void DrawDispatcher::add( const DrawComponentRef &dc )
 	{
-		switch( dc->getVisibilityDetermination() )
-		{
-			case VisibilityDetermination::ALWAYS_DRAW:
-				_alwaysVisible.insert( dc );
-				break;
+		if (_all.insert(dc).second) {
+			switch( dc->getVisibilityDetermination() )
+			{
+				case VisibilityDetermination::ALWAYS_DRAW:
+					_alwaysVisible.insert( dc );
+					break;
 
-			case VisibilityDetermination::FRUSTUM_CULLING:
-				cpSpatialIndexInsert( _index, dc.get(), getCPHashValue(dc) );
-				break;
+				case VisibilityDetermination::FRUSTUM_CULLING:
+					cpSpatialIndexInsert( _index, dc.get(), getCPHashValue(dc) );
+					break;
 
-			case VisibilityDetermination::NEVER_DRAW:
-				break;
+				case VisibilityDetermination::NEVER_DRAW:
+					break;
+			}
 		}
 	}
 
 	void DrawDispatcher::remove( const DrawComponentRef &dc )
 	{
-		switch( dc->getVisibilityDetermination() )
-		{
-			case VisibilityDetermination::ALWAYS_DRAW:
+		if (_all.erase(dc)) {
+			switch( dc->getVisibilityDetermination() )
 			{
-				_alwaysVisible.erase( dc );
-				break;
+				case VisibilityDetermination::ALWAYS_DRAW:
+				{
+					_alwaysVisible.erase( dc );
+					break;
+				}
+
+				case VisibilityDetermination::FRUSTUM_CULLING:
+				{
+					cpSpatialIndexRemove( _index, dc.get(), getCPHashValue(dc) );
+					break;
+				}
+
+				case VisibilityDetermination::NEVER_DRAW:
+					break;
 			}
 
-			case VisibilityDetermination::FRUSTUM_CULLING:
-			{
-				cpSpatialIndexRemove( _index, dc.get(), getCPHashValue(dc) );
-				break;
-			}
-
-			case VisibilityDetermination::NEVER_DRAW:
-				break;
+			_collector.remove(dc);
 		}
-
-		//
-		//	And, just to be safe, remove this object from the current visible set
-		//
-
-		_collector.remove(dc);
 	}
 
 	void DrawDispatcher::moved( const DrawComponentRef &dc )

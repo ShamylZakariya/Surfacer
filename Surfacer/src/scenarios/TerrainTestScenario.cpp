@@ -147,8 +147,8 @@ void TerrainTestScenario::setup() {
 	//testSimplePartitionedTerrain();
 	//exploitGroupingBug();
 
-	//testComplexPartitionedTerrainWithAnchors();
-	testFail();
+	testComplexPartitionedTerrainWithAnchors();
+	//testFail();
 }
 
 void TerrainTestScenario::cleanup() {

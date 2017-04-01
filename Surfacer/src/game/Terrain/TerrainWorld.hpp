@@ -120,6 +120,58 @@ namespace terrain {
 		{}
 	};
 
+#pragma mark - DrawDispatcher
+
+	class DrawDispatcher {
+	public:
+
+		struct collector
+		{
+			set<ShapeRef> visible;
+			vector<ShapeRef> sorted;
+
+			void remove( const ShapeRef &s  )
+			{
+				visible.erase(s);
+				sorted.erase(std::remove(sorted.begin(),sorted.end(),s), sorted.end());
+			}
+		};
+
+		DrawDispatcher();
+		virtual ~DrawDispatcher();
+
+		void add( const ShapeRef & );
+		void remove( const ShapeRef & );
+		void moved( const ShapeRef & );
+		void moved( Shape* );
+
+		void cull( const core::render_state & );
+		void draw( const core::render_state & );
+
+		void setDrawPasses(size_t passes) { _drawPasses = passes; }
+		size_t getPasses() const { return _drawPasses; }
+
+		size_t visibleCount() const { return _collector.sorted.size(); }
+
+	private:
+
+		/**
+			render a run of shapes belonging to a common group
+			returns iterator to last shape drawn
+		 */
+		vector<ShapeRef>::iterator _drawGroupRun( vector<ShapeRef>::iterator first, vector<ShapeRef>::iterator storageEnd, const core::render_state &state );
+
+	private:
+
+		cpSpatialIndex *_index;
+		set<ShapeRef> _all;
+		collector _collector;
+		size_t _drawPasses;
+		
+	};
+
+
+
 #pragma mark - World
 
 
@@ -127,7 +179,7 @@ namespace terrain {
 	 @class World
 	 World "owns" and manages Group instances, which in turn own and manage Shape instances.
 	 */
-	class World {
+	class World : public enable_shared_from_this<World> {
 	public:
 
 		/**
@@ -161,6 +213,9 @@ namespace terrain {
 		StaticGroupRef getStaticGroup() const { return _staticGroup; }
 		const vector<AnchorRef> getAnchors() const { return _anchors; }
 
+		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
+		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
+
 	protected:
 
 		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
@@ -177,6 +232,8 @@ namespace terrain {
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
+
+		DrawDispatcher _drawDispatcher;
 	};
 
 
@@ -185,8 +242,13 @@ namespace terrain {
 
 	class GroupBase {
 	public:
+
+		GroupBase(cpSpace *space, material m, DrawDispatcher &dispatcher);
 		virtual ~GroupBase();
 
+		DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
+		cpSpace *getSpace() const { return _space; }
+		const material &getMaterials() const { return _material; }
 		virtual string getName() const { return _name; }
 		virtual Color getColor() const { return _color; }
 		virtual const cpHashValue getHash() const { return _hash; }
@@ -198,9 +260,11 @@ namespace terrain {
 		virtual vec2 getPosition() const = 0;
 		virtual float getAngle() const = 0;
 		virtual set<ShapeRef> getShapes() const = 0;
+		virtual void releaseShapes() = 0;
 		virtual void draw(const core::render_state &renderState) = 0;
 		virtual void step(const core::time_state &timeState) = 0;
 		virtual void update(const core::time_state &timeState) = 0;
+
 
 		cpTransform getModelviewTransform() const {
 			mat4 mv = getModelview();
@@ -213,6 +277,10 @@ namespace terrain {
 		}
 
 	protected:
+
+		DrawDispatcher &_drawDispatcher;
+		cpSpace *_space;
+		material _material;
 		string _name;
 		Color _color;
 		cpHashValue _hash;
@@ -223,7 +291,7 @@ namespace terrain {
 
 	class StaticGroup : public GroupBase, public enable_shared_from_this<StaticGroup> {
 	public:
-		StaticGroup(cpSpace *space, material m);
+		StaticGroup(cpSpace *space, material m, DrawDispatcher &dispatcher);
 		virtual ~StaticGroup();
 
 		virtual cpBody* getBody() const override { return _body; }
@@ -233,6 +301,7 @@ namespace terrain {
 		virtual vec2 getPosition() const override { return vec2(0); }
 		virtual float getAngle() const override { return 0; }
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
+		virtual void releaseShapes() override;
 
 		virtual void draw(const core::render_state &renderState) override {}
 		virtual void step(const core::time_state &timeState) override {}
@@ -246,9 +315,7 @@ namespace terrain {
 		void updateWorldBB();
 
 	protected:
-		cpSpace *_space;
 		cpBody *_body;
-		material _material;
 		set<ShapeRef> _shapes;
 		mutable cpBB _worldBB;
 	};
@@ -259,7 +326,7 @@ namespace terrain {
 
 	class DynamicGroup : public GroupBase, public enable_shared_from_this<DynamicGroup>{
 	public:
-		DynamicGroup(cpSpace *space, material m);
+		DynamicGroup(cpSpace *space, material m, DrawDispatcher &dispatcher);
 		virtual ~DynamicGroup();
 
 		virtual string getName() const override;
@@ -270,6 +337,7 @@ namespace terrain {
 		virtual vec2 getPosition() const override { return v2(_position); }
 		virtual float getAngle() const override { return static_cast<float>(_angle); }
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
+		virtual void releaseShapes() override;
 
 		virtual void draw(const core::render_state &renderState) override;
 		virtual void step(const core::time_state &timeState) override;
@@ -286,8 +354,6 @@ namespace terrain {
 	private:
 		static size_t _count;
 
-		material _material;
-		cpSpace *_space;
 		cpBody *_body;
 		cpVect _position;
 		cpFloat _angle;
@@ -365,14 +431,18 @@ namespace terrain {
 
 		~Shape();
 
-		const string &getName() const { return _name; }
-		const cpHashValue getHash() const { return _hash; }
+		/**
+		 Get the unique id for this shape
+		 */
+
+		size_t getId() const { return _id; }
 		const contour_pair &getOuterContour() const { return _outerContour; }
 		const vector<contour_pair> &getHoleContours() const { return _holeContours; }
 
 		GroupBaseRef getGroup() const { return _group.lock(); }
+		cpHashValue getGroupHash() const { return _groupHash; }
 
-		const mat4 getModelview() const {
+		mat4 getModelview() const {
 			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelview();
 			} else {
@@ -380,7 +450,7 @@ namespace terrain {
 			}
 		}
 
-		const mat4 getModelviewInverse() const {
+		mat4 getModelviewInverse() const {
 			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelviewInverse();
 			} else {
@@ -389,7 +459,7 @@ namespace terrain {
 		}
 
 		const vector<cpShape*> &getShapes(cpBB &shapesModelBB) const {
-			shapesModelBB = _shapesBB;
+			shapesModelBB = _shapesModelBB;
 			return _shapes;
 		}
 
@@ -398,6 +468,11 @@ namespace terrain {
 		bool hasValidTriMesh() const {
 			return _trimesh && _trimesh->getNumTriangles() > 0;
 		}
+
+		/**
+		 Get the world-space bounding box for this shape
+		 */
+		cpBB getBB() const;
 
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
@@ -412,7 +487,7 @@ namespace terrain {
 
 		string nextId();
 		void updateWorldSpaceContourAndBB();
-		void setGroup(GroupBaseRef group) { _group = group; }
+		void setGroup(GroupBaseRef group);
 
 		// build the trimesh, returning true iff we got > 0 triangles
 		bool triangulate();
@@ -428,16 +503,16 @@ namespace terrain {
 		static size_t _count;
 
 		bool _worldSpaceShapeContourEdgesDirty;
-		cpHashValue _hash;
-		string _name;
+		size_t _id;
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
 		TriMeshRef _trimesh;
 		vec2 _modelCentroid;
 
-		cpBB _shapesBB;
+		cpBB _shapesModelBB;
 		vector<cpShape*> _shapes;
 		GroupBaseWeakRef _group;
+		cpHashValue _groupHash;
 		
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;

@@ -17,7 +17,7 @@ public:
 
 	static void prepareSettings(Settings *settings) {
 		GameApp::prepareSettings(settings);
-		settings->setTitle( "DemoApp - LevelTestScenario" );
+		settings->setTitle( "DemoApp" );
 	}
 
 public:
@@ -26,7 +26,7 @@ public:
 
 	virtual void setup() override {
 		GameApp::setup();
-		setScenario(make_shared<LevelTestScenario>());
+		setScenario(make_shared<TerrainTestScenario>());
 	}
 
 };

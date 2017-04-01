@@ -343,4 +343,17 @@ void cpCleanupAndFree( vector<T> &s ) {
 	s.clear();
 }
 
+inline bool
+cpShapeFilterReject(cpShapeFilter a, cpShapeFilter b)
+{
+	// Reject the collision if:
+	return (
+			// They are in the same non-zero group.
+			(a.group != 0 && a.group == b.group) ||
+			// One of the category/mask combinations fails.
+			(a.categories & b.mask) == 0 ||
+			(b.categories & a.mask) == 0
+			);
+}
+
 #endif /* ChipmunkHelpers_hpp */
