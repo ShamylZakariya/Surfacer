@@ -15,10 +15,20 @@ namespace terrain {
 	TerrainObject::TerrainObject(string name, WorldRef world):
 	GameObject(name),
 	_world(world)
-	{}
+	{
+		addComponent(make_shared<TerrainDrawComponent>());
+	}
 
 	TerrainObject::~TerrainObject()
 	{}
+
+	void TerrainObject::step(const core::time_state &timeState) {
+		_world->step(timeState);
+	}
+
+	void TerrainObject::update(const core::time_state &timeState) {
+		_world->update(timeState);
+	}
 
 #pragma mark - TerrainDrawComponent
 

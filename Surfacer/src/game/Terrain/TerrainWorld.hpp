@@ -153,6 +153,8 @@ namespace terrain {
 		size_t getPasses() const { return _drawPasses; }
 
 		size_t visibleCount() const { return _collector.sorted.size(); }
+		const set<DrawableRef> &getVisible() const { return _collector.visible; }
+		const vector<DrawableRef> &getVisibleSorted() const { return _collector.sorted; }
 
 	private:
 
@@ -222,9 +224,6 @@ namespace terrain {
 		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		vector<set<ShapeRef>> findShapeGroups(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		bool isShapeGroupStatic(const set<ShapeRef> shapeGroup, const GroupBaseRef &parentGroup);
-
-		void drawGame(const core::render_state &renderState);
-		void drawDebug(const core::render_state &renderState);
 
 	private:
 
@@ -376,6 +375,8 @@ namespace terrain {
 		virtual cpBB getBB() const = 0;
 		virtual size_t getDrawingBatchId() const = 0;
 		virtual mat4 getModelview() const = 0;
+		virtual float getAngle() const = 0;
+		virtual vec2 getModelCentroid() const = 0;
 		virtual const TriMeshRef &getTriMesh() const = 0;
 		virtual Color getColor() const = 0;
 
@@ -424,8 +425,10 @@ namespace terrain {
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
 		mat4 getModelview() const override { return mat4(1); } // identity
+		float getAngle() const override { return 0; };
+		vec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
-		Color getColor() const override { return Color(1,1,1); }
+		Color getColor() const override { return Color(0,0,0); }
 
 	protected:
 
@@ -506,6 +509,9 @@ namespace terrain {
 		size_t getDrawingBatchId() const override {
 			return reinterpret_cast<size_t>(_groupHash);
 		}
+
+		float getAngle() const override { return getGroup()->getAngle(); }
+		vec2 getModelCentroid() const override { return _modelCentroid; }
 
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 

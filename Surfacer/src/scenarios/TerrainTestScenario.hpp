@@ -9,7 +9,7 @@
 #ifndef IslandTestScenario_hpp
 #define IslandTestScenario_hpp
 
-#include "TerrainWorld.hpp"
+#include "Terrain.hpp"
 #include "Scenario.hpp"
 
 using namespace ci;
@@ -27,6 +27,7 @@ public:
 
 	virtual void step( const time_state &time ) override;
 	virtual void update( const time_state &time ) override;
+	virtual void clear( const render_state &state ) override;
 	virtual void draw( const render_state &state ) override;
 
 	virtual bool mouseDown( const ci::app::MouseEvent &event ) override;
@@ -41,15 +42,15 @@ public:
 
 private:
 
-	void testBasicTerrainSetup();
-	void testComplexTerrainSetup();
-	void testSimpleAnchors();
-	void testComplexAnchors();
+	terrain::WorldRef testBasicTerrainSetup();
+	terrain::WorldRef testComplexTerrainSetup();
+	terrain::WorldRef testSimpleAnchors();
+	terrain::WorldRef testComplexAnchors();
 
-	void testSimplePartitionedTerrain();
-	void testComplexPartitionedTerrainWithAnchors();
+	terrain::WorldRef testSimplePartitionedTerrain();
+	terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
 
-	void testFail();
+	terrain::WorldRef testFail();
 
 	void timeSpatialIndex();
 
@@ -62,8 +63,7 @@ private:
 	vec2 _cutterStart, _cutterEnd, _mouseScreen, _mouseWorld;
 
 	ViewportController _cameraController;
-
-	terrain::WorldRef _terrainWorld;
+	terrain::TerrainObjectRef _terrain;
 
 	cpSpace *_space;
 	cpBody *_mouseBody, *_draggingBody;

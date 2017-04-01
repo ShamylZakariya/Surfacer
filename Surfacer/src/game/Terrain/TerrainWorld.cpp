@@ -401,38 +401,33 @@ namespace terrain {
 		_drawDispatcher.cull(renderState);
 		_drawDispatcher.draw(renderState);
 
-//		//
-//		// draw ALL bbs
-//		//
-//
-//		auto drawBB = [](cpBB bb, Color color) {
-//			gl::lineWidth(1);
-//			gl::color(color);
-//			gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
-//		};
-//
-//		for (const auto &group : _dynamicGroups) {
-//			for (const auto &shape : group->getShapes()) {
-//				drawBB(shape->getBB(),Color(1,0,1));
-//			}
-//		}
-//
-//		for (const auto &shape : _staticGroup->getShapes()) {
-//			drawBB(shape->getBB(), Color(0,1,1));
-//		}
+		//
+		//	In dev mode draw BBs and drawable IDs
+		//
 
-//		switch(renderState.mode) {
-//			case RenderMode::GAME:
-//				drawGame(renderState);
-//				break;
-//
-//			case RenderMode::DEVELOPMENT:
-//				drawDebug(renderState);
-//				break;
-//
-//			case RenderMode::COUNT:
-//				break;
-//		}
+		if (renderState.mode == RenderMode::DEVELOPMENT) {
+			const float rScale = renderState.viewport.getReciprocalScale();
+			const mat4 rScaleMat = glm::scale(vec3(rScale, -rScale, 1));
+			const ColorA bbColor(1,0.2,1,0.5);
+
+			gl::lineWidth(1);
+			for (const auto &drawable : _drawDispatcher.getVisibleSorted()) {
+
+				// draw the bounds
+				const auto bb = drawable->getBB();
+				gl::color(bbColor);
+				gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
+
+				// draw the shape id
+				const auto R = drawable->getModelview();
+				const float angle = drawable->getAngle();
+				const vec3 modelCentroid = vec3(drawable->getModelCentroid(), 0);
+
+				gl::ScopedModelMatrix smm2;
+				gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * rScaleMat);
+				gl::drawString(strings::str(drawable->getId()), vec2(0,0), Color(1,1,1));
+			}
+		}
 	}
 
 	void World::step(const time_state &timeState) {
@@ -584,114 +579,6 @@ namespace terrain {
 		return false;
 	}
 
-	void World::drawGame(const render_state &renderState) {
-		const cpBB frustum = renderState.viewport.getFrustum();
-		for (const auto &group : _dynamicGroups) {
-			if (cpBBIntersects(frustum, group->getBB())) {
-				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(group->getModelview());
-
-				for (const auto &shape : group->getShapes()) {
-					gl::color(group->getColor());
-					gl::draw(*shape->getTriMesh());
-				}
-			}
-		}
-
-		if (cpBBIntersects(frustum, _staticGroup->getBB())) {
-			gl::ScopedModelMatrix smm;
-			gl::multModelMatrix(_staticGroup->getModelview());
-
-			for (const auto &shape : _staticGroup->getShapes()) {
-				gl::color(_staticGroup->getColor());
-				gl::draw(*shape->getTriMesh());
-			}
-		}
-
-		for (const auto &anchor : _anchors) {
-			if (cpBBIntersects(frustum, anchor->getBB())) {
-				// anchors are already in world space so we just draw them
-				gl::color(ColorA(1,1,1));
-				gl::draw(*anchor->getTriMesh());
-			}
-		}
-	}
-
-	void World::drawDebug(const render_state &renderState) {
-		const cpBB frustum = renderState.viewport.getFrustum();
-
-		auto drawBB = [](cpBB bb, Color color) {
-			gl::lineWidth(1);
-			gl::color(color);
-			gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
-		};
-
-		auto drawGroup = [frustum, &renderState](GroupBaseRef group, Color fillColor, Color strokeColor) {
-			if (cpBBIntersects(frustum, group->getBB())) {
-				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(group->getModelview());
-
-				for (const auto &shape : group->getShapes()) {
-					gl::color(fillColor);
-					gl::draw(*shape->getTriMesh());
-
-					gl::lineWidth(1);
-					gl::color(strokeColor);
-					gl::draw(shape->getOuterContour().model);
-
-					for (auto &holeContour : shape->getHoleContours()) {
-						gl::draw(holeContour.model);
-					}
-
-					{
-						float rScale = renderState.viewport.getReciprocalScale();
-						float angle = group->getAngle();
-						vec3 modelCentroid = vec3(shape->_modelCentroid, 0);
-						gl::ScopedModelMatrix smm2;
-						gl::multModelMatrix(glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * glm::scale(vec3(rScale, -rScale, 1)));
-						gl::drawString(strings::str(shape->getId()), vec2(0,0), strokeColor);
-					}
-				}
-			}
-
-			// body draws some debug data - note that game render pass ignores Group::draw
-			group->draw(renderState);
-		};
-
-
-		for (const auto &group : _dynamicGroups) {
-			drawGroup(group, group->getColor(), group->getColor().lerp(0.5, Color::white()));
-		}
-
-		drawGroup(_staticGroup, _staticGroup->getColor(), _staticGroup->getColor().lerp(0.75, Color::white()));
-
-		for (const auto &anchor : _anchors) {
-			if (cpBBIntersects(frustum, anchor->getBB())) {
-				// anchors are already in world space so we just draw them
-				gl::color(ColorA(1,1,1,0.25));
-				gl::draw(*anchor->getTriMesh());
-
-				gl::lineWidth(1);
-				gl::color(Color(1,1,1));
-				gl::draw(anchor->getContour());
-			}
-		}
-
-		//
-		//	Now draw ALL bbs
-		//
-
-		for (const auto &group : _dynamicGroups) {
-			for (const auto &shape : group->getShapes()) {
-				drawBB(shape->getBB(),Color(1,0,1));
-			}
-		}
-
-		for (const auto &shape : _staticGroup->getShapes()) {
-			drawBB(shape->getBB(), Color(0,1,1));
-		}
-	}
-
 #pragma mark - GroupBase
 
 	/*
@@ -725,7 +612,7 @@ namespace terrain {
 	_body(nullptr),
 	_worldBB(cpBBInvalid) {
 		_name = "StaticGroup";
-		_color = Color(0.1,0.1,0.1);
+		_color = Color(0.15,0.15,0.15);
 		_body = cpBodyNewStatic();
 		cpBodySetUserData(_body, this);
 		cpSpaceAddBody(space,_body);
@@ -1172,6 +1059,10 @@ namespace terrain {
 		}
 		_shapes.clear();
 		cpCleanupAndFree(_staticBody);
+	}
+
+	vec2 Anchor::getModelCentroid() const {
+		return vec2((_bb.l + _bb.r) * 0.5f, (_bb.b + _bb.t) * 0.5f);
 	}
 
 	bool Anchor::build(cpSpace *space) {

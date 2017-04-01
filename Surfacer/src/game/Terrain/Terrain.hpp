@@ -19,10 +19,22 @@ namespace terrain {
 
 	static const int LAYER = 0;
 
-	class TerrainObject : core::GameObject {
+	SMART_PTR(TerrainObject);
+
+	class TerrainObject : public core::GameObject {
 	public:
+
+		static TerrainObjectRef create(string name, WorldRef world) {
+			return make_shared<TerrainObject>(name, world);
+		}
+
+	public:
+
 		TerrainObject(string name, WorldRef world);
 		virtual ~TerrainObject();
+
+		void step(const core::time_state &timeState) override;
+		void update(const core::time_state &timeState) override;
 
 		const WorldRef & getWorld() const { return _world; }
 
@@ -30,8 +42,11 @@ namespace terrain {
 		WorldRef _world;
 	};
 
-	class TerrainDrawComponent : core::DrawComponent {
+	class TerrainDrawComponent : public core::DrawComponent {
 	public:
+
+		TerrainDrawComponent(){}
+		virtual ~TerrainDrawComponent(){}
 
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
 		cpBB getBB() const override { return cpBBInfinity; }
@@ -40,8 +55,11 @@ namespace terrain {
 		int getLayer() const override { return LAYER; };
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
+
 	private:
+
 		WorldRef _world;
+
 	};
 
 }

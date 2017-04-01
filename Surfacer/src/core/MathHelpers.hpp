@@ -22,14 +22,6 @@ namespace cinder {
 	inline vec2 operator * ( const mat4 &m, const vec2 &v )
 	{
 		return vec2(m * vec4(v.x, v.y, 0, 1));
-//		vec4 v4(v.x, v.y, 0, 1);
-//		v4 = m * v4;
-//		return vec2(v4.x, v4.y);
-
-		//		float x = m[0][0] * v.x + m[1][0] * v.y + m[3][0];
-		//		float y = m[0][1] * v.x + m[1][1] * v.y + m[3][1];
-		//		float w = m[0][3] * v.x + m[1][3] * v.y + m[3][3];
-		//		return vec3(x/w, y/w);
 	}
 
 }
@@ -469,6 +461,16 @@ template< typename T, glm::precision P >
 void mat4WithPositionAndRotation( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &position, T rotation )
 {
 	mat4WithPositionAndRotation( R, position, glm::tvec2<T,P>( std::cos( rotation ), std::sin( rotation )));
+}
+
+template< typename T, glm::precision P >
+T getRotation(const glm::tmat4x4<T,P> &R) {
+	return std::atan2(R[0].y, R[0].x);
+}
+
+template< typename T, glm::precision P >
+glm::tvec2<T,P> getTranslation(const glm::tmat4x4<T,P> &R) {
+	return glm::tvec2<T,P>(R[3].x, R[3].y);
 }
 
 #endif /* MathHelpers_h */

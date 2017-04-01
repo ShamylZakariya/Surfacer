@@ -100,6 +100,70 @@ namespace {
 		cpShapeFilter PICK = cpShapeFilterNew(CP_NO_GROUP, Categories::PICK, Categories::TERRAIN);
 	}
 
+	class WorldCoordinateSystemDrawComponent : public DrawComponent {
+	public:
+
+		WorldCoordinateSystemDrawComponent(int gridSize = 10):
+		_gridSize(gridSize){}
+
+		void onReady(GameObjectRef parent, LevelRef level) override{
+			DrawComponent::onReady(parent, level);
+		}
+
+		cpBB getBB() const override {
+			return cpBBInfinity;
+		}
+
+		void draw(const core::render_state &state) override {
+			const cpBB frustum = state.viewport.getFrustum();
+			const int gridSize = _gridSize;
+			const int majorGridSize = _gridSize * 10;
+			const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
+			const int lastY = static_cast<int>(floor(frustum.t / gridSize) * gridSize) + gridSize;
+			const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
+			const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
+
+			const auto MinorLineColor = ColorA(1,1,1,0.1);
+			const auto MajorLineColor = ColorA(1,1,1,0.35);
+			const auto AxisColor = ColorA(1,0,0,1);
+			gl::lineWidth(1.0 / state.viewport.getScale());
+
+			for (int y = firstY; y <= lastY; y+= gridSize) {
+				if (y == 0) {
+					gl::color(AxisColor);
+				} else if ( y % majorGridSize == 0) {
+					gl::color(MajorLineColor);
+				} else {
+					gl::color(MinorLineColor);
+				}
+				gl::drawLine(vec2(firstX, y), vec2(lastX, y));
+			}
+
+			for (int x = firstX; x <= lastX; x+= gridSize) {
+				if (x == 0) {
+					gl::color(AxisColor);
+				} else if ( x % majorGridSize == 0) {
+					gl::color(MajorLineColor);
+				} else {
+					gl::color(MinorLineColor);
+				}
+				gl::drawLine(vec2(x, firstY), vec2(x, lastY));
+			}
+		}
+
+		VisibilityDetermination::style getVisibilityDetermination() const override {
+			return VisibilityDetermination::ALWAYS_DRAW;
+		}
+
+		int getLayer() const override { return -1; }
+
+	private:
+
+		int _gridSize;
+		
+	};
+
+
 
 }
 
@@ -108,8 +172,7 @@ namespace {
 	vec2 _cutterStart, _cutterEnd, _mouseScreen, _mouseWorld;
 
 	ViewportController _cameraController;
- 
-	terrain::WorldRef _terrainWorld;
+	terrain::TerrainObjectRef _terrain;
 
 	cpSpace *_space;
 	cpBody *_mouseBody, *_draggingBody;
@@ -130,29 +193,39 @@ _mouseJoint(nullptr)
 TerrainTestScenario::~TerrainTestScenario(){}
 
 void TerrainTestScenario::setup() {
-
 	// go debug for rendering
 	setRenderMode(RenderMode::DEVELOPMENT);
 
-	//timeSpatialIndex();
+	LevelRef level = make_shared<Level>("Terrain Test Level");
+	setLevel(level);
+
+	// add background renderer
+	auto background = GameObject::with("Background", {
+		make_shared<WorldCoordinateSystemDrawComponent>()
+	});
+
+	level->addGameObject(background);
 
 	_space = cpSpaceNew();
 	cpSpaceSetDamping(_space, 0.95);
 	_mouseBody = cpBodyNewKinematic();
 
-	//testBasicTerrainSetup();
-	//testComplexTerrainSetup();
-	//testSimpleAnchors();
-	//testComplexAnchors();
-	//testSimplePartitionedTerrain();
-	//exploitGroupingBug();
+	//auto world = testBasicTerrainSetup();
+	//auto world = testComplexTerrainSetup();
+	//auto world = testSimpleAnchors();
+	auto world = testComplexAnchors();
+	//auto world = testSimplePartitionedTerrain();
+	//auto world = exploitGroupingBug();
+	//auto world = testComplexPartitionedTerrainWithAnchors();
+	//auto world = testFail();
 
-	testComplexPartitionedTerrainWithAnchors();
-	//testFail();
+	_terrain = terrain::TerrainObject::create("Terrain", world);
+	level->addGameObject(_terrain);
 }
 
 void TerrainTestScenario::cleanup() {
-	_terrainWorld.reset();
+	setLevel(nullptr);
+	_terrain.reset();
 
 	_cutting = false;
 
@@ -177,32 +250,20 @@ void TerrainTestScenario::step( const time_state &time ) {
 
 	cpBodySetVelocity(_mouseBody, cpvmult(cpvsub(newMouseBodyPos, cpBodyGetPosition(_mouseBody)), time.deltaT));
 	cpBodySetPosition(_mouseBody, newMouseBodyPos);
-
-	if (_terrainWorld) {
-		_terrainWorld->step(time);
-	}
 }
 
 void TerrainTestScenario::update( const time_state &time ) {
 	_cameraController.step(time);
-	if (_terrainWorld) {
-		_terrainWorld->update(time);
-	}
+}
+
+void TerrainTestScenario::clear( const render_state &state ) {
+	gl::clear( Color( 0, 0, 0 ) );
 }
 
 void TerrainTestScenario::draw( const render_state &state ) {
-	//const ivec2 screenSize = getWindowSize();
-	gl::clear( Color( 0.2, 0.2, 0.2 ) );
 
 	{
-		// apply camera modelview
 		Viewport::ScopedState cameraState(getCamera());
-
-		drawWorldCoordinateSystem(state);
-
-		if (_terrainWorld) {
-			_terrainWorld->draw(state);
-		}
 
 		if (_cutting) {
 			float radius = (CUT_WIDTH/2) / state.viewport.getScale();
@@ -229,8 +290,6 @@ void TerrainTestScenario::draw( const render_state &state ) {
 			gl::drawSolidCircle(v2(cpBodyGetPosition(_mouseBody)), radius);
 		}
 	}
-
-	// now we're in screen space
 
 
 	// draw fpf/sps
@@ -284,9 +343,9 @@ bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	if (_cutting) {
-		if (_terrainWorld) {
+		if (_terrain) {
 			const float radius = (CUT_WIDTH/2) / _cameraController.getScale();
-			_terrainWorld->cut(_cutterStart, _cutterEnd, radius, Filters::CUTTER);
+			_terrain->getWorld()->cut(_cutterStart, _cutterEnd, radius, Filters::CUTTER);
 		}
 
 		_cutting = false;
@@ -352,12 +411,8 @@ void TerrainTestScenario::reset() {
 	setup();
 }
 
-void TerrainTestScenario::testBasicTerrainSetup() {
+terrain::WorldRef TerrainTestScenario::testBasicTerrainSetup() {
 	_cameraController.lookAt(vec2(0,0));
-
-	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-
-	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -369,16 +424,14 @@ void TerrainTestScenario::testBasicTerrainSetup() {
 		//terrain::Shape::fromContour(rect(200,0,210,0)),		// empty rect - should be garbage collected
 	};
 
-	_terrainWorld->build(shapes);
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	world->build(shapes);
+	return world;
 }
 
-void TerrainTestScenario::testComplexTerrainSetup() {
+terrain::WorldRef TerrainTestScenario::testComplexTerrainSetup() {
 	_cameraController.lookAt(vec2(0,0));
-
-	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
-
-	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -400,16 +453,19 @@ void TerrainTestScenario::testComplexTerrainSetup() {
 		boxShape(boxPos(0,1),boxSize),
 	};
 
-	_terrainWorld->build(shapes);
-}
-
-void TerrainTestScenario::testSimpleAnchors() {
-	_cameraController.lookAt(vec2(0,0));
-
 	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
-	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	world->build(shapes);
+
+	return world;
+}
+
+terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
+	_cameraController.lookAt(vec2(0,0));
+
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -422,17 +478,20 @@ void TerrainTestScenario::testSimpleAnchors() {
 		terrain::Anchor::fromContour(rect(200,20,260,30), anchorMaterial)
 	};
 
-	_terrainWorld->build(shapes, anchors);
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+
+	world->build(shapes, anchors);
+	return world;
 }
 
-void TerrainTestScenario::testComplexAnchors() {
+terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 	_cameraController.lookAt(vec2(0,0));
 
-	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
 
 	cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
-	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
+
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -456,14 +515,21 @@ void TerrainTestScenario::testComplexAnchors() {
 		boxShape(boxSize * 2.f, boxSize)
 	};
 
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
 	vector<terrain::AnchorRef> anchors = {
 		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)), anchorMaterial)
 	};
 
-	_terrainWorld->build(shapes, anchors);
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	world->build(shapes, anchors);
+
+	return world;
 }
 
-void TerrainTestScenario::testSimplePartitionedTerrain() {
+terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 
 	ci::Rand rng;
 
@@ -481,9 +547,6 @@ void TerrainTestScenario::testSimplePartitionedTerrain() {
 
 	_cameraController.lookAt(vec2(0,0));
 
-	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
-	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
-
 	auto rings = vector<PolyLine2f> {
 		ring(vec2(0,0), 500, 600, 0),
 		ring(vec2(0,0), 400, 600, 0)
@@ -494,10 +557,14 @@ void TerrainTestScenario::testSimplePartitionedTerrain() {
 
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
-	_terrainWorld->build(partitionedShapes);
+	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	world->build(partitionedShapes);
+
+	return world;
 }
 
-void TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
+terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
 
 	//cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
 
@@ -517,11 +584,6 @@ void TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
 
 	_cameraController.lookAt(vec2(0,0));
 
-	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
-
-	_terrainWorld = make_shared<terrain::World>(_space,terrainMaterial);
-
 	auto rings = vector<PolyLine2f> {
 		ring(vec2(0,0), 500, 600, 0),
 		ring(vec2(0,0), 400, 600, 0)
@@ -530,16 +592,21 @@ void TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
 	auto shapes = terrain::Shape::fromContours(rings);
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
 	vector<terrain::AnchorRef> anchors = {
 		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)), anchorMaterial)
 	};
 
-	_terrainWorld->build(partitionedShapes, anchors);
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	world->build(partitionedShapes, anchors);
 
+	return world;
 }
 
-void TerrainTestScenario::testFail() {
-	testComplexPartitionedTerrainWithAnchors();
+terrain::WorldRef TerrainTestScenario::testFail() {
+	auto world = testComplexPartitionedTerrainWithAnchors();
 
 	// this sequence of cuts causes trouble
 	string cutDescriptions = R"(
@@ -567,15 +634,17 @@ void TerrainTestScenario::testFail() {
 
 	// we know the last cut causes weirdness so cut all but the last
 	for (int i = 0; i < cuts.size() - 1; i++) {
-		_terrainWorld->cut(cuts[i].a, cuts[i].b, cuts[i].radius, Filters::CUTTER);
+		world->cut(cuts[i].a, cuts[i].b, cuts[i].radius, Filters::CUTTER);
 	}
 
 	cut lastCut = cuts[cuts.size()-1];
-	_terrainWorld->cut(lastCut.a, lastCut.b, lastCut.radius, Filters::CUTTER);
+	world->cut(lastCut.a, lastCut.b, lastCut.radius, Filters::CUTTER);
 
 
 //	// this leaves shape 31 improperly cut - there's a tiny tab on lower left which should be excised but isn't
-//	_terrainWorld->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, Filters::CUTTER);
+//	world->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, Filters::CUTTER);
+
+	return world;
 }
 
 void TerrainTestScenario::timeSpatialIndex() {
