@@ -42,8 +42,9 @@ public:
 
 private:
 
-	terrain::WorldRef testBasicTerrainSetup();
-	terrain::WorldRef testComplexTerrainSetup();
+	terrain::WorldRef testDistantTerrain();
+	terrain::WorldRef testBasicTerrain();
+	terrain::WorldRef testComplexTerrain();
 	terrain::WorldRef testSimpleAnchors();
 	terrain::WorldRef testComplexAnchors();
 
@@ -54,7 +55,6 @@ private:
 
 	void timeSpatialIndex();
 
-	void drawWorldCoordinateSystem(const render_state &state);
 	void releaseMouseDragConstraint();
 
 private:

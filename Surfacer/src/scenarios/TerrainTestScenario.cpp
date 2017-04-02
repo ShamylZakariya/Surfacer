@@ -123,7 +123,7 @@ namespace {
 			const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
 			const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
 
-			const auto MinorLineColor = ColorA(1,1,1,0.1);
+			const auto MinorLineColor = ColorA(1,1,1, .1);
 			const auto MajorLineColor = ColorA(1,1,1,0.35);
 			const auto AxisColor = ColorA(1,0,0,1);
 			gl::lineWidth(1.0 / state.viewport.getScale());
@@ -210,13 +210,13 @@ void TerrainTestScenario::setup() {
 	cpSpaceSetDamping(_space, 0.95);
 	_mouseBody = cpBodyNewKinematic();
 
-	//auto world = testBasicTerrainSetup();
-	//auto world = testComplexTerrainSetup();
+	//auto world = testDistantTerrain();
+	//auto world = testBasicTerrain();
+	//auto world = testComplexTerrain();
 	//auto world = testSimpleAnchors();
-	auto world = testComplexAnchors();
+	//auto world = testComplexAnchors();
 	//auto world = testSimplePartitionedTerrain();
-	//auto world = exploitGroupingBug();
-	//auto world = testComplexPartitionedTerrainWithAnchors();
+	auto world = testComplexPartitionedTerrainWithAnchors();
 	//auto world = testFail();
 
 	_terrain = terrain::TerrainObject::create("Terrain", world);
@@ -257,7 +257,7 @@ void TerrainTestScenario::update( const time_state &time ) {
 }
 
 void TerrainTestScenario::clear( const render_state &state ) {
-	gl::clear( Color( 0, 0, 0 ) );
+	gl::clear( Color( 0.2, 0.225, 0.25 ) );
 }
 
 void TerrainTestScenario::draw( const render_state &state ) {
@@ -411,7 +411,25 @@ void TerrainTestScenario::reset() {
 	setup();
 }
 
-terrain::WorldRef TerrainTestScenario::testBasicTerrainSetup() {
+terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
+
+
+	const vec2 origin(20000,20000);
+
+	_cameraController.lookAt(origin);
+
+
+	vector<terrain::ShapeRef> shapes = { terrain::Shape::fromContour(rect(origin.x-200,origin.y-200,origin.x+200,origin.y+200)) };
+	shapes = terrain::World::partition(shapes, vec2(0,0), 30);
+
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	auto world = make_shared<terrain::World>(_space, terrainMaterial);
+	world->build(shapes);
+
+	return world;
+}
+
+terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 	_cameraController.lookAt(vec2(0,0));
 
 	vector<terrain::ShapeRef> shapes = {
@@ -430,7 +448,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrainSetup() {
 	return world;
 }
 
-terrain::WorldRef TerrainTestScenario::testComplexTerrainSetup() {
+terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 	_cameraController.lookAt(vec2(0,0));
 
 	const vec2 boxSize(50,50);
@@ -566,8 +584,6 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 
 terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors() {
 
-	//cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
-
 	ci::Rand rng;
 
 	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
@@ -606,7 +622,40 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 }
 
 terrain::WorldRef TerrainTestScenario::testFail() {
-	auto world = testComplexPartitionedTerrainWithAnchors();
+	ci::Rand rng;
+
+	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
+		PolyLine2f polyLine;
+		for (int i = 0; i < subdivisions; i++) {
+			float j = static_cast<float>(i)/static_cast<float>(subdivisions);
+			float r = j * M_PI * 2;
+			vec2 p = center + (vec2(cos(r), sin(r)) * (radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
+			polyLine.push_back(p);
+		}
+		polyLine.setClosed();
+		return polyLine;
+	};
+
+	_cameraController.lookAt(vec2(0,0));
+
+	auto rings = vector<PolyLine2f> {
+		ring(vec2(0,0), 500, 600, 0),
+		ring(vec2(0,0), 400, 600, 0)
+	};
+
+	auto shapes = terrain::Shape::fromContours(rings);
+	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
+
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
+	vector<terrain::AnchorRef> anchors = {
+		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)), anchorMaterial)
+	};
+
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	world->build(partitionedShapes, anchors);
+	
 
 	// this sequence of cuts causes trouble
 	string cutDescriptions = R"(
@@ -731,45 +780,6 @@ void TerrainTestScenario::timeSpatialIndex() {
 
 	app::console() << "------------------------------------" << endl << "PERFORMING PERF MEASUREMENTS" << endl;
 	performTimingRun(450);
-}
-
-void TerrainTestScenario::drawWorldCoordinateSystem(const render_state &state) {
-
-	const cpBB frustum = state.viewport.getFrustum();
-	const int gridSize = 10;
-	const int majorGridSize = 100;
-	const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
-	const int lastY = static_cast<int>(floor(frustum.t / gridSize) * gridSize) + gridSize;
-	const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
-	const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
-
-	const auto MinorLineColor = ColorA(1,1,1,0.05);
-	const auto MajorLineColor = ColorA(1,1,1,0.25);
-	const auto AxisColor = ColorA(1,0,0,1);
-	gl::lineWidth(1.0 / state.viewport.getScale());
-
-	for (int y = firstY; y <= lastY; y+= gridSize) {
-		if (y == 0) {
-			gl::color(AxisColor);
-		} else if ( y % majorGridSize == 0) {
-			gl::color(MajorLineColor);
-		} else {
-			gl::color(MinorLineColor);
-		}
-		gl::drawLine(vec2(firstX, y), vec2(lastX, y));
-	}
-
-	for (int x = firstX; x <= lastX; x+= gridSize) {
-		if (x == 0) {
-			gl::color(AxisColor);
-		} else if ( x % majorGridSize == 0) {
-			gl::color(MajorLineColor);
-		} else {
-			gl::color(MinorLineColor);
-		}
-		gl::drawLine(vec2(x, firstY), vec2(x, lastY));
-	}
-
 }
 
 void TerrainTestScenario::releaseMouseDragConstraint() {

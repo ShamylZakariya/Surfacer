@@ -28,8 +28,7 @@ namespace terrain {
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
 
-	#define POLY_EDGE_PRECISION 10.f
-
+	#define POLY_EDGE_PRECISION 25.f
 
 	/**
 	 poly_edge represents an edge in a PolyLine2f. It is not meant to represent the specific vertices in

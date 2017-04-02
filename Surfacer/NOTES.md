@@ -15,12 +15,12 @@ Need to verify stitching of a large environment works.
 	✓ Let that grid stitch back together as needed.
 	- Start with synthetic/parametric geometry, work towards a proper SVG level loader which vends anchors as well as contours.
 
-	NOTES:
-	Right now, this works when my geometry is simple, like a big box. But when running on a ring, it weirds out when cutting starts, as if Shape transforms are wrong.
-		- maybe try making edge snapping more aggressive? snap any edge where vertices are within 2,4,8 units?
+✓ Then I need to design a basic component system. Can adopt some of my old Surfacer code here.
 
 
-Then I need to design a basic component system. Can adopt some of my old Surfacer code here. But:
-	- Needs a collect() method where components can deliver their draw components to be passed through visibility determination/culling. 
-	This needs to be flexible enough that World can vend a list of island::Shape instances to draw and the culler can efficiently pick the visible subset 
+## Trouble
+
+When a dynamic shape has stopped moving, if I zoom in really close, it disappears, as if the spatial index culling alg stops working. If I move it a smidge, culling starts working again.
+- REPRO: Cut a shape, move it, let it stop moving on its own. Zoom in real close. Pop, it's gone. Zoom back out, give it a wee toss, culling works again.
  
+Do I need to switch to a double prec representation? This affects trimesh generation, because trimesh must be single precision. My guess is I can be entirely double prec, except for making a single-prec copy of the contours for making the trimesh?

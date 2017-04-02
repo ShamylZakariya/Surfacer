@@ -847,11 +847,11 @@ namespace terrain {
 		// first compute the averaged centroid
 		//
 
-		vec2 averageModelSpaceCentroid(0,0);
-		const float averagingScale = 1.f / shapes.size();
+		dvec2 averageModelSpaceCentroid(0,0);
+		const double averagingScale = 1.0 / shapes.size();
 		for (auto &shape : shapes) {
 			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
-			averageModelSpaceCentroid += shape->_modelCentroid * averagingScale;
+			averageModelSpaceCentroid += dvec2(shape->_modelCentroid) * averagingScale;
 		}
 
 		//
