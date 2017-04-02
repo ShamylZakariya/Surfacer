@@ -28,6 +28,8 @@ namespace terrain {
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
 
+	#define POLY_EDGE_PRECISION 10.f
+
 
 	/**
 	 poly_edge represents an edge in a PolyLine2f. It is not meant to represent the specific vertices in
@@ -36,14 +38,13 @@ namespace terrain {
 	 contour at a given level of precision.
 	 */
 	struct poly_edge {
-		static const int SNAP_CELL_SIZE = 2;
 		ivec2 a, b;
 
 		poly_edge(vec2 m, vec2 n) {
-			a.x = static_cast<int>(lround(m.x / SNAP_CELL_SIZE));
-			a.y = static_cast<int>(lround(m.y / SNAP_CELL_SIZE));
-			b.x = static_cast<int>(lround(n.x / SNAP_CELL_SIZE));
-			b.y = static_cast<int>(lround(n.y / SNAP_CELL_SIZE));
+			a.x = static_cast<int>(lround(m.x * POLY_EDGE_PRECISION));
+			a.y = static_cast<int>(lround(m.y * POLY_EDGE_PRECISION));
+			b.x = static_cast<int>(lround(n.x * POLY_EDGE_PRECISION));
+			b.y = static_cast<int>(lround(n.y * POLY_EDGE_PRECISION));
 
 			// we want consistent ordering
 			if (a.x == b.x) {
@@ -73,7 +74,8 @@ namespace terrain {
 		}
 
 		friend std::ostream& operator<<( std::ostream& lhs, const poly_edge& rhs ) {
-			return lhs << "(poly_edge " << vec2(rhs.a.x * SNAP_CELL_SIZE, rhs.a.y * SNAP_CELL_SIZE) << " : " << vec2(rhs.b.x * SNAP_CELL_SIZE, rhs.b.y * SNAP_CELL_SIZE) << ")";
+			return lhs << "(poly_edge " << vec2(rhs.a.x / POLY_EDGE_PRECISION, rhs.a.y / POLY_EDGE_PRECISION)
+				<< " : " << vec2(rhs.b.x / POLY_EDGE_PRECISION, rhs.b.y / POLY_EDGE_PRECISION) << ")";
 		}
 	};
 
