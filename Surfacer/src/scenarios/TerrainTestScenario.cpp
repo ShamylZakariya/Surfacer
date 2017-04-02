@@ -17,8 +17,8 @@ namespace {
 
 	const float CUT_WIDTH = 4;
 
-	PolyLine2f rect(float left, float bottom, float right, float top) {
-		PolyLine2f pl;
+	PolyLine2d rect(float left, float bottom, float right, float top) {
+		PolyLine2d pl;
 		pl.push_back(vec2(left,bottom));
 		pl.push_back(vec2(right,bottom));
 		pl.push_back(vec2(right,top));
@@ -27,7 +27,7 @@ namespace {
 		return pl;
 	}
 
-	PolyLine2f rect(vec2 center, vec2 size) {
+	PolyLine2d rect(vec2 center, vec2 size) {
 		return rect(center.x - size.x/2, center.y - size.y/2, center.x + size.x/2, center.y + size.y/2);
 	}
 
@@ -551,11 +551,11 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 
 	ci::Rand rng;
 
-	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
-		PolyLine2f polyLine;
+	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2d {
+		PolyLine2d polyLine;
 		for (int i = 0; i < subdivisions; i++) {
-			float j = static_cast<float>(i)/static_cast<float>(subdivisions);
-			float r = j * M_PI * 2;
+			double j = static_cast<double>(i)/static_cast<double>(subdivisions);
+			double r = j * M_PI * 2;
 			vec2 p = center + (vec2(cos(r), sin(r)) * (radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
 			polyLine.push_back(p);
 		}
@@ -565,7 +565,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 
 	_cameraController.lookAt(vec2(0,0));
 
-	auto rings = vector<PolyLine2f> {
+	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
 		ring(vec2(0,0), 400, 600, 0)
 	};
@@ -586,11 +586,11 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 
 	ci::Rand rng;
 
-	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
-		PolyLine2f polyLine;
+	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2d {
+		PolyLine2d polyLine;
 		for (int i = 0; i < subdivisions; i++) {
-			float j = static_cast<float>(i)/static_cast<float>(subdivisions);
-			float r = j * M_PI * 2;
+			double j = static_cast<double>(i)/static_cast<double>(subdivisions);
+			double r = j * M_PI * 2;
 			vec2 p = center + (vec2(cos(r), sin(r)) * (radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
 			polyLine.push_back(p);
 		}
@@ -600,7 +600,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 
 	_cameraController.lookAt(vec2(0,0));
 
-	auto rings = vector<PolyLine2f> {
+	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
 		ring(vec2(0,0), 400, 600, 0)
 	};
@@ -624,12 +624,12 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 terrain::WorldRef TerrainTestScenario::testFail() {
 	ci::Rand rng;
 
-	auto ring = [&rng](vec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2f {
-		PolyLine2f polyLine;
+	auto ring = [&rng](dvec2 center, float radius, int subdivisions, float wobbleRange) -> PolyLine2d {
+		PolyLine2d polyLine;
 		for (int i = 0; i < subdivisions; i++) {
-			float j = static_cast<float>(i)/static_cast<float>(subdivisions);
-			float r = j * M_PI * 2;
-			vec2 p = center + (vec2(cos(r), sin(r)) * (radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
+			double j = static_cast<double>(i)/static_cast<double>(subdivisions);
+			double r = j * M_PI * 2;
+			dvec2 p = center + (dvec2(cos(r), sin(r)) * static_cast<double>(radius + rng.nextFloat(-wobbleRange, +wobbleRange)));
 			polyLine.push_back(p);
 		}
 		polyLine.setClosed();
@@ -638,7 +638,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 
 	_cameraController.lookAt(vec2(0,0));
 
-	auto rings = vector<PolyLine2f> {
+	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
 		ring(vec2(0,0), 400, 600, 0)
 	};

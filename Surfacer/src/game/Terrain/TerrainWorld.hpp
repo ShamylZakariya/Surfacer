@@ -28,10 +28,16 @@ namespace terrain {
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
 
-	#define POLY_EDGE_PRECISION 25.f
+	/**
+	 If we're considering 1 unit to be 1m, then a precision of 100 means we have a precision of 1cm, e.g.,
+	 poly_edges whos' vertices are within 1cm of eachother will be considered congruent. A precision of 1000 would
+	 increase precision such that only edges with vertices within one mm of one another would be congruent.
+	 */
+
+	#define POLY_EDGE_PRECISION 100.0
 
 	/**
-	 poly_edge represents an edge in a PolyLine2f. It is not meant to represent the specific vertices in
+	 poly_edge represents an edge in a PolyLine2d. It is not meant to represent the specific vertices in
 	 a coordinate system but rather it is meant to make it easy to determine if two PolyShapes share an edge.
 	 As such the coordinates a and b are integers, representing the world space coords of the PolyShape outer
 	 contour at a given level of precision.
@@ -39,7 +45,7 @@ namespace terrain {
 	struct poly_edge {
 		ivec2 a, b;
 
-		poly_edge(vec2 m, vec2 n) {
+		poly_edge(dvec2 m, dvec2 n) {
 			a.x = static_cast<int>(lround(m.x * POLY_EDGE_PRECISION));
 			a.y = static_cast<int>(lround(m.y * POLY_EDGE_PRECISION));
 			b.x = static_cast<int>(lround(n.x * POLY_EDGE_PRECISION));
@@ -73,8 +79,8 @@ namespace terrain {
 		}
 
 		friend std::ostream& operator<<( std::ostream& lhs, const poly_edge& rhs ) {
-			return lhs << "(poly_edge " << vec2(rhs.a.x / POLY_EDGE_PRECISION, rhs.a.y / POLY_EDGE_PRECISION)
-				<< " : " << vec2(rhs.b.x / POLY_EDGE_PRECISION, rhs.b.y / POLY_EDGE_PRECISION) << ")";
+			return lhs << "(poly_edge " << dvec2(rhs.a.x / POLY_EDGE_PRECISION, rhs.a.y / POLY_EDGE_PRECISION)
+				<< " : " << dvec2(rhs.b.x / POLY_EDGE_PRECISION, rhs.b.y / POLY_EDGE_PRECISION) << ")";
 		}
 	};
 
@@ -111,11 +117,11 @@ namespace terrain {
 	 Describes basic physics material properties for a collision shape
 	 */
 	struct material {
-		float density;
-		float friction;
+		cpFloat density;
+		cpFloat friction;
 		cpShapeFilter filter;
 
-		material(float d, float f, cpShapeFilter flt):
+		material(cpFloat d, cpFloat f, cpShapeFilter flt):
 		density(d),
 		friction(f),
 		filter(flt)
@@ -191,7 +197,7 @@ namespace terrain {
 		 The purpose of this is simple: You might have a large level. You want to divide the geometry of the level into manageable
 		 chunks for visibility culling and collision/physics performance.
 		 */
-		static vector<ShapeRef> partition(const vector<ShapeRef> &shapes, vec2 partitionOrigin, float partitionSize);
+		static vector<ShapeRef> partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize);
 
 	public:
 		World(cpSpace *space, material m);
@@ -207,7 +213,7 @@ namespace terrain {
 		/**
 		 Perform a cut in world space from a to b, with half-thickness of radius
 		 */
-		void cut(vec2 a, vec2 b, float radius, cpShapeFilter filter);
+		void cut(dvec2 a, dvec2 b, double radius, cpShapeFilter filter);
 
 		void draw(const core::render_state &renderState);
 		void step(const core::time_state &timeState);
@@ -249,17 +255,17 @@ namespace terrain {
 
 		DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
 		cpSpace *getSpace() const { return _space; }
-		const material &getMaterials() const { return _material; }
+		const material &getMaterial() const { return _material; }
 		virtual string getName() const { return _name; }
 		virtual Color getColor() const { return _color; }
 		virtual const cpHashValue getHash() const { return _hash; }
 
 		virtual cpBody* getBody() const = 0;
 		virtual cpBB getBB() const = 0;
-		virtual mat4 getModelview() const = 0;
-		virtual mat4 getModelviewInverse() const = 0;
-		virtual vec2 getPosition() const = 0;
-		virtual float getAngle() const = 0;
+		virtual dmat4 getModelview() const = 0;
+		virtual dmat4 getModelviewInverse() const = 0;
+		virtual dvec2 getPosition() const = 0;
+		virtual double getAngle() const = 0;
 		virtual set<ShapeRef> getShapes() const = 0;
 		virtual void releaseShapes() = 0;
 		virtual void draw(const core::render_state &renderState) = 0;
@@ -268,12 +274,12 @@ namespace terrain {
 
 
 		cpTransform getModelviewTransform() const {
-			mat4 mv = getModelview();
+			dmat4 mv = getModelview();
 			return cpTransform { mv[0].x, mv[0].y, mv[1].x, mv[1].y, mv[3].x, mv[3].y };
 		}
 
 		cpTransform getModelviewInverseTransform() const {
-			mat4 mvi = getModelviewInverse();
+			dmat4 mvi = getModelviewInverse();
 			return cpTransform { mvi[0].x, mvi[0].y, mvi[1].x, mvi[1].y, mvi[3].x, mvi[3].y };
 		}
 
@@ -297,10 +303,10 @@ namespace terrain {
 
 		virtual cpBody* getBody() const override { return _body; }
 		virtual cpBB getBB() const override;
-		virtual mat4 getModelview() const override { return mat4(1); }
-		virtual mat4 getModelviewInverse() const override { return mat4(1); }
-		virtual vec2 getPosition() const override { return vec2(0); }
-		virtual float getAngle() const override { return 0; }
+		virtual dmat4 getModelview() const override { return dmat4(1); }
+		virtual dmat4 getModelviewInverse() const override { return dmat4(1); }
+		virtual dvec2 getPosition() const override { return dvec2(0); }
+		virtual double getAngle() const override { return 0; }
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
 		virtual void releaseShapes() override;
 
@@ -333,10 +339,10 @@ namespace terrain {
 		virtual string getName() const override;
 		virtual cpBody* getBody() const override { return _body; }
 		cpBB getBB() const override { return _worldBB; }
-		virtual mat4 getModelview() const override { return _modelview; }
-		virtual mat4 getModelviewInverse() const override { return _modelviewInverse; }
-		virtual vec2 getPosition() const override { return v2(_position); }
-		virtual float getAngle() const override { return static_cast<float>(_angle); }
+		virtual dmat4 getModelview() const override { return _modelview; }
+		virtual dmat4 getModelviewInverse() const override { return _modelviewInverse; }
+		virtual dvec2 getPosition() const override { return v2(_position); }
+		virtual double getAngle() const override { return static_cast<double>(_angle); }
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
 		virtual void releaseShapes() override;
 
@@ -359,7 +365,7 @@ namespace terrain {
 		cpVect _position;
 		cpFloat _angle;
 		cpBB _worldBB, _modelBB;
-		mat4 _modelview, _modelviewInverse;
+		dmat4 _modelview, _modelviewInverse;
 
 		set<ShapeRef> _shapes;
 	};
@@ -375,9 +381,9 @@ namespace terrain {
 
 		virtual cpBB getBB() const = 0;
 		virtual size_t getDrawingBatchId() const = 0;
-		virtual mat4 getModelview() const = 0;
-		virtual float getAngle() const = 0;
-		virtual vec2 getModelCentroid() const = 0;
+		virtual dmat4 getModelview() const = 0;
+		virtual double getAngle() const = 0;
+		virtual dvec2 getModelCentroid() const = 0;
 		virtual const TriMeshRef &getTriMesh() const = 0;
 		virtual Color getColor() const = 0;
 
@@ -412,22 +418,22 @@ namespace terrain {
 
 		static const size_t DRAWING_BATCH_ID = ~0;
 
-		static AnchorRef fromContour(const PolyLine2f &contour, material m) {
+		static AnchorRef fromContour(const PolyLine2d &contour, material m) {
 			return make_shared<Anchor>(contour, m);
 		}
 
 	public:
 
-		Anchor(const PolyLine2f &contour, material m);
+		Anchor(const PolyLine2d &contour, material m);
 		~Anchor();
 
-		const PolyLine2f &getContour() const { return _contour; }
+		const PolyLine2d &getContour() const { return _contour; }
 
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
-		mat4 getModelview() const override { return mat4(1); } // identity
-		float getAngle() const override { return 0; };
-		vec2 getModelCentroid() const override;
+		dmat4 getModelview() const override { return dmat4(1); } // identity
+		double getAngle() const override { return 0; };
+		dvec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		Color getColor() const override { return Color(0,0,0); }
 
@@ -443,7 +449,7 @@ namespace terrain {
 
 		cpBB _bb;
 		material _material;
-		PolyLine2f _contour;
+		PolyLine2d _contour;
 		TriMeshRef _trimesh;
 
 	};
@@ -454,23 +460,23 @@ namespace terrain {
 	public:
 
 		struct contour_pair {
-			PolyLine2f world, model;
+			PolyLine2d world, model;
 
 			// when constructed model and world are both equal
-			contour_pair(const PolyLine2f &w):
+			contour_pair(const PolyLine2d &w):
 			world(w),
 			model(w)
 			{}
 		};
 
-		static ShapeRef fromContour(const PolyLine2f outerContour);
-		static vector<ShapeRef> fromContours(const vector<PolyLine2f> &contourSoup);
+		static ShapeRef fromContour(const PolyLine2d &outerContour);
+		static vector<ShapeRef> fromContours(const vector<PolyLine2d> &contourSoup);
 		static vector<ShapeRef> fromShapes(const vector<Shape2d> &shapeSoup);
 
 	public:
 
-		Shape(const PolyLine2f &shapeContour);
-		Shape(const PolyLine2f &shapeContour, const std::vector<PolyLine2f> &holeContours);
+		Shape(const PolyLine2d &shapeContour);
+		Shape(const PolyLine2d &shapeContour, const std::vector<PolyLine2d> &holeContours);
 
 		~Shape();
 
@@ -480,19 +486,19 @@ namespace terrain {
 		GroupBaseRef getGroup() const { return _group.lock(); }
 		cpHashValue getGroupHash() const { return _groupHash; }
 
-		mat4 getModelview() const override {
+		dmat4 getModelview() const override {
 			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelview();
 			} else {
-				return mat4();
+				return dmat4();
 			}
 		}
 
-		mat4 getModelviewInverse() const {
+		dmat4 getModelviewInverse() const {
 			if (GroupBaseRef group = _group.lock()) {
 				return group->getModelviewInverse();
 			} else {
-				return mat4();
+				return dmat4();
 			}
 		}
 
@@ -511,8 +517,8 @@ namespace terrain {
 			return reinterpret_cast<size_t>(_groupHash);
 		}
 
-		float getAngle() const override { return getGroup()->getAngle(); }
-		vec2 getModelCentroid() const override { return _modelCentroid; }
+		double getAngle() const override { return getGroup()->getAngle(); }
+		dvec2 getModelCentroid() const override { return _modelCentroid; }
 
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 
@@ -521,7 +527,7 @@ namespace terrain {
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
 
-		vector<ShapeRef> subtract(const PolyLine2f &contourToSubtract) const;
+		vector<ShapeRef> subtract(const PolyLine2d &contourToSubtract) const;
 
 
 	protected:
@@ -537,8 +543,8 @@ namespace terrain {
 		// build the trimesh, returning true iff we got > 0 triangles
 		bool triangulate();
 
-		float computeArea();
-		void computeMassAndMoment(float density, float &mass, float &moment, float &area);
+		double computeArea();
+		void computeMassAndMoment(double density, double &mass, double &moment, double &area);
 
 		void destroyCollisionShapes();
 		const vector<cpShape*> &createCollisionShapes(cpBody *body, cpBB &shapesModelBB);
@@ -549,7 +555,7 @@ namespace terrain {
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
 		TriMeshRef _trimesh;
-		vec2 _modelCentroid;
+		dvec2 _modelCentroid;
 
 		cpBB _shapesModelBB;
 		vector<cpShape*> _shapes;

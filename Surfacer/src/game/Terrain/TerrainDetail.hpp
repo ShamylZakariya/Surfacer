@@ -33,11 +33,11 @@ namespace terrain {
 	namespace detail {
 
 		// TODO: Optimization is disabled since it seems to break edge stitching. The question is, how?
-		const float RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.5;
+		const double RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.5;
 
-		const float MIN_SHAPE_AREA = 1.f;
-		const float MIN_TRIANGLE_AREA = 1.f;
-		const float COLLISION_SHAPE_RADIUS = 0.05;
+		const double MIN_SHAPE_AREA = 1.0;
+		const double MIN_TRIANGLE_AREA = 1.0;
+		const double COLLISION_SHAPE_RADIUS = 0.05;
 
 #pragma mark - Helpers
 
@@ -47,18 +47,18 @@ namespace terrain {
 			return Color(CM_HSV, colorRand.nextFloat(), 0.5 + colorRand.nextFloat(0.5), 0.5 + colorRand.nextFloat(0.5));
 		}
 
-		vec2 rotate_cw(const vec2 &v) {
-			return vec2(v.y, -v.x);
+		dvec2 rotate_cw(const dvec2 &v) {
+			return dvec2(v.y, -v.x);
 		}
 
-		bool is_wound_clockwise(const PolyLine2f &contour) {
+		bool is_wound_clockwise(const PolyLine2d &contour) {
 			// http://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
 			// Sum over the edges, (x2 − x1)(y2 + y1)
 
 			double sum = 0;
 			for (size_t i = 0, j = 1, n = contour.getPoints().size(); i < n; i++, j++) {
-				vec2 a = contour.getPoints()[i];
-				vec2 b = contour.getPoints()[j % n];
+				dvec2 a = contour.getPoints()[i];
+				dvec2 b = contour.getPoints()[j % n];
 				double k = (b.x - a.x) * (b.y + a.y);
 				sum += k;
 			}
@@ -66,35 +66,35 @@ namespace terrain {
 			return sum >= 0;
 		}
 
-		void wind_clockwise(PolyLine2f &contour) {
+		void wind_clockwise(PolyLine2d &contour) {
 			if (!is_wound_clockwise(contour)) {
 				contour.reverse();
 			}
 		}
 
-		void wind_counter_clockwise(PolyLine2f &contour) {
+		void wind_counter_clockwise(PolyLine2d &contour) {
 			if (is_wound_clockwise(contour)) {
 				contour.reverse();
 			}
 		}
 
-		PolyLine2f transformed(const PolyLine2f &pl, const mat4 &m) {
-			PolyLine2f transformed;
+		PolyLine2d transformed(const PolyLine2d &pl, const dmat4 &m) {
+			PolyLine2d transformed;
 			for (auto &p : pl) {
 				transformed.push_back(m * p);
 			}
 			return transformed;
 		}
 
-		void transform(PolyLine2f &pl, const mat4 &m) {
+		void transform(PolyLine2d &pl, const dmat4 &m) {
 			for (auto &p : pl) {
-				vec2 tp = m * p;
+				dvec2 tp = m * p;
 				p.x = tp.x;
 				p.y = tp.y;
 			}
 		}
 
-		void transform(const PolyLine2f &a, PolyLine2f &b, const mat4 &m) {
+		void transform(const PolyLine2d &a, PolyLine2d &b, const dmat4 &m) {
 			if (b.getPoints().size() != a.getPoints().size()) {
 				b.getPoints().clear();
 				b.getPoints().resize(a.getPoints().size());
@@ -108,21 +108,21 @@ namespace terrain {
 			}
 		};
 
-		PolyLine2f optimize(PolyLine2f p) {
+		PolyLine2d optimize(PolyLine2d p) {
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
-				return simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
+				return core::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
 			} else {
 				p.setClosed();
 				return p;
 			}
 		}
 
-		vector<Shape::contour_pair> optimize(vector<PolyLine2f> ps) {
+		vector<Shape::contour_pair> optimize(vector<PolyLine2d> ps) {
 			vector<Shape::contour_pair> ret;
 
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
 				for (auto &p : ps) {
-					ret.push_back(simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
+					ret.push_back(core::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
 				}
 			} else {
 				for (auto &p : ps) {
@@ -134,14 +134,30 @@ namespace terrain {
 			return ret;
 		}
 
+		PolyLine2f polyline2d_to_2f(const PolyLine2d &p2d) {
+			PolyLine2f p2f;
+			for (dvec2 dv2 : p2d) {
+				p2f.push_back(dv2);
+			}
+			return p2f;
+		}
+
+		PolyLine2d polyline2f_to_2d(const PolyLine2f &p2f) {
+			PolyLine2d p2d;
+			for (dvec2 v2 : p2f) {
+				p2d.push_back(v2);
+			}
+			return p2d;
+		}
+
 
 #pragma mark - Boost::Geometry - Shape Interop
 
 
 		typedef boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > polygon;
 
-		std::vector<ShapeRef> convertBoostGeometryToTerrainShapes( std::vector<polygon> &polygons, const mat4 &modelview) {
-			const float Dist2Epsilon = 1e-2;
+		std::vector<ShapeRef> convertBoostGeometryToTerrainShapes( std::vector<polygon> &polygons, const dmat4 &modelview) {
+			const double Dist2Epsilon = 1e-2;
 			std::vector<ShapeRef> result;
 
 			for( std::vector<polygon>::iterator outIt = polygons.begin(); outIt != polygons.end(); ++outIt ) {
@@ -151,10 +167,10 @@ namespace terrain {
 				boost::geometry::correct(*outIt);
 
 				bool polygonOuterContourIsSane = true;
-				PolyLine2f shapeContour;
-				vector<PolyLine2f> holeContours;
+				PolyLine2d shapeContour;
+				vector<PolyLine2d> holeContours;
 
-				// convert the boost geometry to PolyLine2f, creating the shapeContour and holeContours.
+				// convert the boost geometry to PolyLine2d, creating the shapeContour and holeContours.
 				// note: we apply the modelview BEFORE calling updateModelview on the PolyShape. This
 				// is to move the polylines to the world space of the shape they were created from,
 				// and then move them to their own model space. this is a small loss of precision
@@ -168,7 +184,7 @@ namespace terrain {
 						polygonOuterContourIsSane = false;
 						break;
 					} else {
-						shapeContour.push_back( vec2(x,y) );
+						shapeContour.push_back( dvec2(x,y) );
 					}
 				}
 
@@ -190,7 +206,7 @@ namespace terrain {
 				transform(shapeContour, modelview);
 
 				for( RingIterator crunk = outIt->inners().begin(); crunk != outIt->inners().end(); ++crunk ) {
-					PolyLine2f contour;
+					PolyLine2d contour;
 					bool innerContourIsSane = true;
 					for( PointIterator pt = crunk->begin(); pt != crunk->end(); ++pt ) {
 						const double x = boost::geometry::get<0>(*pt);
@@ -202,7 +218,7 @@ namespace terrain {
 									 << " vertex: " << (size_t)(pt - crunk->begin()));
 							break;
 						} else {
-							contour.push_back( vec2(x,y) );
+							contour.push_back( dvec2(x,y) );
 						}
 					}
 
@@ -248,7 +264,7 @@ namespace terrain {
 			return result;
 		}
 
-		polygon convertPolyLineToBoostGeometry( const PolyLine2f &polyLine )
+		polygon convertPolyLineToBoostGeometry( const PolyLine2d &polyLine )
 		{
 			polygon result;
 
@@ -268,7 +284,7 @@ namespace terrain {
 		typedef shared_ptr<contour_tree_node> contour_tree_node_ref;
 
 		struct contour_tree_node {
-			PolyLine2f contour;
+			PolyLine2d contour;
 			vector<contour_tree_node_ref> children;
 		};
 
@@ -276,7 +292,7 @@ namespace terrain {
 		 Given a "soup" of contours (an unordered mess of closed polylines) build a tree (with possibly
 		 multiple roots) which describes their nesting in a manner useful for constructing PolyShapes
 		 */
-		vector<contour_tree_node_ref> build_contour_tree(const vector<PolyLine2f> &contourSoup) {
+		vector<contour_tree_node_ref> build_contour_tree(const vector<PolyLine2d> &contourSoup) {
 
 			// simple cases
 			if (contourSoup.size() == 0) {
@@ -290,7 +306,7 @@ namespace terrain {
 
 
 			// create a set of pointers to our polylines
-			set<const PolyLine2f*> contours;
+			set<const PolyLine2d*> contours;
 			for (auto &pl : contourSoup) {
 				contours.insert(&pl);
 			}
@@ -323,7 +339,7 @@ namespace terrain {
 				}
 
 				// find each polyline which is inside the one we just found
-				vector<PolyLine2f> innerContours;
+				vector<PolyLine2d> innerContours;
 				for (auto candidateHoleIt = begin(contours); candidateHoleIt != end(contours);) {
 					if (node->contour.contains(*(*candidateHoleIt)->begin())) {
 						innerContours.push_back(**candidateHoleIt);
@@ -361,7 +377,7 @@ namespace terrain {
 
 			vector<ShapeRef> result;
 
-			vector<PolyLine2f> holes;
+			vector<PolyLine2d> holes;
 			for (auto &childNode : rootNode->children) {
 				// each child becomes a hole contour
 				holes.push_back(childNode->contour);
@@ -411,7 +427,7 @@ namespace terrain {
 #pragma mark - Edge Test
 
 		bool shared_edges(const ShapeRef &a, const ShapeRef &b) {
-			const float bbFudge = 4.f;
+			const double bbFudge = 4.f;
 			if (cpBBIntersects(a->getWorldSpaceContourEdgesBB(), b->getWorldSpaceContourEdgesBB(), bbFudge)) {
 
 				const auto &aShapeEdges = a->getWorldSpaceContourEdges();

@@ -172,7 +172,7 @@ namespace terrain {
 	
 #pragma mark - World
 
-	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, vec2 partitionOrigin, float partitionSize) {
+	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize) {
 
 		// first compute the march area
 		cpBB bounds = cpBBInvalid;
@@ -185,10 +185,10 @@ namespace terrain {
 		const int marchBottom = static_cast<int>(floor((bounds.b - partitionOrigin.y) / partitionSize));
 		const int marchTop = static_cast<int>(ceil((bounds.t - partitionOrigin.y) / partitionSize));
 
-		const mat4 identity(1);
+		const dmat4 identity(1);
 		cpBB quadBB = cpBBInvalid;
 
-		PolyLine2f quad;
+		PolyLine2d quad;
 		quad.getPoints().resize(4);
 
 		vector<ShapeRef> result;
@@ -207,10 +207,10 @@ namespace terrain {
 
 					if (cpBBIntersects(quadBB, shape->getWorldSpaceContourEdgesBB())) {
 						// generate the test quad
-						quad.getPoints()[0] = vec2(quadBB.l, quadBB.b);
-						quad.getPoints()[1] = vec2(quadBB.l, quadBB.t);
-						quad.getPoints()[2] = vec2(quadBB.r, quadBB.t);
-						quad.getPoints()[3] = vec2(quadBB.r, quadBB.b);
+						quad.getPoints()[0] = dvec2(quadBB.l, quadBB.b);
+						quad.getPoints()[1] = dvec2(quadBB.l, quadBB.t);
+						quad.getPoints()[2] = dvec2(quadBB.r, quadBB.t);
+						quad.getPoints()[3] = dvec2(quadBB.r, quadBB.b);
 
 						auto polygonToIntersect = detail::convertPolyLineToBoostGeometry( quad );
 
@@ -266,25 +266,25 @@ namespace terrain {
 		build(shapes, map<ShapeRef,GroupBaseRef>());
 	}
 
-	void World::cut(vec2 a, vec2 b, float radius, cpShapeFilter filter) {
-		const float MinLength = 1e-2;
-		const float MinRadius = 1e-2;
+	void World::cut(dvec2 a, dvec2 b, double radius, cpShapeFilter filter) {
+		const double MinLength = 1e-2;
+		const double MinRadius = 1e-2;
 
-		vec2 dir = b - a;
-		float l = length(dir);
+		dvec2 dir = b - a;
+		double l = length(dir);
 
 		if (l > MinLength && radius > MinRadius) {
 			dir /= l;
 
-			vec2 right = radius * detail::rotate_cw(dir);
-			vec2 left = -right;
+			dvec2 right = radius * detail::rotate_cw(dir);
+			dvec2 left = -right;
 
-			vec2 ca = a + right;
-			vec2 cb = a + left;
-			vec2 cc = b + left;
-			vec2 cd = b + right;
+			dvec2 ca = a + right;
+			dvec2 cb = a + left;
+			dvec2 cc = b + left;
+			dvec2 cd = b + right;
 
-			PolyLine2f contour;
+			PolyLine2d contour;
 			contour.push_back(ca);
 			contour.push_back(cb);
 			contour.push_back(cc);
@@ -406,8 +406,8 @@ namespace terrain {
 		//
 
 		if (renderState.mode == RenderMode::DEVELOPMENT) {
-			const float rScale = renderState.viewport.getReciprocalScale();
-			const mat4 rScaleMat = glm::scale(vec3(rScale, -rScale, 1));
+			const double rScale = renderState.viewport.getReciprocalScale();
+			const dmat4 rScaleMat = glm::scale(dvec3(rScale, -rScale, 1));
 			const ColorA bbColor(1,0.2,1,0.5);
 
 			gl::lineWidth(1);
@@ -420,12 +420,12 @@ namespace terrain {
 
 				// draw the shape id
 				const auto R = drawable->getModelview();
-				const float angle = drawable->getAngle();
-				const vec3 modelCentroid = vec3(drawable->getModelCentroid(), 0);
+				const double angle = drawable->getAngle();
+				const dvec3 modelCentroid = dvec3(drawable->getModelCentroid(), 0);
 
 				gl::ScopedModelMatrix smm2;
-				gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, vec3(0,0,1)) * rScaleMat);
-				gl::drawString(strings::str(drawable->getId()), vec2(0,0), Color(1,1,1));
+				gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, dvec3(0,0,1)) * rScaleMat);
+				gl::drawString(strings::str(drawable->getId()), dvec2(0,0), Color(1,1,1));
 			}
 		}
 	}
@@ -553,8 +553,8 @@ namespace terrain {
 				for (auto &anchor : _anchors) {
 					if (cpBBIntersects(anchor->getBB(), shape->getWorldSpaceContourEdgesBB())) {
 
-						const PolyLine2f &shapeContour = shape->getOuterContour().world;
-						const PolyLine2f &anchorContour = anchor->getContour();
+						const PolyLine2d &shapeContour = shape->getOuterContour().world;
+						const PolyLine2d &anchorContour = anchor->getContour();
 
 						//
 						// check if the anchor overlaps the shape's outer contour
@@ -654,7 +654,7 @@ namespace terrain {
 
 			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
 
-			float area = shape->computeArea();
+			double area = shape->computeArea();
 			if (area >= detail::MIN_SHAPE_AREA) {
 
 				shape->setGroup(shared_from_this());
@@ -728,7 +728,7 @@ namespace terrain {
 		cpVect _position;
 		cpFloat _angle;
 		cpBB _worldBB, _modelBB;
-		mat4 _modelview, _modelviewInverse;
+		dmat4 _modelview, _modelviewInverse;
 
 		set<ShapeRef> _shapes;
 
@@ -778,12 +778,12 @@ namespace terrain {
 
 	void DynamicGroup::draw(const render_state &renderState) {
 		if (renderState.mode == RenderMode::DEVELOPMENT) {
-			const float rScale = renderState.viewport.getReciprocalScale();
+			const double rScale = renderState.viewport.getReciprocalScale();
 
 			gl::ScopedModelMatrix smm2;
-			gl::multModelMatrix(translate(vec3(getPosition() + vec2(0,20),0)) * scale(vec3(rScale, -rScale, 1)));
+			gl::multModelMatrix(translate(dvec3(getPosition() + dvec2(0,20),0)) * scale(dvec3(rScale, -rScale, 1)));
 
-			gl::drawString(getName(), vec2(0,0), Color(1,1,1));
+			gl::drawString(getName(), dvec2(0,0), Color(1,1,1));
 		}
 	}
 
@@ -821,7 +821,7 @@ namespace terrain {
 			GroupBaseRef body = shape->getGroup();
 			if (body && body.get() != this) {
 
-				const mat4 T = shape->getModelview();
+				const dmat4 T = shape->getModelview();
 				detail::transform(shape->_outerContour.model, shape->_outerContour.world, T);
 				shape->_outerContour.model = shape->_outerContour.world;
 
@@ -866,7 +866,7 @@ namespace terrain {
 			}
 		}
 
-		_modelview = _modelview * translate(vec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0.f));
+		_modelview = _modelview * translate(dvec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0.f));
 		_modelviewInverse = inverse(_modelview);
 
 		//
@@ -885,9 +885,9 @@ namespace terrain {
 		//	Compute collective mass and moment
 		//
 
-		float totalArea = 0, totalMass = 0, totalMoment = 0;
+		double totalArea = 0, totalMass = 0, totalMoment = 0;
 		for (auto &shape : shapes) {
-			float area = 0, mass = 0, moment = 0;
+			double area = 0, mass = 0, moment = 0;
 			shape->computeMassAndMoment(_material.density, mass, moment, area);
 			totalArea += area;
 			totalMass += mass;
@@ -900,8 +900,8 @@ namespace terrain {
 			_body = cpBodyNew(totalMass, totalMoment);
 			cpBodySetUserData(_body, this);
 
-			// glm::mat4 is column major
-			vec2 position;
+			// glm::dmat4 is column major
+			dvec2 position;
 			position.x = _modelview[3][0];
 			position.y = _modelview[3][1];
 			cpBodySetPosition(_body, cpv(position));
@@ -956,7 +956,7 @@ namespace terrain {
 					//	Compute world linearvel and angularvel for parent and apply to self
 					//
 
-					const float angularVel = cpBodyGetAngularVelocity(parentGroup->getBody());
+					const double angularVel = cpBodyGetAngularVelocity(parentGroup->getBody());
 					const cpVect linearVel = cpBodyGetVelocityAtWorldPoint(parentGroup->getBody(), cpv(getPosition()));
 					cpBodySetVelocity(_body, linearVel);
 					cpBodySetAngularVelocity(_body, angularVel);
@@ -985,8 +985,8 @@ namespace terrain {
 		_position = position;
 		_angle = angle;
 
-		// mat4 - column major, each column is a vec4
-		_modelview = mat4(
+		// dmat4 - column major, each column is a vec4
+		_modelview = dmat4(
 						  vec4(rotation.x, rotation.y, 0, 0),
 						  vec4(-rotation.y, rotation.x, 0, 0),
 						  vec4(0,0,1,0),
@@ -1034,11 +1034,11 @@ namespace terrain {
 
 		cpBB _bb;
 		material _material;
-		PolyLine2f _contour;
+		PolyLine2d _contour;
 		TriMeshRef _trimesh;
 	 */
 
-	Anchor::Anchor(const PolyLine2f &contour, material m):
+	Anchor::Anchor(const PolyLine2d &contour, material m):
 	_staticBody(nullptr),
 	_bb(cpBBInvalid),
 	_material(m),
@@ -1049,7 +1049,7 @@ namespace terrain {
 		}
 
 		Triangulator triangulator;
-		triangulator.addPolyLine(_contour);
+		triangulator.addPolyLine(detail::polyline2d_to_2f(_contour));
 		_trimesh = triangulator.createMesh();
 	}
 
@@ -1061,8 +1061,8 @@ namespace terrain {
 		cpCleanupAndFree(_staticBody);
 	}
 
-	vec2 Anchor::getModelCentroid() const {
-		return vec2((_bb.l + _bb.r) * 0.5f, (_bb.b + _bb.t) * 0.5f);
+	dvec2 Anchor::getModelCentroid() const {
+		return dvec2((_bb.l + _bb.r) * 0.5f, (_bb.b + _bb.t) * 0.5f);
 	}
 
 	bool Anchor::build(cpSpace *space) {
@@ -1078,7 +1078,7 @@ namespace terrain {
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
 
-			float area = cpAreaForPoly(3, triangle, 0);
+			double area = cpAreaForPoly(3, triangle, 0);
 			if (area < 0) {
 				triangle[0] = cpv(c);
 				triangle[1] = cpv(b);
@@ -1113,11 +1113,11 @@ namespace terrain {
 
 #pragma mark - Shape
 
-	ShapeRef Shape::fromContour(const PolyLine2f outerContour) {
+	ShapeRef Shape::fromContour(const PolyLine2d &outerContour) {
 		return make_shared<Shape>(outerContour);
 	}
 
-	vector<ShapeRef> Shape::fromContours(const vector<PolyLine2f> &contourSoup) {
+	vector<ShapeRef> Shape::fromContours(const vector<PolyLine2d> &contourSoup) {
 
 		vector<detail::contour_tree_node_ref> rootNodes = detail::build_contour_tree(contourSoup);
 		vector<ShapeRef> shapes;
@@ -1130,10 +1130,17 @@ namespace terrain {
 	}
 
 	vector<ShapeRef> Shape::fromShapes(const vector<Shape2d> &shapeSoup) {
-		vector<PolyLine2f> contours;
+		vector<PolyLine2d> contours;
 		for (auto &shape : shapeSoup) {
 			for (auto &path : shape.getContours()) {
-				contours.push_back(path.subdivide());
+
+				// path.subdivide returns a vector<dvec2> which isn't convertible to vector<dvec2>
+				PolyLine2d contour;
+				for (const dvec2 v : path.subdivide()) {
+					contour.push_back(v);
+				}
+
+				contours.push_back(contour);
 			}
 		}
 
@@ -1148,7 +1155,7 @@ namespace terrain {
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
 		TriMeshRef _trimesh;
-		vec2 _modelCentroid;
+		dvec2 _modelCentroid;
 
 		cpBB _shapesModelBB;
 		vector<cpShape*> _shapes;
@@ -1160,7 +1167,7 @@ namespace terrain {
 	 */
 
 
-	Shape::Shape(const PolyLine2f &sc):
+	Shape::Shape(const PolyLine2d &sc):
 	_worldSpaceShapeContourEdgesDirty(true),
 	_outerContour(detail::optimize(sc)),
 	_modelCentroid(0,0),
@@ -1169,7 +1176,7 @@ namespace terrain {
 		detail::wind_clockwise(_outerContour.world);
 	}
 
-	Shape::Shape(const PolyLine2f &sc, const std::vector<PolyLine2f> &hcs):
+	Shape::Shape(const PolyLine2d &sc, const std::vector<PolyLine2d> &hcs):
 	_worldSpaceShapeContourEdgesDirty(true),
 	_outerContour(detail::optimize(sc)),
 	_holeContours(detail::optimize(hcs)),
@@ -1201,14 +1208,14 @@ namespace terrain {
 		return _worldSpaceContourEdgesBB;
 	}
 
-	vector<ShapeRef> Shape::subtract(const PolyLine2f &contourToSubtract) const {
+	vector<ShapeRef> Shape::subtract(const PolyLine2d &contourToSubtract) const {
 		if (!contourToSubtract.getPoints().empty()) {
 
 			//
 			// move the shape to subtract from world space to the our model space, and convert to a boost poly
 			//
 
-			PolyLine2f transformedShapeToSubtract = detail::transformed(contourToSubtract, getModelviewInverse());
+			PolyLine2d transformedShapeToSubtract = detail::transformed(contourToSubtract, getModelviewInverse());
 			detail::polygon polyToSubtract = detail::convertPolyLineToBoostGeometry( transformedShapeToSubtract );
 
 			//
@@ -1245,8 +1252,8 @@ namespace terrain {
 
 			assert(_outerContour.model.size() > 1);
 
-			const mat4 mv = getModelview();
-			vec2 worldPoint = mv * _outerContour.model.getPoints().front();
+			const dmat4 mv = getModelview();
+			dvec2 worldPoint = mv * _outerContour.model.getPoints().front();
 
 			_worldSpaceContourEdges.clear();
 			cpBB bb = cpBBInvalid;
@@ -1256,7 +1263,7 @@ namespace terrain {
 				if (next == end) {
 					next = _outerContour.model.begin();
 				}
-				const vec2 worldNext = mv * (*next);
+				const dvec2 worldNext = mv * (*next);
 				_worldSpaceContourEdges.insert(poly_edge(worldPoint, worldNext));
 				worldPoint = worldNext;
 				cpBBExpand(bb, worldPoint);
@@ -1283,10 +1290,10 @@ namespace terrain {
 		//
 
 		Triangulator triangulator;
-		triangulator.addPolyLine(_outerContour.model);
+		triangulator.addPolyLine(detail::polyline2d_to_2f(_outerContour.model));
 
 		for (auto holeContour : _holeContours) {
-			triangulator.addPolyLine(holeContour.model);
+			triangulator.addPolyLine(detail::polyline2d_to_2f(holeContour.model));
 		}
 
 		_trimesh = triangulator.createMesh();
@@ -1294,8 +1301,8 @@ namespace terrain {
 		return _trimesh->getNumTriangles() > 0;
 	}
 
-	float Shape::computeArea() {
-		float area = 0;
+	double Shape::computeArea() {
+		double area = 0;
 		cpVect triangle[3];
 
 		for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
@@ -1306,7 +1313,7 @@ namespace terrain {
 			triangle[0] = cpv(a);
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
-			float triArea = length(cross(vec3(b-a,0),vec3(c-a,0))) * 0.5f;
+			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5f;
 
 			if (triArea < 0) {
 
@@ -1327,7 +1334,7 @@ namespace terrain {
 		return area;
 	}
 
-	void Shape::computeMassAndMoment(float density, float &mass, float &moment, float &area) {
+	void Shape::computeMassAndMoment(double density, double &mass, double &moment, double &area) {
 		mass = 0;
 		moment = 0;
 		area = 0;
@@ -1341,7 +1348,7 @@ namespace terrain {
 			triangle[0] = cpv(a);
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
-			float triArea = length(cross(vec3(b-a,0),vec3(c-a,0))) * 0.5f;
+			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5f;
 
 			if (triArea < 0) {
 
@@ -1356,10 +1363,10 @@ namespace terrain {
 				triArea = -triArea;
 			}
 
-			const float polyMass = abs(density * triArea);
+			const double polyMass = abs(density * triArea);
 
 			if (polyMass > 1e-3) {
-				const float polyMoment = cpMomentForPoly(polyMass, 3, triangle, cpvzero, 0);
+				const double polyMoment = cpMomentForPoly(polyMass, 3, triangle, cpvzero, 0);
 				if (!isnan(polyMoment)) {
 					mass += polyMass;
 					moment += abs(polyMoment);
@@ -1389,7 +1396,7 @@ namespace terrain {
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
 
-			float area = cpAreaForPoly(3, triangle, 0);
+			double area = cpAreaForPoly(3, triangle, 0);
 			if (area < 0) {
 				triangle[0] = cpv(c);
 				triangle[1] = cpv(b);
