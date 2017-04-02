@@ -866,7 +866,7 @@ namespace terrain {
 			}
 		}
 
-		_modelview = _modelview * translate(dvec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0.f));
+		_modelview = _modelview * translate(dvec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0));
 		_modelviewInverse = inverse(_modelview);
 
 		//
@@ -1062,7 +1062,7 @@ namespace terrain {
 	}
 
 	dvec2 Anchor::getModelCentroid() const {
-		return dvec2((_bb.l + _bb.r) * 0.5f, (_bb.b + _bb.t) * 0.5f);
+		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
 
 	bool Anchor::build(cpSpace *space) {
@@ -1313,7 +1313,7 @@ namespace terrain {
 			triangle[0] = cpv(a);
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
-			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5f;
+			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5;
 
 			if (triArea < 0) {
 
@@ -1348,7 +1348,7 @@ namespace terrain {
 			triangle[0] = cpv(a);
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
-			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5f;
+			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5;
 
 			if (triArea < 0) {
 
