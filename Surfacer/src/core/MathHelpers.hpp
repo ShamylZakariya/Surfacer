@@ -19,9 +19,10 @@ using namespace ci;
 namespace cinder {
 	typedef RectT<int> Recti;
 
-	inline vec2 operator * ( const mat4 &m, const vec2 &v )
+	template< class T, glm::precision P >
+	inline glm::tvec2<T,P> operator * ( const glm::tmat4x4<T,P> &m, const glm::tvec2<T,P> &v )
 	{
-		return vec2(m * vec4(v.x, v.y, 0, 1));
+		return glm::tvec2<T,P>(m * glm::tvec4<T,P>(v.x, v.y, T(0), T(1)));
 	}
 
 }
@@ -38,9 +39,11 @@ struct vec2_comparator_
 
 typedef vec2_comparator_<int, glm::highp> ivec2Comparator;
 typedef vec2_comparator_<float, glm::highp> vec2Comparator;
+typedef vec2_comparator_<double, glm::highp> dvec2Comparator;
 
 typedef std::set< ivec2, ivec2Comparator > ivec2Set;
 typedef std::set< vec2, vec2Comparator > vec2Set;
+typedef std::set< dvec2, dvec2Comparator > dvec2Set;
 
 template < typename T, glm::precision P >
 struct vec3_comparator_
@@ -57,13 +60,11 @@ typedef glm::tvec3<int,glm::highp> vec3i;
 
 typedef vec3_comparator_<int, glm::highp> vec3iComparator;
 typedef vec3_comparator_<float, glm::highp> vec3Comparator;
+typedef vec3_comparator_<double, glm::highp> dvec3Comparator;
 
 typedef std::set< vec3i, vec3iComparator > vec3iSet;
 typedef std::set< vec3, vec3Comparator > vec3Set;
-
-typedef std::vector< vec2 > vec2Vec;
-typedef std::vector< vec3 > vec3Vec;
-typedef std::vector< vec4 > vec4Vec;
+typedef std::set< dvec3, dvec3Comparator > dvec3Set;
 
 template <typename T>
 inline T sign( const T s )

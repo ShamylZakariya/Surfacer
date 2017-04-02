@@ -14,7 +14,7 @@
 
 namespace {
 
-	const float Epsilon = 1e-3;
+	const double Epsilon = 1e-3;
 
 }
 
@@ -25,8 +25,8 @@ namespace core {
 		unsigned int		_constraintMask;
 		control_method		_controlMethod;
 		cpBB				_levelBounds;
-		float				_scale;
-		vec2				_pan;
+		double				_scale;
+		dvec2				_pan;
 		zeno_config			_zenoConfig;
 		bool				_disregardViewportMotion;
 	 */
@@ -75,27 +75,27 @@ namespace core {
 		}
 	}
 
-	void ViewportController::setScale( float z, const vec2 &aboutScreen )
+	void ViewportController::setScale( double z, const dvec2 &aboutScreen )
 	{
-		mat4 mv, imv;
+		dmat4 mv, imv;
 		Viewport::modelviewFor( _pan, _scale, mv );
 
 		imv = inverse(mv);
-		vec2 aboutWorld = imv * aboutScreen;
+		dvec2 aboutWorld = imv * aboutScreen;
 
 		Viewport::modelviewFor( _pan, _constrainScale(z), mv );
 
-		vec2 postScaleAboutScreen = mv * aboutWorld;
+		dvec2 postScaleAboutScreen = mv * aboutWorld;
 
 		_pan = _constrainPan( _pan + ( aboutScreen - postScaleAboutScreen ) );
 		_scale = _constrainScale( z );
 	}
 
-	void ViewportController::lookAt( const vec2 &world, float scale, const vec2 &screen )
+	void ViewportController::lookAt( const dvec2 &world, double scale, const dvec2 &screen )
 	{
 		_scale = _constrainScale(scale);
 
-		mat4 mv;
+		dmat4 mv;
 		Viewport::modelviewFor( _pan, _scale, mv );
 
 		_pan = _constrainPan( _pan + (screen - (mv*world)));
@@ -104,16 +104,16 @@ namespace core {
 #pragma mark -
 #pragma mark Private
 
-	vec2 ViewportController::_constrainPan( vec2 pan ) const
+	dvec2 ViewportController::_constrainPan( dvec2 pan ) const
 	{
 		if ( _levelBounds == cpBBInfinity ) return pan;
 
 		if ( _constraintMask & ConstrainPan )
 		{
-			pan.x = std::min( pan.x, static_cast<float>(_levelBounds.l * _scale));
-			pan.y = std::min( pan.y, static_cast<float>(_levelBounds.b * _scale));
+			pan.x = std::min( pan.x, _levelBounds.l * _scale);
+			pan.y = std::min( pan.y, _levelBounds.b * _scale);
 
-			float right = (_levelBounds.r * _scale) - _viewport.getWidth(),
+			double right = (_levelBounds.r * _scale) - _viewport.getWidth(),
 			top = (_levelBounds.t * _scale) - _viewport.getHeight();
 
 			pan.x = std::max( pan.x, -right );
@@ -123,13 +123,13 @@ namespace core {
 		return pan;
 	}
 
-	float ViewportController::_constrainScale( float scale ) const
+	double ViewportController::_constrainScale( double scale ) const
 	{
 		if ( _levelBounds == cpBBInfinity ) return scale;
 
 		if ( _constraintMask & ConstrainScale )
 		{
-			float minScaleWidth = _viewport.getWidth() / (_levelBounds.r - _levelBounds.l),
+			double minScaleWidth = _viewport.getWidth() / (_levelBounds.r - _levelBounds.l),
 			minScaleHeight = _viewport.getHeight() / (_levelBounds.t - _levelBounds.b );
 
 			scale = std::max( scale, std::max( minScaleWidth, minScaleHeight ));
@@ -147,11 +147,10 @@ namespace core {
 	{
 		_disregardViewportMotion = true;
 
-		vec2 panError = _pan - _viewport.getPan();
-		float scaleError = _scale - _viewport.getScale();
+		dvec2 panError = _pan - _viewport.getPan();
+		double scaleError = _scale - _viewport.getScale();
 
-		const float
-		Rate = static_cast<float>(1)/ time.deltaT;
+		const double Rate = static_cast<double>(1)/ time.deltaT;
 
 		bool panNeedsCorrecting = lengthSquared(panError) > Epsilon,
 		scaleNeedsCorrecting = std::abs( scaleError ) > Epsilon;

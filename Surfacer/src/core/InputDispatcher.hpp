@@ -182,8 +182,8 @@ namespace core {
 		virtual bool mouseDown( const ci::app::MouseEvent &event ) { return false; }
 		virtual bool mouseUp( const ci::app::MouseEvent &event ) { return false; }
 		virtual bool mouseWheel( const ci::app::MouseEvent &event ) { return false; }
-		virtual bool mouseMove( const ci::app::MouseEvent &event, const vec2 &delta ) { return false; }
-		virtual bool mouseDrag( const ci::app::MouseEvent &event, const vec2 &delta ) { return false; }
+		virtual bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) { return false; }
+		virtual bool mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) { return false; }
 		virtual bool keyDown( const ci::app::KeyEvent &event ) { return false; }
 		virtual bool keyUp( const ci::app::KeyEvent &event ) { return false; }
 

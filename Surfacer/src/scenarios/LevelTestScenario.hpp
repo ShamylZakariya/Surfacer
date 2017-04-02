@@ -32,8 +32,8 @@ public:
 	virtual bool mouseDown( const ci::app::MouseEvent &event ) override;
 	virtual bool mouseUp( const ci::app::MouseEvent &event ) override;
 	virtual bool mouseWheel( const ci::app::MouseEvent &event ) override;
-	virtual bool mouseMove( const ci::app::MouseEvent &event, const vec2 &delta ) override;
-	virtual bool mouseDrag( const ci::app::MouseEvent &event, const vec2 &delta ) override;
+	virtual bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) override;
+	virtual bool mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) override;
 	virtual bool keyDown( const ci::app::KeyEvent &event ) override;
 	virtual bool keyUp( const ci::app::KeyEvent &event ) override;
 

@@ -364,19 +364,19 @@ bool TerrainTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
 	return true;
 }
 
-bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const vec2 &delta ) {
+bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
 	return true;
 }
 
-bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const vec2 &delta ) {
+bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
-		_cameraController.setPan( _cameraController.getPan() + delta );
+		_cameraController.setPan( _cameraController.getPan() + dvec2(delta) );
 		_cutting = false;
 		return true;
 	}

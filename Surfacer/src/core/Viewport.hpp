@@ -26,9 +26,9 @@ namespace core {
 	class Viewport {
 	public:
 
-		static inline void modelviewFor( const vec2 &pan, float scale, mat4 &mv )
+		static inline void modelviewFor( const dvec2 &pan, double scale, dmat4 &mv )
 		{
-			mv = translate(vec3(pan.x, pan.y, 0)) * ::scale(vec3(scale, scale, scale));
+			mv = translate(dvec3(pan.x, pan.y, 0)) * ::scale(dvec3(scale, scale, scale));
 		}
 
 		signals::signal< void( const Viewport & ) > motion;
@@ -79,37 +79,37 @@ namespace core {
 		/**
 		 get the center of the current viewport
 		 */
-		vec2 getViewportCenter() const { return vec2(float(getWidth())/2,float(getHeight())/2); }
+		dvec2 getViewportCenter() const { return dvec2(double(getWidth())/2,double(getHeight())/2); }
 
 		/**
 		 set the scale
 		 */
-		void setScale( float z );
+		void setScale( double z );
 
 		/**
 		 set the scale, and pan such that @a about stays in the same spot on screen
 		 */
-		void setScale( float z, const vec2 &about );
+		void setScale( double z, const dvec2 &about );
 
 		/**
 		 get the current scale
 		 */
-		float getScale() const { return _scale; }
+		double getScale() const { return _scale; }
 
 		/**
 		 get 1/current scale
 		 */
-		float getReciprocalScale() const { return _rScale; }
+		double getReciprocalScale() const { return _rScale; }
 
 		/**
 		 set the pan
 		 */
-		void setPan( const vec2 &p );
+		void setPan( const dvec2 &p );
 
 		/**
 		 get the current pan
 		 */
-		vec2 getPan() const {
+		dvec2 getPan() const {
 			return _pan;
 		}
 
@@ -122,7 +122,7 @@ namespace core {
 		 This is the function to use if, for example, you want the camera to pan to some
 		 object or character of interest.
 		 */
-		void lookAt( const vec2 &world, float scale, vec2 screen );
+		void lookAt( const dvec2 &world, double scale, dvec2 screen );
 
 		/**
 		 cause the viewport to pan such that @a world is at the center of the viewport
@@ -132,7 +132,7 @@ namespace core {
 		 This is the function to use if, for example, you want the camera to pan to some
 		 object or character of interest.
 		 */
-		void lookAt( const vec2 &world, float scale )
+		void lookAt( const dvec2 &world, double scale )
 		{
 			lookAt( world, scale, getViewportCenter() );
 		}
@@ -144,7 +144,7 @@ namespace core {
 		 This is the function to use if, for example, you want the camera to pan to some
 		 object or character of interest.
 		 */
-		void lookAt( const vec2 &world )
+		void lookAt( const dvec2 &world )
 		{
 			lookAt( world, getScale(), getViewportCenter() );
 		}
@@ -154,23 +154,23 @@ namespace core {
 		 @a pan the pan
 		 @a scale the scale
 		 */
-		void setPanAndScale( const vec2 &pan, float scale );
+		void setPanAndScale( const dvec2 &pan, double scale );
 
 		/**
 		 get the current modelview matrix
 		 */
-		const mat4 &getModelview() const { return _modelview; }
+		const dmat4 &getModelview() const { return _modelview; }
 
 		/**
 		 get the current inverse modelview matrix
 		 */
-		const mat4 &getInverseModelview() const { return _inverseModelview; }
+		const dmat4 &getInverseModelview() const { return _inverseModelview; }
 
 		/**
 		 convert a point in world coordinate system to screen
 		 @note Assumes lower-left origin screen coordinate system
 		 */
-		vec2 worldToScreen( const vec2 &world ) const
+		dvec2 worldToScreen( const dvec2 &world ) const
 		{
 			return _modelview * world;
 		}
@@ -179,7 +179,7 @@ namespace core {
 		 convert a point in screen coordinate system to world.
 		 @note Assumes lower-left origin screen coordinate system
 		 */
-		vec2 screenToWorld( const vec2 &screen ) const
+		dvec2 screenToWorld( const dvec2 &screen ) const
 		{
 			return _inverseModelview * screen;
 		}
@@ -195,9 +195,9 @@ namespace core {
 		
 	protected:
 		
-		mat4				_modelview, _inverseModelview;
-		vec2				_pan;
-		float				_scale, _rScale;
+		dmat4				_modelview, _inverseModelview;
+		dvec2				_pan;
+		double				_scale, _rScale;
 		ci::Area			_bounds;
 		
 	};

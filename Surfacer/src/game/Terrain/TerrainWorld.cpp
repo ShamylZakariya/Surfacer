@@ -276,7 +276,7 @@ namespace terrain {
 		if (l > MinLength && radius > MinRadius) {
 			dir /= l;
 
-			dvec2 right = radius * detail::rotate_cw(dir);
+			dvec2 right = radius * rotateCW(dir);
 			dvec2 left = -right;
 
 			dvec2 ca = a + right;
