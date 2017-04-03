@@ -115,7 +115,7 @@ namespace {
 		}
 
 		void draw(const core::render_state &state) override {
-			const cpBB frustum = state.viewport.getFrustum();
+			const cpBB frustum = state.viewport->getFrustum();
 			const int gridSize = _gridSize;
 			const int majorGridSize = _gridSize * 10;
 			const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
@@ -126,7 +126,7 @@ namespace {
 			const auto MinorLineColor = ColorA(1,1,1, .1);
 			const auto MajorLineColor = ColorA(1,1,1,0.35);
 			const auto AxisColor = ColorA(1,0,0,1);
-			gl::lineWidth(1.0 / state.viewport.getScale());
+			gl::lineWidth(1.0 / state.viewport->getScale());
 
 			for (int y = firstY; y <= lastY; y+= gridSize) {
 				if (y == 0) {
@@ -171,7 +171,7 @@ namespace {
 	bool _cutting;
 	vec2 _cutterStart, _cutterEnd, _mouseScreen, _mouseWorld;
 
-	ViewportController _cameraController;
+	Camera2DInterfaceRef _cameraController;
 	terrain::TerrainObjectRef _terrain;
 
 	cpSpace *_space;
@@ -180,14 +180,17 @@ namespace {
 */
 
 TerrainTestScenario::TerrainTestScenario():
-_cameraController(getCamera()),
 _cutting(false),
 _space(nullptr),
 _mouseBody(nullptr),
 _draggingBody(nullptr),
 _mouseJoint(nullptr)
 {
-	_cameraController.setConstraintMask( ViewportController::ConstrainPan | ViewportController::ConstrainScale );
+	if (/* DISABLES CODE */ (false)) {
+		_cameraController = getCamera();
+	} else {
+		_cameraController = make_shared<ViewportController>(getCamera());
+	}
 }
 
 TerrainTestScenario::~TerrainTestScenario(){}
@@ -210,13 +213,13 @@ void TerrainTestScenario::setup() {
 	cpSpaceSetDamping(_space, 0.95);
 	_mouseBody = cpBodyNewKinematic();
 
-	//auto world = testDistantTerrain();
+	auto world = testDistantTerrain();
 	//auto world = testBasicTerrain();
 	//auto world = testComplexTerrain();
 	//auto world = testSimpleAnchors();
 	//auto world = testComplexAnchors();
 	//auto world = testSimplePartitionedTerrain();
-	auto world = testComplexPartitionedTerrainWithAnchors();
+	//auto world = testComplexPartitionedTerrainWithAnchors();
 	//auto world = testFail();
 
 	_terrain = terrain::TerrainObject::create("Terrain", world);
@@ -250,10 +253,12 @@ void TerrainTestScenario::step( const time_state &time ) {
 
 	cpBodySetVelocity(_mouseBody, cpvmult(cpvsub(newMouseBodyPos, cpBodyGetPosition(_mouseBody)), time.deltaT));
 	cpBodySetPosition(_mouseBody, newMouseBodyPos);
+
+	_cameraController->step(time);
 }
 
 void TerrainTestScenario::update( const time_state &time ) {
-	_cameraController.step(time);
+	_cameraController->update(time);
 }
 
 void TerrainTestScenario::clear( const render_state &state ) {
@@ -266,7 +271,7 @@ void TerrainTestScenario::draw( const render_state &state ) {
 		Viewport::ScopedState cameraState(getCamera());
 
 		if (_cutting) {
-			float radius = (CUT_WIDTH/2) / state.viewport.getScale();
+			float radius = (CUT_WIDTH/2) / state.viewport->getScale();
 			vec2 dir = _cutterEnd - _cutterStart;
 			float len = ::length(dir);
 			if (len > 1e-2) {
@@ -285,7 +290,7 @@ void TerrainTestScenario::draw( const render_state &state ) {
 
 		if (_mouseJoint) {
 			// we're dragging, so draw mouse body
-			const float radius = 2 * getCamera().getReciprocalScale();
+			const float radius = 2 * getCamera()->getReciprocalScale();
 			gl::color(Color(1,0,1));
 			gl::drawSolidCircle(v2(cpBodyGetPosition(_mouseBody)), radius);
 		}
@@ -303,11 +308,11 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
 
 	if ( event.isAltDown() )
 	{
-		_cameraController.lookAt( _mouseWorld );
+		_cameraController->lookAt( _mouseWorld );
 		return true;
 	}
 
@@ -344,7 +349,7 @@ bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 
 	if (_cutting) {
 		if (_terrain) {
-			const float radius = (CUT_WIDTH/2) / _cameraController.getScale();
+			const float radius = (CUT_WIDTH/2) / _cameraController->getScale();
 			_terrain->getWorld()->cut(_cutterStart, _cutterEnd, radius, Filters::CUTTER);
 		}
 
@@ -355,28 +360,28 @@ bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 }
 
 bool TerrainTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
-	float zoom = _cameraController.getScale(),
+	const float zoom = _cameraController->getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
 
-	_cameraController.setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
+	_cameraController->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
 
 	return true;
 }
 
 bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
 	return true;
 }
 
 bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
-		_cameraController.setPan( _cameraController.getPan() + dvec2(delta) );
+		_cameraController->setPan( _cameraController->getPan() + dvec2(delta) );
 		_cutting = false;
 		return true;
 	}
@@ -414,9 +419,9 @@ void TerrainTestScenario::reset() {
 terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 
 
-	const vec2 origin(20000,20000);
+	const vec2 origin(30000,30000);
 
-	_cameraController.lookAt(origin);
+	_cameraController->lookAt(origin);
 
 
 	vector<terrain::ShapeRef> shapes = { terrain::Shape::fromContour(rect(origin.x-200,origin.y-200,origin.x+200,origin.y+200)) };
@@ -430,7 +435,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
-	_cameraController.lookAt(vec2(0,0));
+	_cameraController->lookAt(vec2(0,0));
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -449,7 +454,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
-	_cameraController.lookAt(vec2(0,0));
+	_cameraController->lookAt(vec2(0,0));
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -481,7 +486,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
-	_cameraController.lookAt(vec2(0,0));
+	_cameraController->lookAt(vec2(0,0));
 
 	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
@@ -504,9 +509,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 }
 
 terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
-	_cameraController.lookAt(vec2(0,0));
-
-
+	_cameraController->lookAt(vec2(0,0));
 
 	cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
 
@@ -563,7 +566,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 		return polyLine;
 	};
 
-	_cameraController.lookAt(vec2(0,0));
+	_cameraController->lookAt(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
@@ -598,7 +601,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 		return polyLine;
 	};
 
-	_cameraController.lookAt(vec2(0,0));
+	_cameraController->lookAt(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
@@ -636,7 +639,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 		return polyLine;
 	};
 
-	_cameraController.lookAt(vec2(0,0));
+	_cameraController->lookAt(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),

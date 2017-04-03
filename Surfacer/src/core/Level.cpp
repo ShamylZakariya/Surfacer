@@ -175,7 +175,7 @@ namespace core {
 		//	Find those objects which use frustum culling and which intersect the current view frustum
 		//
 
-		cpSpatialIndexQuery( _index, this, state.viewport.getFrustum(), visibleObjectCollector, &_collector );
+		cpSpatialIndexQuery( _index, this, state.viewport->getFrustum(), visibleObjectCollector, &_collector );
 
 		//
 		//	Sort them all
@@ -417,11 +417,7 @@ namespace core {
 		return result;
 	}
 
-	const Viewport &Level::camera() const {
-		return getScenario()->getCamera();
-	}
-
-	Viewport &Level::camera() {
+	ViewportRef Level::camera() {
 		return getScenario()->getCamera();
 	}
 

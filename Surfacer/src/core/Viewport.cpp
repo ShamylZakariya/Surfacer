@@ -81,7 +81,7 @@ namespace core {
 		_update();
 	}
 
-	void Viewport::lookAt( const dvec2 &world, double scale, dvec2 screen )
+	void Viewport::lookAt( const dvec2 &world, double scale, const dvec2 &screen )
 	{
 		//
 		//	Update scale and compute appropriate modelview
@@ -105,17 +105,9 @@ namespace core {
 		_update();
 	}
 
-	cpBB Viewport::getFrustum() const
-	{
-		dvec2 lb = _inverseModelview * dvec2( 0,0 ),
-		tr = _inverseModelview * dvec2( _bounds.getWidth(),_bounds.getHeight() );
-
-		return cpBBNew( lb.x, lb.y, tr.x, tr.y );
-	}
-
 	void Viewport::_update()
 	{
-		_rScale = 1 / _scale;
+		_rScale = 1.0 / _scale;
 		modelviewFor( _pan, _scale, _modelview );
 		_inverseModelview = inverse(_modelview);
 		

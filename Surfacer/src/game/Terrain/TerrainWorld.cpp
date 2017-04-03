@@ -114,7 +114,7 @@ namespace terrain {
 		_collector.visible.clear();
 		_collector.sorted.clear();
 
-		cpSpatialIndexQuery( _index, this, state.viewport.getFrustum(), visibleObjectCollector, &_collector );
+		cpSpatialIndexQuery( _index, this, state.viewport->getFrustum(), visibleObjectCollector, &_collector );
 
 		//
 		//	Sort them all
@@ -406,7 +406,7 @@ namespace terrain {
 		//
 
 		if (renderState.mode == RenderMode::DEVELOPMENT) {
-			const double rScale = renderState.viewport.getReciprocalScale();
+			const double rScale = renderState.viewport->getReciprocalScale();
 			const dmat4 rScaleMat = glm::scale(dvec3(rScale, -rScale, 1));
 			const ColorA bbColor(1,0.2,1,0.5);
 
@@ -778,7 +778,7 @@ namespace terrain {
 
 	void DynamicGroup::draw(const render_state &renderState) {
 		if (renderState.mode == RenderMode::DEVELOPMENT) {
-			const double rScale = renderState.viewport.getReciprocalScale();
+			const double rScale = renderState.viewport->getReciprocalScale();
 
 			gl::ScopedModelMatrix smm2;
 			gl::multModelMatrix(translate(dvec3(getPosition() + dvec2(0,20),0)) * scale(dvec3(rScale, -rScale, 1)));

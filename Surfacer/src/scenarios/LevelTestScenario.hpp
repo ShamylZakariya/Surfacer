@@ -46,7 +46,7 @@ protected:
 
 private:
 
-	ViewportController _cameraController;
+	ViewportControllerRef _cameraController;
 	vec2 _mouseScreen, _mouseWorld;
 
 };

@@ -31,23 +31,23 @@ namespace core {
 		bool				_disregardViewportMotion;
 	 */
 
-	ViewportController::ViewportController( Viewport &vp, control_method cm ):
+	ViewportController::ViewportController( ViewportRef vp, control_method cm ):
 	_viewport(vp),
 	_constraintMask(NoConstraint),
 	_controlMethod(cm),
 	_levelBounds( cpBBInfinity ),
-	_scale(vp.getScale()),
-	_pan(vp.getPan()),
+	_scale(vp->getScale()),
+	_pan(vp->getPan()),
 	_disregardViewportMotion(false)
 	{
-		_viewport.motion.connect(this, &ViewportController::_viewportInitiatedChange );
-		_viewport.boundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
+		_viewport->motion.connect(this, &ViewportController::_viewportInitiatedChange );
+		_viewport->boundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
 	}
 
 	ViewportController::~ViewportController()
 	{}
 
-	void ViewportController::step( const time_state &time )
+	void ViewportController::update( const time_state &time )
 	{
 		//
 		//	smoothly apply the changes
@@ -56,11 +56,11 @@ namespace core {
 		switch( _controlMethod )
 		{
 			case Zeno:
-				_stepZeno( time );
+				_updateZeno( time );
 				break;
 
 			case PID:
-				_stepPID( time );
+				_updatePID( time );
 				break;
 		}
 	}
@@ -73,6 +73,14 @@ namespace core {
 			_pan = _constrainPan( _pan );
 			_scale = _constrainScale( _scale );
 		}
+	}
+
+	void ViewportController::setViewport( int width, int height ) {
+		_viewport->setViewport(width, height);
+	}
+
+	ci::Area ViewportController::getBounds() const {
+		return _viewport->getBounds();
 	}
 
 	void ViewportController::setScale( double z, const dvec2 &aboutScreen )
@@ -101,6 +109,14 @@ namespace core {
 		_pan = _constrainPan( _pan + (screen - (mv*world)));
 	}
 
+	dmat4 ViewportController::getModelview() const {
+		return _viewport->getModelview();
+	}
+
+	dmat4 ViewportController::getInverseModelview() const {
+		return _viewport->getInverseModelview();
+	}
+
 #pragma mark -
 #pragma mark Private
 
@@ -113,8 +129,8 @@ namespace core {
 			pan.x = std::min( pan.x, _levelBounds.l * _scale);
 			pan.y = std::min( pan.y, _levelBounds.b * _scale);
 
-			double right = (_levelBounds.r * _scale) - _viewport.getWidth(),
-			top = (_levelBounds.t * _scale) - _viewport.getHeight();
+			double right = (_levelBounds.r * _scale) - _viewport->getWidth(),
+			top = (_levelBounds.t * _scale) - _viewport->getHeight();
 
 			pan.x = std::max( pan.x, -right );
 			pan.y = std::max( pan.y, -top );
@@ -129,8 +145,8 @@ namespace core {
 
 		if ( _constraintMask & ConstrainScale )
 		{
-			double minScaleWidth = _viewport.getWidth() / (_levelBounds.r - _levelBounds.l),
-			minScaleHeight = _viewport.getHeight() / (_levelBounds.t - _levelBounds.b );
+			double minScaleWidth = _viewport->getWidth() / (_levelBounds.r - _levelBounds.l),
+			minScaleHeight = _viewport->getHeight() / (_levelBounds.t - _levelBounds.b );
 
 			scale = std::max( scale, std::max( minScaleWidth, minScaleHeight ));
 		}
@@ -143,41 +159,25 @@ namespace core {
 	}
 
 
-	void ViewportController::_stepZeno( const time_state &time )
+	void ViewportController::_updateZeno( const time_state &time )
 	{
 		_disregardViewportMotion = true;
 
-		dvec2 panError = _pan - _viewport.getPan();
-		double scaleError = _scale - _viewport.getScale();
-
-		const double Rate = static_cast<double>(1)/ time.deltaT;
-
-		bool panNeedsCorrecting = lengthSquared(panError) > Epsilon,
-		scaleNeedsCorrecting = std::abs( scaleError ) > Epsilon;
-
-		if ( panNeedsCorrecting && scaleNeedsCorrecting )
-		{
-			_viewport.setPanAndScale(
-									_viewport.getPan() + panError * std::pow( 1 - _zenoConfig.panFactor, Rate),
-									_viewport.getScale() + scaleError * std::pow( 1 - _zenoConfig.scaleFactor, Rate ));
-		}
-		else if ( panNeedsCorrecting )
-		{
-			_viewport.setPan( _viewport.getPan() + panError * std::pow( 1-_zenoConfig.panFactor, Rate ));
-		}
-		else if ( scaleNeedsCorrecting )
-		{
-			_viewport.setScale( _viewport.getScale() + scaleError * std::pow( 1-_zenoConfig.scaleFactor, Rate));
-		}
+		const dvec2 PanError = _pan - _viewport->getPan();
+		const double ScaleError = _scale - _viewport->getScale();
+		const double Rate = 1.0 / time.deltaT;
+		const dvec2 Pan = _viewport->getPan() + PanError * std::pow( 1.0 - _zenoConfig.panFactor, Rate);
+		const double Scale = _viewport->getScale() + ScaleError * std::pow( 1.0 - _zenoConfig.scaleFactor, Rate );
+		_viewport->setPanAndScale(Pan, Scale);
 
 		_disregardViewportMotion = false;
 	}
 
-	void ViewportController::_stepPID( const time_state &time )
+	void ViewportController::_updatePID( const time_state &time )
 	{
 		_disregardViewportMotion = true;
 
-		// unimplemented...
+		// TODO: unimplemented...
 
 		_disregardViewportMotion = false;
 	}

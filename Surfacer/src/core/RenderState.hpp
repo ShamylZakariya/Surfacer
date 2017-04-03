@@ -48,7 +48,7 @@ namespace core {
 	 */
 	struct render_state {
 
-		const Viewport &viewport;
+		const ViewportRef viewport;
 		RenderMode::mode mode;
 		std::size_t frame, pass;
 		seconds_t time, deltaT;
@@ -65,7 +65,7 @@ namespace core {
 		 draws multiple child game objects, and might need to render them multiple times, with them
 		 rendering effects after solid geometry, etc. Pass will generally be zero.
 		 */
-		render_state( const Viewport &vp, RenderMode::mode m, std::size_t f, std::size_t p, seconds_t t, seconds_t dt ):
+		render_state( ViewportRef vp, RenderMode::mode m, std::size_t f, std::size_t p, seconds_t t, seconds_t dt ):
 		viewport(vp),
 		mode(m),
 		frame(f),

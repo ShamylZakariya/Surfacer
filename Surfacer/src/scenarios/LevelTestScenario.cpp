@@ -181,7 +181,7 @@ namespace {
 		}
 
 		void draw(const core::render_state &state) override {
-			const cpBB frustum = state.viewport.getFrustum();
+			const cpBB frustum = state.viewport->getFrustum();
 			const int gridSize = _gridSize;
 			const int majorGridSize = _gridSize * 10;
 			const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
@@ -192,7 +192,7 @@ namespace {
 			const auto MinorLineColor = ColorA(1,1,1,0.05);
 			const auto MajorLineColor = ColorA(1,1,1,0.25);
 			const auto AxisColor = ColorA(1,0,0,1);
-			gl::lineWidth(1.0 / state.viewport.getScale());
+			gl::lineWidth(1.0 / state.viewport->getScale());
 
 			for (int y = firstY; y <= lastY; y+= gridSize) {
 				if (y == 0) {
@@ -232,9 +232,9 @@ namespace {
 }
 
 LevelTestScenario::LevelTestScenario():
-_cameraController(getCamera())
+_cameraController(make_shared<ViewportController>(getCamera()))
 {
-	_cameraController.setConstraintMask( ViewportController::ConstrainPan | ViewportController::ConstrainScale );
+	_cameraController->setConstraintMask( ViewportController::ConstrainPan | ViewportController::ConstrainScale );
 }
 
 LevelTestScenario::~LevelTestScenario() {
@@ -276,7 +276,7 @@ void LevelTestScenario::step( const time_state &time ) {
 }
 
 void LevelTestScenario::update( const time_state &time ) {
-	_cameraController.step(time);
+	_cameraController->step(time);
 }
 
 void LevelTestScenario::clear( const render_state &state ) {
@@ -298,11 +298,11 @@ void LevelTestScenario::draw( const render_state &state ) {
 
 bool LevelTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
 
 	if ( event.isAltDown() )
 	{
-		_cameraController.lookAt( _mouseWorld );
+		_cameraController->lookAt( _mouseWorld );
 		return true;
 	}
 
@@ -318,28 +318,28 @@ bool LevelTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 }
 
 bool LevelTestScenario::mouseWheel( const ci::app::MouseEvent &event ) {
-	float zoom = _cameraController.getScale(),
+	float zoom = _cameraController->getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
 
-	_cameraController.setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
+	_cameraController->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
 
 	return true;
 }
 
 bool LevelTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
 	return true;
 }
 
 bool LevelTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera().screenToWorld(_mouseScreen);
+	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
-		_cameraController.setPan( _cameraController.getPan() + dvec2(delta) );
+		_cameraController->setPan( _cameraController->getPan() + dvec2(delta) );
 		return true;
 	}
 
