@@ -274,8 +274,11 @@ namespace core {
 	}
 
 	Level::~Level() {
+		// these all have to be freed before we can free the space
 		_objects.clear();
 		_objectsById.clear();
+		_drawDispatcher.reset();
+
 		cpSpaceFree(_space);
 	}
 
