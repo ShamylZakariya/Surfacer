@@ -15,7 +15,9 @@
 
 namespace core {
 
-	class ViewportController : public core::signals::receiver {
+	SMART_PTR(ViewportController);
+
+	class ViewportController : public Camera2DInterface, public core::signals::receiver {
 	public:
 
 		enum constraint {
@@ -40,14 +42,14 @@ namespace core {
 
 		 */
 		struct zeno_config {
-			float panFactor, scaleFactor;
+			double panFactor, scaleFactor;
 
 			zeno_config():
 			panFactor(0.01),
 			scaleFactor(0.01)
 			{}
 
-			zeno_config( float pf, float zf ):
+			zeno_config( double pf, double zf ):
 			panFactor(pf),
 			scaleFactor(zf)
 			{}
@@ -56,14 +58,14 @@ namespace core {
 
 	public:
 
-		ViewportController( core::Viewport &vp, control_method cm = Zeno );
+		ViewportController( core::ViewportRef vp, control_method cm = Zeno );
 		virtual ~ViewportController();
 
 		///////////////////////////////////////////////////////////////////////////
 
-		virtual void step( const core::time_state &time );
+		virtual void update( const core::time_state &time ) override;
 
-		core::Viewport &getViewport() const { return _viewport; }
+		core::ViewportRef getViewport() const { return _viewport; }
 
 		void setControlMethod( control_method m ) { _controlMethod = m; }
 		control_method getControlMethod() const { return _controlMethod; }
@@ -75,76 +77,53 @@ namespace core {
 		void setConstraintMask( unsigned int cmask );
 		unsigned int getConstraintMask() const { return _constraintMask; }
 
-		/**
-			Set the scale
-		 */
-		void setScale( float z ) { _scale = _constrainScale(z); }
+		// Camera2DInterface
 
-		/**
-			set the scale and pan such that @a about stays in the same spot on screen
-		 */
-		void setScale( float z, const vec2 &about );
+		void setViewport( int width, int height ) override;
+		ci::Area getBounds() const override;
 
-		/**
-			get the current scale
-		 */
-		float getScale() const { return _scale; }
+		void setScale( double z ) override { _scale = _constrainScale(z); }
+		void setScale( double z, const dvec2 &about ) override;
+		double getScale() const override { return _scale; }
 
-		/**
-			set the pan
-		 */
-		void setPan( const vec2 &p ) { _pan = _constrainPan( p ); }
+		void setPan( const dvec2 &p ) override { _pan = _constrainPan( p ); }
+		dvec2 getPan() const override { return _pan; }
 
-		/**
-			get the current pan
-		 */
-		vec2 getPan() const {
-			return _pan;
+		void lookAt(const dvec2 &world, double scale, const dvec2 &screen ) override;
+
+		void lookAt(const dvec2 &world, double scale) override {
+			Camera2DInterface::lookAt(world, scale);
 		}
 
-		/**
-			cause the viewport to pan such that @a world is at location @a screen with @a scale
-			@a world Location of interest in world coordinates
-			@a scale desired level of scale
-			@a screen focal point in screen coordinates
+		void lookAt(const dvec2 &world) override {
+			Camera2DInterface::lookAt(world);
+		}
 
-			This is the function to use if, for example, you want the camera to pan to some
-			object or character of interest.
-		 */
-		void lookAt( const vec2 &world, float scale, const vec2 &screen );
+		dmat4 getModelview() const override;
+		dmat4 getInverseModelview() const override;
 
-		/**
-			Shortcut to lookAt( const vec2 &world, float scale, const vec2 &screen )
-		 */
-		void lookAt( const vec2 &world, float scale ) { lookAt( world, scale, _viewport.getViewportCenter() ); }
-
-		/**
-			Shortcut to lookAt( const vec2 &world, float scale, const vec2 &screen )
-			Causes the camera to center @a world in the screen
-		 */
-		void lookAt( const vec2 &world ) { lookAt( world, _scale, _viewport.getViewportCenter() ); }
 
 	protected:
 
-		vec2 _constrainPan( vec2 p ) const;
-		float _constrainScale( float z ) const;
+		dvec2 _constrainPan( dvec2 p ) const;
+		double _constrainScale( double z ) const;
 
-		virtual void _stepZeno( const core::time_state &time );
-		virtual void _stepPID( const core::time_state &time );
+		virtual void _updateZeno( const core::time_state &time );
+		virtual void _updatePID( const core::time_state &time );
 
 		void _viewportInitiatedChange( const core::Viewport &vp );
 		void _viewportBoundsChanged( const core::Viewport &vp, const ci::Area &bounds );
 
 	private:
 
-		core::Viewport		&_viewport;
-		unsigned int		_constraintMask;
-		control_method		_controlMethod;
-		cpBB				_levelBounds;
-		float				_scale;
-		vec2				_pan;
-		zeno_config			_zenoConfig;
-		bool				_disregardViewportMotion;
+		ViewportRef _viewport;
+		unsigned int _constraintMask;
+		control_method _controlMethod;
+		cpBB _levelBounds;
+		double _scale;
+		dvec2 _pan;
+		zeno_config _zenoConfig;
+		bool _disregardViewportMotion;
 	};
 	
 	

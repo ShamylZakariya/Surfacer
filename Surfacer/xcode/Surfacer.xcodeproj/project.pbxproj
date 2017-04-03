@@ -19,7 +19,6 @@
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		63254AEC1E8ABD6800AFED94 /* LevelTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63254AEA1E8ABD6800AFED94 /* LevelTestScenario.cpp */; };
 		632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
-		632623161E7D9A630051ABE2 /* Exception.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F11E7D9A630051ABE2 /* Exception.cpp */; };
 		632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
 		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
 		632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622FF1E7D9A630051ABE2 /* Viewport.cpp */; };
@@ -58,7 +57,6 @@
 		632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkHelpers.cpp; sourceTree = "<group>"; };
 		632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ChipmunkHelpers.hpp; sourceTree = "<group>"; };
 		632622F01E7D9A630051ABE2 /* Core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Core.hpp; sourceTree = "<group>"; };
-		632622F11E7D9A630051ABE2 /* Exception.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Exception.cpp; sourceTree = "<group>"; };
 		632622F21E7D9A630051ABE2 /* Exception.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Exception.hpp; sourceTree = "<group>"; };
 		632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputDispatcher.cpp; sourceTree = "<group>"; };
 		632622F41E7D9A630051ABE2 /* InputDispatcher.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = InputDispatcher.hpp; sourceTree = "<group>"; };
@@ -216,7 +214,6 @@
 				632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */,
 				63BFD8171E895D6900D821E4 /* Common.hpp */,
 				632622F01E7D9A630051ABE2 /* Core.hpp */,
-				632622F11E7D9A630051ABE2 /* Exception.cpp */,
 				632622F21E7D9A630051ABE2 /* Exception.hpp */,
 				63BFD8141E89565600D821E4 /* GameObject.cpp */,
 				63BFD8151E89565600D821E4 /* GameObject.hpp */,
@@ -355,7 +352,6 @@
 				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
 				63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */,
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
-				632623161E7D9A630051ABE2 /* Exception.cpp in Sources */,
 				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
 				632623221E7D9A630051ABE2 /* SvgParsing.cpp in Sources */,
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,

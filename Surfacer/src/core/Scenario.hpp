@@ -33,8 +33,7 @@ namespace core {
 		virtual void clear( const render_state &state );
 		virtual void draw( const render_state &state );
 
-		const Viewport& getCamera() const { return _camera; }
-		Viewport& getCamera() { return _camera; }
+		const ViewportRef& getCamera() const { return _camera; }
 
 		// time state used for animation
 		const time_state &getTime() const { return _time; }
@@ -68,7 +67,7 @@ namespace core {
 
 	private:
 
-		Viewport _camera;
+		ViewportRef _camera;
 		time_state _time, _stepTime;
 		render_state _renderState;
 		LevelRef _level;

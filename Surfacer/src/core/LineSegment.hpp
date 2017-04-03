@@ -23,12 +23,13 @@ using namespace std;
 
 namespace core {
 
+	template< class T, glm::precision P >
 	struct line_segment
 	{
-		vec2 a,b,dir;
-		float length;
+		glm::tvec2<T,P> a,b,dir;
+		T length;
 
-		line_segment( const vec2 &A, const vec2 &B ):
+		line_segment( const glm::tvec2<T,P> &A, const glm::tvec2<T,P> &B ):
 		a(A),
 		b(B),
 		dir(B-A)
@@ -38,7 +39,7 @@ namespace core {
 			dir.y /= length;
 		}
 
-		vec2 lrp( float distance ) const
+		glm::tvec2<T,P> lrp( T distance ) const
 		{
 			return a + (distance * dir);
 		}
@@ -46,10 +47,10 @@ namespace core {
 		/**
 		 get distance of a point from this line segment
 		 */
-		float distance( const vec2 &point ) const
+		T distance( const glm::tvec2<T,P> &point ) const
 		{
-			vec2 toPoint = point - a;
-			float projLength = dot(toPoint, dir );
+			const glm::tvec2<T,P> toPoint = point - a;
+			const T projLength = dot(toPoint, dir );
 
 			// early exit condition, we'll have to get distance from endpoints
 			if ( projLength < 0 )
@@ -62,14 +63,14 @@ namespace core {
 			}
 
 			// compute distance from point to the closest projection point on the line segment
-			vec2 projOnSegment = a + (projLength * dir);
+			const glm::tvec2<T,P> projOnSegment = a + (projLength * dir);
 			return ::distance( point, projOnSegment );
 		}
 
-		vec2 snapToLine( const vec2 &point ) const
+		glm::tvec2<T,P> snapToLine( const glm::tvec2<T,P> &point ) const
 		{
-			vec2 toPoint = point - a;
-			float projLength = dot( toPoint, dir );
+			const glm::tvec2<T,P> toPoint = point - a;
+			const T projLength = dot( toPoint, dir );
 
 			// early exit condition, we'll have to get distance from endpoints
 			if ( projLength < 0 )
@@ -84,34 +85,34 @@ namespace core {
 			return a + (projLength * dir);
 		}
 
-		pair<bool,vec2> intersects( const line_segment &other_line, bool bounded = true ) const
+		pair<bool,glm::tvec2<T,P>> intersects( const line_segment &other_line, bool bounded = true ) const
 		{
 			// early exit test for parallel lines
-			const float Epsilon = 1e-5;
+			const T Epsilon = 1e-5;
 			if (abs(dot(dir, other_line.dir)) > 1 - Epsilon) {
-				return pair<bool,vec2>(false, vec2());
+				return pair<bool,glm::tvec2<T,P>>(false, glm::tvec2<T,P>());
 			}
 
 			// cribbed from http://jeffreythompson.org/collision-detection/line-line.php
 
-			float x1 = a.x;
-			float y1 = a.y;
-			float x2 = b.x;
-			float y2 = b.y;
+			const T x1 = a.x;
+			const T y1 = a.y;
+			const T x2 = b.x;
+			const T y2 = b.y;
 
-			float x3 = other_line.a.x;
-			float y3 = other_line.a.y;
-			float x4 = other_line.b.x;
-			float y4 = other_line.b.y;
+			const T x3 = other_line.a.x;
+			const T y3 = other_line.a.y;
+			const T x4 = other_line.b.x;
+			const T y4 = other_line.b.y;
 
-			float u_a = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-			float u_b = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+			const T u_a = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+			const T u_b = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
 
 			if (!bounded || (u_a >= 0 && u_a <=1 && u_b >= 0 && u_b <= 1)) {
-				return pair<bool,vec2>(true, vec2(x1 + u_a * (x2 - x1), y1 + u_a * (y2 - y1)));
+				return pair<bool,glm::tvec2<T,P>>(true, glm::tvec2<T,P>(x1 + u_a * (x2 - x1), y1 + u_a * (y2 - y1)));
 			}
 
-			return pair<bool,vec2>(false, vec2());
+			return pair<bool,glm::tvec2<T,P>>(false, glm::tvec2<T,P>());
 		}
 		
 	};

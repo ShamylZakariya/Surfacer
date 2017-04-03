@@ -47,10 +47,6 @@ namespace terrain {
 			return Color(CM_HSV, colorRand.nextFloat(), 0.5 + colorRand.nextFloat(0.5), 0.5 + colorRand.nextFloat(0.5));
 		}
 
-		dvec2 rotate_cw(const dvec2 &v) {
-			return dvec2(v.y, -v.x);
-		}
-
 		bool is_wound_clockwise(const PolyLine2d &contour) {
 			// http://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
 			// Sum over the edges, (x2 − x1)(y2 + y1)

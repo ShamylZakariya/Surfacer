@@ -15,12 +15,12 @@
 using namespace ci;
 using namespace std;
 
-inline cpVect cpv(const vec2 &v) {
+inline cpVect cpv(const dvec2 &v) {
 	return ::cpv(v.x, v.y);
 }
 
-inline vec2 v2(const cpVect &v) {
-	return vec2(v.x, v.y);
+inline dvec2 v2(const cpVect &v) {
+	return dvec2(v.x, v.y);
 }
 
 #pragma mark -
@@ -206,17 +206,17 @@ static inline cpBool cpBBIntersects(cpBB a, cpBB b, cpFloat f) {
  */
 bool cpBBIntersection( const cpBB &bb1, const cpBB &bb2, cpBB &intersection );
 
-inline cpTransform cpTransformNew( const mat4 &M) {
-	vec4 c0 = M[0];
-	vec4 c1 = M[1];
-	vec4 c3 = M[3];
+inline cpTransform cpTransformNew( const dmat4 &M) {
+	dvec4 c0 = M[0];
+	dvec4 c1 = M[1];
+	dvec4 c3 = M[3];
 	cpTransform t = {c0.x, c0.y, c1.x, c1.y, c3.x, c3.y};
 	return t;
 }
 /**
 	create a new cpBB containing the provided cpBB after it has had the transform applied to it
  */
-inline cpBB cpBBTransform(const cpBB &bb, const mat4 transform){
+inline cpBB cpBBTransform(const cpBB &bb, const dmat4 transform){
 	return cpTransformbBB(cpTransformNew(transform), bb);
 }
 

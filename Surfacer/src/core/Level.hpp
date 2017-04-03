@@ -109,8 +109,7 @@ namespace core {
 
 		const DrawDispatcherRef &getDrawDispatcher() const { return _drawDispatcher; }
 		const time_state &time() const { return _time; }
-		const Viewport &camera() const;
-		Viewport &camera();
+		ViewportRef camera();
 
 	protected:
 

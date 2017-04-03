@@ -22,5 +22,3 @@ Need to verify stitching of a large environment works.
 
 When a dynamic shape has stopped moving, if I zoom in really close, it disappears, as if the spatial index culling alg stops working. If I move it a smidge, culling starts working again.
 - REPRO: Cut a shape, move it, let it stop moving on its own. Zoom in real close. Pop, it's gone. Zoom back out, give it a wee toss, culling works again.
- 
-Do I need to switch to a double prec representation? This affects trimesh generation, because trimesh must be single precision. My guess is I can be entirely double prec, except for making a single-prec copy of the contours for making the trimesh?

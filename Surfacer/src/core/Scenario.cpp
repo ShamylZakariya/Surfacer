@@ -38,12 +38,13 @@ namespace core {
 	}
 
 	/*
-		Viewport _camera;
+		ViewportRef _camera;
 		time_state _time, _stepTime;
 		render_state _renderState;
 	 */
 
 	Scenario::Scenario():
+	_camera(make_shared<Viewport>()),
 	_time(app::getElapsedSeconds(), 1.0/60.0, 0),
 	_stepTime(app::getElapsedSeconds(), 1.0/60.0, 0),
 	_renderState(_camera, RenderMode::GAME, 0,0,0,0 )
@@ -108,7 +109,7 @@ namespace core {
 
 	void Scenario::_dispatchResize( const ivec2 &size )
 	{
-		_camera.setViewport(size.x, size.y);
+		_camera->setViewport(size.x, size.y);
 		if (_level) {
 			_level->resize(size);
 		}

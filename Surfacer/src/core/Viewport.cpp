@@ -12,9 +12,9 @@
 namespace core {
 
 	/*
-	 mat4				_modelview, _inverseModelview;
-	 vec2				_pan;
-	 float				_scale, _rScale;
+	 dmat4				_modelview, _inverseModelview;
+	 dvec2				_pan;
+	 double				_scale, _rScale;
 	 AreaID				_bounds;
 	 */
 
@@ -25,7 +25,7 @@ namespace core {
 	_bounds(0,0,0,0)
 	{
 		setViewport( app::getWindowWidth(), app::getWindowHeight() );
-		setPanAndScale( vec2(0,0), 1 );
+		setPanAndScale( dvec2(0,0), 1 );
 	}
 
 	Viewport::~Viewport()
@@ -52,36 +52,36 @@ namespace core {
 		}
 	}
 
-	void Viewport::setScale( float z )
+	void Viewport::setScale( double z )
 	{
 		_scale = z;
 		_update();
 	}
 
-	void Viewport::setScale( float s, const vec2 &aboutScreen )
+	void Viewport::setScale( double s, const dvec2 &aboutScreen )
 	{
-		mat4 mv, imv;
+		dmat4 mv, imv;
 		modelviewFor( getPan(), getScale(), mv );
 		imv = inverse(mv);
 
-		vec2 aboutWorld = imv * aboutScreen;
+		dvec2 aboutWorld = imv * aboutScreen;
 
 		modelviewFor( getPan(), s, mv );
 
-		vec2 postScaleAboutScreen = mv * aboutWorld;
+		dvec2 postScaleAboutScreen = mv * aboutWorld;
 
 		_pan += aboutScreen - postScaleAboutScreen;
 		_scale = s;
 		_update();
 	}
 
-	void Viewport::setPan( const vec2 &p )
+	void Viewport::setPan( const dvec2 &p )
 	{
 		_pan = p;
 		_update();
 	}
 
-	void Viewport::lookAt( const vec2 &world, float scale, vec2 screen )
+	void Viewport::lookAt( const dvec2 &world, double scale, const dvec2 &screen )
 	{
 		//
 		//	Update scale and compute appropriate modelview
@@ -89,33 +89,25 @@ namespace core {
 
 		_scale = scale;
 
-		mat4 mv;
+		dmat4 mv;
 		Viewport::modelviewFor( _pan, _scale, mv );
 
 		// update pan accordingly
-		_pan = _pan + (screen - mv * world );
+		_pan = _pan + (screen - (mv * world));
 
 		_update();
 	}
 
-	void Viewport::setPanAndScale( const vec2 &pan, float scale )
+	void Viewport::setPanAndScale( const dvec2 &pan, double scale )
 	{
 		_pan = pan;
 		_scale = scale;
 		_update();
 	}
 
-	cpBB Viewport::getFrustum() const
-	{
-		vec2 lb = _inverseModelview * vec2( 0,0 ),
-		tr = _inverseModelview * vec2( _bounds.getWidth(),_bounds.getHeight() );
-
-		return cpBBNew( lb.x, lb.y, tr.x, tr.y );
-	}
-
 	void Viewport::_update()
 	{
-		_rScale = 1 / _scale;
+		_rScale = 1.0 / _scale;
 		modelviewFor( _pan, _scale, _modelview );
 		_inverseModelview = inverse(_modelview);
 		
