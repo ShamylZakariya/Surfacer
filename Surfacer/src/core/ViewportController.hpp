@@ -37,16 +37,16 @@ namespace core {
 			in the range of [0,1], representing the interpolation distance
 			to take from the current viewport value to the controller's set point.
 
-			A panFactor of 0.1 will, for example, cause the error between the controller
-			set point and the current viewport value to be reduced by 90% (1-factor) each timestep.
+			A panFactor of 0.9 will, for example, cause the error between the controller
+			set point and the current viewport value to be reduced by 90% each second.
 
 		 */
 		struct zeno_config {
 			double panFactor, scaleFactor;
 
 			zeno_config():
-			panFactor(0.01),
-			scaleFactor(0.01)
+			panFactor(0.99),
+			scaleFactor(0.99)
 			{}
 
 			zeno_config( double pf, double zf ):

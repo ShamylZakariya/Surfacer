@@ -166,8 +166,8 @@ namespace core {
 		const dvec2 PanError = _pan - _viewport->getPan();
 		const double ScaleError = _scale - _viewport->getScale();
 		const double Rate = 1.0 / time.deltaT;
-		const dvec2 Pan = _viewport->getPan() + PanError * std::pow( 1.0 - _zenoConfig.panFactor, Rate);
-		const double Scale = _viewport->getScale() + ScaleError * std::pow( 1.0 - _zenoConfig.scaleFactor, Rate );
+		const dvec2 Pan = _viewport->getPan() + PanError * std::pow(_zenoConfig.panFactor, Rate);
+		const double Scale = _viewport->getScale() + ScaleError * std::pow(_zenoConfig.scaleFactor, Rate );
 		_viewport->setPanAndScale(Pan, Scale);
 
 		_disregardViewportMotion = false;
