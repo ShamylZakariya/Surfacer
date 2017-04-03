@@ -65,7 +65,6 @@ private:
 	Camera2DInterfaceRef _cameraController;
 	terrain::TerrainObjectRef _terrain;
 
-	cpSpace *_space;
 	cpBody *_mouseBody, *_draggingBody;
 	cpConstraint *_mouseJoint;
 };

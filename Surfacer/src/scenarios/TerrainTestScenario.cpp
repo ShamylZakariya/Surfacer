@@ -174,14 +174,12 @@ namespace {
 	Camera2DInterfaceRef _cameraController;
 	terrain::TerrainObjectRef _terrain;
 
-	cpSpace *_space;
 	cpBody *_mouseBody, *_draggingBody;
 	cpConstraint *_mouseJoint;
 */
 
 TerrainTestScenario::TerrainTestScenario():
 _cutting(false),
-_space(nullptr),
 _mouseBody(nullptr),
 _draggingBody(nullptr),
 _mouseJoint(nullptr)
@@ -209,12 +207,11 @@ void TerrainTestScenario::setup() {
 
 	level->addGameObject(background);
 
-	_space = cpSpaceNew();
-	cpSpaceSetDamping(_space, 0.95);
+	cpSpaceSetDamping(level->getSpace(), 0.95);
 	_mouseBody = cpBodyNewKinematic();
 
-	auto world = testDistantTerrain();
-	//auto world = testBasicTerrain();
+	//auto world = testDistantTerrain();
+	auto world = testBasicTerrain();
 	//auto world = testComplexTerrain();
 	//auto world = testSimpleAnchors();
 	//auto world = testComplexAnchors();
@@ -227,27 +224,19 @@ void TerrainTestScenario::setup() {
 }
 
 void TerrainTestScenario::cleanup() {
-	setLevel(nullptr);
-	_terrain.reset();
 
 	_cutting = false;
 
-	if (_mouseJoint) {
-		cpSpaceRemoveConstraint(_space, _mouseJoint);
-		cpConstraintFree(_mouseJoint);
-		_mouseJoint = nullptr;
-		_draggingBody = nullptr;
-	}
-
+	releaseMouseDragConstraint();
 	cpBodyFree(_mouseBody);
-	cpSpaceFree(_space);
+
+	_terrain.reset();
+	setLevel(nullptr);
 }
 
 void TerrainTestScenario::resize( ivec2 size ){}
 
 void TerrainTestScenario::step( const time_state &time ) {
-	cpSpaceStep(_space, time.deltaT);
-
 	cpVect mouseBodyPos = cpv(_mouseWorld);
 	cpVect newMouseBodyPos = cpvlerp(cpBodyGetPosition(_mouseBody), mouseBodyPos, 0.75);
 
@@ -322,7 +311,7 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 
 	const float distance = 1.f;
 	cpPointQueryInfo info = {};
-	cpShape *pick = cpSpacePointQueryNearest(_space, cpv(_mouseWorld), distance, Filters::PICK, &info);
+	cpShape *pick = cpSpacePointQueryNearest(getLevel()->getSpace(), cpv(_mouseWorld), distance, Filters::PICK, &info);
 	if (pick) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
@@ -332,7 +321,7 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 			_draggingBody = pickBody;
 			_mouseJoint = cpPivotJointNew2(_mouseBody, _draggingBody, cpvzero, cpBodyWorldToLocal(_draggingBody,nearest));
 
-			cpSpaceAddConstraint(_space, _mouseJoint);
+			cpSpaceAddConstraint(getLevel()->getSpace(), _mouseJoint);
 
 			return true;
 		}
@@ -428,7 +417,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 	shapes = terrain::World::partition(shapes, vec2(0,0), 30);
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(_space, terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial);
 	world->build(shapes);
 
 	return world;
@@ -448,7 +437,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial);
 	world->build(shapes);
 	return world;
 }
@@ -479,7 +468,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
 	world->build(shapes);
 
 	return world;
@@ -502,7 +491,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
 
 	world->build(shapes, anchors);
 	return world;
@@ -511,7 +500,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 	_cameraController->lookAt(vec2(0,0));
 
-	cpSpaceSetGravity(_space, cpv(0,-9.8 * 10));
+	cpSpaceSetGravity(getLevel()->getSpace(), cpv(0,-9.8 * 10));
 
 
 	const vec2 boxSize(50,50);
@@ -544,7 +533,7 @@ terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
 	world->build(shapes, anchors);
 
 	return world;
@@ -579,7 +568,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
 	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
 	world->build(partitionedShapes);
 
 	return world;
@@ -618,7 +607,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
 	world->build(partitionedShapes, anchors);
 
 	return world;
@@ -656,7 +645,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(_space,terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
 	world->build(partitionedShapes, anchors);
 	
 
@@ -787,7 +776,7 @@ void TerrainTestScenario::timeSpatialIndex() {
 
 void TerrainTestScenario::releaseMouseDragConstraint() {
 	if (_mouseJoint) {
-		cpSpaceRemoveConstraint(_space, _mouseJoint);
+		cpSpaceRemoveConstraint(getLevel()->getSpace(), _mouseJoint);
 		cpConstraintFree(_mouseJoint);
 		_mouseJoint = nullptr;
 		_draggingBody = nullptr;
