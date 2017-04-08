@@ -32,14 +32,7 @@
 	@namespace core::strings
 	@brief core::util::strings is a toolbox of convenient string-related functions
  */
-namespace core { namespace strings {
-
-	typedef std::vector< std::string > stringvec;
-	typedef std::vector< char > charvec;
-	typedef std::set< std::string > stringset;
-	typedef std::set< char > charset;
-
-	enum numeric_base { Binary, Octal, Decimal, Hexadecimal };
+namespace core {
 
 	/**
 	 @brief Convert @a v to a string
@@ -108,6 +101,16 @@ namespace core { namespace strings {
 	{
 		return s;
 	}
+
+
+	namespace strings {
+
+	typedef std::vector< std::string > stringvec;
+	typedef std::vector< char > charvec;
+	typedef std::set< std::string > stringset;
+	typedef std::set< char > charset;
+
+	enum numeric_base { Binary, Octal, Decimal, Hexadecimal };
 
 	/**
 	 @brief generate a lowercase version of a string

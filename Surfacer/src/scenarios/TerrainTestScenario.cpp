@@ -171,7 +171,6 @@ namespace {
 	bool _cutting;
 	vec2 _cutterStart, _cutterEnd, _mouseScreen, _mouseWorld;
 
-	Camera2DInterfaceRef _cameraController;
 	terrain::TerrainObjectRef _terrain;
 
 	cpBody *_mouseBody, *_draggingBody;
@@ -183,13 +182,7 @@ _cutting(false),
 _mouseBody(nullptr),
 _draggingBody(nullptr),
 _mouseJoint(nullptr)
-{
-	if (/* DISABLES CODE */ (false)) {
-		_cameraController = getCamera();
-	} else {
-		_cameraController = make_shared<ViewportController>(getCamera());
-	}
-}
+{}
 
 TerrainTestScenario::~TerrainTestScenario(){}
 
@@ -242,12 +235,9 @@ void TerrainTestScenario::step( const time_state &time ) {
 
 	cpBodySetVelocity(_mouseBody, cpvmult(cpvsub(newMouseBodyPos, cpBodyGetPosition(_mouseBody)), time.deltaT));
 	cpBodySetPosition(_mouseBody, newMouseBodyPos);
-
-	_cameraController->step(time);
 }
 
 void TerrainTestScenario::update( const time_state &time ) {
-	_cameraController->update(time);
 }
 
 void TerrainTestScenario::clear( const render_state &state ) {
@@ -257,7 +247,7 @@ void TerrainTestScenario::clear( const render_state &state ) {
 void TerrainTestScenario::draw( const render_state &state ) {
 
 	{
-		Viewport::ScopedState cameraState(getCamera());
+		Viewport::ScopedState cameraState(getViewport());
 
 		if (_cutting) {
 			float radius = (CUT_WIDTH/2) / state.viewport->getScale();
@@ -279,7 +269,7 @@ void TerrainTestScenario::draw( const render_state &state ) {
 
 		if (_mouseJoint) {
 			// we're dragging, so draw mouse body
-			const float radius = 2 * getCamera()->getReciprocalScale();
+			const float radius = 2 * getViewport()->getReciprocalScale();
 			gl::color(Color(1,0,1));
 			gl::drawSolidCircle(v2(cpBodyGetPosition(_mouseBody)), radius);
 		}
@@ -297,11 +287,11 @@ bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	releaseMouseDragConstraint();
 
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
+	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 
 	if ( event.isAltDown() )
 	{
-		_cameraController->lookAt( _mouseWorld );
+		getViewportController()->lookAt( _mouseWorld );
 		return true;
 	}
 
@@ -338,7 +328,7 @@ bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 
 	if (_cutting) {
 		if (_terrain) {
-			const float radius = (CUT_WIDTH/2) / _cameraController->getScale();
+			const float radius = (CUT_WIDTH/2) / getViewport()->getScale();
 			_terrain->getWorld()->cut(_cutterStart, _cutterEnd, radius, Filters::CUTTER);
 		}
 
@@ -349,28 +339,28 @@ bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 }
 
 bool TerrainTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
-	const float zoom = _cameraController->getScale(),
+	const float zoom = getViewportController()->getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
 
-	_cameraController->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
+	getViewportController()->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
 
 	return true;
 }
 
 bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
+	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 	return true;
 }
 
 bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
+	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
-		_cameraController->setPan( _cameraController->getPan() + dvec2(delta) );
+		getViewportController()->setPan( getViewportController()->getPan() + dvec2(delta) );
 		_cutting = false;
 		return true;
 	}
@@ -410,7 +400,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 
 	const vec2 origin(30000,30000);
 
-	_cameraController->lookAt(origin);
+	getViewportController()->lookAt(origin);
 
 
 	vector<terrain::ShapeRef> shapes = { terrain::Shape::fromContour(rect(origin.x-200,origin.y-200,origin.x+200,origin.y+200)) };
@@ -424,7 +414,10 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
-	_cameraController->lookAt(vec2(0,0));
+
+	cpSpaceSetDamping(getLevel()->getSpace(), 0.5);
+
+	getViewportController()->lookAt(vec2(0,0));
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -443,7 +436,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
-	_cameraController->lookAt(vec2(0,0));
+	getViewportController()->lookAt(vec2(0,0));
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -475,7 +468,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
-	_cameraController->lookAt(vec2(0,0));
+	getViewportController()->lookAt(vec2(0,0));
 
 	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
@@ -498,7 +491,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 }
 
 terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
-	_cameraController->lookAt(vec2(0,0));
+	getViewportController()->lookAt(vec2(0,0));
 
 	cpSpaceSetGravity(getLevel()->getSpace(), cpv(0,-9.8 * 10));
 
@@ -555,7 +548,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 		return polyLine;
 	};
 
-	_cameraController->lookAt(vec2(0,0));
+	getViewportController()->lookAt(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
@@ -590,7 +583,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 		return polyLine;
 	};
 
-	_cameraController->lookAt(vec2(0,0));
+	getViewportController()->lookAt(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
@@ -628,7 +621,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 		return polyLine;
 	};
 
-	_cameraController->lookAt(vec2(0,0));
+	getViewportController()->lookAt(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),

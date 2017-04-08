@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 2048 1536" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;">
+    <g id="world">
+        <path id="arrow" d="M450.383,399.217L1457.91,396.867L1460.83,221.408L1706.66,503.608L1466.54,694.275L1464.81,548.375L454.758,546.192L450.383,399.217Z" style="fill:rgb(191,191,191);"/>
+    </g>
+    <g id="anchors">
+        <g id="anchor2" transform="matrix(1,0,0,1,-71.175,0)">
+            <rect x="606.767" y="457.842" width="48.158" height="44.033" style="fill:rgb(255,0,0);"/>
+        </g>
+        <rect id="anchor1" x="1531.49" y="457.842" width="38.417" height="44.033" style="fill:rgb(0,255,0);"/>
+    </g>
+</svg>

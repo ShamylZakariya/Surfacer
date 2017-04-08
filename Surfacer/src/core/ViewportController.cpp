@@ -31,17 +31,26 @@ namespace core {
 		bool				_disregardViewportMotion;
 	 */
 
-	ViewportController::ViewportController( ViewportRef vp, control_method cm ):
-	_viewport(vp),
+	ViewportController::ViewportController(control_method cm):
+	_viewport(nullptr),
 	_constraintMask(NoConstraint),
 	_controlMethod(cm),
 	_levelBounds( cpBBInfinity ),
-	_scale(vp->getScale()),
-	_pan(vp->getPan()),
+	_scale(1),
+	_pan(0,0),
+	_disregardViewportMotion(false)
+	{}
+
+	ViewportController::ViewportController( ViewportRef vp, control_method cm ):
+	_viewport(nullptr),
+	_constraintMask(NoConstraint),
+	_controlMethod(cm),
+	_levelBounds( cpBBInfinity ),
+	_scale(1),
+	_pan(0,0),
 	_disregardViewportMotion(false)
 	{
-		_viewport->motion.connect(this, &ViewportController::_viewportInitiatedChange );
-		_viewport->boundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
+		setViewport(vp);
 	}
 
 	ViewportController::~ViewportController()
@@ -62,6 +71,23 @@ namespace core {
 			case PID:
 				_updatePID( time );
 				break;
+		}
+	}
+
+	void ViewportController::setViewport(ViewportRef vp) {
+		if (_viewport) {
+			_viewport->motion.disconnect(this);
+			_viewport->boundsChanged.disconnect(this);
+		}
+		_viewport = vp;
+		if (_viewport) {
+			_scale = _viewport->getScale();
+			_pan = _viewport->getPan();
+			_viewport->motion.connect(this, &ViewportController::_viewportInitiatedChange );
+			_viewport->boundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
+		} else {
+			_scale = 1;
+			_pan = dvec2(0,0);
 		}
 	}
 

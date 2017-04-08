@@ -18,7 +18,13 @@ Need to verify stitching of a large environment works.
 ✓ Then I need to design a basic component system. Can adopt some of my old Surfacer code here.
 
 
-## Trouble
+## TODO
+
+Rewrite the cartesian coordinate renderer using a shader. Make it handle rotation.
+	- CPU can compute the origin and step, pass that to shader. Shader uses gl_FragCoord - or shader does a line distance calculation with some kind of modulo
 
 When a dynamic shape has stopped moving, if I zoom in really close, it disappears, as if the spatial index culling alg stops working. If I move it a smidge, culling starts working again.
 - REPRO: Cut a shape, move it, let it stop moving on its own. Zoom in real close. Pop, it's gone. Zoom back out, give it a wee toss, culling works again.
+	This might only happen for items FAR from the origin. And this would be the same bug as we saw with the camera controller. Doing a length squared test to see if I need to call moved() - might be smarter to just do taxi dist abs() on the dx dy
+
+- Need to get rid of the different BB for poly edge testing. Just use the BB vended by getBB() on terrain::Shape

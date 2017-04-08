@@ -38,16 +38,17 @@ namespace core {
 	}
 
 	/*
-		ViewportRef _camera;
+		ViewportRef _viewport;
 		time_state _time, _stepTime;
 		render_state _renderState;
 	 */
 
 	Scenario::Scenario():
-	_camera(make_shared<Viewport>()),
+	_viewport(make_shared<Viewport>()),
+	_viewportController(make_shared<ViewportController>(_viewport)),
 	_time(app::getElapsedSeconds(), 1.0/60.0, 0),
 	_stepTime(app::getElapsedSeconds(), 1.0/60.0, 0),
-	_renderState(_camera, RenderMode::GAME, 0,0,0,0 )
+	_renderState(_viewport, RenderMode::GAME, 0,0,0,0 )
 	{}
 
 	Scenario::~Scenario()
@@ -68,6 +69,11 @@ namespace core {
 	void Scenario::draw( const render_state &state )
 	{}
 
+	void Scenario::setViewportController(ViewportControllerRef vp) {
+		_viewportController = vp;
+		_viewportController->setViewport(_viewport);
+	}
+
 	void Scenario::setRenderMode( RenderMode::mode mode )
 	{
 		_renderState.mode = mode;
@@ -80,7 +86,7 @@ namespace core {
 		ci::fs::path fullPath;
 
 		do {
-			fullPath = folderPath / (namingPrefix + strings::str(index++) + "." + format );
+			fullPath = folderPath / (namingPrefix + str(index++) + "." + format );
 		} while( ci::fs::exists( fullPath ));
 
 		Surface s = app::copyWindowSurface();
@@ -109,7 +115,7 @@ namespace core {
 
 	void Scenario::_dispatchResize( const ivec2 &size )
 	{
-		_camera->setViewport(size.x, size.y);
+		_viewport->setViewport(size.x, size.y);
 		if (_level) {
 			_level->resize(size);
 		}
@@ -119,20 +125,32 @@ namespace core {
 	void Scenario::_dispatchStep()
 	{
 		update_time( _stepTime );
+
+		// we don't wantphysics steps to vary wildly from the target
 		_stepTime.deltaT = clamp<seconds_t>(_stepTime.deltaT, STEP_INTERVAL * 0.9, STEP_INTERVAL * 1.1 );
+
 		step( _stepTime );
+
 		if (_level) {
 			_level->step(_stepTime);
 		}
+
+		_viewport->step(_stepTime);
+		_viewportController->step(_stepTime);
 	}
 
 	void Scenario::_dispatchUpdate()
 	{
 		update_time( _time );
+
 		update( _time );
+
 		if (_level) {
 			_level->update(_time);
 		}
+
+		_viewport->update(_time);
+		_viewportController->update(_time);
 	}
 
 	void Scenario::_dispatchDraw()
@@ -145,7 +163,7 @@ namespace core {
 		clear(_renderState);
 
 		if (_level) {
-			Viewport::ScopedState cameraState(getCamera());
+			Viewport::ScopedState vs(getViewport());
 			_level->draw(_renderState);
 		}
 

@@ -106,7 +106,7 @@ namespace terrain {
 
 		PolyLine2d optimize(PolyLine2d p) {
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
-				return core::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
+				return util::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
 			} else {
 				p.setClosed();
 				return p;
@@ -118,7 +118,7 @@ namespace terrain {
 
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
 				for (auto &p : ps) {
-					ret.push_back(core::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
+					ret.push_back(util::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
 				}
 			} else {
 				for (auto &p : ps) {

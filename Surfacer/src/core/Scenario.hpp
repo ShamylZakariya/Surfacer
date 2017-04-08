@@ -11,6 +11,7 @@
 
 #include "InputDispatcher.hpp"
 #include "Viewport.hpp"
+#include "ViewportController.hpp"
 #include "RenderState.hpp"
 #include "TimeState.hpp"
 
@@ -33,7 +34,9 @@ namespace core {
 		virtual void clear( const render_state &state );
 		virtual void draw( const render_state &state );
 
-		const ViewportRef& getCamera() const { return _camera; }
+		const ViewportRef& getViewport() const { return _viewport; }
+		const ViewportControllerRef getViewportController() const { return _viewportController; }
+		void setViewportController(ViewportControllerRef vp);
 
 		// time state used for animation
 		const time_state &getTime() const { return _time; }
@@ -67,7 +70,8 @@ namespace core {
 
 	private:
 
-		ViewportRef _camera;
+		ViewportRef _viewport;
+		ViewportControllerRef _viewportController;
 		time_state _time, _stepTime;
 		render_state _renderState;
 		LevelRef _level;

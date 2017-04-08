@@ -11,6 +11,7 @@
 
 #include "TerrainTestScenario.hpp"
 #include "LevelTestScenario.hpp"
+#include "SvgTestScenario.hpp"
 
 class DemoApp : public core::GameApp {
 public:
@@ -26,7 +27,7 @@ public:
 
 	virtual void setup() override {
 		GameApp::setup();
-		setScenario(make_shared<TerrainTestScenario>());
+		setScenario(make_shared<SvgTestScenario>());
 	}
 
 };

@@ -22,12 +22,12 @@ namespace core { namespace util { namespace svg {
 
 #pragma mark Matrix Parsing
 
-		const float EPSILON = 1e-3;
-		const float ALPHA_EPSILON = 1.f / 255.f;
+		const double EPSILON = 1e-3;
+		const double ALPHA_EPSILON = 1.f / 255.f;
 
 		const std::string zero("0");
 
-		float getNumericAttributeValue( const XmlTree &node, const std::string &attrName, float defaultValue )
+		double getNumericAttributeValue( const XmlTree &node, const std::string &attrName, double defaultValue )
 		{
 			if ( node.hasAttribute( attrName ))
 			{
@@ -37,7 +37,7 @@ namespace core { namespace util { namespace svg {
 			return defaultValue;
 		}
 
-		void getTransformValues( const std::string &transform, std::vector< float > &values )
+		void getTransformValues( const std::string &transform, std::vector< double > &values )
 		{
 			values.clear();
 
@@ -51,7 +51,7 @@ namespace core { namespace util { namespace svg {
 			}
 		}
 
-		mat4 parseMatrixTransform( const std::string svgMatrixTransform )
+		dmat4 parseMatrixTransform( const std::string svgMatrixTransform )
 		{
 			/*
 				matrix(<a> <b> <c> <d> <e> <f>), which specifies a transformation in the form of a transformation matrix of six values. matrix(a,b,c,d,e,f) is equivalent to applying the transformation matrix [a b c d e f].
@@ -68,48 +68,48 @@ namespace core { namespace util { namespace svg {
 				[0,0,0,1]
 			 */
 
-			std::vector<float> values;
+			std::vector<double> values;
 			getTransformValues( svgMatrixTransform, values );
 
-			return mat4(
-						vec4( values[0], values[1], 0, 0 ),
-						vec4( values[2], values[3], 0, 0 ),
-						vec4(        0 ,        0 , 1, 0 ),
-						vec4( values[4], values[5], 0, 1 ));
+			return dmat4(
+						dvec4( values[0], values[1], 0, 0 ),
+						dvec4( values[2], values[3], 0, 0 ),
+						dvec4(        0 ,        0 , 1, 0 ),
+						dvec4( values[4], values[5], 0, 1 ));
 		}
 
-		mat4 parseTranslateTransform( const std::string svgTranslateTransform )
+		dmat4 parseTranslateTransform( const std::string svgTranslateTransform )
 		{
 			/*
 			 translate(<tx> [<ty>]), which specifies a translation by tx and ty. If <ty> is not provided, it is assumed to be zero.
 			 */
 
-			std::vector<float> values;
+			std::vector<double> values;
 			getTransformValues( svgTranslateTransform, values );
 
-			float tx = values[0],
+			double tx = values[0],
 			ty = values.size() > 1 ? values[1] : 0;
 
-			return translate(vec3(tx, ty, 0));
+			return translate(dvec3(tx, ty, 0));
 		}
 
-		mat4 parseScaleTransform( const std::string svgScaleTransform )
+		dmat4 parseScaleTransform( const std::string svgScaleTransform )
 		{
 			/*
 				scale(<sx> [<sy>]), which specifies a scale operation by sx and sy. If <sy> is not provided, it is assumed to be equal to <sx>.
 			 */
 
-			std::vector<float> values;
+			std::vector<double> values;
 			getTransformValues( svgScaleTransform, values );
 
-			float sx = values[0],
+			double sx = values[0],
 			sy = values.size() > 1 ? values[1] : sx;
 
-			return scale(vec3(sx, sy, 1));
+			return scale(dvec3(sx, sy, 1));
 
 		}
 
-		mat4 parseRotateTransform( const std::string svgRotateTransform )
+		dmat4 parseRotateTransform( const std::string svgRotateTransform )
 		{
 			/*
 				rotate(<rotate-angle> [<cx> <cy>]), which specifies a rotation by <rotate-angle> degrees about a given point.
@@ -117,10 +117,10 @@ namespace core { namespace util { namespace svg {
 			 If optional parameters <cx> and <cy> are supplied, the rotate is about the point (cx, cy). The operation represents the equivalent of the following specification: translate(<cx>, <cy>) rotate(<rotate-angle>) translate(-<cx>, -<cy>).
 			 */
 
-			std::vector<float> values;
+			std::vector<double> values;
 			getTransformValues( svgRotateTransform, values );
 
-			mat4 rot = rotate(values[0], vec3(0,0,1));
+			dmat4 rot = rotate(values[0], dvec3(0,0,1));
 
 			if ( values.size() == 1 )
 			{
@@ -128,21 +128,21 @@ namespace core { namespace util { namespace svg {
 			}
 			else if ( values.size() == 3 )
 			{
-				float tx = values[1],
+				double tx = values[1],
 				ty = values[2];
 
-				mat4
-				t0 = translate( vec3( tx, ty, 0 )),
-				t1 = translate( vec3( -tx, -ty, 0 ));
+				dmat4
+				t0 = translate( dvec3( tx, ty, 0 )),
+				t1 = translate( dvec3( -tx, -ty, 0 ));
 
 				return t0 * rot * t1;
 			}
 
 			// hopefully this doesn't happen
-			return mat4();
+			return dmat4();
 		}
 
-		mat4 parseSkewXTransform( const std::string svgSkewXTransform )
+		dmat4 parseSkewXTransform( const std::string svgSkewXTransform )
 		{
 			/*
 				skewX(<skew-angle>), which specifies a skew transformation along the x-axis.
@@ -151,19 +151,19 @@ namespace core { namespace util { namespace svg {
 				[0      0   1]
 			 */
 
-			std::vector<float> values;
+			std::vector<double> values;
 			getTransformValues( svgSkewXTransform, values );
 
-			float sx = std::tan( values[0] );
+			double sx = std::tan( values[0] );
 
-			return mat4(
-						vec4(1,  0, 0, 0 ),
-						vec4(sx, 1, 0, 0 ),
-						vec4(0,  0, 1, 0 ),
-						vec4(0,  0, 0, 1 ));
+			return dmat4(
+						dvec4(1,  0, 0, 0 ),
+						dvec4(sx, 1, 0, 0 ),
+						dvec4(0,  0, 1, 0 ),
+						dvec4(0,  0, 0, 1 ));
 		}
 
-		mat4 parseSkewYTransform( const std::string svgSkewYTransform )
+		dmat4 parseSkewYTransform( const std::string svgSkewYTransform )
 		{
 			/*
 			 skewY(<skew-angle>), which specifies a skew transformation along the y-axis.
@@ -173,21 +173,21 @@ namespace core { namespace util { namespace svg {
 				[0        0, 1]
 			 */
 
-			std::vector<float> values;
+			std::vector<double> values;
 			getTransformValues( svgSkewYTransform, values );
 
-			float sy = std::tan( values[0] );
+			double sy = std::tan( values[0] );
 
-			return mat4(
-						vec4(1, sy, 0, 0 ),
-						vec4(0,  1, 0, 0 ),
-						vec4(0,  0, 1, 0 ),
-						vec4(0,  0, 0, 1 ));
+			return dmat4(
+						dvec4(1, sy, 0, 0 ),
+						dvec4(0,  1, 0, 0 ),
+						dvec4(0,  0, 1, 0 ),
+						dvec4(0,  0, 0, 1 ));
 		}
 
 #pragma mark - Polyline Parsing
 
-		void parsePolyline( const std::string &polyline, std::vector< vec2 > &points )
+		void parsePolyline( const std::string &polyline, std::vector< dvec2 > &points )
 		{
 			const char *current = polyline.c_str();
 			while( *current != '\0' )
@@ -206,7 +206,7 @@ namespace core { namespace util { namespace svg {
 
 				if ( std::isdigit( c ) || c == '.' || c == '+' || c == '-' )
 				{
-					float v[2];
+					double v[2];
 					for ( int i = 0; i < 2; i++ )
 					{
 						char *end = nullptr;
@@ -217,7 +217,7 @@ namespace core { namespace util { namespace svg {
 						if ( *current == ',' ) current++;
 					}
 
-					points.push_back( ci::vec2( v[0], v[1] ));
+					points.push_back( ci::dvec2( v[0], v[1] ));
 					continue;
 				}
 
@@ -253,37 +253,37 @@ namespace core { namespace util { namespace svg {
 
 		protected:
 
-			void moveTo( vec2 p, bool relative );
-			void lineTo( vec2 p, bool relative );
-			void horizontalLineTo( float x, bool relative );
-			void verticalLineTo( float y, bool relative );
-			void curveTo( vec2 c0, vec2 c1, vec2 p, bool relative );
-			void shorthandCurveTo( vec2 c1, vec2 p, bool relative );
-			void quadraticCurveTo( vec2 c, vec2 p, bool relative );
-			void shorthandQuadraticCurveTo( vec2 p, bool relative );
-			void arcTo( float rx, float ry, float xAxisRotation, bool largeArcFlag, bool sweepFlag, vec2 end, bool relative );
+			void moveTo( dvec2 p, bool relative );
+			void lineTo( dvec2 p, bool relative );
+			void horizontalLineTo( double x, bool relative );
+			void verticalLineTo( double y, bool relative );
+			void curveTo( dvec2 c0, dvec2 c1, dvec2 p, bool relative );
+			void shorthandCurveTo( dvec2 c1, dvec2 p, bool relative );
+			void quadraticCurveTo( dvec2 c, dvec2 p, bool relative );
+			void shorthandQuadraticCurveTo( dvec2 p, bool relative );
+			void arcTo( double rx, double ry, double xAxisRotation, bool largeArcFlag, bool sweepFlag, dvec2 end, bool relative );
 			void close();
 
 		private:
 
 			void _pathArcSegment(
-								 float xc, float yc,
-								 float th0, float th1, float rx, float ry,
-								 float x_axis_rotation);
+								 double xc, double yc,
+								 double th0, double th1, double rx, double ry,
+								 double x_axis_rotation);
 
 			void _pathArc(
-						  float rx,
-						  float ry,
-						  float x_axis_rotation,
+						  double rx,
+						  double ry,
+						  double x_axis_rotation,
 						  int large_arc_flag,
 						  int sweep_flag,
-						  float x,
-						  float y);
+						  double x,
+						  double y);
 
 		private:
 
 			bool _pathOpen;
-			vec2 _lastPoint, _lastControl;
+			dvec2 _lastPoint, _lastControl;
 			Shape2d *_shape;
 
 		};
@@ -398,7 +398,7 @@ namespace core { namespace util { namespace svg {
 
 				if ( std::isdigit( c ) || c == '.' || c == '+' || c == '-' )
 				{
-					float v[7];
+					double v[7];
 					unsigned int toRead = coordinatesToRead[std::tolower(command)];
 
 					for ( unsigned int i = 0; i < toRead; i++ )
@@ -415,7 +415,7 @@ namespace core { namespace util { namespace svg {
 					switch( std::tolower(command))
 					{
 						case 'm':
-							moveTo( vec2( v[0],v[1] ), relative );
+							moveTo( dvec2( v[0],v[1] ), relative );
 
 							//
 							//	after move implicit next command becomes lineTo,
@@ -429,7 +429,7 @@ namespace core { namespace util { namespace svg {
 							break;
 
 						case 'l':
-							lineTo( vec2( v[0],v[1] ), relative );
+							lineTo( dvec2( v[0],v[1] ), relative );
 							break;
 
 						case 'h':
@@ -441,23 +441,23 @@ namespace core { namespace util { namespace svg {
 							break;
 
 						case 'c':
-							curveTo( vec2(v[0],v[1]), vec2(v[2],v[3]), vec2(v[4],v[5]), relative );
+							curveTo( dvec2(v[0],v[1]), dvec2(v[2],v[3]), dvec2(v[4],v[5]), relative );
 							break;
 
 						case 's':
-							shorthandCurveTo(vec2(v[0],v[1]), vec2(v[2],v[3]), relative );
+							shorthandCurveTo(dvec2(v[0],v[1]), dvec2(v[2],v[3]), relative );
 							break;
 
 						case 'q':
-							quadraticCurveTo(vec2(v[0],v[1]), vec2(v[2],v[3]), relative );
+							quadraticCurveTo(dvec2(v[0],v[1]), dvec2(v[2],v[3]), relative );
 							break;
 
 						case 't':
-							shorthandQuadraticCurveTo(vec2(v[0],v[1]), relative );
+							shorthandQuadraticCurveTo(dvec2(v[0],v[1]), relative );
 							break;
 
 						case 'a':
-							arcTo(v[0],v[1],v[2], v[3] > 0, v[4] > 0, vec2(v[5],v[6]), relative );
+							arcTo(v[0],v[1],v[2], v[3] > 0, v[4] > 0, dvec2(v[5],v[6]), relative );
 							break;
 
 						case 'z': break; // this should never come up
@@ -479,7 +479,7 @@ namespace core { namespace util { namespace svg {
 			}
 		}
 
-		void PathParser::moveTo( vec2 p, bool relative )
+		void PathParser::moveTo( dvec2 p, bool relative )
 		{
 			if ( relative ) p += _lastPoint;
 			_lastPoint = p;
@@ -487,7 +487,7 @@ namespace core { namespace util { namespace svg {
 			_shape->moveTo( p );
 		}
 
-		void PathParser::lineTo( vec2 p, bool relative )
+		void PathParser::lineTo( dvec2 p, bool relative )
 		{
 			if ( relative ) p += _lastPoint;
 			_lastPoint = p;
@@ -495,19 +495,19 @@ namespace core { namespace util { namespace svg {
 			_shape->lineTo( p );
 		}
 
-		void PathParser::horizontalLineTo( float x, bool relative )
+		void PathParser::horizontalLineTo( double x, bool relative )
 		{
 			if( relative ) x += _lastPoint.x;
-			lineTo( vec2( x, _lastPoint.y ), false );
+			lineTo( dvec2( x, _lastPoint.y ), false );
 		}
 
-		void PathParser::verticalLineTo( float y, bool relative )
+		void PathParser::verticalLineTo( double y, bool relative )
 		{
 			if( relative ) y += _lastPoint.y;
-			lineTo( vec2( _lastPoint.x, y ), false );
+			lineTo( dvec2( _lastPoint.x, y ), false );
 		}
 
-		void PathParser::curveTo( vec2 c0, vec2 c1, vec2 p, bool relative )
+		void PathParser::curveTo( dvec2 c0, dvec2 c1, dvec2 p, bool relative )
 		{
 			if ( relative )
 			{
@@ -522,7 +522,7 @@ namespace core { namespace util { namespace svg {
 			_shape->curveTo( c0, c1, p );
 		}
 
-		void PathParser::shorthandCurveTo( vec2 c1, vec2 p, bool relative )
+		void PathParser::shorthandCurveTo( dvec2 c1, dvec2 p, bool relative )
 		{
 			if ( relative )
 			{
@@ -530,11 +530,11 @@ namespace core { namespace util { namespace svg {
 				p += _lastPoint;
 			}
 
-			vec2 c0 = _lastPoint - ( _lastControl - _lastPoint );
+			dvec2 c0 = _lastPoint - ( _lastControl - _lastPoint );
 			curveTo( c0, c1, p, false );
 		}
 
-		void PathParser::quadraticCurveTo( vec2 c, vec2 p, bool relative )
+		void PathParser::quadraticCurveTo( dvec2 c, dvec2 p, bool relative )
 		{
 			if ( relative )
 			{
@@ -545,14 +545,14 @@ namespace core { namespace util { namespace svg {
 			curveTo( c, c, p, false );
 		}
 
-		void PathParser::shorthandQuadraticCurveTo( vec2 p, bool relative )
+		void PathParser::shorthandQuadraticCurveTo( dvec2 p, bool relative )
 		{
 			if ( relative ) p += _lastPoint;
-			vec2 c = _lastPoint - ( _lastControl - _lastPoint );
+			dvec2 c = _lastPoint - ( _lastControl - _lastPoint );
 			quadraticCurveTo( c, p, false );
 		}
 
-		void PathParser::arcTo( float rx, float ry, float xAxisRotation, bool largeArcFlag, bool sweepFlag, vec2 end, bool relative )
+		void PathParser::arcTo( double rx, double ry, double xAxisRotation, bool largeArcFlag, bool sweepFlag, dvec2 end, bool relative )
 		{
 			if ( relative )
 			{
@@ -574,17 +574,17 @@ namespace core { namespace util { namespace svg {
 		//
 
 		void PathParser::_pathArcSegment(
-										 float xc, float yc,
-										 float th0, float th1, float rx, float ry,
-										 float x_axis_rotation)
+										 double xc, double yc,
+										 double th0, double th1, double rx, double ry,
+										 double x_axis_rotation)
 		{
 			using std::sin;
 			using std::cos;
 
-			float x1, y1, x2, y2, x3, y3;
-			float t;
-			float th_half;
-			float f, sinf, cosf;
+			double x1, y1, x2, y2, x3, y3;
+			double t;
+			double th_half;
+			double f, sinf, cosf;
 
 			f = x_axis_rotation * M_PI / 180.0;
 			sinf = sin(f);
@@ -600,20 +600,20 @@ namespace core { namespace util { namespace svg {
 			y2 = y3 + ry*(-t * cos (th1));
 
 			curveTo(
-					vec2(xc + cosf*x1 - sinf*y1, yc + sinf*x1 + cosf*y1 ),
-					vec2(xc + cosf*x2 - sinf*y2, yc + sinf*x2 + cosf*y2 ),
-					vec2(xc + cosf*x3 - sinf*y3, yc + sinf*x3 + cosf*y3 ),
+					dvec2(xc + cosf*x1 - sinf*y1, yc + sinf*x1 + cosf*y1 ),
+					dvec2(xc + cosf*x2 - sinf*y2, yc + sinf*x2 + cosf*y2 ),
+					dvec2(xc + cosf*x3 - sinf*y3, yc + sinf*x3 + cosf*y3 ),
 					false);
 		}
 
 		void PathParser::_pathArc(
-								  float rx,
-								  float ry,
-								  float x_axis_rotation,
+								  double rx,
+								  double ry,
+								  double x_axis_rotation,
 								  int large_arc_flag,
 								  int sweep_flag,
-								  float x,
-								  float y)
+								  double x,
+								  double y)
 		{
 			using std::sin;
 			using std::cos;
@@ -625,13 +625,13 @@ namespace core { namespace util { namespace svg {
 			/* See Appendix F.6 Elliptical arc implementation notes
 			 http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes */
 
-			float f, sinf, cosf;
-			float x1, y1, x2, y2;
-			float x1_, y1_;
-			float cx_, cy_, cx, cy;
-			float gamma;
-			float theta1, delta_theta;
-			float k1, k2, k3, k4, k5;
+			double f, sinf, cosf;
+			double x1, y1, x2, y2;
+			double x1_, y1_;
+			double cx_, cy_, cx, cy;
+			double gamma;
+			double theta1, delta_theta;
+			double k1, k2, k3, k4, k5;
 
 			int i, n_segs;
 
@@ -656,7 +656,7 @@ namespace core { namespace util { namespace svg {
 			 See http://bugs.debian.org/508443 */
 			if ((abs(rx) < EPSILON) || (abs(ry) < EPSILON))
 			{
-				lineTo( vec2( x,y ), false );
+				lineTo( dvec2( x,y ), false );
 				return;
 			}
 
@@ -752,7 +752,7 @@ namespace core { namespace util { namespace svg {
 
 		void parseRectShape( const XmlTree &shapeNode, Shape2d &shape )
 		{
-			float
+			double
 			x = getNumericAttributeValue( shapeNode, "x", 0 ),
 			y = getNumericAttributeValue( shapeNode, "y", 0 ),
 			width = getNumericAttributeValue( shapeNode, "width", 0 ),
@@ -826,32 +826,32 @@ namespace core { namespace util { namespace svg {
 			}
 			else
 			{
-				shape.moveTo( vec2(x,y ));
-				shape.lineTo( vec2(x + width, y ));
-				shape.lineTo( vec2(x + width, y + height ));
-				shape.lineTo( vec2(x, y + height ));
+				shape.moveTo( dvec2(x,y ));
+				shape.lineTo( dvec2(x + width, y ));
+				shape.lineTo( dvec2(x + width, y + height ));
+				shape.lineTo( dvec2(x, y + height ));
 				shape.close();
 			}
 		}
 
 		void parseCircleShape( const XmlTree &shapeNode, Shape2d &shape )
 		{
-			float
+			double
 			cx = getNumericAttributeValue( shapeNode, "cx", 0 ),
 			cy = getNumericAttributeValue( shapeNode, "cy", 0 ),
 			r = getNumericAttributeValue( shapeNode, "r", 0 );
 
 			if ( r > 0 )
 			{
-				shape.moveTo( vec2( cx + r, cy ));
-				shape.arc( vec2( cx, cy ), r, 0, 2 * M_PI );
+				shape.moveTo( dvec2( cx + r, cy ));
+				shape.arc( dvec2( cx, cy ), r, 0, 2 * M_PI );
 				shape.close();
 			}
 		}
 
 		void parseEllipseShape( const XmlTree &shapeNode, Shape2d &shape )
 		{
-			float
+			double
 			cx = getNumericAttributeValue( shapeNode, "cx", 0 ),
 			cy = getNumericAttributeValue( shapeNode, "cy", 0 ),
 			rx = getNumericAttributeValue( shapeNode, "rx", 0 ),
@@ -874,7 +874,7 @@ namespace core { namespace util { namespace svg {
 
 		void parseLineShape( const XmlTree &shapeNode, Shape2d &shape )
 		{
-			vec2 a,b;
+			dvec2 a,b;
 
 			a.x = getNumericAttributeValue( shapeNode, "x1", 0 );
 			a.y = getNumericAttributeValue( shapeNode, "y1", 0 );
@@ -892,14 +892,14 @@ namespace core { namespace util { namespace svg {
 		{
 			if ( shapeNode.hasAttribute( "points" ))
 			{
-				std::vector< ci::vec2 > points;
+				std::vector< ci::dvec2 > points;
 				parsePolyline( shapeNode.getAttribute( "points" ).getValue(), points );
 
 				if ( !points.empty() )
 				{
 					// we don't close polyline shapes
 					shape.moveTo( points.front() );
-					for( std::vector< ci::vec2 >::const_iterator p(points.begin() + 1),end(points.end()); p != end; ++p )
+					for( std::vector< ci::dvec2 >::const_iterator p(points.begin() + 1),end(points.end()); p != end; ++p )
 					{
 						shape.lineTo( *p );
 					}
@@ -917,9 +917,18 @@ namespace core { namespace util { namespace svg {
 
 	}
 
-	float parseNumericAttribute( const std::string &numericAttributeValue )
+	double parseNumericAttribute( const std::string &numericAttributeValue )
 	{
 		return std::strtod( numericAttributeValue.c_str(), nullptr );
+	}
+
+	Rectd parseViewBoxAttribute(const string &viewportValue) {
+		const auto tokens = strings::split(viewportValue, ' ');
+		double minX = parseNumericAttribute(tokens[0]);
+		double minY = parseNumericAttribute(tokens[1]);
+		double width = parseNumericAttribute(tokens[2]);
+		double height = parseNumericAttribute(tokens[3]);
+		return Rectd(minX, minY, minX + width, minY + height);
 	}
 
 	namespace {
@@ -1019,16 +1028,16 @@ namespace core { namespace util { namespace svg {
 		"translate(-10,-20) scale(2) rotate(45) translate(5,10)"
 	 */
 
-	mat4 parseTransform( const std::string &svgTransform )
+	dmat4 parseTransform( const std::string &svgTransform )
 	{
-		mat4 transform;
+		dmat4 transform;
 
 		//	split - only supporting multiple transforms separated by spaces
 		//	note: we're concatenating each transform into one
 
 		for( const std::string &transformToken : strings::split( svgTransform, ' ' ))
 		{
-			mat4 m;
+			dmat4 m;
 			if ( strings::startsWith( transformToken, "matrix" ))			m = parseMatrixTransform( transformToken );
 			else if ( strings::startsWith( transformToken, "translate" )) m = parseTranslateTransform( transformToken );
 			else if ( strings::startsWith( transformToken, "scale" ))		m = parseScaleTransform( transformToken );
@@ -1068,9 +1077,9 @@ namespace core { namespace util { namespace svg {
 				green = colorValue.substr( 3,2 ),
 				blue = colorValue.substr( 5,2 );
 
-				color.r = saturate(float(std::strtol( red.c_str(), nullptr, 16 )) / 255);
-				color.g = saturate(float(std::strtol( green.c_str(), nullptr, 16 )) / 255);
-				color.b = saturate(float(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
+				color.r = saturate(double(std::strtol( red.c_str(), nullptr, 16 )) / 255);
+				color.g = saturate(double(std::strtol( green.c_str(), nullptr, 16 )) / 255);
+				color.b = saturate(double(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
 				color.a = 1;
 
 				return true;
@@ -1083,10 +1092,10 @@ namespace core { namespace util { namespace svg {
 				green = colorValue.substr( 5,2 ),
 				blue = colorValue.substr( 7,2 );
 
-				color.r = saturate(float(std::strtol( red.c_str(), nullptr, 16 )) / 255);
-				color.g = saturate(float(std::strtol( green.c_str(), nullptr, 16 )) / 255);
-				color.b = saturate(float(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
-				color.a = saturate(float(std::strtol( alpha.c_str(), nullptr, 16 )) / 255);
+				color.r = saturate(double(std::strtol( red.c_str(), nullptr, 16 )) / 255);
+				color.g = saturate(double(std::strtol( green.c_str(), nullptr, 16 )) / 255);
+				color.b = saturate(double(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
+				color.a = saturate(double(std::strtol( alpha.c_str(), nullptr, 16 )) / 255);
 
 				return true;
 			}
@@ -1103,18 +1112,18 @@ namespace core { namespace util { namespace svg {
 			}
 
 			const std::string ValueString = colorValue.substr( OpenParen+1, (CloseParen-OpenParen-1));
-			std::vector<float> components;
+			std::vector<double> components;
 
 			for( const std::string &token : strings::split( ValueString, "," ))
 			{
 				if ( token.find("%") != std::string::npos )
 				{
-					float value = 255 * saturate(std::strtod( token.c_str(), nullptr ) / 100);
+					double value = 255 * saturate(std::strtod( token.c_str(), nullptr ) / 100);
 					components.push_back( value );
 				}
 				else
 				{
-					float value = std::strtod( token.c_str(), nullptr );
+					double value = std::strtod( token.c_str(), nullptr );
 					components.push_back( saturate( value / 255 ));
 				}
 			}

@@ -231,11 +231,8 @@ namespace {
 
 }
 
-LevelTestScenario::LevelTestScenario():
-_cameraController(make_shared<ViewportController>(getCamera()))
-{
-	_cameraController->setConstraintMask( ViewportController::ConstrainPan | ViewportController::ConstrainScale );
-}
+LevelTestScenario::LevelTestScenario()
+{}
 
 LevelTestScenario::~LevelTestScenario() {
 
@@ -272,11 +269,9 @@ void LevelTestScenario::resize( ivec2 size ) {
 }
 
 void LevelTestScenario::step( const time_state &time ) {
-
 }
 
 void LevelTestScenario::update( const time_state &time ) {
-	_cameraController->step(time);
 }
 
 void LevelTestScenario::clear( const render_state &state ) {
@@ -298,11 +293,11 @@ void LevelTestScenario::draw( const render_state &state ) {
 
 bool LevelTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
+	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 
 	if ( event.isAltDown() )
 	{
-		_cameraController->lookAt( _mouseWorld );
+		getViewportController()->lookAt( _mouseWorld );
 		return true;
 	}
 
@@ -318,28 +313,28 @@ bool LevelTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
 }
 
 bool LevelTestScenario::mouseWheel( const ci::app::MouseEvent &event ) {
-	float zoom = _cameraController->getScale(),
+	float zoom = getViewportController()->getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
 
-	_cameraController->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
+	getViewportController()->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
 
 	return true;
 }
 
 bool LevelTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
+	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 	return true;
 }
 
 bool LevelTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getCamera()->screenToWorld(_mouseScreen);
+	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
-		_cameraController->setPan( _cameraController->getPan() + dvec2(delta) );
+		getViewportController()->setPan( getViewportController()->getPan() + dvec2(delta) );
 		return true;
 	}
 

@@ -25,7 +25,7 @@ namespace core { namespace util { namespace svg {
 
 	struct svg_style {
 		ci::Color fillColor, strokeColor;
-		float opacity, fillOpacity, strokeOpacity, strokeWidth;
+		double opacity, fillOpacity, strokeOpacity, strokeWidth;
 		ci::Triangulator::Winding fillRule;
 		bool filled, stroked;
 
@@ -47,14 +47,16 @@ namespace core { namespace util { namespace svg {
 		}
 	};
 
-	float parseNumericAttribute( const std::string &numericAttributeValue );
+	double parseNumericAttribute( const std::string &numericAttributeValue );
+
+	Rectd parseViewBoxAttribute(const string &viewportValue);
 
 	svg_style parseStyle( const ci::XmlTree &node );
 
 	/**
 	 parse an svg transform declaration
 	 */
-	mat4 parseTransform( const std::string &svgTransform );
+	dmat4 parseTransform( const std::string &svgTransform );
 
 	/**
 	 parse a #FFFF00FF (argb) or #FF00FF (rgb) style color declaration ignoring alpha

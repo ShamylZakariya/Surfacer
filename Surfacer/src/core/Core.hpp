@@ -12,25 +12,25 @@
 // base stuff
 
 #include "Common.hpp"
-#include "Exception.hpp"
-#include "MathHelpers.hpp"
-#include "Strings.hpp"
+#include "BlendMode.hpp"
 #include "ChipmunkHelpers.hpp"
+#include "Exception.hpp"
+#include "InputDispatcher.hpp"
+#include "LineSegment.hpp"
+#include "MathHelpers.hpp"
 #include "Signals.hpp"
+#include "SpatialIndex.hpp"
+#include "StopWatch.hpp"
+#include "Strings.hpp"
 #include "TimeState.hpp"
 #include "RenderState.hpp"
 #include "Viewport.hpp"
 #include "ViewportController.hpp"
-#include "InputDispatcher.hpp"
-#include "SvgParsing.hpp"
-#include "LineSegment.hpp"
-#include "SpatialIndex.hpp"
-#include "StopWatch.hpp"
 
 // higher level stuff
 
-#include "Level.hpp"
 #include "GameObject.hpp"
+#include "Level.hpp"
 #include "Scenario.hpp"
 
 #endif /* Core_h */

@@ -62,7 +62,6 @@ private:
 	bool _cutting;
 	vec2 _cutterStart, _cutterEnd, _mouseScreen, _mouseWorld;
 
-	Camera2DInterfaceRef _cameraController;
 	terrain::TerrainObjectRef _terrain;
 
 	cpBody *_mouseBody, *_draggingBody;

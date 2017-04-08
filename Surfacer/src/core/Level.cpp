@@ -421,7 +421,7 @@ namespace core {
 	}
 
 	ViewportRef Level::camera() {
-		return getScenario()->getCamera();
+		return getScenario()->getViewport();
 	}
 
 	void Level::addedToScenario(ScenarioRef scenario) {

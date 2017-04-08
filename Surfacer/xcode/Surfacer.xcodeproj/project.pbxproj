@@ -29,6 +29,9 @@
 		632623221E7D9A630051ABE2 /* SvgParsing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623131E7D9A630051ABE2 /* SvgParsing.cpp */; };
 		63711E9F1E8DE4410086332B /* TerrainWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63711E9D1E8DE4410086332B /* TerrainWorld.cpp */; };
 		63711EA21E8DE4900086332B /* Terrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63711EA01E8DE4900086332B /* Terrain.cpp */; };
+		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
+		639168AE1E952680007FD4FA /* Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168AC1E952680007FD4FA /* Svg.cpp */; };
+		639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */; };
 		63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* GameObject.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -87,6 +90,12 @@
 		63711EA01E8DE4900086332B /* Terrain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Terrain.cpp; sourceTree = "<group>"; };
 		63711EA11E8DE4900086332B /* Terrain.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Terrain.hpp; sourceTree = "<group>"; };
 		63711EA31E8DE8CD0086332B /* TerrainDetail.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainDetail.hpp; sourceTree = "<group>"; };
+		639168A61E93E21A007FD4FA /* BlendMode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BlendMode.hpp; sourceTree = "<group>"; };
+		639168A71E93E289007FD4FA /* BlendMode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlendMode.cpp; sourceTree = "<group>"; };
+		639168AC1E952680007FD4FA /* Svg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Svg.cpp; sourceTree = "<group>"; };
+		639168AD1E952680007FD4FA /* Svg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Svg.hpp; sourceTree = "<group>"; };
+		639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SvgTestScenario.cpp; sourceTree = "<group>"; };
+		639168B01E96832A007FD4FA /* SvgTestScenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SvgTestScenario.hpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
 		63BFD8141E89565600D821E4 /* GameObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameObject.cpp; sourceTree = "<group>"; };
 		63BFD8151E89565600D821E4 /* GameObject.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameObject.hpp; sourceTree = "<group>"; };
@@ -235,6 +244,8 @@
 				632623021E7D9A630051ABE2 /* ViewportController.hpp */,
 				63BFD8181E89ED2A00D821E4 /* Level.cpp */,
 				63BFD8191E89ED2A00D821E4 /* Level.hpp */,
+				639168A61E93E21A007FD4FA /* BlendMode.hpp */,
+				639168A71E93E289007FD4FA /* BlendMode.cpp */,
 			);
 			path = core;
 			sourceTree = "<group>";
@@ -256,6 +267,8 @@
 				6326230F1E7D9A630051ABE2 /* TerrainTestScenario.hpp */,
 				63254AEA1E8ABD6800AFED94 /* LevelTestScenario.cpp */,
 				63254AEB1E8ABD6800AFED94 /* LevelTestScenario.hpp */,
+				639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */,
+				639168B01E96832A007FD4FA /* SvgTestScenario.hpp */,
 			);
 			path = scenarios;
 			sourceTree = "<group>";
@@ -263,6 +276,8 @@
 		632623101E7D9A630051ABE2 /* util */ = {
 			isa = PBXGroup;
 			children = (
+				639168AC1E952680007FD4FA /* Svg.cpp */,
+				639168AD1E952680007FD4FA /* Svg.hpp */,
 				632623121E7D9A630051ABE2 /* ContourSimplification.hpp */,
 				632623131E7D9A630051ABE2 /* SvgParsing.cpp */,
 				632623141E7D9A630051ABE2 /* SvgParsing.hpp */,
@@ -354,9 +369,12 @@
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
 				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
 				632623221E7D9A630051ABE2 /* SvgParsing.cpp in Sources */,
+				639168AE1E952680007FD4FA /* Svg.cpp in Sources */,
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
+				639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */,
 				63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */,
 				63711E9F1E8DE4410086332B /* TerrainWorld.cpp in Sources */,
+				639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */,
 				6326231D1E7D9A630051ABE2 /* main.cpp in Sources */,
 				632623201E7D9A630051ABE2 /* TerrainTestScenario.cpp in Sources */,
 				6326231B1E7D9A630051ABE2 /* GameApp.cpp in Sources */,

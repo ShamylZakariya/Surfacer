@@ -45,8 +45,8 @@ namespace core {
 			double panFactor, scaleFactor;
 
 			zeno_config():
-			panFactor(0.99),
-			scaleFactor(0.99)
+			panFactor(0.98),
+			scaleFactor(0.98)
 			{}
 
 			zeno_config( double pf, double zf ):
@@ -58,6 +58,7 @@ namespace core {
 
 	public:
 
+		ViewportController(control_method cm = Zeno );
 		ViewportController( core::ViewportRef vp, control_method cm = Zeno );
 		virtual ~ViewportController();
 
@@ -65,7 +66,9 @@ namespace core {
 
 		virtual void update( const core::time_state &time ) override;
 
-		core::ViewportRef getViewport() const { return _viewport; }
+		ViewportRef getViewport() const { return _viewport; }
+		void setViewport(ViewportRef vp);
+
 
 		void setControlMethod( control_method m ) { _controlMethod = m; }
 		control_method getControlMethod() const { return _controlMethod; }

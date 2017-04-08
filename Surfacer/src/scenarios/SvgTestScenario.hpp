@@ -1,24 +1,28 @@
 //
-//  LevelTestScenario.hpp
+//  SvgTestScenario.hpp
 //  Surfacer
 //
-//  Created by Shamyl Zakariya on 3/28/17.
+//  Created by Shamyl Zakariya on 4/6/17.
 //
 //
 
-#ifndef LevelTestScenario_hpp
-#define LevelTestScenario_hpp
+#ifndef SvgTestScenario_hpp
+#define SvgTestScenario_hpp
+
+#include <cinder/gl/GlslProg.h>
 
 #include "Core.hpp"
+#include "Svg.hpp"
+
 
 using namespace ci;
 using namespace core;
 
-class LevelTestScenario : public Scenario {
+class SvgTestScenario : public Scenario {
 public:
 
-	LevelTestScenario();
-	virtual ~LevelTestScenario();
+	SvgTestScenario();
+	virtual ~SvgTestScenario();
 
 	virtual void setup() override;
 	virtual void cleanup() override;
@@ -39,10 +43,15 @@ public:
 
 	void reset();
 
+protected:
+
+	void testSimpleSvgLoad();
+
 private:
 
 	vec2 _mouseScreen, _mouseWorld;
-
+	util::svg::GroupRef _svgDocument;
+	gl::GlslProgRef _shader;
 };
 
-#endif /* LevelTestScenario_hpp */
+#endif /* SvgTestScenario_hpp */

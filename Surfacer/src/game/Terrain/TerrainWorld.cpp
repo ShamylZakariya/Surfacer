@@ -425,7 +425,7 @@ namespace terrain {
 
 				gl::ScopedModelMatrix smm2;
 				gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, dvec3(0,0,1)) * rScaleMat);
-				gl::drawString(strings::str(drawable->getId()), dvec2(0,0), Color(1,1,1));
+				gl::drawString(str(drawable->getId()), dvec2(0,0), Color(1,1,1));
 			}
 		}
 	}
