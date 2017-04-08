@@ -12,9 +12,6 @@
 #include "Core.hpp"
 #include "TerrainWorld.hpp"
 
-using namespace ci;
-using namespace std;
-
 namespace terrain {
 
 	static const int LAYER = 0;

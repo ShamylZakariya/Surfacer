@@ -14,8 +14,6 @@
 #include <cinder/Vector.h>
 #include <cinder/Quaternion.h>
 
-using namespace ci;
-
 namespace cinder {
 	typedef RectT<int> Recti;
 
@@ -41,9 +39,9 @@ typedef vec2_comparator_<int, glm::highp> ivec2Comparator;
 typedef vec2_comparator_<float, glm::highp> vec2Comparator;
 typedef vec2_comparator_<double, glm::highp> dvec2Comparator;
 
-typedef std::set< ivec2, ivec2Comparator > ivec2Set;
-typedef std::set< vec2, vec2Comparator > vec2Set;
-typedef std::set< dvec2, dvec2Comparator > dvec2Set;
+typedef std::set< ci::ivec2, ivec2Comparator > ivec2Set;
+typedef std::set< ci::vec2, vec2Comparator > vec2Set;
+typedef std::set< ci::dvec2, dvec2Comparator > dvec2Set;
 
 template < typename T, glm::precision P >
 struct vec3_comparator_
@@ -63,8 +61,8 @@ typedef vec3_comparator_<float, glm::highp> vec3Comparator;
 typedef vec3_comparator_<double, glm::highp> dvec3Comparator;
 
 typedef std::set< vec3i, vec3iComparator > vec3iSet;
-typedef std::set< vec3, vec3Comparator > vec3Set;
-typedef std::set< dvec3, dvec3Comparator > dvec3Set;
+typedef std::set< ci::vec3, vec3Comparator > vec3Set;
+typedef std::set< ci::dvec3, dvec3Comparator > dvec3Set;
 
 template <typename T>
 inline T sign( const T s )
@@ -452,10 +450,10 @@ inline bool isPow2( int n )
 template< class T, glm::precision P >
 void mat4WithPositionAndRotation( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &position, const glm::tvec2<T,P> &rotation )
 {
-	R[0] = vec4(rotation.x, rotation.y, 0, 0);
-	R[1] = vec4(-rotation.y, rotation.x, 0, 0);
-	R[2] = vec4(0, 0, 1, 0);
-	R[3] = vec4(position.x, position.y, 0, 1);
+	R[0] = glm::tvec4<T,P>(rotation.x, rotation.y, 0, 0);
+	R[1] = glm::tvec4<T,P>(-rotation.y, rotation.x, 0, 0);
+	R[2] = glm::tvec4<T,P>(0, 0, 1, 0);
+	R[3] = glm::tvec4<T,P>(position.x, position.y, 0, 1);
 }
 
 template< typename T, glm::precision P >
@@ -473,5 +471,26 @@ template< typename T, glm::precision P >
 glm::tvec2<T,P> getTranslation(const glm::tmat4x4<T,P> &R) {
 	return glm::tvec2<T,P>(R[3].x, R[3].y);
 }
+
+using ci::ivec2;
+using ci::vec2;
+using ci::dvec2;
+
+using ci::ivec3;
+using ci::vec3;
+using ci::dvec3;
+
+using ci::ivec4;
+using ci::vec4;
+using ci::dvec4;
+
+using ci::mat4;
+using ci::dmat4;
+
+using glm::length;
+using glm::distance;
+using glm::dot;
+using glm::cross;
+using glm::normalize;
 
 #endif /* MathHelpers_h */

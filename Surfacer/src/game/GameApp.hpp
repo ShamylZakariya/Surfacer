@@ -18,15 +18,12 @@
 #include "ChipmunkHelpers.hpp"
 #include "Scenario.hpp"
 
-using namespace ci;
-using namespace ci::app;
-using namespace std;
 
 namespace core {
 
 SMART_PTR(PhysicsLoop);
 
-class GameApp : public App
+class GameApp : public ci::app::App
 {
 public:
 

@@ -112,6 +112,8 @@ namespace core { namespace util { namespace svg {
 		ci::Triangulator::Winding _fillRule;
 
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
+		ci::gl::VboMeshRef _localMeshVbo;
+
 		vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
 		ci::Rectd _worldBounds, _localBounds;
 

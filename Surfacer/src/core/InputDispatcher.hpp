@@ -18,9 +18,6 @@
 #include "Common.hpp"
 #include "MathHelpers.hpp"
 
-using namespace ci;
-using namespace ci::app;
-
 namespace core {
 
 	class InputListener;
@@ -113,7 +110,7 @@ namespace core {
 		 */
 		InputListener* _popListener();
 
-		ivec2 _mouseDelta( const ci::app::MouseEvent &event );
+		ci::ivec2 _mouseDelta( const ci::app::MouseEvent &event );
 
 	private:
 

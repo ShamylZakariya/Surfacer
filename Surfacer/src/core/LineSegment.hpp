@@ -17,10 +17,6 @@
 #include "MathHelpers.hpp"
 #include "Signals.hpp"
 
-using namespace ci;
-using namespace std;
-
-
 namespace core {
 
 	template< class T, glm::precision P >
@@ -34,7 +30,7 @@ namespace core {
 		b(B),
 		dir(B-A)
 		{
-			length = ::length(dir);
+			length = glm::length(dir);
 			dir.x /= length;
 			dir.y /= length;
 		}
@@ -55,16 +51,16 @@ namespace core {
 			// early exit condition, we'll have to get distance from endpoints
 			if ( projLength < 0 )
 			{
-				return ::length(a - point );
+				return glm::length(a - point );
 			}
 			else if ( projLength > length )
 			{
-				return ::length( b - point );
+				return glm::length( b - point );
 			}
 
 			// compute distance from point to the closest projection point on the line segment
 			const glm::tvec2<T,P> projOnSegment = a + (projLength * dir);
-			return ::distance( point, projOnSegment );
+			return glm::distance( point, projOnSegment );
 		}
 
 		glm::tvec2<T,P> snapToLine( const glm::tvec2<T,P> &point ) const

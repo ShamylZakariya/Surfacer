@@ -32,4 +32,4 @@ public:
 
 };
 
-CINDER_APP( DemoApp, RendererGl, DemoApp::prepareSettings )
+CINDER_APP( DemoApp, app::RendererGl, DemoApp::prepareSettings )

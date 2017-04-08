@@ -12,14 +12,13 @@
 #include <cinder/Shape2d.h>
 #include <cinder/Triangulate.h>
 
+#include "Common.hpp"
+#include "MathHelpers.hpp"
 #include "Exception.hpp"
 
 namespace cinder {
 	class XmlTree;
 }
-
-using namespace ci;
-using namespace std;
 
 namespace core { namespace util { namespace svg {
 
@@ -49,7 +48,7 @@ namespace core { namespace util { namespace svg {
 
 	double parseNumericAttribute( const std::string &numericAttributeValue );
 
-	Rectd parseViewBoxAttribute(const string &viewportValue);
+	ci::Rectd parseViewBoxAttribute(const string &viewportValue);
 
 	svg_style parseStyle( const ci::XmlTree &node );
 

@@ -14,7 +14,6 @@
 #include "MathHelpers.hpp"
 #include "LineSegment.hpp"
 
-using namespace ci;
 using namespace std;
 
 namespace core {

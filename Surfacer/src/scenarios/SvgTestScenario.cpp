@@ -234,6 +234,6 @@ void SvgTestScenario::reset() {
 #pragma mark - Tests
 
 void SvgTestScenario::testSimpleSvgLoad() {
-	_svgDocument = util::svg::Group::loadSvgDocument(loadAsset("AnchorTest0.svg"), 1);
+	_svgDocument = util::svg::Group::loadSvgDocument(app::loadAsset("AnchorTest0.svg"), 1);
 	_svgDocument->trace();
 }

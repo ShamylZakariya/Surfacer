@@ -19,9 +19,6 @@
 #include "ChipmunkHelpers.hpp"
 #include "MathHelpers.hpp"
 
-using namespace ci;
-using namespace std;
-
 namespace core {
 
 	template<class T>

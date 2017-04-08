@@ -9,6 +9,8 @@
 #include "InputDispatcher.hpp"
 
 using namespace ci;
+
+
 namespace core {
 
 	namespace {
@@ -44,7 +46,7 @@ namespace core {
 			return app::MouseEvent(e.getWindow(),
 								   initiator,
 								   e.getX(),
-								   ci::app::getWindowHeight() - e.getY(),
+								   app::getWindowHeight() - e.getY(),
 								   modifiers,
 								   e.getWheelIncrement(),
 								   e.getNativeModifiers()
@@ -61,8 +63,8 @@ namespace core {
 
 	 std::vector< InputListener* > _listeners;
 	 std::map< int, bool > _keyPressState;
-	 ci::app::MouseEvent _lastMouseEvent;
-	 ci::app::KeyEvent _lastKeyEvent;
+	 app::MouseEvent _lastMouseEvent;
+	 app::KeyEvent _lastKeyEvent;
 	 ivec2 *_lastMousePosition;
 	 Connection _mouseDownId, _mouseUpId, _mouseWheelId, _mouseModeId, _mouseDragId, _keyDownId, _keyUpId;
 	 bool _mouseHidden;
@@ -71,36 +73,36 @@ namespace core {
 	InputDispatcherRef InputDispatcher::_sInstance;
 	ScreenCoordinateSystem::origin InputDispatcher::_screenOrigin = ScreenCoordinateSystem::BottomLeft;
 
-	InputDispatcher::InputDispatcher(ci::app::WindowRef window):
+	InputDispatcher::InputDispatcher(app::WindowRef window):
 	_lastMousePosition(NULL),
 	_lastKeyEvent(),
 	_mouseHidden(false)
 	{
-		_mouseDownId = window->getSignalMouseDown().connect([this](MouseEvent &e){
+		_mouseDownId = window->getSignalMouseDown().connect([this](app::MouseEvent &e){
 			_mouseDown(e);
 		});
 
-		_mouseUpId = window->getSignalMouseUp().connect([this](MouseEvent &e){
+		_mouseUpId = window->getSignalMouseUp().connect([this](app::MouseEvent &e){
 			_mouseUp(e);
 		});
 
-		_mouseWheelId = window->getSignalMouseWheel().connect([this](MouseEvent &e){
+		_mouseWheelId = window->getSignalMouseWheel().connect([this](app::MouseEvent &e){
 			_mouseWheel(e);
 		});
 
-		_mouseMoveId = window->getSignalMouseMove().connect([this](MouseEvent &e){
+		_mouseMoveId = window->getSignalMouseMove().connect([this](app::MouseEvent &e){
 			_mouseMove(e);
 		});
 
-		_mouseDragId = window->getSignalMouseDrag().connect([this](MouseEvent &e){
+		_mouseDragId = window->getSignalMouseDrag().connect([this](app::MouseEvent &e){
 			_mouseDrag(e);
 		});
 
-		_keyDownId = window->getSignalKeyDown().connect([this](KeyEvent &e){
+		_keyDownId = window->getSignalKeyDown().connect([this](app::KeyEvent &e){
 			_keyDown(e);
 		});
 
-		_keyUpId = window->getSignalKeyUp().connect([this](KeyEvent &e){
+		_keyUpId = window->getSignalKeyUp().connect([this](app::KeyEvent &e){
 			_keyUp(e);
 		});
 	}
@@ -117,11 +119,11 @@ namespace core {
 	}
 
 	void InputDispatcher::hideMouse() {
-		ci::app::AppBase::get()->hideCursor();
+		app::AppBase::get()->hideCursor();
 		_mouseHidden = true;
 	}
 	void InputDispatcher::unhideMouse() {
-		ci::app::AppBase::get()->showCursor();
+		app::AppBase::get()->showCursor();
 		_mouseHidden = false;
 	}
 
@@ -153,8 +155,7 @@ namespace core {
 		return NULL;
 	}
 
-
-	ivec2 InputDispatcher::_mouseDelta( const ci::app::MouseEvent &event )
+	ivec2 InputDispatcher::_mouseDelta( const app::MouseEvent &event )
 	{
 		ivec2 delta(0,0);
 		if ( _lastMousePosition )
@@ -170,8 +171,7 @@ namespace core {
 		return delta;
 	}
 
-
-	bool InputDispatcher::_mouseDown( ci::app::MouseEvent event )
+	bool InputDispatcher::_mouseDown( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
@@ -182,7 +182,7 @@ namespace core {
 		return false;
 	}
 
-	bool InputDispatcher::_mouseUp( ci::app::MouseEvent event )
+	bool InputDispatcher::_mouseUp( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 
@@ -194,7 +194,7 @@ namespace core {
 		return false;
 	}
 
-	bool InputDispatcher::_mouseWheel( ci::app::MouseEvent event )
+	bool InputDispatcher::_mouseWheel( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 
@@ -206,7 +206,7 @@ namespace core {
 		return false;
 	}
 
-	bool InputDispatcher::_mouseMove( ci::app::MouseEvent event )
+	bool InputDispatcher::_mouseMove( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 		ivec2 delta = _mouseDelta( _lastMouseEvent );
@@ -219,7 +219,7 @@ namespace core {
 		return false;
 	}
 
-	bool InputDispatcher::_mouseDrag( ci::app::MouseEvent event )
+	bool InputDispatcher::_mouseDrag( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 		ivec2 delta = _mouseDelta( _lastMouseEvent );
@@ -232,7 +232,7 @@ namespace core {
 		return false;
 	}
 
-	bool InputDispatcher::_keyDown( ci::app::KeyEvent event )
+	bool InputDispatcher::_keyDown( app::KeyEvent event )
 	{
 		_keyPressState[ event.getCode() ] = true;
 		_lastKeyEvent = event;
@@ -245,7 +245,7 @@ namespace core {
 		return false;
 	}
 
-	bool InputDispatcher::_keyUp( ci::app::KeyEvent event )
+	bool InputDispatcher::_keyUp( app::KeyEvent event )
 	{
 		_keyPressState[ event.getCode() ] = false;
 		_lastKeyEvent = event;

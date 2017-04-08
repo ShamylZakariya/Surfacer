@@ -15,9 +15,6 @@
 
 #include "Core.hpp"
 
-using namespace ci;
-using namespace std;
-
 namespace terrain {
 
 	SMART_PTR(World);

@@ -14,6 +14,7 @@
 #include "Strings.hpp"
 #include "MathHelpers.hpp"
 
+using namespace ci;
 using namespace core::strings;
 
 namespace core { namespace util { namespace svg {

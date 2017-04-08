@@ -204,11 +204,11 @@ void TerrainTestScenario::setup() {
 	_mouseBody = cpBodyNewKinematic();
 
 	//auto world = testDistantTerrain();
-	auto world = testBasicTerrain();
+	//auto world = testBasicTerrain();
 	//auto world = testComplexTerrain();
 	//auto world = testSimpleAnchors();
 	//auto world = testComplexAnchors();
-	//auto world = testSimplePartitionedTerrain();
+	auto world = testSimplePartitionedTerrain();
 	//auto world = testComplexPartitionedTerrainWithAnchors();
 	//auto world = testFail();
 
