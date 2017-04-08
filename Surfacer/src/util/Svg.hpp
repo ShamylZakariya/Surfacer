@@ -15,6 +15,7 @@
 
 #include "Common.hpp"
 #include "BlendMode.hpp"
+#include "Exception.hpp"
 #include "MathHelpers.hpp"
 #include "RenderState.hpp"
 
@@ -92,7 +93,7 @@ namespace core { namespace util { namespace svg {
 		friend class Group;
 
 		void _build( const ci::Shape2d &shape );
-		ci::Rectf _projectToWorld( const dvec2 &documentSize, double documentScale, const dmat4 &worldTransform );
+		ci::Rectd _projectToWorld( const dvec2 &documentSize, double documentScale, const dmat4 &worldTransform );
 		void _makeLocal( const dvec2 &originWorld );
 		void _drawDebug( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes );
 		void _drawGame( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes );
@@ -112,7 +113,7 @@ namespace core { namespace util { namespace svg {
 
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
 		vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
-		ci::Rectf _worldBounds, _localBounds;
+		ci::Rectd _worldBounds, _localBounds;
 
 		GLuint _vao, _vbo, _ebo;
 
@@ -130,10 +131,8 @@ namespace core { namespace util { namespace svg {
 
 		static GroupRef loadSvgDocument(ci::DataSourceRef svgData, double documentScale = 1) {
 			GroupRef g = make_shared<Group>();
-			if (g->load(svgData, documentScale)){
-				return g;
-			}
-			return nullptr;
+			g->load(svgData, documentScale);
+			return g;
 		}
 
 	public:
@@ -146,7 +145,7 @@ namespace core { namespace util { namespace svg {
 		 @param svgData SVG byte stream
 		 @param documentScale A scaling factor to apply to the SVG geometry.
 		 */
-		bool load( ci::DataSourceRef svgData, double documentScale = 1 );
+		void load( ci::DataSourceRef svgData, double documentScale = 1 );
 
 		void clear();
 		void parse( const ci::XmlTree &svgGroupNode );
@@ -284,6 +283,15 @@ namespace core { namespace util { namespace svg {
 		map< string, GroupRef > _groupsByName;
 		map< string, string > _attributes;
 		vector< drawable > _drawables;
+
+	};
+
+	class LoadException : public core::Exception
+	{
+	public:
+
+		LoadException( const std::string &w ):Exception(w){}
+		virtual ~LoadException() throw() {}
 
 	};
 

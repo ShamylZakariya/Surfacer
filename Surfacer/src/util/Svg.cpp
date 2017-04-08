@@ -135,7 +135,7 @@ namespace core { namespace util { namespace svg {
 
 	 ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
 	 vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
-	 ci::Rectf _worldBounds, _localBounds;
+	 ci::Rectd _worldBounds, _localBounds;
 
 	 GLuint _vao, _vbo, _ebo;
 
@@ -276,15 +276,12 @@ namespace core { namespace util { namespace svg {
 
 		const double ApproximationScale = 0.5;
 
-		CI_LOG_D(getId() << " shape.numContours: " << shape.getNumContours());
-
 		//
 		//	we only need to triangulate filled shapes
 		//
 
 		if ( isFilled() ) {
 			_svgMesh = Triangulator(shape, ApproximationScale).createMesh(_fillRule);
-			CI_LOG_D(getId() << " filled - _svgMesh vertices: " << _svgMesh->getNumVertices() << " triangles: " << _svgMesh->getNumTriangles());
 		}
 
 		//
@@ -297,11 +294,10 @@ namespace core { namespace util { namespace svg {
 				_svgStrokes.back().closed = path.isClosed();
 				_svgStrokes.back().vertices = path.subdivide( ApproximationScale );
 			}
-			CI_LOG_D(getId() << " stroked - _strokes.size: " << _svgStrokes.size());
 		}
 	}
 
-	Rectf Shape::_projectToWorld( const dvec2 &documentSize, double documentScale, const dmat4 &worldTransform ) {
+	Rectd Shape::_projectToWorld( const dvec2 &documentSize, double documentScale, const dmat4 &worldTransform ) {
 		dmat4 toWorld = worldTransform * _svgTransform;
 		cpBB bounds = transform( _svgMesh, _worldMesh, _svgStrokes, _worldStrokes, to_world_transformer( documentSize, documentScale, toWorld ));
 
@@ -478,10 +474,8 @@ namespace core { namespace util { namespace svg {
 		clear();
 	}
 
-	bool Group::load( ci::DataSourceRef svgData, double documentScale) {
+	void Group::load( ci::DataSourceRef svgData, double documentScale) {
 		clear();
-
-		// TODO: Meaningfully handle errors in load?
 
 		//
 		//	We're reading a document, not a <g> group; but we want to load attributes and children and (if any,) shapes
@@ -491,21 +485,34 @@ namespace core { namespace util { namespace svg {
 
 		parse( svgDoc );
 
+		//
+		//	Figure out the document size. This is important because we use a bottom-left
+		//	coordinate system, and SVG uses a top-left. We need to flip.
+		//
+
+		dvec2 parentWorldOrigin(0,0);
 		if (svgDoc.hasAttribute("viewBox")) {
 			auto viewBox = util::svg::parseViewBoxAttribute(svgDoc.getAttribute("viewBox"));
+			parentWorldOrigin.x = viewBox.getX1();
+			parentWorldOrigin.y = viewBox.getY1();
+			_documentSize.x = viewBox.getWidth();
+			_documentSize.y = viewBox.getHeight();
 		} else {
-			
+			string width = svgDoc.getAttribute("width").getValue();
+			string height = svgDoc.getAttribute("width").getValue();
+			if (!strings::endsWith(width, "%") && !strings::endsWith(height, "%")){
+				_documentSize.x = util::svg::parseNumericAttribute(width);
+				_documentSize.y = util::svg::parseNumericAttribute(height);
+			} else {
+				throw LoadException("SVG document size must be explicit, not percentages");
+			}
 		}
-		_documentSize.x = 500;//util::svg::parseNumericAttribute( svgDoc.getAttribute("width").getValue()) * documentScale;
-		_documentSize.y = 500;//util::svg::parseNumericAttribute( svgDoc.getAttribute("height").getValue()) * documentScale;
 
 		//
 		//	Now normalize our generated geometry
 		//
 
-		_normalize( _documentSize, documentScale, dmat4(1), dvec2(0,0) );
-
-		return true;
+		_normalize( _documentSize, documentScale, dmat4(1), parentWorldOrigin );
 	}
 
 	void Group::clear() {
@@ -751,7 +758,7 @@ namespace core { namespace util { namespace svg {
 
 		dmat4 toWorld = worldTransform * _groupTransform;
 
-		Rectf worldBounds(
+		Rectd worldBounds(
 						  +std::numeric_limits<double>::max(),
 						  +std::numeric_limits<double>::max(),
 						  -std::numeric_limits<double>::max(),
