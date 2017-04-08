@@ -34,7 +34,7 @@ namespace terrain {
 	 increase precision such that only edges with vertices within one mm of one another would be congruent.
 	 */
 
-	#define POLY_EDGE_PRECISION 1000.0
+	#define POLY_EDGE_PRECISION 100.0
 
 	/**
 	 poly_edge represents an edge in a PolyLine2d. It is not meant to represent the specific vertices in
