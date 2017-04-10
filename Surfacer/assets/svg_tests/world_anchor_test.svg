@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000px" height="1000px" viewBox="0 0 1000 1000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
+    <title>world_anchor_test</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="world_anchor_test">
+            <g id="world" transform="translate(122.000000, 100.000000)" fill="#000000">
+                <polygon id="Path" points="114.941406 0.56640625 0.43359375 199.597656 210.851562 433.679688 173.625 235.667969 309.746094 343.71875 315.144531 181.507812 184.769531 127.699219 255.597656 61.4492188"></polygon>
+                <polygon id="Path-2" points="393.988281 66.515625 427.523438 115.699219 490.542969 102.753906 456.796875 42.1523438 449.8125 78.2539062"></polygon>
+            </g>
+            <g id="anchors" transform="translate(199.000000, 253.000000)" fill="#F8E81C">
+                <rect id="Rectangle" x="0" y="0" width="30" height="30"></rect>
+            </g>
+        </g>
+    </g>
+</svg>
