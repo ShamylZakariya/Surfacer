@@ -946,20 +946,19 @@ namespace core { namespace util { namespace svg {
 			}
 			else if ( name == "fill" )
 			{
-				style.filled = parseColor( value, style.fillColor );
+				parseColor( value, style.fillColor );
 			}
 			else if ( name == "stroke" )
 			{
-				style.stroked = parseColor( value, style.strokeColor );
+				parseColor( value, style.strokeColor );
 			}
 			else if ( name == "stroke-opacity" )
 			{
-				style.strokeOpacity *= parseNumericAttribute( value );
+				style.strokeOpacity = parseNumericAttribute( value );
 			}
 			else if ( name == "stroke-width" )
 			{
 				style.strokeWidth = parseNumericAttribute( value );
-				if (style.strokeWidth <= EPSILON ) style.stroked = false;
 			}
 			else if ( name == "fill-rule" )
 			{
@@ -987,20 +986,6 @@ namespace core { namespace util { namespace svg {
 				strings::stringvec params = strings::split( styleToken, ':' );
 				applyStyle( params[0], params[1], style );
 			}
-		}
-
-		//
-		//	Unset filled/stroked flags if the opacity or stroke width make it invisible
-		//
-
-		if ( style.fillOpacity < ALPHA_EPSILON )
-		{
-			style.filled = false;
-		}
-
-		if ( style.strokeOpacity < ALPHA_EPSILON || style.strokeWidth <= EPSILON )
-		{
-			style.stroked = false;
 		}
 
 		return style;

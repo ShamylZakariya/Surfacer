@@ -26,7 +26,6 @@ namespace core { namespace util { namespace svg {
 		ci::Color fillColor, strokeColor;
 		double opacity, fillOpacity, strokeOpacity, strokeWidth;
 		ci::Triangulator::Winding fillRule;
-		bool filled, stroked;
 
 		svg_style():
 		fillColor(0,0,0),
@@ -35,14 +34,20 @@ namespace core { namespace util { namespace svg {
 		fillOpacity(1),
 		strokeOpacity(0),
 		strokeWidth(0),
-		fillRule( ci::Triangulator::WINDING_NONZERO ),
-		filled(false),
-		stroked(false)
+		fillRule( ci::Triangulator::WINDING_NONZERO )
 		{}
+
+		bool isFilled() const {
+			return fillOpacity >= 1.0/255.0;
+		}
+
+		bool isStroked() const {
+			return strokeWidth > 0 && (strokeOpacity > 1.0/255.0);
+		}
 
 		friend std::ostream& operator<<( std::ostream& lhs, const svg_style& rhs )
 		{
-			return lhs << "<svg_style fill:(filled: " << (rhs.filled ? "true" : "false") << " color: " << rhs.fillColor << " opacity: " << rhs.fillOpacity << " winding: " << rhs.fillRule << ") stroke: (stroked: " << (rhs.stroked ? "true" : "false") << " color: " << rhs.strokeColor << " opacity: " << rhs.strokeOpacity << " width: " << rhs.strokeWidth << ")>";
+			return lhs << "<svg_style fill:(filled: " << (rhs.isFilled() ? "true" : "false") << " color: " << rhs.fillColor << " opacity: " << rhs.fillOpacity << " winding: " << rhs.fillRule << ") stroke: (stroked: " << (rhs.isStroked() ? "true" : "false") << " color: " << rhs.strokeColor << " opacity: " << rhs.strokeOpacity << " width: " << rhs.strokeWidth << ")>";
 		}
 	};
 
