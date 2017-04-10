@@ -123,14 +123,15 @@ namespace terrain {
 		std::sort(_collector.sorted.begin(), _collector.sorted.end(), visibleDrawableDisplaySorter );
 	}
 
-	void DrawDispatcher::draw( const render_state &state ) {
+	void DrawDispatcher::draw( const render_state &state, const ci::gl::GlslProgRef &shader ) {
 		render_state renderState = state;
 		const size_t drawPasses = _drawPasses;
+		gl::ScopedGlslProg sglp(shader);
 
 		for( vector<DrawableRef>::iterator it(_collector.sorted.begin()), end(_collector.sorted.end()); it != end; ++it ) {
 			vector<DrawableRef>::iterator groupRunIt = it;
 			for( renderState.pass = 0; renderState.pass < drawPasses; ++renderState.pass ) {
-				groupRunIt = _drawGroupRun(it, end, renderState );
+				groupRunIt = _drawGroupRun(it, end, renderState, shader );
 			}
 
 			it = groupRunIt;
@@ -138,7 +139,7 @@ namespace terrain {
 	}
 
 	vector<DrawableRef>::iterator
-	DrawDispatcher::_drawGroupRun(vector<DrawableRef>::iterator firstInRun, vector<DrawableRef>::iterator storageEnd, const render_state &state ) {
+	DrawDispatcher::_drawGroupRun(vector<DrawableRef>::iterator firstInRun, vector<DrawableRef>::iterator storageEnd, const render_state &state, const ci::gl::GlslProgRef &shader ) {
 
 		vector<DrawableRef>::iterator it = firstInRun;
 		DrawableRef drawable = *it;
@@ -161,8 +162,8 @@ namespace terrain {
 
 			drawable = *it;
 
-			gl::color(drawable->getColor());
-			gl::draw(*(drawable->getTriMesh()));
+			shader->uniform("Color", ColorA(drawable->getColor(), 1));
+			gl::draw(drawable->getVboMesh());
 		}
 
 		return it - 1;
@@ -235,12 +236,34 @@ namespace terrain {
 		vector<AnchorRef> _anchors;
 
 		DrawDispatcher _drawDispatcher;
+		ci::gl::GlslProgRef _shader;
 	 */
 	
 	World::World(cpSpace *space, material m):
 	_material(m),
 	_space(space)
-	{}
+	{
+		auto vsh = CI_GLSL(150,
+						   uniform mat4 ciModelViewProjection;
+						   in vec4 ciPosition;
+
+						   void main(void){
+							   gl_Position = ciModelViewProjection * ciPosition;
+						   }
+						   );
+
+		auto fsh = CI_GLSL(150,
+						   uniform vec4 Color;
+						   out vec4 oColor;
+
+						   void main(void) {
+							   oColor = Color;
+						   }
+						   );
+
+
+		_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
+	}
 
 	World::~World() {
 		//
@@ -399,7 +422,7 @@ namespace terrain {
 	void World::draw(const render_state &renderState) {
 
 		_drawDispatcher.cull(renderState);
-		_drawDispatcher.draw(renderState);
+		_drawDispatcher.draw(renderState, _shader);
 
 		//
 		//	In dev mode draw BBs and drawable IDs
@@ -1035,7 +1058,9 @@ namespace terrain {
 		cpBB _bb;
 		material _material;
 		PolyLine2d _contour;
+
 		TriMeshRef _trimesh;
+		ci::gl::VboMeshRef _vboMesh;
 	 */
 
 	Anchor::Anchor(const PolyLine2d &contour, material m):
@@ -1051,6 +1076,9 @@ namespace terrain {
 		Triangulator triangulator;
 		triangulator.addPolyLine(detail::polyline2d_to_2f(_contour));
 		_trimesh = triangulator.createMesh();
+		if (_trimesh->getNumTriangles() > 0) {
+			_vboMesh = gl::VboMesh::create(*_trimesh);
+		}
 	}
 
 	Anchor::~Anchor() {
@@ -1148,13 +1176,9 @@ namespace terrain {
 	}
 
 	/*
-		static size_t _count;
-
 		bool _worldSpaceShapeContourEdgesDirty;
-		size_t _id;
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
-		TriMeshRef _trimesh;
 		dvec2 _modelCentroid;
 
 		cpBB _shapesModelBB;
@@ -1164,6 +1188,9 @@ namespace terrain {
 
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
+
+		TriMeshRef _trimesh;
+		ci::gl::VboMeshRef _vboMesh;
 	 */
 
 
@@ -1297,8 +1324,13 @@ namespace terrain {
 		}
 
 		_trimesh = triangulator.createMesh();
+		const size_t numTriangles = _trimesh->getNumTriangles() > 0;
 
-		return _trimesh->getNumTriangles() > 0;
+		if (numTriangles > 0) {
+			_vboMesh = gl::VboMesh::create(*_trimesh);
+		}
+
+		return numTriangles;
 	}
 
 	double Shape::computeArea() {

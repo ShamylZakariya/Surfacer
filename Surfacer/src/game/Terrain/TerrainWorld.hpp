@@ -151,7 +151,7 @@ namespace terrain {
 		void moved( Drawable* );
 
 		void cull( const core::render_state & );
-		void draw( const core::render_state & );
+		void draw( const core::render_state &, const ci::gl::GlslProgRef &shader);
 
 		void setDrawPasses(size_t passes) { _drawPasses = passes; }
 		size_t getPasses() const { return _drawPasses; }
@@ -166,7 +166,7 @@ namespace terrain {
 			render a run of shapes belonging to a common group
 			returns iterator to last shape drawn
 		 */
-		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const core::render_state &state );
+		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const core::render_state &state, const ci::gl::GlslProgRef &shader );
 
 	private:
 
@@ -238,6 +238,7 @@ namespace terrain {
 		vector<AnchorRef> _anchors;
 
 		DrawDispatcher _drawDispatcher;
+		ci::gl::GlslProgRef _shader;
 	};
 
 
@@ -382,6 +383,7 @@ namespace terrain {
 		virtual double getAngle() const = 0;
 		virtual dvec2 getModelCentroid() const = 0;
 		virtual const TriMeshRef &getTriMesh() const = 0;
+		virtual const gl::VboMeshRef &getVboMesh() const = 0;
 		virtual Color getColor() const = 0;
 
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
@@ -432,6 +434,7 @@ namespace terrain {
 		double getAngle() const override { return 0; };
 		dvec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
+		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 		Color getColor() const override { return Color(0,0,0); }
 
 	protected:
@@ -447,7 +450,9 @@ namespace terrain {
 		cpBB _bb;
 		material _material;
 		PolyLine2d _contour;
+
 		TriMeshRef _trimesh;
+		ci::gl::VboMeshRef _vboMesh;
 
 	};
 
@@ -518,6 +523,7 @@ namespace terrain {
 		dvec2 getModelCentroid() const override { return _modelCentroid; }
 
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
+		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 
 		Color getColor() const override { return getGroup()->getColor(); }
 
@@ -551,7 +557,6 @@ namespace terrain {
 		bool _worldSpaceShapeContourEdgesDirty;
 		contour_pair _outerContour;
 		vector<contour_pair> _holeContours;
-		TriMeshRef _trimesh;
 		dvec2 _modelCentroid;
 
 		cpBB _shapesModelBB;
@@ -561,6 +566,9 @@ namespace terrain {
 		
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
+
+		TriMeshRef _trimesh;
+		ci::gl::VboMeshRef _vboMesh;
 	};
 	
 }
