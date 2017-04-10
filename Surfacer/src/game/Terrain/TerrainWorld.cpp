@@ -12,6 +12,7 @@
 #include <cinder/Triangulate.h>
 #include <cinder/gl/gl.h>
 #include <cinder/Rand.h>
+#include <cinder/Xml.h>
 
 #include <list>
 #include <queue>
@@ -173,6 +174,14 @@ namespace terrain {
 	
 #pragma mark - World
 
+	void World::loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors) {
+		shapes.clear();
+		anchors.clear();
+
+		XmlTree svgDoc = XmlTree( svgData ).getChild( "svg" );
+		detail::svg_load(svgDoc, transform, shapes, anchors);
+	}
+
 	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize) {
 
 		// first compute the march area
@@ -229,7 +238,7 @@ namespace terrain {
 	}
 
 	/*
-		material _material;
+		material _worldMaterial, _anchorMaterial;
 		cpSpace *_space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
@@ -239,8 +248,9 @@ namespace terrain {
 		ci::gl::GlslProgRef _shader;
 	 */
 	
-	World::World(cpSpace *space, material m):
-	_material(m),
+	World::World(cpSpace *space, material worldMaterial, material anchorMaterial):
+	_worldMaterial(worldMaterial),
+	_anchorMaterial(anchorMaterial),
 	_space(space)
 	{
 		auto vsh = CI_GLSL(150,
@@ -279,7 +289,7 @@ namespace terrain {
 
 		// build the anchors, adding all that triangulated and made physics representations
 		for (auto anchor : anchors) {
-			if (anchor->build(_space)) {
+			if (anchor->build(_space, _anchorMaterial)) {
 				_anchors.push_back(anchor);
 				_drawDispatcher.add(anchor);
 			}
@@ -482,7 +492,7 @@ namespace terrain {
 		//
 
 		if (!_staticGroup) {
-			_staticGroup = make_shared<StaticGroup>(_space, _material, _drawDispatcher);
+			_staticGroup = make_shared<StaticGroup>(_space, _worldMaterial, _drawDispatcher);
 		}
 
 		//
@@ -531,7 +541,7 @@ namespace terrain {
 				//
 
 
-				DynamicGroupRef group = make_shared<DynamicGroup>(_space, _material, _drawDispatcher);
+				DynamicGroupRef group = make_shared<DynamicGroup>(_space, _worldMaterial, _drawDispatcher);
 				if (group->build(shapeGroup, parentGroup)) {
 					_dynamicGroups.insert(group);
 				}
@@ -1051,6 +1061,15 @@ namespace terrain {
 
 #pragma mark - Anchor
 
+	AnchorRef Anchor::fromShape(const Shape2d &shape) {
+		PolyLine2d contour;
+		for (const dvec2 v : shape.getContour(0).subdivide()) {
+			contour.push_back(v);
+		}
+
+		return fromContour(contour);
+	}
+
 	/*
 		cpBody *_staticBody;
 		vector<cpShape*> _shapes;
@@ -1063,10 +1082,9 @@ namespace terrain {
 		ci::gl::VboMeshRef _vboMesh;
 	 */
 
-	Anchor::Anchor(const PolyLine2d &contour, material m):
+	Anchor::Anchor(const PolyLine2d &contour):
 	_staticBody(nullptr),
 	_bb(cpBBInvalid),
-	_material(m),
 	_contour(contour) {
 
 		for (auto &p : _contour.getPoints()) {
@@ -1093,9 +1111,10 @@ namespace terrain {
 		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
 
-	bool Anchor::build(cpSpace *space) {
+	bool Anchor::build(cpSpace *space, material m) {
 		assert(_shapes.empty());
 
+		_material = m;
 		_staticBody = cpBodyNewStatic();
 
 		cpVect triangle[3];

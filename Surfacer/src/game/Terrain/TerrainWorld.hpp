@@ -118,6 +118,12 @@ namespace terrain {
 		cpFloat friction;
 		cpShapeFilter filter;
 
+		material():
+		density(1),
+		friction(1),
+		filter({0,0,0})
+		{}
+
 		material(cpFloat d, cpFloat f, cpShapeFilter flt):
 		density(d),
 		friction(f),
@@ -189,6 +195,8 @@ namespace terrain {
 	class World : public enable_shared_from_this<World> {
 	public:
 
+		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors);
+
 		/**
 		 Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.
 		 The purpose of this is simple: You might have a large level. You want to divide the geometry of the level into manageable
@@ -197,7 +205,7 @@ namespace terrain {
 		static vector<ShapeRef> partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize);
 
 	public:
-		World(cpSpace *space, material m);
+		World(cpSpace *space, material worldMaterial, material anchorMaterial);
 		~World();
 
 		/**
@@ -231,7 +239,7 @@ namespace terrain {
 
 	private:
 
-		material _material;
+		material _worldMaterial, _anchorMaterial;
 		cpSpace *_space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
@@ -415,15 +423,27 @@ namespace terrain {
 	class Anchor : public Drawable {
 	public:
 
+		// we want anchors to draw AFTER all shapes have drawn
 		static const size_t DRAWING_BATCH_ID = ~0;
 
-		static AnchorRef fromContour(const PolyLine2d &contour, material m) {
-			return make_shared<Anchor>(contour, m);
+		static AnchorRef fromContour(const PolyLine2d &contour) {
+			return make_shared<Anchor>(contour);
 		}
+
+		static vector<AnchorRef> fromContours(const vector<PolyLine2d> &contours) {
+			vector<AnchorRef> anchors;
+			anchors.reserve(contours.size());
+			for (auto c : contours) {
+				anchors.push_back(make_shared<Anchor>(c));
+			}
+			return anchors;
+		}
+
+		static AnchorRef fromShape(const Shape2d &shape);
 
 	public:
 
-		Anchor(const PolyLine2d &contour, material m);
+		Anchor(const PolyLine2d &contour);
 		~Anchor();
 
 		const PolyLine2d &getContour() const { return _contour; }
@@ -440,7 +460,7 @@ namespace terrain {
 	protected:
 
 		friend class World;
-		bool build(cpSpace *space);
+		bool build(cpSpace *space, material m);
 
 	private:
 

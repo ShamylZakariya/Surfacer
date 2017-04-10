@@ -208,9 +208,10 @@ void TerrainTestScenario::setup() {
 	//auto world = testComplexTerrain();
 	//auto world = testSimpleAnchors();
 	//auto world = testComplexAnchors();
-	auto world = testSimplePartitionedTerrain();
+	//auto world = testSimplePartitionedTerrain();
 	//auto world = testComplexPartitionedTerrainWithAnchors();
 	//auto world = testFail();
+	auto world = testSimpleSvgLoad();
 
 	_terrain = terrain::TerrainObject::create("Terrain", world);
 	level->addGameObject(_terrain);
@@ -407,7 +408,9 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 	shapes = terrain::World::partition(shapes, vec2(0,0), 30);
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
 
 	return world;
@@ -430,7 +433,9 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
 	return world;
 }
@@ -461,7 +466,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes);
 
 	return world;
@@ -470,7 +475,6 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 	getViewportController()->lookAt(vec2(0,0));
 
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -479,12 +483,13 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 	};
 
 	vector<terrain::AnchorRef> anchors = {
-		terrain::Anchor::fromContour(rect(40,20,60,30), anchorMaterial),
-		terrain::Anchor::fromContour(rect(200,20,260,30), anchorMaterial)
+		terrain::Anchor::fromContour(rect(40,20,60,30)),
+		terrain::Anchor::fromContour(rect(200,20,260,30))
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 
 	world->build(shapes, anchors);
 	return world;
@@ -518,15 +523,15 @@ terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 		boxShape(boxSize * 2.f, boxSize)
 	};
 
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
 	vector<terrain::AnchorRef> anchors = {
-		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)), anchorMaterial)
+		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)))
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors);
 
 	return world;
@@ -561,7 +566,9 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
 	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
+	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes);
 
 	return world;
@@ -593,15 +600,35 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 	auto shapes = terrain::Shape::fromContours(rings);
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
 	vector<terrain::AnchorRef> anchors = {
-		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)), anchorMaterial)
+		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)))
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
+
+	return world;
+}
+
+terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
+
+	// load shapes and anchors from SVG
+	vector<terrain::ShapeRef> shapes;
+	vector<terrain::AnchorRef> anchors;
+	dmat4 transform(1);
+	terrain::World::loadSvg(app::loadAsset("svg_tests/world_anchor_test.svg"), transform, shapes, anchors);
+
+	// partition
+	//auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 50);
+
+	// construct
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	world->build(shapes, anchors);
 
 	return world;
 }
@@ -631,14 +658,15 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 	auto shapes = terrain::Shape::fromContours(rings);
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 
 	vector<terrain::AnchorRef> anchors = {
-		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)), anchorMaterial)
+		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)))
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial);
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+
+	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
 	
 

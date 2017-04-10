@@ -51,6 +51,8 @@ private:
 	terrain::WorldRef testSimplePartitionedTerrain();
 	terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
 
+	terrain::WorldRef testSimpleSvgLoad();
+
 	terrain::WorldRef testFail();
 
 	void timeSpatialIndex();
