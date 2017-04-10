@@ -24,9 +24,11 @@ namespace core { namespace util { namespace svg {
 #pragma mark Matrix Parsing
 
 		const double EPSILON = 1e-3;
-		const double ALPHA_EPSILON = 1.f / 255.f;
-
 		const std::string zero("0");
+		const std::map<std::string,ColorA> ColorsByName = {
+			{"black",ColorA(0,0,0,1)},
+			{"white",ColorA(1,1,1,1)},
+		};
 
 		double getNumericAttributeValue( const XmlTree &node, const std::string &attrName, double defaultValue )
 		{
@@ -1122,6 +1124,18 @@ namespace core { namespace util { namespace svg {
 				color.a = components.size() >=4 ? saturate( components[3] ) : 1;
 				return true;
 			}
+		} else {
+
+			//
+			// try color name lookup
+			//
+
+			auto pos = ColorsByName.find(colorValue);
+			if (pos != ColorsByName.end()) {
+				color = pos->second;
+				return true;
+			}
+			
 		}
 
 		return false;
