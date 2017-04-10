@@ -30,6 +30,7 @@ namespace core { namespace util { namespace svg {
 		struct stroke {
 			vector< vec2 > vertices;
 			bool closed;
+			ci::gl::VboMeshRef vboMesh;
 			GLuint vao;
 			GLuint vbo;
 
@@ -47,7 +48,7 @@ namespace core { namespace util { namespace svg {
 		~Shape();
 
 		void parse( const ci::XmlTree &shapeNode );
-		void draw( const render_state &, const GroupRef &owner, double opacity );
+		void draw( const render_state &, const GroupRef &owner, double opacity, const ci::gl::GlslProgRef &shader );
 
 		void setFillColor( const ci::ColorA &color ) { _fillColor = color; _filled = _fillColor.a > ALPHA_EPSILON; }
 		ci::ColorA getFillColor() const { return _fillColor; }
@@ -61,8 +62,8 @@ namespace core { namespace util { namespace svg {
 		void setStrokeWidth( double w ) { _strokeWidth = max( w, double(0)); _stroked = (_strokeWidth > 0 && _strokeColor.a > ALPHA_EPSILON ); }
 		double getStrokeWidth() const { return _strokeWidth; }
 
-		inline bool isStroked() const { return _stroked; }
-		inline bool isFilled() const { return _filled; }
+		bool isStroked() const { return _stroked; }
+		bool isFilled() const { return _filled; }
 
 		void setBlendMode( const BlendMode &bm ) { _blendMode = bm; }
 		const BlendMode &getBlendMode() const { return _blendMode; }
@@ -77,7 +78,7 @@ namespace core { namespace util { namespace svg {
 		 - add class "origin" to the shape node's classes
 
 		 */
-		inline bool isOrigin() const { return _origin; }
+		bool isOrigin() const { return _origin; }
 
 		// returns 'path', 'rect', etc
 		string getType() const { return _type; }
@@ -95,11 +96,11 @@ namespace core { namespace util { namespace svg {
 		void _build( const ci::Shape2d &shape );
 		ci::Rectd _projectToWorld( const dvec2 &documentSize, double documentScale, const dmat4 &worldTransform );
 		void _makeLocal( const dvec2 &originWorld );
-		void _drawDebug( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes );
-		void _drawGame( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes );
 
-		void _drawStrokes( const render_state &state, const GroupRef &owner, double opacity, vector<stroke> &strokes );
-		void _drawFills( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh );
+		void _drawDebug( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader );
+		void _drawGame( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader );
+		void _drawStrokes( const render_state &state, const GroupRef &owner, double opacity, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader );
+		void _drawFills( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, const ci::gl::GlslProgRef &shader );
 
 	private:
 
@@ -110,14 +111,11 @@ namespace core { namespace util { namespace svg {
 		map< string, string > _attributes;
 		string _type, _id;
 		ci::Triangulator::Winding _fillRule;
-
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
-		ci::gl::VboMeshRef _localMeshVbo;
+		ci::gl::VboMeshRef _localVboMesh;
 
 		vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
 		ci::Rectd _worldBounds, _localBounds;
-
-		GLuint _vao, _vbo, _ebo;
 
 		BlendMode _blendMode;
 
@@ -248,7 +246,7 @@ namespace core { namespace util { namespace svg {
 
 		friend class Shape;
 
-		void _draw( const render_state &state, double opacity );
+		void _draw( const render_state &state, double opacity, const ci::gl::GlslProgRef &shader );
 		void _parseGroupAttributes( const ci::XmlTree &groupNode );
 		void _loadGroupsAndShapes( const ci::XmlTree &fromNode );
 		void _updateTransform();
@@ -286,6 +284,7 @@ namespace core { namespace util { namespace svg {
 		map< string, string > _attributes;
 		vector< drawable > _drawables;
 
+		ci::gl::GlslProgRef _shader;
 	};
 
 	class LoadException : public core::Exception

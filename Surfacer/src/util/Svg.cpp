@@ -125,21 +125,20 @@ namespace core { namespace util { namespace svg {
 #pragma mark - Shape
 
 	/*
-	 bool _origin, _filled, _stroked;
-	 dmat4 _svgTransform;
-	 ci::ColorA _fillColor, _strokeColor;
-	 double _strokeWidth;
-	 map< string, string > _attributes;
-	 string _type, _id;
-	 ci::Triangulator::Winding _fillRule;
+		bool _origin, _filled, _stroked;
+		dmat4 _svgTransform;
+		ci::ColorA _fillColor, _strokeColor;
+		double _strokeWidth;
+		map< string, string > _attributes;
+		string _type, _id;
+		ci::Triangulator::Winding _fillRule;
+		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
+		ci::gl::VboMeshRef _localVboMesh;
 
-	 ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
-	 vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
-	 ci::Rectd _worldBounds, _localBounds;
+		vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
+		ci::Rectd _worldBounds, _localBounds;
 
-	 GLuint _vao, _vbo, _ebo;
-
-	 BlendMode _blendMode;
+		BlendMode _blendMode;
 	 */
 
 	Shape::Shape():
@@ -149,19 +148,10 @@ namespace core { namespace util { namespace svg {
 	_fillColor(0,0,0,1),
 	_strokeColor(0,0,0,1),
 	_strokeWidth(0),
-	_fillRule( Triangulator::WINDING_NONZERO ),
-	_vao(0),
-	_vbo(0),
-	_ebo(0)
+	_fillRule( Triangulator::WINDING_NONZERO )
 	{}
 
-	Shape::~Shape() {
-		if ( _vao ) {
-			glDeleteBuffers( 1, &_vao );
-			glDeleteBuffers( 1, &_vbo );
-			glDeleteBuffers( 1, &_ebo );
-		}
-	}
+	Shape::~Shape() {}
 
 	void Shape::parse( const ci::XmlTree &shapeNode )
 	{
@@ -186,8 +176,8 @@ namespace core { namespace util { namespace svg {
 		{
 			util::svg::svg_style style = util::svg::parseStyle( shapeNode );
 
-			_filled = style.filled;
-			_stroked = style.stroked;
+			_filled = style.isFilled();
+			_stroked = style.isStroked();
 			_fillColor = ColorA( style.fillColor, style.fillOpacity * style.opacity );
 			_strokeColor = ColorA( style.strokeColor, style.strokeOpacity * style.opacity );
 			_strokeWidth = style.strokeWidth;
@@ -249,16 +239,16 @@ namespace core { namespace util { namespace svg {
 		_build( shape2d );
 	}
 
-	void Shape::draw( const render_state &state, const GroupRef &owner, double opacity ) {
+	void Shape::draw( const render_state &state, const GroupRef &owner, double opacity, const ci::gl::GlslProgRef &shader ) {
 		switch( state.mode ) {
 			case RenderMode::GAME:
 				if ( !isOrigin() ) {
-					_drawGame(state, owner, opacity, _localMesh, _localStrokes );
+					_drawGame(state, owner, opacity, _localMesh, _localStrokes, shader );
 				}
 				break;
 
 			case RenderMode::DEVELOPMENT:
-				_drawDebug(state, owner, opacity, _localMesh, _localStrokes );
+				_drawDebug(state, owner, opacity, _localMesh, _localStrokes, shader );
 				break;
 
 			case RenderMode::COUNT:
@@ -315,7 +305,7 @@ namespace core { namespace util { namespace svg {
 		_svgStrokes.clear();
 	}
 
-	void Shape::_drawDebug( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes ) {
+	void Shape::_drawDebug( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader ) {
 		if ( isOrigin() ) {
 			dmat4 worldTransform = owner->_worldTransform(dmat4(1));
 
@@ -337,104 +327,81 @@ namespace core { namespace util { namespace svg {
 			gl::drawLine( vec2(0,0), vec2(0,-scale.y));
 		}
 		else {
-			if ( isFilled() ) {
 
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				_drawFills(state, owner, opacity * 0.5, mesh);
+			//
+			//	Crude immediate-mode style drawing of meshes and strokes
+			//
 
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
-				_drawFills(state, owner, opacity, mesh);
+			if ( isFilled() )
+			{
+				ci::ColorA fc = getFillColor();
+				shader->uniform("Color", ColorA(fc.r, fc.g, fc.b, fc.a * opacity));
+				gl::draw(*mesh);
+			}
 
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			if (isStroked()) {
+				ci::ColorA sc = getStrokeColor();
+				shader->uniform("Color", ColorA(sc.r, sc.g, sc.b, sc.a * opacity));
+				gl::lineWidth(1);
 
-				_drawStrokes(state, owner, opacity, strokes);
+				for( auto &stroke : strokes )
+				{
+					vec2 a = stroke.vertices.front();
+					for (auto it = stroke.vertices.begin()+1, end = stroke.vertices.end(); it != end; ++it) {
+						vec2 b = *it;
+						gl::drawLine(a, b);
+						a = b;
+					}
+
+					if (stroke.closed) {
+						gl::drawLine(a, stroke.vertices.front());
+					}
+				}
 			}
 		}
 	}
 
-	void Shape::_drawGame( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes ) {
-		_drawFills(state, owner, opacity, mesh);
-		_drawStrokes(state, owner, opacity, strokes);
+	void Shape::_drawGame( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader ) {
+		gl::Context::getCurrent()->setDefaultShaderVars();
+		_drawFills(state, owner, opacity, mesh, shader);
+		_drawStrokes(state, owner, opacity, strokes, shader);
 	}
 
-	void Shape::_drawStrokes( const render_state &state, const GroupRef &owner, double opacity, vector<stroke> &strokes ) {
+	void Shape::_drawStrokes( const render_state &state, const GroupRef &owner, double opacity, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader ) {
 		if (isStroked()) {
 
 			ci::ColorA sc = getStrokeColor();
-			gl::color( sc.r, sc.g, sc.b, sc.a * opacity );
+			shader->uniform("Color", ColorA(sc.r, sc.g, sc.b, sc.a * opacity));
 			gl::lineWidth(1);
-
 
 			for( auto &stroke : strokes )
 			{
-				vec2 a = stroke.vertices.front();
-				for (auto it = stroke.vertices.begin()+1, end = stroke.vertices.end(); it != end; ++it) {
-					vec2 b = *it;
-					gl::drawLine(a, b);
-					a = b;
+				if (!stroke.vboMesh) {
+					gl::VboMesh::Layout layout;
+					layout.usage( GL_STATIC_DRAW ).attrib( geom::POSITION, 2 );
+
+					const GLsizei count = static_cast<GLsizei>(stroke.vertices.size());
+					const GLenum primitive = stroke.closed ? GL_LINE_LOOP : GL_LINE_STRIP;
+					stroke.vboMesh = gl::VboMesh::create(count,primitive,{ layout });
+					stroke.vboMesh->bufferAttrib( geom::POSITION, count * sizeof( vec2 ), stroke.vertices.data() );
 				}
 
-				if (stroke.closed) {
-					gl::drawLine(a, stroke.vertices.front());
-				}
-
-//				const GLsizei count = static_cast<GLsizei>(stroke.vertices.size());
-//				if ( !stroke.vao )
-//				{
-//					glGenVertexArrays(1, &stroke.vao);
-//					glGenBuffers(1, &stroke.vbo);
-//
-//					glBindVertexArray(stroke.vao);
-//					glBindBuffer(GL_ARRAY_BUFFER, stroke.vbo);
-//					glBufferData(GL_ARRAY_BUFFER, count * sizeof(vec2), &stroke.vertices.front(), GL_STATIC_DRAW);
-//					glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), nullptr);
-//					glEnableVertexAttribArray(0);
-//
-//					glBindVertexArray(0);
-//				}
-//
-//				const GLenum type = stroke.closed ? GL_LINE_LOOP : GL_LINE_STRIP;
-//				glBindVertexArray(stroke.vao);
-//				glDrawArrays(type,0,count);
-//				glBindVertexArray(0);
+				gl::draw(stroke.vboMesh);
 			}
 		}
 	}
 
-	void Shape::_drawFills( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh ) {
+	void Shape::_drawFills( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, const ci::gl::GlslProgRef &shader ) {
 		if ( isFilled() )
 		{
 			ci::ColorA fc = getFillColor();
-			gl::color( fc.r, fc.g, fc.b, fc.a * opacity );
-			gl::draw(*mesh);
+			shader->uniform("Color", ColorA(fc.r, fc.g, fc.b, fc.a * opacity));
 
-//			const GLsizei numVertices = static_cast<GLsizei>(mesh->getNumVertices());
-//			const vec2 *vertices = mesh->getPositions<2>();
-//			const vector< uint32_t > &indices( mesh->getIndices() );
-//			const GLsizei numIndices = static_cast<GLsizei>(indices.size());
-//
-//			if (!_vao) {
-//				glGenVertexArrays(1, &_vao);
-//				glGenBuffers(1, &_vbo);
-//				glGenBuffers(1, &_ebo);
-//
-//
-//				glBindVertexArray(_vao);
-//				glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-//				glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(vec2), vertices, GL_STATIC_DRAW);
-//				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), nullptr);
-//				glEnableVertexAttribArray(0);
-//
-//				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-//				glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices, &indices.front(), GL_STATIC_DRAW);
-//
-//
-//				glBindBuffer(GL_ARRAY_BUFFER, 0);
-//				glBindVertexArray(0);
-//			}
-//
-//			glBindVertexArray(_vao);
-//			glDrawElements(GL_TRIANGLES,numIndices,GL_UNSIGNED_INT, 0);
+			if (!_localVboMesh) {
+				_localVboMesh = gl::VboMesh::create(*mesh);
+			}
+
+			gl::draw(_localVboMesh);
 		}
 	}
 
@@ -532,7 +499,36 @@ namespace core { namespace util { namespace svg {
 	}
 
 	void Group::draw( const render_state &state ) {
-		_draw( state, 1 );
+
+		//
+		//	Build the shader (lazily)
+		//
+
+		if (isRoot() && !_shader) {
+			auto vsh = CI_GLSL(150,
+							   uniform mat4 ciModelViewProjection;
+							   in vec4 ciPosition;
+
+							   void main(void){
+								   gl_Position = ciModelViewProjection * ciPosition;
+							   }
+							   );
+
+			auto fsh = CI_GLSL(150,
+							   uniform vec4 Color;
+							   out vec4 oColor;
+
+							   void main(void) {
+								   oColor = Color;
+							   }
+							   );
+
+
+			_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
+		}
+
+		gl::ScopedGlslProg sp(_shader);
+		_draw( state, 1, _shader );
 	}
 
 	void Group::trace( int depth ) const {
@@ -643,7 +639,7 @@ namespace core { namespace util { namespace svg {
 		return inverseWorldTransform * p;
 	}
 
-	void Group::_draw( const render_state &state, double parentOpacity ) {
+	void Group::_draw( const render_state &state, double parentOpacity, const ci::gl::GlslProgRef &shader ) {
 		auto self = shared_from_this();
 		double opacity = _opacity * parentOpacity;
 		BlendMode lastBlendMode = getBlendMode();
@@ -662,7 +658,7 @@ namespace core { namespace util { namespace svg {
 				//	Draw child group
 				//
 
-				c->first->_draw( state, opacity );
+				c->first->_draw( state, opacity, shader );
 			}
 			else if ( c->second ) {
 				//
@@ -674,7 +670,7 @@ namespace core { namespace util { namespace svg {
 					lastBlendMode.bind();
 				}
 
-				c->second->draw( state, self, opacity );
+				c->second->draw( state, self, opacity, shader );
 			}
 		}
 	}
