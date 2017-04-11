@@ -1343,13 +1343,14 @@ namespace terrain {
 		}
 
 		_trimesh = triangulator.createMesh();
-		const size_t numTriangles = _trimesh->getNumTriangles() > 0;
+		const size_t numTriangles = _trimesh->getNumTriangles();
 
 		if (numTriangles > 0) {
 			_vboMesh = gl::VboMesh::create(*_trimesh);
+			return true;
 		}
 
-		return numTriangles;
+		return false;
 	}
 
 	double Shape::computeArea() {
