@@ -24,37 +24,55 @@ namespace core { namespace util { namespace svg {
 #pragma mark Matrix Parsing
 
 		const double EPSILON = 1e-3;
-		const std::string zero("0");
-		const std::map<std::string,ColorA> ColorsByName = {
+		const string zero("0");
+		const map<string,ColorA> ColorsByName = {
 			{"black",ColorA(0,0,0,1)},
 			{"white",ColorA(1,1,1,1)},
 		};
 
-		double getNumericAttributeValue( const XmlTree &node, const std::string &attrName, double defaultValue )
+		double getNumericAttributeValue( const XmlTree &node, const string &attrName, double defaultValue )
 		{
 			if ( node.hasAttribute( attrName ))
 			{
-				return std::strtod( node.getAttribute( attrName ).getValue().c_str(), nullptr );
+				return strtod( node.getAttribute( attrName ).getValue().c_str(), nullptr );
 			}
 
 			return defaultValue;
 		}
 
-		void getTransformValues( const std::string &transform, std::vector< double > &values )
-		{
-			values.clear();
-
-			std::string::size_type
-			open = transform.find( '(' ) + 1,
-			close = transform.find( ')' );
-
-			for( const std::string &token : strings::split( transform.substr( open, close - open ), ',' ))
-			{
-				values.push_back( parseNumericAttribute(token));
+		// handles a list of numbers, separated by spaces, commas, or comma-space
+		void readNumericValueSequence(const string &sequence, vector<double> &values) {
+			string token;
+			double value;
+			for (auto c : sequence) {
+				if (c == ',' || c == ' ') {
+					if (!token.empty()) {
+						value = strtod(token.c_str(),nullptr);
+						token.clear();
+						values.push_back(value);
+					}
+					continue;
+				} else {
+					token = token + c;
+				}
+			}
+			if (!token.empty()) {
+				value = strtod(token.c_str(),nullptr);
+				values.push_back(value);
 			}
 		}
 
-		dmat4 parseMatrixTransform( const std::string svgMatrixTransform )
+		void getTransformValues( const string &transform, vector< double > &values )
+		{
+			values.clear();
+
+			string::size_type
+			open = transform.find( '(' ) + 1,
+			close = transform.find( ')' );
+			readNumericValueSequence(transform.substr( open, close - open ), values);
+		}
+
+		dmat4 parseMatrixTransform( const string svgMatrixTransform )
 		{
 			/*
 				matrix(<a> <b> <c> <d> <e> <f>), which specifies a transformation in the form of a transformation matrix of six values. matrix(a,b,c,d,e,f) is equivalent to applying the transformation matrix [a b c d e f].
@@ -71,7 +89,7 @@ namespace core { namespace util { namespace svg {
 				[0,0,0,1]
 			 */
 
-			std::vector<double> values;
+			vector<double> values;
 			getTransformValues( svgMatrixTransform, values );
 
 			return dmat4(
@@ -81,13 +99,13 @@ namespace core { namespace util { namespace svg {
 						dvec4( values[4], values[5], 0, 1 ));
 		}
 
-		dmat4 parseTranslateTransform( const std::string svgTranslateTransform )
+		dmat4 parseTranslateTransform( const string svgTranslateTransform )
 		{
 			/*
 			 translate(<tx> [<ty>]), which specifies a translation by tx and ty. If <ty> is not provided, it is assumed to be zero.
 			 */
 
-			std::vector<double> values;
+			vector<double> values;
 			getTransformValues( svgTranslateTransform, values );
 
 			double tx = values[0],
@@ -96,13 +114,13 @@ namespace core { namespace util { namespace svg {
 			return translate(dvec3(tx, ty, 0));
 		}
 
-		dmat4 parseScaleTransform( const std::string svgScaleTransform )
+		dmat4 parseScaleTransform( const string svgScaleTransform )
 		{
 			/*
 				scale(<sx> [<sy>]), which specifies a scale operation by sx and sy. If <sy> is not provided, it is assumed to be equal to <sx>.
 			 */
 
-			std::vector<double> values;
+			vector<double> values;
 			getTransformValues( svgScaleTransform, values );
 
 			double sx = values[0],
@@ -112,7 +130,7 @@ namespace core { namespace util { namespace svg {
 
 		}
 
-		dmat4 parseRotateTransform( const std::string svgRotateTransform )
+		dmat4 parseRotateTransform( const string svgRotateTransform )
 		{
 			/*
 				rotate(<rotate-angle> [<cx> <cy>]), which specifies a rotation by <rotate-angle> degrees about a given point.
@@ -120,7 +138,7 @@ namespace core { namespace util { namespace svg {
 			 If optional parameters <cx> and <cy> are supplied, the rotate is about the point (cx, cy). The operation represents the equivalent of the following specification: translate(<cx>, <cy>) rotate(<rotate-angle>) translate(-<cx>, -<cy>).
 			 */
 
-			std::vector<double> values;
+			vector<double> values;
 			getTransformValues( svgRotateTransform, values );
 
 			dmat4 rot = rotate(values[0], dvec3(0,0,1));
@@ -145,7 +163,7 @@ namespace core { namespace util { namespace svg {
 			return dmat4();
 		}
 
-		dmat4 parseSkewXTransform( const std::string svgSkewXTransform )
+		dmat4 parseSkewXTransform( const string svgSkewXTransform )
 		{
 			/*
 				skewX(<skew-angle>), which specifies a skew transformation along the x-axis.
@@ -154,10 +172,10 @@ namespace core { namespace util { namespace svg {
 				[0      0   1]
 			 */
 
-			std::vector<double> values;
+			vector<double> values;
 			getTransformValues( svgSkewXTransform, values );
 
-			double sx = std::tan( values[0] );
+			double sx = tan( values[0] );
 
 			return dmat4(
 						dvec4(1,  0, 0, 0 ),
@@ -166,7 +184,7 @@ namespace core { namespace util { namespace svg {
 						dvec4(0,  0, 0, 1 ));
 		}
 
-		dmat4 parseSkewYTransform( const std::string svgSkewYTransform )
+		dmat4 parseSkewYTransform( const string svgSkewYTransform )
 		{
 			/*
 			 skewY(<skew-angle>), which specifies a skew transformation along the y-axis.
@@ -176,10 +194,10 @@ namespace core { namespace util { namespace svg {
 				[0        0, 1]
 			 */
 
-			std::vector<double> values;
+			vector<double> values;
 			getTransformValues( svgSkewYTransform, values );
 
-			double sy = std::tan( values[0] );
+			double sy = tan( values[0] );
 
 			return dmat4(
 						dvec4(1, sy, 0, 0 ),
@@ -190,7 +208,7 @@ namespace core { namespace util { namespace svg {
 
 #pragma mark - Polyline Parsing
 
-		void parsePolyline( const std::string &polyline, std::vector< dvec2 > &points )
+		void parsePolyline( const string &polyline, vector< dvec2 > &points )
 		{
 			const char *current = polyline.c_str();
 			while( *current != '\0' )
@@ -201,19 +219,19 @@ namespace core { namespace util { namespace svg {
 				//	gobble spaces
 				//
 
-				if ( std::isspace( c ))
+				if ( isspace( c ))
 				{
 					current++;
 					continue;
 				}
 
-				if ( std::isdigit( c ) || c == '.' || c == '+' || c == '-' )
+				if ( isdigit( c ) || c == '.' || c == '+' || c == '-' )
 				{
 					double v[2];
 					for ( int i = 0; i < 2; i++ )
 					{
 						char *end = nullptr;
-						v[i] = std::strtod( current, &end );
+						v[i] = strtod( current, &end );
 						current = end;
 
 						// handle optional coordinate comma separator
@@ -252,7 +270,7 @@ namespace core { namespace util { namespace svg {
 
 				Will throw ParserException if something's wonky.
 			 */
-			void parse( const std::string &pathStr, Shape2d &shape );
+			void parse( const string &pathStr, Shape2d &shape );
 
 		protected:
 
@@ -298,7 +316,7 @@ namespace core { namespace util { namespace svg {
 
 		PathParser::~PathParser(){}
 
-		void PathParser::parse( const std::string &pathStr, Shape2d &shape )
+		void PathParser::parse( const string &pathStr, Shape2d &shape )
 		{
 			_shape = &shape;
 			_pathOpen = false;
@@ -307,7 +325,7 @@ namespace core { namespace util { namespace svg {
 			int command = 0;
 			bool relative = false, firstCommand = true;
 
-			std::map< char, unsigned int > coordinatesToRead;
+			map< char, unsigned int > coordinatesToRead;
 			coordinatesToRead['z'] = 0;
 			coordinatesToRead['m'] = 2;
 			coordinatesToRead['l'] = 2;
@@ -327,7 +345,7 @@ namespace core { namespace util { namespace svg {
 				//	gobble spaces
 				//
 
-				if ( std::isspace( c ))
+				if ( isspace( c ))
 				{
 					current++;
 					continue;
@@ -336,9 +354,9 @@ namespace core { namespace util { namespace svg {
 				//
 				//	if this is a letter get the command
 				//
-				if ( std::isalpha( c ) && c != '.' )
+				if ( isalpha( c ) && c != '.' )
 				{
-					relative = std::islower( c );
+					relative = islower( c );
 					command = c;
 
 					//
@@ -356,7 +374,7 @@ namespace core { namespace util { namespace svg {
 						}
 					}
 
-					if ( coordinatesToRead.find( std::tolower(command)) == coordinatesToRead.end())
+					if ( coordinatesToRead.find( tolower(command)) == coordinatesToRead.end())
 					{
 						throw ParserException( "Unrecognized command token: \"" + str(char(command)) + "\"" );
 					}
@@ -399,15 +417,15 @@ namespace core { namespace util { namespace svg {
 				}
 
 
-				if ( std::isdigit( c ) || c == '.' || c == '+' || c == '-' )
+				if ( isdigit( c ) || c == '.' || c == '+' || c == '-' )
 				{
 					double v[7];
-					unsigned int toRead = coordinatesToRead[std::tolower(command)];
+					unsigned int toRead = coordinatesToRead[tolower(command)];
 
 					for ( unsigned int i = 0; i < toRead; i++ )
 					{
 						char *end = nullptr;
-						v[i] = std::strtod( current, &end );
+						v[i] = strtod( current, &end );
 						current = end;
 
 						// handle optional coordinate comma separator
@@ -415,7 +433,7 @@ namespace core { namespace util { namespace svg {
 					}
 
 					// note z is not handled here since it has no coordinates
-					switch( std::tolower(command))
+					switch( tolower(command))
 					{
 						case 'm':
 							moveTo( dvec2( v[0],v[1] ), relative );
@@ -426,7 +444,7 @@ namespace core { namespace util { namespace svg {
 							//	since the first 'm' is treated as absolute if it's the first entry in the path
 							//
 
-							relative = std::islower(command);
+							relative = islower(command);
 							command = 'l';
 
 							break;
@@ -769,8 +787,8 @@ namespace core { namespace util { namespace svg {
 
 			if ( rx > 0 && ry > 0 )
 			{
-				rx = std::min( rx, width/2 );
-				ry = std::min( ry, height/2 );
+				rx = min( rx, width/2 );
+				ry = min( ry, height/2 );
 
 				/*
 				 from: http://www.w3.org/TR/SVG/shapes.html#RectElement
@@ -794,7 +812,7 @@ namespace core { namespace util { namespace svg {
 				 9 perform an absolute elliptical arc operation to coordinate (x+rx,y)
 				 */
 
-				std::stringstream command;
+				stringstream command;
 
 				//1
 				command << " M " << (x + rx) << "," << y;
@@ -862,7 +880,7 @@ namespace core { namespace util { namespace svg {
 
 			if ( rx > 0 && ry > 0 )
 			{
-				std::stringstream command;
+				stringstream command;
 
 				command << "M " << (cx + rx) << "," << (cy);
 				command << " A " << rx << "," << ry << " " << 0 << " " << 0 << " " << 1 << " " << (cx) << "," << (cy+ry);
@@ -895,14 +913,14 @@ namespace core { namespace util { namespace svg {
 		{
 			if ( shapeNode.hasAttribute( "points" ))
 			{
-				std::vector< ci::dvec2 > points;
+				vector< ci::dvec2 > points;
 				parsePolyline( shapeNode.getAttribute( "points" ).getValue(), points );
 
 				if ( !points.empty() )
 				{
 					// we don't close polyline shapes
 					shape.moveTo( points.front() );
-					for( std::vector< ci::dvec2 >::const_iterator p(points.begin() + 1),end(points.end()); p != end; ++p )
+					for( vector< ci::dvec2 >::const_iterator p(points.begin() + 1),end(points.end()); p != end; ++p )
 					{
 						shape.lineTo( *p );
 					}
@@ -920,9 +938,9 @@ namespace core { namespace util { namespace svg {
 
 	}
 
-	double parseNumericAttribute( const std::string &numericAttributeValue )
+	double parseNumericAttribute( const string &numericAttributeValue )
 	{
-		return std::strtod( numericAttributeValue.c_str(), nullptr );
+		return strtod( numericAttributeValue.c_str(), nullptr );
 	}
 
 	Rectd parseViewBoxAttribute(const string &viewportValue) {
@@ -936,7 +954,7 @@ namespace core { namespace util { namespace svg {
 
 	namespace {
 
-		void applyStyle( const std::string &name, const std::string & value, svg_style &style )
+		void applyStyle( const string &name, const string & value, svg_style &style )
 		{
 			if ( name == "opacity" )
 			{
@@ -983,7 +1001,7 @@ namespace core { namespace util { namespace svg {
 		// style-list overrides attrs?
 		if ( node.hasAttribute( "style" ))
 		{
-			for( const std::string &styleToken : strings::split( node.getAttribute("style").getValue(), ';' ) )
+			for( const string &styleToken : strings::split( node.getAttribute("style").getValue(), ';' ) )
 			{
 				strings::stringvec params = strings::split( styleToken, ':' );
 				applyStyle( params[0], params[1], style );
@@ -1016,14 +1034,33 @@ namespace core { namespace util { namespace svg {
 		"translate(-10,-20) scale(2) rotate(45) translate(5,10)"
 	 */
 
-	dmat4 parseTransform( const std::string &svgTransform )
+	namespace {
+
+		vector<string> svgTransformComponents(const string svgTransform) {
+			vector<string> components;
+			string component;
+			for (auto c : svgTransform) {
+				if (c == ')') {
+					components.push_back(strings::strip(component + ')'));
+					component.clear();
+				} else {
+					component = component + c;
+				}
+			}
+			return components;
+		}
+
+	}
+
+	dmat4 parseTransform( const string &svgTransform )
 	{
 		dmat4 transform;
 
 		//	split - only supporting multiple transforms separated by spaces
 		//	note: we're concatenating each transform into one
 
-		for( const std::string &transformToken : strings::split( svgTransform, ' ' ))
+		auto components = svgTransformComponents(svgTransform);
+		for( const string &transformToken : components)
 		{
 			dmat4 m;
 			if ( strings::startsWith( transformToken, "matrix" ))			m = parseMatrixTransform( transformToken );
@@ -1040,7 +1077,7 @@ namespace core { namespace util { namespace svg {
 		return transform;
 	}
 
-	bool parseColor( const std::string &colorValue, Color &color )
+	bool parseColor( const string &colorValue, Color &color )
 	{
 		ColorA temp;
 		if ( parseColor( colorValue, temp ) )
@@ -1052,7 +1089,7 @@ namespace core { namespace util { namespace svg {
 		return false;
 	}
 
-	bool parseColor( const std::string &colorValue, ColorA &color )
+	bool parseColor( const string &colorValue, ColorA &color )
 	{
 		color = ColorA::black();
 
@@ -1060,58 +1097,58 @@ namespace core { namespace util { namespace svg {
 		{
 			if ( colorValue.size() == 7 )
 			{
-				std::string
+				string
 				red = colorValue.substr( 1,2 ),
 				green = colorValue.substr( 3,2 ),
 				blue = colorValue.substr( 5,2 );
 
-				color.r = saturate(double(std::strtol( red.c_str(), nullptr, 16 )) / 255);
-				color.g = saturate(double(std::strtol( green.c_str(), nullptr, 16 )) / 255);
-				color.b = saturate(double(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
+				color.r = saturate(double(strtol( red.c_str(), nullptr, 16 )) / 255);
+				color.g = saturate(double(strtol( green.c_str(), nullptr, 16 )) / 255);
+				color.b = saturate(double(strtol( blue.c_str(), nullptr, 16 )) / 255);
 				color.a = 1;
 
 				return true;
 			}
 			else if ( colorValue.size() == 9 )
 			{
-				std::string
+				string
 				alpha = colorValue.substr( 1,2 ),
 				red = colorValue.substr( 3,2 ),
 				green = colorValue.substr( 5,2 ),
 				blue = colorValue.substr( 7,2 );
 
-				color.r = saturate(double(std::strtol( red.c_str(), nullptr, 16 )) / 255);
-				color.g = saturate(double(std::strtol( green.c_str(), nullptr, 16 )) / 255);
-				color.b = saturate(double(std::strtol( blue.c_str(), nullptr, 16 )) / 255);
-				color.a = saturate(double(std::strtol( alpha.c_str(), nullptr, 16 )) / 255);
+				color.r = saturate(double(strtol( red.c_str(), nullptr, 16 )) / 255);
+				color.g = saturate(double(strtol( green.c_str(), nullptr, 16 )) / 255);
+				color.b = saturate(double(strtol( blue.c_str(), nullptr, 16 )) / 255);
+				color.a = saturate(double(strtol( alpha.c_str(), nullptr, 16 )) / 255);
 
 				return true;
 			}
 		}
 		else if ( colorValue.find( "rgb" ) == 0 )
 		{
-			const std::string::size_type
+			const string::size_type
 			OpenParen = colorValue.find_first_of( '(' ),
 			CloseParen = colorValue.find_last_of( ')' );
 
-			if ( OpenParen == std::string::npos || CloseParen == std::string::npos )
+			if ( OpenParen == string::npos || CloseParen == string::npos )
 			{
 				return false;
 			}
 
-			const std::string ValueString = colorValue.substr( OpenParen+1, (CloseParen-OpenParen-1));
-			std::vector<double> components;
+			const string ValueString = colorValue.substr( OpenParen+1, (CloseParen-OpenParen-1));
+			vector<double> components;
 
-			for( const std::string &token : strings::split( ValueString, "," ))
+			for( const string &token : strings::split( ValueString, "," ))
 			{
-				if ( token.find("%") != std::string::npos )
+				if ( token.find("%") != string::npos )
 				{
-					double value = 255 * saturate(std::strtod( token.c_str(), nullptr ) / 100);
+					double value = 255 * saturate(strtod( token.c_str(), nullptr ) / 100);
 					components.push_back( value );
 				}
 				else
 				{
-					double value = std::strtod( token.c_str(), nullptr );
+					double value = strtod( token.c_str(), nullptr );
 					components.push_back( saturate( value / 255 ));
 				}
 			}
@@ -1142,13 +1179,13 @@ namespace core { namespace util { namespace svg {
 	}
 
 
-	void parsePath( const std::string &pathString, Shape2d &shape )
+	void parsePath( const string &pathString, Shape2d &shape )
 	{
 		PathParser pp;
 		pp.parse( pathString, shape );
 	}
 
-	bool canParseShape( std::string shapeName )
+	bool canParseShape( string shapeName )
 	{
 		return
 		shapeName == "path" ||
@@ -1162,7 +1199,7 @@ namespace core { namespace util { namespace svg {
 	
 	void parseShape( const XmlTree &shapeNode, ci::Shape2d &shape )
 	{
-		std::string name = shapeNode.getTag();
+		string name = shapeNode.getTag();
 		
 		if ( name == "path" )		{ parsePathShape( shapeNode, shape ); return; }
 		if ( name == "rect" )		{ parseRectShape( shapeNode, shape ); return; }
