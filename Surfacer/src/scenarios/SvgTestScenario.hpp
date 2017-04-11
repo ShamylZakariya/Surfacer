@@ -46,6 +46,7 @@ public:
 protected:
 
 	void testSimpleSvgLoad();
+	void testSimpleSvgGroupOriginTransforms();
 
 private:
 

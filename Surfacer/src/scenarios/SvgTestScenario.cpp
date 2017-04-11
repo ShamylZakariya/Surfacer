@@ -142,7 +142,8 @@ void SvgTestScenario::setup() {
 
 	getLevel()->addGameObject(background);
 
-	testSimpleSvgLoad();
+	//testSimpleSvgLoad();
+	testSimpleSvgGroupOriginTransforms();
 }
 
 void SvgTestScenario::cleanup() {
@@ -255,4 +256,43 @@ void SvgTestScenario::testSimpleSvgLoad() {
 	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/group_origin_test.svg"), 1);
 	doc->trace();
 	getLevel()->addGameObject(GameObject::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
+}
+
+void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
+	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/group_origin_test.svg"), 1);
+	auto root = doc->find("Page-1/group_origin_test/root");
+	auto green = root->find("green");
+	auto green1 = green->find("green-1");
+	auto green2 = green->find("green-2");
+	auto purple = root->find("purple");
+	auto purple1 = purple->find("purple-1");
+	auto purple2 = purple->find("purple-2");
+
+
+	class Wiggler : public core::Component {
+	public:
+		Wiggler(vector<util::svg::GroupRef> elements):
+		_elements(elements)
+		{}
+
+		void step(const time_state &time) override {
+			double cycle = cos(time.time) * 0.5;
+			int dir = 0;
+			for (auto group : _elements) {
+				group->setAngle(cycle * (dir % 2 == 0 ? 1 : -1));
+				dir++;
+			}
+		}
+
+	private:
+		vector<util::svg::GroupRef> _elements;
+	};
+
+
+	auto drawComponent = make_shared<SvgDrawComponent>(doc);
+	vector<util::svg::GroupRef> elements = { root, green, purple, green1, green2, purple1, purple2 };
+	auto wiggleComponent = make_shared<Wiggler>(elements);
+
+	auto obj = GameObject::with("Hello SVG", { drawComponent, wiggleComponent });
+	getLevel()->addGameObject(obj);
 }

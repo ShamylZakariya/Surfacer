@@ -6,16 +6,32 @@
     <defs></defs>
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
         <g id="group_origin_test">
-            <g id="root" transform="translate(142.000000, 562.000000)">
-                <rect id="Rectangle-2" fill="#D8D8D8" x="336" y="0" width="45" height="395"></rect>
-                <circle id="__origin__" fill="#F8E81C" cx="358" cy="377" r="16"></circle>
+            <g id="root" transform="translate(142.000000, 480.000000)">
+                <rect id="Rectangle-2" fill="#D8D8D8" x="336" y="82" width="45" height="395" rx="22.5"></rect>
+                <circle id="__origin__" fill="#F8E81C" cx="358" cy="459" r="16"></circle>
                 <g id="green">
-                    <rect id="Rectangle-2-Copy" fill="#B8E986" x="0" y="0" width="381" height="45"></rect>
-                    <circle id="__origin__" fill="#F8E81C" cx="358" cy="23" r="16"></circle>
+                    <rect id="Rectangle-2-Copy" fill="#B8E986" x="0" y="82" width="381" height="45" rx="22.5"></rect>
+                    <circle id="__origin__" fill="#F8E81C" cx="358" cy="105" r="16"></circle>
+                    <g id="green-1" transform="translate(8.000000, 0.000000)">
+                        <rect id="Rectangle-2-Copy" fill="#7BD025" x="0" y="0" width="32" height="122" rx="16"></rect>
+                        <circle id="__origin__" fill="#F8E81C" cx="16" cy="106" r="16"></circle>
+                    </g>
+                    <g id="green-2" transform="translate(8.000000, 89.000000)">
+                        <rect id="Rectangle-2-Copy" fill="#53970E" x="0" y="0" width="32" height="122" rx="16"></rect>
+                        <circle id="__origin__" fill="#F8E81C" cx="16" cy="16" r="16"></circle>
+                    </g>
                 </g>
                 <g id="purple" transform="translate(336.000000, 0.000000)">
-                    <rect id="Rectangle-2-Copy-2" fill="#BD0FE1" x="0" y="0" width="381" height="45"></rect>
-                    <circle id="__origin__" fill="#F8E81C" cx="22" cy="23" r="16"></circle>
+                    <rect id="Rectangle-2-Copy-2" fill="#BD0FE1" x="0" y="82" width="381" height="45" rx="22.5"></rect>
+                    <circle id="__origin__" fill="#F8E81C" cx="22" cy="105" r="16"></circle>
+                    <g id="purple-1" transform="translate(343.000000, 0.000000)">
+                        <rect id="Rectangle-2-Copy" fill="#FF17FD" x="0" y="0" width="32" height="122" rx="16"></rect>
+                        <ellipse id="__origin__" fill="#F8E81C" cx="16" cy="106" rx="16" ry="16"></ellipse>
+                    </g>
+                    <g id="purple-2" transform="translate(343.000000, 89.000000)">
+                        <rect id="Rectangle-2-Copy" fill="#6A086C" x="0" y="0" width="32" height="122" rx="16"></rect>
+                        <ellipse id="__origin__" fill="#F8E81C" cx="16" cy="16" rx="16" ry="16"></ellipse>
+                    </g>
                 </g>
             </g>
         </g>
