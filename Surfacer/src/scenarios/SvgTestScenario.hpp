@@ -50,7 +50,6 @@ protected:
 private:
 
 	vec2 _mouseScreen, _mouseWorld;
-	util::svg::GroupRef _svgDocument;
 	gl::GlslProgRef _shader;
 };
 

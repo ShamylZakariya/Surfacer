@@ -20,6 +20,8 @@ Need to verify stitching of a large environment works.
 
 ## TODO
 
+SVG Groups need a way to recursively compute their BB
+
 SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
 
 Rewrite the cartesian coordinate renderer using a shader. Make it handle rotation.

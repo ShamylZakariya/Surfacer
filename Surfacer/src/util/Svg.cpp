@@ -207,16 +207,16 @@ namespace core { namespace util { namespace svg {
 		if ( shapeNode.hasChild( "title" )) {
 			string title = shapeNode.getChild( "title" ).getValue();
 			title = strings::strip( strings::lowercase( title ));
-			if ( title == "origin" ) _origin = true;
+			if ( title == "__origin__" ) _origin = true;
 		}
 
-		if ( shapeNode.hasAttribute( "origin" )) {
+		if ( shapeNode.hasAttribute( "__origin__" )) {
 			_origin = true;
 		}
 
 		if ( shapeNode.hasAttribute( "class" )) {
 			string classes = strings::lowercase(shapeNode.getAttribute( "class" ).getValue());
-			if ( classes.find( "origin" ) != string::npos ) {
+			if ( classes.find( "__origin__" ) != string::npos ) {
 				_origin = true;
 			}
 		}
@@ -225,7 +225,7 @@ namespace core { namespace util { namespace svg {
 		// any name starting with "origin" makes it an origin node
 		//
 
-		if ( _id.find( "origin" ) == 0 ) {
+		if ( _id.find( "__origin__" ) == 0 ) {
 			_origin = true;
 		}
 
@@ -448,32 +448,19 @@ namespace core { namespace util { namespace svg {
 		//	We're reading a document, not a <g> group; but we want to load attributes and children and (if any,) shapes
 		//
 
-		XmlTree svgDoc = XmlTree( svgData ).getChild( "svg" );
+		XmlTree svgNode = XmlTree( svgData ).getChild( "svg" );
 
-		parse( svgDoc );
+		parse( svgNode );
 
 		//
 		//	Figure out the document size. This is important because we use a bottom-left
 		//	coordinate system, and SVG uses a top-left. We need to flip.
 		//
 
-		dvec2 parentWorldOrigin(0,0);
-		if (svgDoc.hasAttribute("viewBox")) {
-			auto viewBox = util::svg::parseViewBoxAttribute(svgDoc.getAttribute("viewBox"));
-			parentWorldOrigin.x = viewBox.getX1();
-			parentWorldOrigin.y = viewBox.getY1();
-			_documentSize.x = viewBox.getWidth();
-			_documentSize.y = viewBox.getHeight();
-		} else {
-			string width = svgDoc.getAttribute("width").getValue();
-			string height = svgDoc.getAttribute("width").getValue();
-			if (!strings::endsWith(width, "%") && !strings::endsWith(height, "%")){
-				_documentSize.x = util::svg::parseNumericAttribute(width);
-				_documentSize.y = util::svg::parseNumericAttribute(height);
-			} else {
-				throw LoadException("SVG document size must be explicit, not percentages");
-			}
-		}
+		const Rectd documentFrame = util::svg::parseDocumentFrame(svgNode);
+		const dvec2 parentWorldOrigin(documentFrame.getX1(),documentFrame.getY1());
+		_documentSize.x = documentFrame.getWidth();
+		_documentSize.y = documentFrame.getHeight();
 
 		//
 		//	Now normalize our generated geometry

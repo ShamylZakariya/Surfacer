@@ -73,9 +73,9 @@ namespace core { namespace util { namespace svg {
 		 origin shapes aren't drawn, they're used to position the origin for the parent object's shapes and children
 
 		 to mark a shape as origin, do any of the following
-		 - add a title node to the shape with the text "origin"
-		 - set attriubute origin="true" to the shape node
-		 - add class "origin" to the shape node's classes
+		 - set the node's id to anything starting with "__origin__", e.g., "__origin__1", "___origin__2", etc
+		 - set attriubute __origin__="true" to the shape node
+		 - add class "__origin__" to the shape node's classes
 
 		 */
 		bool isOrigin() const { return _origin; }

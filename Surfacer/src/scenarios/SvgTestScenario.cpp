@@ -75,6 +75,31 @@ namespace {
 
 	};
 
+	class SvgDrawComponent : public DrawComponent {
+	public:
+		SvgDrawComponent(util::svg::GroupRef doc):
+		_docRoot(doc)
+		{}
+
+		cpBB getBB() const override {
+			// TODO: Compute BB from Svg... but how?
+			return cpBBInfinity;
+		}
+
+		void draw(const core::render_state &state) override {
+			_docRoot->draw(state);
+		}
+
+		VisibilityDetermination::style getVisibilityDetermination() const override {
+			return VisibilityDetermination::FRUSTUM_CULLING;
+		}
+
+		int getLayer() const override { return 0; }
+
+	private:
+		util::svg::GroupRef _docRoot;
+	};
+
 }
 
 SvgTestScenario::SvgTestScenario() {
@@ -140,13 +165,6 @@ void SvgTestScenario::clear( const render_state &state ) {
 }
 
 void SvgTestScenario::draw( const render_state &state ) {
-	if (_svgDocument) {
-		Viewport::ScopedState vs(getViewport());
-		// TODO Re-enable shader when using GL to draw SVGs
-		//gl::ScopedGlslProg sglp(_shader);
-		_svgDocument->draw(state);
-	}
-
 
 	//
 	// NOTE: we're in screen space, with coordinate system origin at top left
@@ -234,6 +252,7 @@ void SvgTestScenario::reset() {
 #pragma mark - Tests
 
 void SvgTestScenario::testSimpleSvgLoad() {
-	_svgDocument = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/AnchorTest0.svg"), 1);
-	_svgDocument->trace();
+	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/group_origin_test.svg"), 1);
+	doc->trace();
+	getLevel()->addGameObject(GameObject::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
 }
