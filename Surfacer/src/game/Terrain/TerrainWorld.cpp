@@ -20,7 +20,7 @@
 
 #include "ContourSimplification.hpp"
 #include "TerrainDetail.hpp"
-#include "Svg.hpp"
+#include "SvgParsing.hpp"
 
 using namespace core;
 
