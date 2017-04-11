@@ -40,8 +40,8 @@ namespace core { namespace util { namespace svg {
 			return defaultValue;
 		}
 
-		// handles a list of numbers, separated by spaces, commas, or comma-space
-		void readNumericValueSequence(const string &sequence, vector<double> &values) {
+		// reads a list of numbers, separated by spaces, commas, or comma-space
+		void readNumericSequence(const string &sequence, vector<double> &values) {
 			string token;
 			double value;
 			for (auto c : sequence) {
@@ -69,7 +69,7 @@ namespace core { namespace util { namespace svg {
 			string::size_type
 			open = transform.find( '(' ) + 1,
 			close = transform.find( ')' );
-			readNumericValueSequence(transform.substr( open, close - open ), values);
+			readNumericSequence(transform.substr( open, close - open ), values);
 		}
 
 		dmat4 parseMatrixTransform( const string svgMatrixTransform )
@@ -943,13 +943,64 @@ namespace core { namespace util { namespace svg {
 		return strtod( numericAttributeValue.c_str(), nullptr );
 	}
 
-	Rectd parseViewBoxAttribute(const string &viewportValue) {
-		const auto tokens = strings::split(viewportValue, ' ');
-		double minX = parseNumericAttribute(tokens[0]);
-		double minY = parseNumericAttribute(tokens[1]);
-		double width = parseNumericAttribute(tokens[2]);
-		double height = parseNumericAttribute(tokens[3]);
+	Rectd parseViewBoxAttribute(const string &viewboxValue) {
+		vector<double> values;
+		readNumericSequence(viewboxValue, values);
+
+		double minX = values[0];
+		double minY = values[1];
+		double width = values[2];
+		double height = values[3];
+
 		return Rectd(minX, minY, minX + width, minY + height);
+	}
+
+	ci::Rectd parseDocumentFrame( const ci::XmlTree &svgNode ) {
+		dvec2 parentWorldOrigin(0,0);
+		dvec2 documentSize(0,0);
+
+		if (svgNode.hasAttribute("viewBox")) {
+			auto viewBox = util::svg::parseViewBoxAttribute(svgNode.getAttribute("viewBox"));
+			parentWorldOrigin.x = viewBox.getX1();
+			parentWorldOrigin.y = viewBox.getY1();
+			documentSize.x = viewBox.getWidth();
+			documentSize.y = viewBox.getHeight();
+		}
+
+		if (svgNode.hasAttribute("width")) {
+			string widthSpec = svgNode.getAttribute("width").getValue();
+			double width = util::svg::parseNumericAttribute(widthSpec);
+			if (strings::endsWith(widthSpec, "%")) {
+				documentSize.x = (width/100) * documentSize.x;
+			} else {
+				documentSize.x = width;
+			}
+		}
+
+		if (svgNode.hasAttribute("height")) {
+			string heightSpec = svgNode.getAttribute("height").getValue();
+			double height = util::svg::parseNumericAttribute(heightSpec);
+			if (strings::endsWith(heightSpec, "%")) {
+				documentSize.y = (height/100) * documentSize.y;
+			} else {
+				documentSize.y = height;
+			}
+		}
+
+		double left = parentWorldOrigin.x;
+		double right = parentWorldOrigin.x + documentSize.x;
+		double bottom = parentWorldOrigin.y;
+		double top = parentWorldOrigin.y + documentSize.y;
+
+		if (right < left) {
+			swap(right, left);
+		}
+
+		if (top < bottom) {
+			swap(top,bottom);
+		}
+
+		return Rectd(left,bottom, right, top);
 	}
 
 	namespace {

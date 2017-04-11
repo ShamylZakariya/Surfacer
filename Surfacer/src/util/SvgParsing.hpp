@@ -55,6 +55,11 @@ namespace core { namespace util { namespace svg {
 
 	ci::Rectd parseViewBoxAttribute(const string &viewportValue);
 
+	/**
+	 Read the document size and offset of an <svg> node from the viewBox, width and height attributes.
+	 */
+	ci::Rectd parseDocumentFrame( const ci::XmlTree &svgNode );
+
 	svg_style parseStyle( const ci::XmlTree &node );
 
 	/**
