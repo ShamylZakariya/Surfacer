@@ -20,6 +20,7 @@
 
 #include "ContourSimplification.hpp"
 #include "TerrainDetail.hpp"
+#include "Svg.hpp"
 
 using namespace core;
 
@@ -174,12 +175,18 @@ namespace terrain {
 	
 #pragma mark - World
 
-	void World::loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors) {
+	void World::loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, bool flip) {
 		shapes.clear();
 		anchors.clear();
 
-		XmlTree svgDoc = XmlTree( svgData ).getChild( "svg" );
-		detail::svg_load(svgDoc, transform, shapes, anchors);
+		XmlTree svgNode = XmlTree( svgData ).getChild( "svg" );
+
+		if (flip) {
+			Rectd documentFrame = util::svg::parseDocumentFrame(svgNode);
+			transform = transform * translate(dvec3(0,documentFrame.getY2(),0)) * glm::scale(dvec3(1,-1,1));
+		}
+
+		detail::svg_load(svgNode, transform, shapes, anchors);
 	}
 
 	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize) {

@@ -195,7 +195,7 @@ namespace terrain {
 	class World : public enable_shared_from_this<World> {
 	public:
 
-		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors);
+		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, bool flip = true);
 
 		/**
 		 Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.

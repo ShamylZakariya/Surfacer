@@ -618,8 +618,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
 	// load shapes and anchors from SVG
 	vector<terrain::ShapeRef> shapes;
 	vector<terrain::AnchorRef> anchors;
-	dmat4 transform = glm::scale(dvec3(1,-1,1));
-	terrain::World::loadSvg(app::loadAsset("svg_tests/world_anchor_test.svg"), transform, shapes, anchors);
+	terrain::World::loadSvg(app::loadAsset("svg_tests/world_anchor_test.svg"), dmat4(), shapes, anchors, true);
 
 	// partition
 	//auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 50);
