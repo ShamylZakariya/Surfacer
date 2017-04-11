@@ -316,14 +316,14 @@ namespace core { namespace util { namespace svg {
 			dvec2 scale( screenSize / length(xAxis), screenSize / length(yAxis));
 			scale *= state.viewport->getReciprocalScale();
 
-			gl::color(1,0,0);
+			shader->uniform("Color",ColorA(1,0,0,1));
 			gl::drawLine( vec2(0,0), vec2(scale.x,0));
-			gl::color(0.25,0,0);
+			shader->uniform("Color",ColorA(1,0,0,0.5));
 			gl::drawLine( vec2(0,0), vec2(-scale.x,0));
 
-			gl::color(0,1,0);
+			shader->uniform("Color",ColorA(0,1,0,1));
 			gl::drawLine( vec2(0,0), vec2(0,scale.y));
-			gl::color(0,0.25,0);
+			shader->uniform("Color",ColorA(0,1,0,0.5));
 			gl::drawLine( vec2(0,0), vec2(0,-scale.y));
 		}
 		else {
