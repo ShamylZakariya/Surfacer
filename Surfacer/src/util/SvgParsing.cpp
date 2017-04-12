@@ -481,7 +481,9 @@ namespace core { namespace util { namespace svg {
 							arcTo(v[0],v[1],v[2], v[3] > 0, v[4] > 0, dvec2(v[5],v[6]), relative );
 							break;
 
-						case 'z': break; // this should never come up
+						case 'z':
+							// close is handled above
+							break;
 
 						default:
 							throw ParserException( "Unrecognized command token: \"" + str(command) + "\"" );
