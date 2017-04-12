@@ -131,6 +131,8 @@ namespace core { namespace util { namespace svg {
 		double _strokeWidth;
 		map< string, string > _attributes;
 		string _type, _id;
+		cpBB _localBB;
+
 		ci::Triangulator::Winding _fillRule;
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
 		ci::gl::VboMeshRef _localVboMesh;
@@ -148,6 +150,7 @@ namespace core { namespace util { namespace svg {
 	_fillColor(0,0,0,1),
 	_strokeColor(0,0,0,1),
 	_strokeWidth(0),
+	_localBB(cpBBInvalid),
 	_fillRule( Triangulator::WINDING_NONZERO )
 	{}
 
@@ -296,9 +299,17 @@ namespace core { namespace util { namespace svg {
 	}
 
 	void Shape::_makeLocal( const dvec2 &originWorld ) {
-		transform( _worldMesh, _localMesh, _worldStrokes, _localStrokes, to_local_transformer( originWorld ));
 
+		//
+		//	Move from world to local coordinate system
+		//
+
+		_localBB = transform( _worldMesh, _localMesh, _worldStrokes, _localStrokes, to_local_transformer( originWorld ));
+
+		//
 		// free up memory we're not using anymore
+		//
+
 		_worldMesh.reset();
 		_svgMesh.reset();
 		_worldStrokes.clear();
@@ -514,8 +525,20 @@ namespace core { namespace util { namespace svg {
 			_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
 		}
 
-		gl::ScopedGlslProg sp(_shader);
-		_draw( state, 1, _shader );
+		{
+			gl::ScopedGlslProg sp(_shader);
+			_draw( state, 1, _shader );
+		}
+
+		if (state.mode == RenderMode::DEVELOPMENT && isRoot()) {
+			gl::color(1,0,1);
+			cpBB bounds = getBB();
+			gl::drawStrokedRect(Rectf(bounds.l, bounds.b, bounds.r, bounds.t), state.viewport->getReciprocalScale());
+		}
+	}
+
+	cpBB Group::getBB() {
+		return _getBB(dmat4());
 	}
 
 	void Group::trace( int depth ) const {
@@ -810,6 +833,24 @@ namespace core { namespace util { namespace svg {
 		
 		_updateTransform();
 		return m * _transform;
+	}
+
+	cpBB Group::_getBB(dmat4 toWorld) {
+		cpBB bb = cpBBInvalid;
+		_updateTransform();
+
+		toWorld = toWorld * _transform;
+
+		for (auto shape : getShapes()) {
+			cpBB shapeLocalBB = shape->getLocalBB();
+			cpBBExpand(bb, cpBBTransform(shapeLocalBB, toWorld));
+		}
+
+		for (auto childGroup : getGroups()) {
+			cpBBExpand(bb, childGroup->_getBB(toWorld));
+		}
+
+		return bb;
 	}
 
 }}} // core::util::svg

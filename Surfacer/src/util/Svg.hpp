@@ -68,6 +68,8 @@ namespace core { namespace util { namespace svg {
 		void setBlendMode( const BlendMode &bm ) { _blendMode = bm; }
 		const BlendMode &getBlendMode() const { return _blendMode; }
 
+		cpBB getLocalBB() const { return _localBB; }
+
 		/**
 		 return true if this shape represents the origin shape for the parent Group
 		 origin shapes aren't drawn, they're used to position the origin for the parent object's shapes and children
@@ -110,6 +112,8 @@ namespace core { namespace util { namespace svg {
 		double _strokeWidth;
 		map< string, string > _attributes;
 		string _type, _id;
+		cpBB _localBB;
+
 		ci::Triangulator::Winding _fillRule;
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
 		ci::gl::VboMeshRef _localVboMesh;
@@ -198,6 +202,11 @@ namespace core { namespace util { namespace svg {
 		void draw( const render_state &state );
 
 		/**
+		 Compute world-space BB of this group and its contents, recursively
+		 */
+		cpBB getBB();
+
+		/**
 		 Dumps human-readable tree to stdout
 		 */
 		void trace( int depth = 0 ) const;
@@ -250,6 +259,7 @@ namespace core { namespace util { namespace svg {
 		void _parseGroupAttributes( const ci::XmlTree &groupNode );
 		void _loadGroupsAndShapes( const ci::XmlTree &fromNode );
 		void _updateTransform();
+		cpBB _getBB(dmat4 toWorld);
 
 		/**
 		 walk down tree, moving vertices of child shapes to world space, then walk back up tree transforming them to space local to their transform.

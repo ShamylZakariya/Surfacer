@@ -82,8 +82,7 @@ namespace {
 		{}
 
 		cpBB getBB() const override {
-			// TODO: Compute BB from Svg... but how?
-			return cpBBInfinity;
+			return _docRoot->getBB();
 		}
 
 		void draw(const core::render_state &state) override {
@@ -276,7 +275,7 @@ void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
 		{}
 
 		void step(const time_state &time) override {
-			double cycle = cos(time.time) * 0.5;
+			double cycle = cos(time.time) * 0.75;
 			int dir = 0;
 			for (auto group : _elements) {
 				group->setAngle(cycle * (dir % 2 == 0 ? 1 : -1));
