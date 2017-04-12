@@ -1168,12 +1168,14 @@ namespace terrain {
 #pragma mark - Shape
 
 	ShapeRef Shape::fromContour(const PolyLine2d &outerContour) {
-		return make_shared<Shape>(outerContour);
+		return make_shared<Shape>(detail::optimize(outerContour));
 	}
 
 	vector<ShapeRef> Shape::fromContours(const vector<PolyLine2d> &contourSoup) {
 
-		vector<detail::contour_tree_node_ref> rootNodes = detail::build_contour_tree(contourSoup);
+		const auto optimizedContourSoup = detail::optimize(contourSoup);
+		vector<detail::contour_tree_node_ref> rootNodes = detail::build_contour_tree(optimizedContourSoup);
+
 		vector<ShapeRef> shapes;
 		for (auto &rn : rootNodes) {
 			vector<ShapeRef> built = build_from_contour_tree(rn, 0);
@@ -1222,7 +1224,7 @@ namespace terrain {
 
 	Shape::Shape(const PolyLine2d &sc):
 	_worldSpaceShapeContourEdgesDirty(true),
-	_outerContour(detail::optimize(sc)),
+	_outerContour(sc),
 	_modelCentroid(0,0),
 	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
@@ -1231,11 +1233,15 @@ namespace terrain {
 
 	Shape::Shape(const PolyLine2d &sc, const std::vector<PolyLine2d> &hcs):
 	_worldSpaceShapeContourEdgesDirty(true),
-	_outerContour(detail::optimize(sc)),
-	_holeContours(detail::optimize(hcs)),
+	_outerContour(sc),
 	_modelCentroid(0,0),
 	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
+
+		for (const auto hc : hcs) {
+			_holeContours.emplace_back(hc);
+		}
+
 		detail::wind_clockwise(_outerContour.world);
 		for (auto &hc : _holeContours) {
 			detail::wind_counter_clockwise(hc.world);

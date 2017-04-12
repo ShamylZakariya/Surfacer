@@ -28,17 +28,22 @@ namespace core {
 
 		template< class T, glm::precision P >
 		void simplify( vector<glm::tvec2<T,P>> in, vector<glm::tvec2<T,P>> &out, T threshold ) {
-			if ( in.size() <= 2 ) {
-				out = in;
-				return;
-			}
 
 			//
 			//	cometimes a "closed" contour has the last vertex == first
 			//
 
-			if (distanceSquared(in.front(),in.back()) < 1e-4) {
+			while (in.size() > 2 && distanceSquared(in.front(),in.back()) < 1e-4) {
 				in.pop_back();
+			}
+
+			//
+			//	Sanity check
+			//
+
+			if ( in.size() <= 2 ) {
+				out = in;
+				return;
 			}
 
 			//

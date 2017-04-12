@@ -115,8 +115,8 @@ namespace terrain {
 			}
 		}
 
-		vector<Shape::contour_pair> optimize(vector<PolyLine2d> ps) {
-			vector<Shape::contour_pair> ret;
+		vector<PolyLine2d> optimize(vector<PolyLine2d> ps) {
+			vector<PolyLine2d> ret;
 
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
 				for (auto &p : ps) {
