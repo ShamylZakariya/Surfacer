@@ -13,7 +13,7 @@ Need to verify stitching of a large environment works.
 	✓ Use ring generator to make a large "world" of discrete contours.
 	✓ Intersect these contours with a checkerboard type pattern to divide it into a grid.
 	✓ Let that grid stitch back together as needed.
-	- Start with synthetic/parametric geometry, work towards a proper SVG level loader which vends anchors as well as contours.
+	✓ Start with synthetic/parametric geometry, work towards a proper SVG level loader which vends anchors as well as contours.
 
 ✓ Then I need to design a basic component system. Can adopt some of my old Surfacer code here.
 

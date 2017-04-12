@@ -61,9 +61,16 @@ namespace terrain {
 			return id;
 		}
 
-		bool visibleDrawableDisplaySorter( const DrawableRef &a, const DrawableRef &b )
-		{
+		inline bool visibleDrawableDisplaySorter( const DrawableRef &a, const DrawableRef &b ) {
+
+			const size_t aLayer = a->getLayer();
+			const size_t bLayer = b->getLayer();
+
+			if (aLayer != bLayer) {
+				return aLayer < bLayer;
+			}
 			return a->getDrawingBatchId() < b->getDrawingBatchId();
+
 		}
 
 	}
@@ -174,6 +181,8 @@ namespace terrain {
 
 	
 #pragma mark - World
+
+	size_t World::_idCounter = 0;
 
 	void World::loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, bool flip) {
 		shapes.clear();
@@ -623,6 +632,7 @@ namespace terrain {
 
 	/*
 		DrawDispatcher &_drawDispatcher;
+		size_t _drawingBatchId;
 		cpSpace *_space;
 		material _material;
 		string _name;
@@ -632,6 +642,7 @@ namespace terrain {
 
 	GroupBase::GroupBase(cpSpace *space, material m, DrawDispatcher &dispatcher):
 	_drawDispatcher(dispatcher),
+	_drawingBatchId(World::nextId()),
 	_space(space),
 	_material(m)
 	{}
@@ -777,8 +788,6 @@ namespace terrain {
 		Color _color;
 	 */
 
-	size_t DynamicGroup::_count = 0;
-
 	DynamicGroup::DynamicGroup(cpSpace *space, material m, DrawDispatcher &dispatcher):
 	GroupBase(space, m, dispatcher),
 	_body(nullptr),
@@ -788,7 +797,7 @@ namespace terrain {
 	_modelBB(cpBBInvalid),
 	_modelview(1),
 	_modelviewInverse(1) {
-		_name = nextId();
+		_name = str(World::nextId());
 		_hash = hash<string>{}(_name);
 		_color = detail::next_random_color();
 	}
@@ -832,12 +841,6 @@ namespace terrain {
 	}
 
 	void DynamicGroup::update(const time_state &timeState) {
-	}
-
-	string DynamicGroup::nextId() {
-		stringstream ss;
-		ss << _count++;
-		return ss.str();
 	}
 
 	bool DynamicGroup::build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup) {
@@ -1057,10 +1060,8 @@ namespace terrain {
 	 size_t _id;
 	 */
 
-	size_t Drawable::_count = 0;
-
 	Drawable::Drawable():
-	_id(_count++)
+	_id(World::nextId())
 	{}
 
 	Drawable::~Drawable(){}
@@ -1212,20 +1213,21 @@ namespace terrain {
 		cpBB _shapesModelBB;
 		vector<cpShape*> _shapes;
 		GroupBaseWeakRef _group;
+		size_t _groupDrawingBatchId;
 		cpHashValue _groupHash;
 
 		unordered_set<poly_edge> _worldSpaceContourEdges;
 		cpBB _worldSpaceContourEdgesBB;
 
 		TriMeshRef _trimesh;
-		ci::gl::VboMeshRef _vboMesh;
-	 */
+		ci::gl::VboMeshRef _vboMesh;	 */
 
 
 	Shape::Shape(const PolyLine2d &sc):
 	_worldSpaceShapeContourEdgesDirty(true),
 	_outerContour(sc),
 	_modelCentroid(0,0),
+	_groupDrawingBatchId(0),
 	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
 		detail::wind_clockwise(_outerContour.world);
@@ -1235,6 +1237,7 @@ namespace terrain {
 	_worldSpaceShapeContourEdgesDirty(true),
 	_outerContour(sc),
 	_modelCentroid(0,0),
+	_groupDrawingBatchId(0),
 	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
 
@@ -1336,8 +1339,10 @@ namespace terrain {
 	void Shape::setGroup(GroupBaseRef group) {
 		_group = group;
 		if (group) {
+			_groupDrawingBatchId = group->getDrawingBatchId();
 			_groupHash = group->getHash();
 		} else {
+			_groupDrawingBatchId = 0;
 			_groupHash = 0;
 		}
 	}

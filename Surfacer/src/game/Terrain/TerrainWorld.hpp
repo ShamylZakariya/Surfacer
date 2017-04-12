@@ -204,6 +204,10 @@ namespace terrain {
 		 */
 		static vector<ShapeRef> partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize);
 
+		static size_t nextId() {
+			return _idCounter++;
+		}
+
 	public:
 		World(cpSpace *space, material worldMaterial, material anchorMaterial);
 		~World();
@@ -239,6 +243,8 @@ namespace terrain {
 
 	private:
 
+		static size_t _idCounter;
+
 		material _worldMaterial, _anchorMaterial;
 		cpSpace *_space;
 		StaticGroupRef _staticGroup;
@@ -264,7 +270,7 @@ namespace terrain {
 		const material &getMaterial() const { return _material; }
 		virtual string getName() const { return _name; }
 		virtual Color getColor() const { return _color; }
-		virtual const cpHashValue getHash() const { return _hash; }
+		virtual cpHashValue getHash() const { return _hash; }
 
 		virtual cpBody* getBody() const = 0;
 		virtual cpBB getBB() const = 0;
@@ -274,6 +280,7 @@ namespace terrain {
 		virtual double getAngle() const = 0;
 		virtual set<ShapeRef> getShapes() const = 0;
 		virtual void releaseShapes() = 0;
+		virtual size_t getDrawingBatchId() const { return _drawingBatchId;}
 		virtual void draw(const core::render_state &renderState) = 0;
 		virtual void step(const core::time_state &timeState) = 0;
 		virtual void update(const core::time_state &timeState) = 0;
@@ -292,6 +299,7 @@ namespace terrain {
 	protected:
 
 		DrawDispatcher &_drawDispatcher;
+		size_t _drawingBatchId;
 		cpSpace *_space;
 		material _material;
 		string _name;
@@ -360,12 +368,10 @@ namespace terrain {
 	protected:
 		friend class World;
 
-		string nextId();
 		bool build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup);
 		void syncToCpBody();
 
 	private:
-		static size_t _count;
 
 		cpBody *_body;
 		cpVect _position;
@@ -387,6 +393,7 @@ namespace terrain {
 
 		virtual cpBB getBB() const = 0;
 		virtual size_t getDrawingBatchId() const = 0;
+		virtual size_t getLayer() const = 0;
 		virtual dmat4 getModelview() const = 0;
 		virtual double getAngle() const = 0;
 		virtual dvec2 getModelCentroid() const = 0;
@@ -407,7 +414,6 @@ namespace terrain {
 		}
 
 	private:
-		static size_t _count;
 		size_t _id;
 	};
 
@@ -423,8 +429,8 @@ namespace terrain {
 	class Anchor : public Drawable {
 	public:
 
-		// we want anchors to draw AFTER all shapes have drawn
 		static const size_t DRAWING_BATCH_ID = ~0;
+		static const size_t LAYER = 1;
 
 		static AnchorRef fromContour(const PolyLine2d &contour) {
 			return make_shared<Anchor>(contour);
@@ -450,6 +456,7 @@ namespace terrain {
 
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
+		size_t getLayer() const override { return LAYER; }
 		dmat4 getModelview() const override { return dmat4(1); } // identity
 		double getAngle() const override { return 0; };
 		dvec2 getModelCentroid() const override;
@@ -480,6 +487,8 @@ namespace terrain {
 
 	class Shape : public Drawable {
 	public:
+
+		static const size_t LAYER = 0;
 
 		struct contour_pair {
 			PolyLine2d world, model;
@@ -536,8 +545,10 @@ namespace terrain {
 		cpBB getBB() const override;
 
 		size_t getDrawingBatchId() const override {
-			return reinterpret_cast<size_t>(_groupHash);
+			return _groupDrawingBatchId;
 		}
+
+		size_t getLayer() const override { return LAYER; }
 
 		double getAngle() const override { return getGroup()->getAngle(); }
 		dvec2 getModelCentroid() const override { return _modelCentroid; }
@@ -559,7 +570,6 @@ namespace terrain {
 		friend class DynamicGroup;
 		friend class World;
 
-		string nextId();
 		void updateWorldSpaceContourAndBB();
 		void setGroup(GroupBaseRef group);
 
@@ -582,6 +592,7 @@ namespace terrain {
 		cpBB _shapesModelBB;
 		vector<cpShape*> _shapes;
 		GroupBaseWeakRef _group;
+		size_t _groupDrawingBatchId;
 		cpHashValue _groupHash;
 		
 		unordered_set<poly_edge> _worldSpaceContourEdges;
