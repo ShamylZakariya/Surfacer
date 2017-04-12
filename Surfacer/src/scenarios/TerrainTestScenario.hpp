@@ -52,6 +52,7 @@ private:
 	terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
 
 	terrain::WorldRef testSimpleSvgLoad();
+	terrain::WorldRef testComplexSvgLoad();
 
 	terrain::WorldRef testFail();
 
