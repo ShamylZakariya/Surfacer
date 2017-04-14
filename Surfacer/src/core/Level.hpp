@@ -96,7 +96,6 @@ namespace core {
 		bool isPaused() const { return _paused; }
 		void setPaused(bool paused = true);
 
-
 		virtual void resize( ivec2 newSize );
 		virtual void step( const time_state &time );
 		virtual void update( const time_state &time );
@@ -112,6 +111,8 @@ namespace core {
 		ViewportRef camera();
 
 	protected:
+
+		void setName(string name) { _name = name; }
 
 		friend class Scenario;
 		virtual void addedToScenario(ScenarioRef scenario);

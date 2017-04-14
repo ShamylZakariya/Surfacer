@@ -8,6 +8,8 @@
 
 #include "Terrain.hpp"
 
+#include "GameLevel.hpp"
+
 namespace terrain {
 
 #pragma mark - TerrainObject
@@ -38,6 +40,21 @@ namespace terrain {
 
 	void TerrainDrawComponent::draw(const core::render_state &renderState) {
 		_world->draw(renderState);
+	}
+
+#pragma mark - TerrainPhysicsComponent
+
+	void TerrainPhysicsComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
+	}
+
+	vector<cpBody*> TerrainPhysicsComponent::getBodies() const {
+		vector<cpBody*> bodies;
+		for (terrain::GroupBaseRef g : _world->getDynamicGroups()) {
+			bodies.push_back(g->getBody());
+		}
+		bodies.push_back(_world->getStaticGroup()->getBody());
+		return bodies;
 	}
 
 }

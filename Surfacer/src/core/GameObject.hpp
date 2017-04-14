@@ -65,6 +65,22 @@ namespace core {
 
 	};
 
+	class PhysicsComponent : public Component {
+	public:
+		PhysicsComponent():_space(nullptr){}
+		virtual ~PhysicsComponent(){}
+
+		void onReady(GameObjectRef parent, LevelRef level) override;
+
+		cpSpace* getSpace() const { return _space; }
+
+		// return a vector of all bodies in use
+		virtual vector<cpBody*> getBodies() const = 0;
+
+	private:
+		cpSpace *_space;
+	};
+
 
 	namespace VisibilityDetermination
 	{

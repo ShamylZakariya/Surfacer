@@ -59,6 +59,20 @@ namespace terrain {
 
 	};
 
+	class TerrainPhysicsComponent : public core::PhysicsComponent {
+	public:
+		TerrainPhysicsComponent(){}
+		virtual ~TerrainPhysicsComponent(){}
+
+		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		vector<cpBody*> getBodies() const override;
+
+	private:
+
+		WorldRef _world;
+
+	};
+
 }
 
 #endif /* Terrain_hpp */

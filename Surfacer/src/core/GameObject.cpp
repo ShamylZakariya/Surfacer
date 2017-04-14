@@ -84,6 +84,11 @@ namespace core {
 		return false;
 	}
 
+#pragma mark - PhysicsComponent
+
+	void PhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+		_space = level->getSpace();
+	}
 
 #pragma mark - GameObject
 
