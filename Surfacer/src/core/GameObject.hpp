@@ -156,9 +156,13 @@ namespace core {
 	SMART_PTR(InputComponent);
 	class InputComponent : public Component, public InputListener {
 	public:
-		InputComponent(){}
-		InputComponent(int dispatchReceiptIndex):InputListener(dispatchReceiptIndex){}
+		InputComponent();
+		InputComponent(int dispatchReceiptIndex);
+
 		virtual ~InputComponent(){}
+
+		void onReady(GameObjectRef parent, LevelRef level) override;
+		bool isListening() const override;
 
 		void monitorKey( int keyCode );
 		void ignoreKey( int keyCode );
@@ -184,7 +188,9 @@ namespace core {
 
 	private:
 
+		bool _attached;
 		map< int, bool > _monitoredKeyStates;
+
 	};
 
 

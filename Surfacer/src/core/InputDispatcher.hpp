@@ -161,6 +161,9 @@ namespace core {
 		void setDispatchReceiptIndex(int newIndex);
 		int getDispatchReceiptIndex() const { return _dispatchReceiptIndex; }
 
+		void setListening(bool listening) { _listening = listening; }
+		virtual bool isListening() const { return _listening; }
+
 		virtual bool mouseDown( const ci::app::MouseEvent &event ) { return false; }
 		virtual bool mouseUp( const ci::app::MouseEvent &event ) { return false; }
 		virtual bool mouseWheel( const ci::app::MouseEvent &event ) { return false; }
@@ -183,8 +186,9 @@ namespace core {
 
 	private:
 
+		bool _listening;
 		int _dispatchReceiptIndex;
-		
+
 	};
 	
 	

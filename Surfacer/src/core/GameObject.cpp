@@ -29,8 +29,28 @@ namespace core {
 #pragma mark - InputComponent
 
 	/*
+	 bool _attached;
 	 map< int, bool > _monitoredKeyStates;
 	 */
+
+	InputComponent::InputComponent():
+	_attached(false)
+	{}
+
+	InputComponent::InputComponent(int dispatchReceiptIndex):
+	InputListener(dispatchReceiptIndex),
+	_attached(false)
+	{}
+
+	void InputComponent::onReady(GameObjectRef parent, LevelRef level) {
+		Component::onReady(parent, level);
+		setListening(true);
+		_attached = true;
+	}
+
+	bool InputComponent::isListening() const {
+		return _attached && InputListener::isListening();
+	}
 
 	void InputComponent::monitorKey( int keyCode ) {
 		_monitoredKeyStates[keyCode] = false;

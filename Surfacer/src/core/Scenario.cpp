@@ -50,10 +50,16 @@ namespace core {
 	_time(app::getElapsedSeconds(), 1.0/60.0, 0),
 	_stepTime(app::getElapsedSeconds(), 1.0/60.0, 0),
 	_renderState(_viewport, RenderMode::GAME, 0,0,0,0 )
-	{}
+	{
+		setListening(true);
+	}
 
 	Scenario::~Scenario()
 	{}
+
+	bool Scenario::isListening() const {
+		return InputListener::isListening() && getLevel();
+	}
 
 	void Scenario::resize( ivec2 size )
 	{}

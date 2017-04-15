@@ -26,6 +26,8 @@ namespace core {
 		Scenario();
 		virtual ~Scenario();
 
+		bool isListening() const override;
+
 		virtual void setup(){}
 		virtual void cleanup(){}
 		virtual void resize( ivec2 size );

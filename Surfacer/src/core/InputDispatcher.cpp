@@ -173,7 +173,7 @@ namespace core {
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 		for ( auto listener : _listeners )
 		{
-			if (listener->mouseDown( _lastMouseEvent )) break;
+			if (listener->isListening() && listener->mouseDown( _lastMouseEvent )) break;
 		}
 
 		return false;
@@ -185,7 +185,7 @@ namespace core {
 
 		for ( auto listener : _listeners )
 		{
-			if(listener->mouseUp( _lastMouseEvent )) break;
+			if(listener->isListening() && listener->mouseUp( _lastMouseEvent )) break;
 		}
 
 		return false;
@@ -197,7 +197,7 @@ namespace core {
 
 		for ( auto listener : _listeners )
 		{
-			if(listener->mouseWheel( _lastMouseEvent )) break;
+			if(listener->isListening() && listener->mouseWheel( _lastMouseEvent )) break;
 		}
 
 		return false;
@@ -210,7 +210,7 @@ namespace core {
 
 		for ( auto listener : _listeners )
 		{
-			if(listener->mouseMove( _lastMouseEvent, delta )) break;
+			if(listener->isListening() && listener->mouseMove( _lastMouseEvent, delta )) break;
 		}
 
 		return false;
@@ -223,7 +223,7 @@ namespace core {
 
 		for ( auto listener : _listeners )
 		{
-			if(listener->mouseDrag( _lastMouseEvent, delta )) break;
+			if(listener->isListening() && listener->mouseDrag( _lastMouseEvent, delta )) break;
 		}
 
 		return false;
@@ -236,7 +236,7 @@ namespace core {
 
 		for ( auto listener : _listeners )
 		{
-			if(listener->keyDown(event)) break;
+			if(listener->isListening() && listener->keyDown(event)) break;
 		}
 
 		return false;
@@ -249,7 +249,7 @@ namespace core {
 
 		for ( auto listener : _listeners )
 		{
-			if(listener->keyUp(event)) break;
+			if(listener->isListening() && listener->keyUp(event)) break;
 		}
 
 		return false;
@@ -259,14 +259,17 @@ namespace core {
 #pragma mark InputListener
 
 	/*
-	 int _dispatchReceiptIndex;
+		bool _listening;
+		int _dispatchReceiptIndex;
 	 */
 	InputListener::InputListener():
+	_listening(false),
 	_dispatchReceiptIndex(0) {
 		InputDispatcher::get()->_addListener(this);
 	}
 
 	InputListener::InputListener(int dispatchReceiptIndex):
+	_listening(false),
 	_dispatchReceiptIndex(dispatchReceiptIndex) {
 		InputDispatcher::get()->_addListener(this);
 	}

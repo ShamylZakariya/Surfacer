@@ -11,7 +11,10 @@ Make an XML level file, which is loaded by GameLevel::load
 
 ## BUGS
 
+CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
+
 InputDispatcher should not dispatch any input events until the level is loaded. InputComponents can consume an event before things are running... which is troubling
+	- this can crash because components assume that getLevel() returns a valid pointer.
 
 SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
 
