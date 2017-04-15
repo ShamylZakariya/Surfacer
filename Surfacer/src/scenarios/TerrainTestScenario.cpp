@@ -13,6 +13,7 @@
 
 #include "Strings.hpp"
 #include "GameLevel.hpp"
+#include "DevComponents.hpp"
 
 namespace {
 
@@ -84,88 +85,13 @@ namespace {
 
 	};
 
-	class WorldCoordinateSystemDrawComponent : public DrawComponent {
-	public:
-
-		WorldCoordinateSystemDrawComponent(int gridSize = 10):
-		_gridSize(gridSize){}
-
-		void onReady(GameObjectRef parent, LevelRef level) override{
-			DrawComponent::onReady(parent, level);
-		}
-
-		cpBB getBB() const override {
-			return cpBBInfinity;
-		}
-
-		void draw(const core::render_state &state) override {
-			const cpBB frustum = state.viewport->getFrustum();
-			const int gridSize = _gridSize;
-			const int majorGridSize = _gridSize * 10;
-			const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
-			const int lastY = static_cast<int>(floor(frustum.t / gridSize) * gridSize) + gridSize;
-			const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
-			const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
-
-			const auto MinorLineColor = ColorA(1,1,1, .1);
-			const auto MajorLineColor = ColorA(1,1,1,0.35);
-			const auto AxisColor = ColorA(1,0,0,1);
-			gl::lineWidth(1.0 / state.viewport->getScale());
-
-			for (int y = firstY; y <= lastY; y+= gridSize) {
-				if (y == 0) {
-					gl::color(AxisColor);
-				} else if ( y % majorGridSize == 0) {
-					gl::color(MajorLineColor);
-				} else {
-					gl::color(MinorLineColor);
-				}
-				gl::drawLine(vec2(firstX, y), vec2(lastX, y));
-			}
-
-			for (int x = firstX; x <= lastX; x+= gridSize) {
-				if (x == 0) {
-					gl::color(AxisColor);
-				} else if ( x % majorGridSize == 0) {
-					gl::color(MajorLineColor);
-				} else {
-					gl::color(MinorLineColor);
-				}
-				gl::drawLine(vec2(x, firstY), vec2(x, lastY));
-			}
-		}
-
-		VisibilityDetermination::style getVisibilityDetermination() const override {
-			return VisibilityDetermination::ALWAYS_DRAW;
-		}
-
-		int getLayer() const override { return -1; }
-
-	private:
-
-		int _gridSize;
-		
-	};
-
-
-
 }
 
 /*
-	bool _cutting;
-	vec2 _cutterStart, _cutterEnd, _mouseScreen, _mouseWorld;
-
 	terrain::TerrainObjectRef _terrain;
-
-	cpBody *_mouseBody, *_draggingBody;
-	cpConstraint *_mouseJoint;
 */
 
-TerrainTestScenario::TerrainTestScenario():
-_cutting(false),
-_mouseBody(nullptr),
-_draggingBody(nullptr),
-_mouseJoint(nullptr)
+TerrainTestScenario::TerrainTestScenario()
 {}
 
 TerrainTestScenario::~TerrainTestScenario(){}
@@ -174,18 +100,8 @@ void TerrainTestScenario::setup() {
 	// go debug for rendering
 	setRenderMode(RenderMode::DEVELOPMENT);
 
-	LevelRef level = make_shared<Level>("Terrain Test Level");
-	setLevel(level);
-
-	// add background renderer
-	auto background = GameObject::with("Background", {
-		make_shared<WorldCoordinateSystemDrawComponent>()
-	});
-
-	level->addGameObject(background);
-
-	cpSpaceSetDamping(level->getSpace(), 0.95);
-	_mouseBody = cpBodyNewKinematic();
+	setLevel(make_shared<Level>("Terrain Test Level"));
+	cpSpaceSetDamping(getLevel()->getSpace(), 0.95);
 
 	//auto world = testDistantTerrain();
 	//auto world = testBasicTerrain();
@@ -199,16 +115,31 @@ void TerrainTestScenario::setup() {
 	auto world = testComplexSvgLoad();
 
 	_terrain = terrain::TerrainObject::create("Terrain", world);
-	level->addGameObject(_terrain);
+	getLevel()->addGameObject(_terrain);
+
+	auto dragger = GameObject::with("Dragger", {
+		make_shared<MousePickComponent>(Filters::PICK),
+		make_shared<MousePickDrawComponent>()
+	});
+
+	auto cutter = GameObject::with("Cutter", {
+		make_shared<MouseCutterComponent>(_terrain, Filters::CUTTER, 4),
+		make_shared<MouseCutterDrawComponent>()
+	});
+
+	auto cameraController = GameObject::with("ViewportControlComponent", {
+		make_shared<CameraControlComponent>(getViewportController())
+	});
+
+	auto grid = GameObject::with("Grid", { make_shared<WorldCoordinateSystemDrawComponent>() });
+
+	getLevel()->addGameObject(dragger);
+	getLevel()->addGameObject(cutter);
+	getLevel()->addGameObject(grid);
+	getLevel()->addGameObject(cameraController);	
 }
 
 void TerrainTestScenario::cleanup() {
-
-	_cutting = false;
-
-	releaseMouseDragConstraint();
-	cpBodyFree(_mouseBody);
-
 	_terrain.reset();
 	setLevel(nullptr);
 }
@@ -216,11 +147,6 @@ void TerrainTestScenario::cleanup() {
 void TerrainTestScenario::resize( ivec2 size ){}
 
 void TerrainTestScenario::step( const time_state &time ) {
-	cpVect mouseBodyPos = cpv(_mouseWorld);
-	cpVect newMouseBodyPos = cpvlerp(cpBodyGetPosition(_mouseBody), mouseBodyPos, 0.75);
-
-	cpBodySetVelocity(_mouseBody, cpvmult(cpvsub(newMouseBodyPos, cpBodyGetPosition(_mouseBody)), time.deltaT));
-	cpBodySetPosition(_mouseBody, newMouseBodyPos);
 }
 
 void TerrainTestScenario::update( const time_state &time ) {
@@ -231,132 +157,11 @@ void TerrainTestScenario::clear( const render_state &state ) {
 }
 
 void TerrainTestScenario::draw( const render_state &state ) {
-
-	{
-		Viewport::ScopedState cameraState(getViewport());
-
-		if (_cutting) {
-			float radius = (CUT_WIDTH/2) / state.viewport->getScale();
-			vec2 dir = _cutterEnd - _cutterStart;
-			float len = ::length(dir);
-			if (len > 1e-2) {
-				dir /= len;
-				float angle = atan2(dir.y, dir.x);
-				vec2 center = (_cutterStart+_cutterEnd)/2.f;
-
-				mat4 M = translate(vec3(center.x, center.y, 0)) * rotate(angle, vec3(0,0,1));
-				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(M);
-
-				gl::color(Color(1,0,1));
-				gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
-			}
-		}
-
-		if (_mouseJoint) {
-			// we're dragging, so draw mouse body
-			const float radius = 2 * getViewport()->getReciprocalScale();
-			gl::color(Color(1,0,1));
-			gl::drawSolidCircle(v2(cpBodyGetPosition(_mouseBody)), radius);
-		}
-	}
-
-
 	// draw fpf/sps
 	float fps = core::GameApp::get()->getAverageFps();
 	float sps = core::GameApp::get()->getAverageSps();
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
-}
-
-bool TerrainTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
-	releaseMouseDragConstraint();
-
-	_mouseScreen = event.getPos();
-	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
-
-	if ( event.isAltDown() )
-	{
-		getViewportController()->lookAt( _mouseWorld );
-		return true;
-	}
-
-	if ( isKeyDown( app::KeyEvent::KEY_SPACE )) {
-		return false;
-	}
-
-	const float distance = 1.f;
-	cpPointQueryInfo info = {};
-	cpShape *pick = cpSpacePointQueryNearest(getLevel()->getSpace(), cpv(_mouseWorld), distance, Filters::PICK, &info);
-	if (pick) {
-		cpBody *pickBody = cpShapeGetBody(pick);
-
-		if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
-			cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
-
-			_draggingBody = pickBody;
-			_mouseJoint = cpPivotJointNew2(_mouseBody, _draggingBody, cpvzero, cpBodyWorldToLocal(_draggingBody,nearest));
-
-			cpSpaceAddConstraint(getLevel()->getSpace(), _mouseJoint);
-
-			return true;
-		}
-	}
-
-	_cutting = true;
-	_cutterStart = _cutterEnd = _mouseWorld;
-
-	return true;
-}
-
-bool TerrainTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
-	releaseMouseDragConstraint();
-
-	if (_cutting) {
-		if (_terrain) {
-			const float radius = (CUT_WIDTH/2) / getViewport()->getScale();
-			_terrain->getWorld()->cut(_cutterStart, _cutterEnd, radius, Filters::CUTTER);
-		}
-
-		_cutting = false;
-	}
-
-	return true;
-}
-
-bool TerrainTestScenario::mouseWheel( const ci::app::MouseEvent &event ){
-	const float zoom = getViewportController()->getScale(),
-	wheelScale = 0.1 * zoom,
-	dz = (event.getWheelIncrement() * wheelScale);
-
-	getViewportController()->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
-
-	return true;
-}
-
-bool TerrainTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
-	_mouseScreen = event.getPos();
-	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
-	return true;
-}
-
-bool TerrainTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
-	_mouseScreen = event.getPos();
-	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
-
-	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
-	{
-		getViewportController()->setPan( getViewportController()->getPan() + dvec2(delta) );
-		_cutting = false;
-		return true;
-	}
-
-
-	if (_cutting) {
-		_cutterEnd = _mouseWorld;
-	}
-
-	return true;
 }
 
 bool TerrainTestScenario::keyDown( const ci::app::KeyEvent &event ) {
@@ -369,10 +174,6 @@ bool TerrainTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 	} else if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
 		setRenderMode( RenderMode::mode( (int(getRenderMode()) + 1) % RenderMode::COUNT ));
 	}
-	return false;
-}
-
-bool TerrainTestScenario::keyUp( const ci::app::KeyEvent &event ) {
 	return false;
 }
 
@@ -797,13 +598,4 @@ void TerrainTestScenario::timeSpatialIndex() {
 
 	app::console() << "------------------------------------" << endl << "PERFORMING PERF MEASUREMENTS" << endl;
 	performTimingRun(450);
-}
-
-void TerrainTestScenario::releaseMouseDragConstraint() {
-	if (_mouseJoint) {
-		cpSpaceRemoveConstraint(getLevel()->getSpace(), _mouseJoint);
-		cpConstraintFree(_mouseJoint);
-		_mouseJoint = nullptr;
-		_draggingBody = nullptr;
-	}
 }

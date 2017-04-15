@@ -32,10 +32,6 @@ namespace core {
 	 map< int, bool > _monitoredKeyStates;
 	 */
 
-	void InputComponent::onReady(GameObjectRef parent, LevelRef level) {
-		Component::onReady(parent,level);
-	}
-
 	void InputComponent::monitorKey( int keyCode ) {
 		_monitoredKeyStates[keyCode] = false;
 	}
@@ -44,7 +40,7 @@ namespace core {
 		_monitoredKeyStates.erase( keyCode );
 	}
 
-	bool InputComponent::isKeyDown( int keyCode ) const {
+	bool InputComponent::isMonitoredKeyDown( int keyCode ) const {
 		auto pos = _monitoredKeyStates.find( keyCode );
 		if ( pos != _monitoredKeyStates.end() )
 		{

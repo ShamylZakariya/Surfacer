@@ -154,13 +154,11 @@ namespace core {
 
 
 	SMART_PTR(InputComponent);
-	class InputComponent : public Component, public InputListener{
+	class InputComponent : public Component, public InputListener {
 	public:
 		InputComponent(){}
 		InputComponent(int dispatchReceiptIndex):InputListener(dispatchReceiptIndex){}
 		virtual ~InputComponent(){}
-
-		virtual void onReady(GameObjectRef parent, LevelRef level) override;
 
 		void monitorKey( int keyCode );
 		void ignoreKey( int keyCode );
@@ -179,7 +177,7 @@ namespace core {
 			return true if any monitored keys are pressed.
 			this ignores any keys that haven't been registered for monitoring by monitorKey()
 		 */
-		bool isKeyDown( int keyCode ) const override;
+		bool isMonitoredKeyDown( int keyCode ) const;
 
 		virtual bool keyDown( const ci::app::KeyEvent &event ) override;
 		virtual bool keyUp( const ci::app::KeyEvent &event ) override;

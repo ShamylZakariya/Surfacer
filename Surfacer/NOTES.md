@@ -9,13 +9,9 @@ Make an XML level file, which is loaded by GameLevel::load
 	- file specifies stuff to do with the ids specified in terrain svg
 	- file has stuff like friction, gravity, etc
 
-Picking, dragging, cutting don't work in GameLevelTestScenario (probably others)
-	- could be Filters/Categories
-
-Crash when closing
-
-
 ## BUGS
+
+InputDispatcher should not dispatch any input events until the level is loaded. InputComponents can consume an event before things are running... which is troubling
 
 SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
 
