@@ -52,6 +52,10 @@ namespace core {
 								   e.getNativeModifiers()
 								   );
 		}
+
+		bool inputListenerDispatchIndexSorter(InputListener *a, InputListener *b) {
+			return a->getDispatchReceiptIndex() < b->getDispatchReceiptIndex();
+		}
 	}
 
 #pragma mark -
@@ -127,10 +131,11 @@ namespace core {
 		_mouseHidden = false;
 	}
 
-	void InputDispatcher::_pushListener( InputListener* listener )
+	void InputDispatcher::_addListener( InputListener* listener )
 	{
 		_removeListener( listener );
 		_listeners.push_back( listener );
+		_sortListeners();
 	}
 
 	void InputDispatcher::_removeListener( InputListener* listener )
@@ -143,16 +148,8 @@ namespace core {
 		return _listeners.empty() ? NULL : _listeners.back();
 	}
 
-	InputListener* InputDispatcher::_popListener()
-	{
-		if ( !_listeners.empty() )
-		{
-			InputListener* back = _listeners.back();
-			_listeners.pop_back();
-			return back;
-		}
-
-		return NULL;
+	void InputDispatcher::_sortListeners() {
+		sort(_listeners.begin(), _listeners.end(), inputListenerDispatchIndexSorter);
 	}
 
 	ivec2 InputDispatcher::_mouseDelta( const app::MouseEvent &event )
@@ -174,9 +171,9 @@ namespace core {
 	bool InputDispatcher::_mouseDown( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if ((*it)->mouseDown( _lastMouseEvent )) break;
+			if (listener->mouseDown( _lastMouseEvent )) break;
 		}
 
 		return false;
@@ -186,9 +183,9 @@ namespace core {
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if((*it)->mouseUp( _lastMouseEvent )) break;
+			if(listener->mouseUp( _lastMouseEvent )) break;
 		}
 
 		return false;
@@ -198,9 +195,9 @@ namespace core {
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if((*it)->mouseWheel( _lastMouseEvent )) break;
+			if(listener->mouseWheel( _lastMouseEvent )) break;
 		}
 
 		return false;
@@ -211,9 +208,9 @@ namespace core {
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 		ivec2 delta = _mouseDelta( _lastMouseEvent );
 
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if((*it)->mouseMove( _lastMouseEvent, delta )) break;
+			if(listener->mouseMove( _lastMouseEvent, delta )) break;
 		}
 
 		return false;
@@ -224,9 +221,9 @@ namespace core {
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
 		ivec2 delta = _mouseDelta( _lastMouseEvent );
 
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if((*it)->mouseDrag( _lastMouseEvent, delta )) break;
+			if(listener->mouseDrag( _lastMouseEvent, delta )) break;
 		}
 
 		return false;
@@ -237,9 +234,9 @@ namespace core {
 		_keyPressState[ event.getCode() ] = true;
 		_lastKeyEvent = event;
 
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if((*it)->keyDown(event)) break;
+			if(listener->keyDown(event)) break;
 		}
 
 		return false;
@@ -250,9 +247,9 @@ namespace core {
 		_keyPressState[ event.getCode() ] = false;
 		_lastKeyEvent = event;
 
-		for ( auto it( _listeners.rbegin()), end( _listeners.rend()); it != end; ++it )
+		for ( auto listener : _listeners )
 		{
-			if((*it)->keyUp(event)) break;
+			if(listener->keyUp(event)) break;
 		}
 
 		return false;
@@ -261,27 +258,26 @@ namespace core {
 #pragma mark -
 #pragma mark InputListener
 
-	InputListener::InputListener()
-	{}
+	/*
+	 int _dispatchReceiptIndex;
+	 */
+	InputListener::InputListener():
+	_dispatchReceiptIndex(0) {
+		InputDispatcher::get()->_addListener(this);
+	}
 
-	InputListener::~InputListener()
-	{
+	InputListener::InputListener(int dispatchReceiptIndex):
+	_dispatchReceiptIndex(dispatchReceiptIndex) {
+		InputDispatcher::get()->_addListener(this);
+	}
+
+	InputListener::~InputListener() {
 		InputDispatcher::get()->_removeListener( this );
 	}
 
-	void InputListener::takeFocus()
-	{
-		InputDispatcher::get()->_pushListener( this );
+	void InputListener::setDispatchReceiptIndex(int newIndex) {
+		_dispatchReceiptIndex = newIndex;
+		InputDispatcher::get()->_sortListeners();
 	}
 
-	void InputListener::resignFocus()
-	{
-		InputDispatcher::get()->_removeListener( this );
-	}
-
-	bool InputListener::hasFocus() const
-	{
-		return InputDispatcher::get()->_topListener() == this;
-	}
-	
 }

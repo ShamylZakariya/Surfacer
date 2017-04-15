@@ -10,6 +10,7 @@
 
 #include "GameLevel.hpp"
 
+using namespace core;
 namespace terrain {
 
 #pragma mark - TerrainObject
@@ -19,33 +20,42 @@ namespace terrain {
 	_world(world)
 	{
 		addComponent(make_shared<TerrainDrawComponent>());
+		addComponent(make_shared<TerrainPhysicsComponent>());
 	}
 
 	TerrainObject::~TerrainObject()
 	{}
 
-	void TerrainObject::step(const core::time_state &timeState) {
+	void TerrainObject::onReady(LevelRef level) {
+		GameObject::onReady(level);
+	}
+
+	void TerrainObject::step(const time_state &timeState) {
 		_world->step(timeState);
 	}
 
-	void TerrainObject::update(const core::time_state &timeState) {
+	void TerrainObject::update(const time_state &timeState) {
 		_world->update(timeState);
 	}
 
 #pragma mark - TerrainDrawComponent
 
-	void TerrainDrawComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+	void TerrainDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
 	}
 
-	void TerrainDrawComponent::draw(const core::render_state &renderState) {
+	void TerrainDrawComponent::draw(const render_state &renderState) {
 		_world->draw(renderState);
 	}
 
 #pragma mark - TerrainPhysicsComponent
 
-	void TerrainPhysicsComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+	void TerrainPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
+
+		// assign level ref to bodies
+		
+
 	}
 
 	vector<cpBody*> TerrainPhysicsComponent::getBodies() const {

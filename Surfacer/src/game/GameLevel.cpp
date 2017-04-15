@@ -12,9 +12,6 @@ using namespace core;
 
 namespace {
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
-
 	pair<XmlTree,bool> findElement(const XmlTree &node, string tag) {
 		if (node.isElement() && node.getTag() == tag) {
 			return make_pair(node,true);
@@ -42,7 +39,6 @@ namespace {
 		}
 		return make_pair(XmlTree(),false);
 	}
-
 
 }
 
@@ -85,6 +81,9 @@ void GameLevel::addGameObject(core::GameObjectRef obj) {
 
 void GameLevel::loadTerrain(ci::DataSourceRef svgData) {
 
+	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	
 	//
 	//	Load terrain
 	//

@@ -30,6 +30,7 @@ namespace terrain {
 		TerrainObject(string name, WorldRef world);
 		virtual ~TerrainObject();
 
+		void onReady(core::LevelRef level) override;
 		void step(const core::time_state &timeState) override;
 		void update(const core::time_state &timeState) override;
 
@@ -39,6 +40,9 @@ namespace terrain {
 		WorldRef _world;
 	};
 
+	/**
+	 TerrainDrawComponent is a thin adapter to TerrainWorld's built-in draw dispatch system
+	 */
 	class TerrainDrawComponent : public core::DrawComponent {
 	public:
 
@@ -59,6 +63,9 @@ namespace terrain {
 
 	};
 
+	/**
+	 TerrainPhysicsComponent is a thin adapter to TerrainWorld's physics system
+	 */
 	class TerrainPhysicsComponent : public core::PhysicsComponent {
 	public:
 		TerrainPhysicsComponent(){}

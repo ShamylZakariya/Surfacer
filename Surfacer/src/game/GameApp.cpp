@@ -86,7 +86,6 @@ namespace core {
 
 	void GameApp::setScenario( ScenarioRef scenario ) {
 		if (_scenario) {
-			_scenario->resignFocus();
 			_scenario->_dispatchCleanup();
 		}
 
@@ -95,7 +94,6 @@ namespace core {
 		if (_scenario) {
 			_scenario->_dispatchSetup();
 			_scenario->_dispatchResize(getWindowSize());
-			_scenario->takeFocus();
 		}
 	}
 

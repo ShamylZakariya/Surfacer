@@ -33,7 +33,7 @@ namespace core {
 	 */
 
 	void InputComponent::onReady(GameObjectRef parent, LevelRef level) {
-		takeFocus();
+		Component::onReady(parent,level);
 	}
 
 	void InputComponent::monitorKey( int keyCode ) {

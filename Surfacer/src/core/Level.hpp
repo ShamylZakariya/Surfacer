@@ -80,6 +80,14 @@ namespace core {
 	class Level : public enable_shared_from_this<Level> {
 	public:
 
+		static LevelRef getLevelFromSpace(cpSpace *space) {
+			return static_cast<Level*>(cpSpaceGetUserData(space))->shared_from_this<Level>();
+		}
+
+		inline static Level* getLevelPtrFromSpace(cpSpace *space) {
+			return static_cast<Level*>(cpSpaceGetUserData(space));
+		}
+
 		signals::signal< void(const LevelRef &) > levelWasPaused;
 		signals::signal< void(const LevelRef &) > levelWasUnpaused;
 
@@ -87,6 +95,18 @@ namespace core {
 
 		Level(string name);
 		virtual ~Level();
+
+		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this<Foo>();
+		template<typename T>
+		shared_ptr<T> shared_from_this() const {
+			return dynamic_pointer_cast<T>(enable_shared_from_this<Level>::shared_from_this());
+		}
+
+		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this<Foo>();
+		template<typename T>
+		shared_ptr<T> shared_from_this() {
+			return dynamic_pointer_cast<T>(enable_shared_from_this<Level>::shared_from_this());
+		}
 
 		const string &getName() const { return _name; }
 		ScenarioRef getScenario() const { return _scenario.lock(); }
@@ -107,8 +127,11 @@ namespace core {
 		virtual vector<GameObjectRef> getGameObjectsByName(string name) const;
 
 		const DrawDispatcherRef &getDrawDispatcher() const { return _drawDispatcher; }
-		const time_state &time() const { return _time; }
-		ViewportRef camera();
+		const time_state &getTime() const { return _time; }
+		ViewportRef getViewport();
+
+		void setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f);
+		cpBodyVelocityFunc getCpBodyVelocityUpdateFunc() const { return _bodyVelocityFunc; }
 
 	protected:
 
@@ -129,6 +152,7 @@ namespace core {
 		time_state _time;
 		string _name;
 		DrawDispatcherRef _drawDispatcher;
+		cpBodyVelocityFunc _bodyVelocityFunc;
 
 	};
 

@@ -12,6 +12,7 @@
 #include <cinder/Rand.h>
 
 #include "Strings.hpp"
+#include "GameLevel.hpp"
 
 namespace {
 
@@ -82,23 +83,6 @@ namespace {
 		}
 
 	};
-
-
-	namespace Categories {
-		enum Categories {
-			TERRAIN = 1 << 30,
-			CUTTER = 1 << 29,
-			PICK = 1 << 28,
-			ANCHOR = 1 << 27
-		};
-	};
-
-	namespace Filters {
-		cpShapeFilter TERRAIN = cpShapeFilterNew(CP_NO_GROUP, Categories::TERRAIN, Categories::TERRAIN | Categories::CUTTER | Categories::PICK | Categories::ANCHOR);
-		cpShapeFilter ANCHOR = cpShapeFilterNew(CP_NO_GROUP, Categories::ANCHOR, Categories::TERRAIN);
-		cpShapeFilter CUTTER = cpShapeFilterNew(CP_NO_GROUP, Categories::CUTTER, Categories::TERRAIN);
-		cpShapeFilter PICK = cpShapeFilterNew(CP_NO_GROUP, Categories::PICK, Categories::TERRAIN);
-	}
 
 	class WorldCoordinateSystemDrawComponent : public DrawComponent {
 	public:

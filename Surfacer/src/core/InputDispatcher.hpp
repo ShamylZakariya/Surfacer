@@ -92,7 +92,7 @@ namespace core {
 			Push a listener to the top of the input receiver stack.
 			This listener will be the first to receive input events.
 		 */
-		void _pushListener( InputListener *listener );
+		void _addListener( InputListener *listener );
 
 		/**
 			Remove a listener from the input receiver stack.
@@ -105,10 +105,7 @@ namespace core {
 		 */
 		InputListener* _topListener() const;
 
-		/**
-			Pop the top-most listener from the input receiver stack.
-		 */
-		InputListener* _popListener();
+		void _sortListeners();
 
 		ci::ivec2 _mouseDelta( const ci::app::MouseEvent &event );
 
@@ -148,8 +145,7 @@ namespace core {
 	 consumed the event. If so, the event will NOT be passed on to the next listener in the stack. If you ignore
 	 the event return false to let it pass on to the next listener.
 	 */
-	class InputListener
-	{
+	class InputListener {
 	public:
 
 		friend class InputDispatcher;
@@ -159,22 +155,11 @@ namespace core {
 			will become the first listener, and will receive input events first, before other listeners in the stack.
 		 */
 		InputListener();
+		InputListener(int dispatchReceiptIndex);
 		virtual ~InputListener();
 
-		/**
-			Convenience function to make this InputListener the first listener in the dispatcher's stack
-		 */
-		void takeFocus();
-
-		/**
-			Convenience function to remove this listener from the dispatcher's stack
-		 */
-		void resignFocus();
-
-		/**
-			@return true if this InputListener has the topmost position in the input listener stack
-		 */
-		bool hasFocus() const;
+		void setDispatchReceiptIndex(int newIndex);
+		int getDispatchReceiptIndex() const { return _dispatchReceiptIndex; }
 
 		virtual bool mouseDown( const ci::app::MouseEvent &event ) { return false; }
 		virtual bool mouseUp( const ci::app::MouseEvent &event ) { return false; }
@@ -195,6 +180,10 @@ namespace core {
 		bool isControlDown() const { return InputDispatcher::get()->isControlDown(); }
 		bool isMetaDown() const { return InputDispatcher::get()->isMetaDown(); }
 		bool isAccelDown() const { return InputDispatcher::get()->isAccelDown(); }
+
+	private:
+
+		int _dispatchReceiptIndex;
 		
 	};
 	

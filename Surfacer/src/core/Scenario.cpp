@@ -44,6 +44,7 @@ namespace core {
 	 */
 
 	Scenario::Scenario():
+	core::InputListener(numeric_limits<int>::max()), // scenario should always be last to receive input after in-game input components
 	_viewport(make_shared<Viewport>()),
 	_viewportController(make_shared<ViewportController>(_viewport)),
 	_time(app::getElapsedSeconds(), 1.0/60.0, 0),

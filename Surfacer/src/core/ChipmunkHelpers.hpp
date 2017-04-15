@@ -295,8 +295,7 @@ inline void cpShapeCleanupAndFree( cpShape **shape ) {
 
 inline void cpBodyCleanupAndFree( cpBody **body ) {
 	if ( *body ) {
-		if (cpBodyGetSpace(*body))
-		{
+		if (cpBodyGetSpace(*body)) {
 			cpSpaceRemoveBody(cpBodyGetSpace(*body), *body );
 		}
 
@@ -308,8 +307,7 @@ inline void cpBodyCleanupAndFree( cpBody **body ) {
 
 inline void cpConstraintCleanupAndFree( cpConstraint **constraint ) {
 	if ( *constraint ) {
-		if (cpConstraintGetSpace(*constraint))
-		{
+		if (cpConstraintGetSpace(*constraint)) {
 			cpSpaceRemoveConstraint(cpConstraintGetSpace(*constraint), *constraint );
 		}
 

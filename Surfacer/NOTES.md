@@ -9,6 +9,11 @@ Make an XML level file, which is loaded by GameLevel::load
 	- file specifies stuff to do with the ids specified in terrain svg
 	- file has stuff like friction, gravity, etc
 
+Picking, dragging, cutting don't work in GameLevelTestScenario (probably others)
+	- could be Filters/Categories
+
+Crash when closing
+
 
 ## BUGS
 

@@ -258,6 +258,7 @@ namespace core {
 		time_state _time;
 		string _name;
 		DrawDispatcherRef _drawDispatcher;
+		cpBodyVelocityFunc _bodyVelocityFunc;
 	 */
 
 	Level::Level(string name):
@@ -266,11 +267,14 @@ namespace core {
 	_paused(false),
 	_time(0,0,0),
 	_name(name),
-	_drawDispatcher(make_shared<DrawDispatcher>()) {
+	_drawDispatcher(make_shared<DrawDispatcher>()),
+	_bodyVelocityFunc(cpBodyUpdateVelocity)
+	{
 		// some defaults
 		cpSpaceSetIterations( _space, 20 );
 		cpSpaceSetDamping( _space, 0.95 );
 		cpSpaceSetSleepTimeThreshold( _space, 1 );
+		cpSpaceSetUserData(_space, this);
 	}
 
 	Level::~Level() {
@@ -286,9 +290,9 @@ namespace core {
 		if (paused != isPaused()) {
 			_paused = isPaused();
 			if (isPaused()) {
-				levelWasPaused(shared_from_this());
+				levelWasPaused(shared_from_this<Level>());
 			} else {
-				levelWasUnpaused(shared_from_this());
+				levelWasUnpaused(shared_from_this<Level>());
 			}
 		}
 	}
@@ -380,10 +384,10 @@ namespace core {
 			_drawDispatcher->add(dc);
 		}
 
-		obj->onAddedToLevel(shared_from_this());
+		obj->onAddedToLevel(shared_from_this<Level>());
 
 		if (_ready) {
-			obj->onReady(shared_from_this());
+			obj->onReady(shared_from_this<Level>());
 		}
 
 	}
@@ -420,7 +424,20 @@ namespace core {
 		return result;
 	}
 
-	ViewportRef Level::camera() {
+	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
+		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
+
+		// now we need to update everything in the level
+		for (const auto &obj : _objects) {
+			if (PhysicsComponentRef physics = obj->getComponent<PhysicsComponent>()) {
+				for (auto body : physics->getBodies()) {
+					cpBodySetVelocityUpdateFunc(body, f);
+				}
+			}
+		}
+	}
+
+	ViewportRef Level::getViewport() {
 		return getScenario()->getViewport();
 	}
 
@@ -435,7 +452,7 @@ namespace core {
 	void Level::onReady() {
 		CI_ASSERT_MSG(!_ready, "Can't call onReady() on Level that is already ready");
 
-		const auto self = shared_from_this();
+		const auto self = shared_from_this<Level>();
 		for (auto &obj : _objects) {
 			obj->onReady(self);
 		}

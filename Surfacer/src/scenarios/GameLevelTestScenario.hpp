@@ -10,6 +10,7 @@
 #define GameLevelTestScenario_hpp
 
 #include "Core.hpp"
+#include "Terrain.hpp"
 
 using namespace ci;
 using namespace core;
@@ -41,8 +42,8 @@ public:
 
 private:
 
-	vec2 _mouseScreen, _mouseWorld;
-	
+	terrain::TerrainObjectRef _terrain;
+
 };
 
 

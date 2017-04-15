@@ -15,23 +15,6 @@
 
 namespace {
 
-	namespace Categories {
-		enum Categories {
-			TERRAIN = 1 << 30,
-			CUTTER = 1 << 29,
-			PICK = 1 << 28,
-			ANCHOR = 1 << 27
-		};
-	};
-
-	namespace Filters {
-		cpShapeFilter TERRAIN = cpShapeFilterNew(CP_NO_GROUP, Categories::TERRAIN, Categories::TERRAIN | Categories::CUTTER | Categories::PICK | Categories::ANCHOR);
-		cpShapeFilter ANCHOR = cpShapeFilterNew(CP_NO_GROUP, Categories::ANCHOR, Categories::TERRAIN);
-		cpShapeFilter CUTTER = cpShapeFilterNew(CP_NO_GROUP, Categories::CUTTER, Categories::TERRAIN);
-		cpShapeFilter PICK = cpShapeFilterNew(CP_NO_GROUP, Categories::PICK, Categories::TERRAIN);
-	}
-
-
 	class WorldCoordinateSystemDrawComponent : public DrawComponent {
 	public:
 
@@ -95,7 +78,173 @@ namespace {
 
 	};
 
+	class MousePickComponent : public core::InputComponent {
+	public:
+
+		MousePickComponent(cpShapeFilter pickFilter):
+		InputComponent(0),
+		_pickFilter(pickFilter),
+		_mouseBody(nullptr),
+		_draggingBody(nullptr),
+		_mouseJoint(nullptr)
+		{}
+
+		virtual ~MousePickComponent() {
+			releaseDragConstraint();
+			cpBodyFree(_mouseBody);
+		}
+
+		void onReady(GameObjectRef parent, LevelRef level) override {
+			InputComponent::onReady(parent, level);
+			_mouseBody = cpBodyNewKinematic();
+		}
+
+		void step(const time_state &time) override {
+			cpVect mouseBodyPos = cpv(_mouseWorld);
+			cpVect newMouseBodyPos = cpvlerp(cpBodyGetPosition(_mouseBody), mouseBodyPos, 0.75);
+
+			cpBodySetVelocity(_mouseBody, cpvmult(cpvsub(newMouseBodyPos, cpBodyGetPosition(_mouseBody)), time.deltaT));
+			cpBodySetPosition(_mouseBody, newMouseBodyPos);
+		}
+
+		bool mouseDown( const ci::app::MouseEvent &event ) override {
+			releaseDragConstraint();
+
+			_mouseScreen = event.getPos();
+			_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+
+			const float distance = 1.f;
+			cpPointQueryInfo info = {};
+			cpShape *pick = cpSpacePointQueryNearest(getLevel()->getSpace(), cpv(_mouseWorld), distance, _pickFilter, &info);
+			if (pick) {
+				cpBody *pickBody = cpShapeGetBody(pick);
+
+				if (pickBody && cpBodyGetType(pickBody) == CP_BODY_TYPE_DYNAMIC) {
+					cpVect nearest = (info.distance > 0.0f ? info.point : cpv(_mouseWorld));
+
+					_draggingBody = pickBody;
+					_mouseJoint = cpPivotJointNew2(_mouseBody, _draggingBody, cpvzero, cpBodyWorldToLocal(_draggingBody,nearest));
+
+					cpSpaceAddConstraint(getLevel()->getSpace(), _mouseJoint);
+					
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		bool mouseUp( const ci::app::MouseEvent &event ) override {
+			releaseDragConstraint();
+			return false;
+		}
+
+		bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) override {
+			_mouseScreen = event.getPos();
+			_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+			return false;
+		}
+
+		bool mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) override {
+			_mouseScreen = event.getPos();
+			_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+			return false;
+		}
+
+		void releaseDragConstraint() {
+			if (_mouseJoint) {
+				cpSpaceRemoveConstraint(getLevel()->getSpace(), _mouseJoint);
+				cpConstraintFree(_mouseJoint);
+				_mouseJoint = nullptr;
+				_draggingBody = nullptr;
+			}
+		}
+
+
+	private:
+
+		cpShapeFilter _pickFilter;
+		cpBody *_mouseBody, *_draggingBody;
+		cpConstraint *_mouseJoint;
+		vec2 _mouseScreen, _mouseWorld;
+
+	};
+
+	class MouseCutterComponent : public core::InputComponent {
+	public:
+
+		MouseCutterComponent(terrain::TerrainObjectRef terrain, cpShapeFilter cutFilter, float radius):
+		InputComponent(1),
+		_cutting(false),
+		_radius(radius),
+		_cutFilter(cutFilter),
+		_terrain(terrain)
+		{}
+
+		virtual ~MouseCutterComponent() {
+		}
+
+		void onReady(GameObjectRef parent, LevelRef level) override {
+			InputComponent::onReady(parent, level);
+		}
+
+		void step(const time_state &time) override {
+		}
+
+		bool mouseDown( const ci::app::MouseEvent &event ) override {
+			_mouseScreen = event.getPos();
+			_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+
+			_cutting = true;
+			_cutStart = _cutEnd = _mouseWorld;
+
+			return false;
+		}
+
+		bool mouseUp( const ci::app::MouseEvent &event ) override {
+			if (_cutting) {
+				if (_terrain) {
+					const float radius = _radius / getLevel()->getViewport()->getScale();
+					_terrain->getWorld()->cut(_cutStart, _cutEnd, radius, _cutFilter);
+				}
+
+				_cutting = false;
+			}
+			return false;
+		}
+
+		bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) override {
+			_mouseScreen = event.getPos();
+			_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+			return false;
+		}
+
+		bool mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) override {
+			_mouseScreen = event.getPos();
+			_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+			if (_cutting) {
+				_cutEnd = _mouseWorld;
+			}
+			return false;
+		}
+
+	private:
+
+		bool _cutting;
+		float _radius;
+		cpShapeFilter _cutFilter;
+		vec2 _mouseScreen, _mouseWorld, _cutStart, _cutEnd;
+		terrain::TerrainObjectRef _terrain;
+
+	};
+
+
+
 }
+
+/*
+	terrain::TerrainObjectRef _terrain;
+*/
 
 GameLevelTestScenario::GameLevelTestScenario()
 {}
@@ -109,21 +258,25 @@ void GameLevelTestScenario::setup() {
 	setLevel(level);
 
 	level->load(app::loadAsset("levels/test0.xml"));
+	_terrain = level->getTerrain();
 
-	// add background renderer
-	auto background = GameObject::with("Background", {
-		make_shared<WorldCoordinateSystemDrawComponent>()
-	});
 
-	getLevel()->addGameObject(background);
+	auto dragger = GameObject::with("Dragger", { make_shared<MousePickComponent>(Filters::PICK) });
+	auto cutter = GameObject::with("Cutter", { make_shared<MouseCutterComponent>(_terrain, Filters::CUTTER, 4)});
+	auto grid = GameObject::with("Grid", { make_shared<WorldCoordinateSystemDrawComponent>() });
+
+	getLevel()->addGameObject(dragger);
+	getLevel()->addGameObject(cutter);
+	getLevel()->addGameObject(grid);
+
 }
 
 void GameLevelTestScenario::cleanup() {
+	_terrain = nullptr;
 	setLevel(nullptr);
 }
 
 void GameLevelTestScenario::resize( ivec2 size ) {
-
 }
 
 void GameLevelTestScenario::step( const time_state &time ) {
@@ -137,7 +290,6 @@ void GameLevelTestScenario::clear( const render_state &state ) {
 }
 
 void GameLevelTestScenario::draw( const render_state &state ) {
-
 	//
 	// NOTE: we're in screen space, with coordinate system origin at top left
 	//
@@ -150,12 +302,10 @@ void GameLevelTestScenario::draw( const render_state &state ) {
 }
 
 bool GameLevelTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
-	_mouseScreen = event.getPos();
-	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
 
-	if ( event.isAltDown() )
-	{
-		getViewportController()->lookAt( _mouseWorld );
+	if ( event.isAltDown() ){
+		dvec2 mouseWorld = getLevel()->getViewport()->screenToWorld(event.getPos());
+		getViewportController()->lookAt( mouseWorld );
 		return true;
 	}
 
@@ -163,7 +313,7 @@ bool GameLevelTestScenario::mouseDown( const ci::app::MouseEvent &event ) {
 		return false;
 	}
 
-	return true;
+	return false;
 }
 
 bool GameLevelTestScenario::mouseUp( const ci::app::MouseEvent &event ) {
@@ -181,22 +331,16 @@ bool GameLevelTestScenario::mouseWheel( const ci::app::MouseEvent &event ) {
 }
 
 bool GameLevelTestScenario::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
-	_mouseScreen = event.getPos();
-	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
-	return true;
+	return false;
 }
 
 bool GameLevelTestScenario::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
-	_mouseScreen = event.getPos();
-	_mouseWorld = getViewport()->screenToWorld(_mouseScreen);
-
-	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
-	{
+	if ( isKeyDown( app::KeyEvent::KEY_SPACE )){
 		getViewportController()->setPan( getViewportController()->getPan() + dvec2(delta) );
 		return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool GameLevelTestScenario::keyDown( const ci::app::KeyEvent &event ) {
@@ -204,7 +348,6 @@ bool GameLevelTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 		reset();
 		return true;
 	} else if (event.getCode() == ci::app::KeyEvent::KEY_SPACE) {
-
 		return true;
 	} else if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
 		setRenderMode( RenderMode::mode( (int(getRenderMode()) + 1) % RenderMode::COUNT ));
