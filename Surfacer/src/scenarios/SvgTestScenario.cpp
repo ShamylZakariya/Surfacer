@@ -48,38 +48,22 @@ SvgTestScenario::~SvgTestScenario() {
 }
 
 void SvgTestScenario::setup() {
-	auto vsh = CI_GLSL(150,
-					   uniform mat4 ciModelViewProjection;
-
-					   in vec4 ciPosition;
-
-					   void main(void){
-						   gl_Position = ciModelViewProjection * ciPosition;
-					   }
-					   );
-
-	auto fsh = CI_GLSL(150,
-					   out vec4 oColor;
-
-					   void main(void) {
-						   oColor = vec4(1,0,1,1);
-					   }
-					   );
-
-
-	_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
-
-
-
 	setLevel(make_shared<Level>("Hello Svg"));
 
 	auto cameraController = GameObject::with("ViewportControlComponent", {
 		make_shared<CameraControlComponent>(getViewportController())
 	});
 
+	auto img = loadImage(app::loadAsset("cartesian_grid.png"));
+	auto tex = gl::Texture2d::create(img, gl::Texture2d::Format().mipmap());
+	auto debugGrid = GameObject::with("Grid", {
+		make_shared<WorldCartesianGridDrawComponent>(tex,100)
+	});
+
 	auto grid = GameObject::with("Grid", { make_shared<WorldCoordinateSystemDrawComponent>() });
 
-	getLevel()->addGameObject(grid);
+	getLevel()->addGameObject(debugGrid);
+	//	getLevel()->addGameObject(grid);
 	getLevel()->addGameObject(cameraController);
 
 	//testSimpleSvgLoad();

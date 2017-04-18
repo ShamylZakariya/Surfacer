@@ -45,6 +45,92 @@ void WorldCoordinateSystemDrawComponent::draw(const core::render_state &state) {
 	}
 }
 
+#pragma mark - WorldCartesianGridDrawComponent
+
+/*
+gl::TextureRef _texture;
+double _baseRepeatPeriod;
+gl::GlslProgRef _shader;
+gl::BatchRef _batch;
+*/
+
+WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef tex, double baseRepeatPeriod):
+_texture(tex),
+_baseRepeatPeriod(baseRepeatPeriod)
+{
+	_texture->setWrap(GL_REPEAT, GL_REPEAT);
+	_texture->setMagFilter(GL_NEAREST);
+	_texture->setMinFilter(GL_LINEAR_MIPMAP_LINEAR);
+	auto vsh = CI_GLSL(150,
+					   uniform mat4 ciModelViewProjection;
+					   uniform mat4 ModelView;
+
+					   in vec4 ciPosition;
+
+					   out vec2 worldPosition;
+
+					   void main(void){
+						   gl_Position = ciModelViewProjection * ciPosition;
+						   worldPosition = (ModelView * ciPosition).xy;
+					   }
+					   );
+
+	auto fsh = CI_GLSL(150,
+					   uniform float BaseRepeatPeriod;
+					   uniform vec4 Color;
+					   uniform sampler2D Tex0;
+
+					   in vec2 worldPosition;
+
+					   out vec4 oColor;
+
+					   void main(void) {
+						   vec2 texCoord = worldPosition / BaseRepeatPeriod;
+						   float alpha = texture(Tex0, texCoord).a;
+						   oColor = vec4(Color.r, Color.g, Color.b, Color.a * alpha);
+					   }
+					   );
+
+	_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
+	_batch = gl::Batch::create(geom::Plane().size(dvec2(2,2)), _shader); // plane of size 2,2 centered on 0
+}
+
+void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
+	// set up a scale to fill viewport with plane
+	cpBB frustum = state.viewport->getFrustum();
+	dvec2 centerWorld(v2(cpBBCenter(frustum)));
+	dvec2 scale(cpBBWidth(frustum)/2, cpBBHeight(frustum)/2);
+	dmat4 mv = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
+
+	//CI_LOG_D("frustum: " << frustum << "centerWorld: " << centerWorld << " scale: " << scale);
+
+	gl::ScopedModelMatrix smm;
+	gl::multModelMatrix(mv);
+
+	if (true) {
+
+		_texture->bind(0);
+		_shader->uniform("ModelView", mv);
+		_shader->uniform("Tex0", 0);
+		_shader->uniform("BaseRepeatPeriod", static_cast<float>(_baseRepeatPeriod));
+		_shader->uniform("Color", ColorA(1,1,1,1));
+		gl::ScopedGlslProg sglp(_shader);
+		gl::drawSolidRect(Rectf(-1,-1,1,1));
+
+		//		_batch->draw();
+	} else {
+
+		gl::color(1,0,1);
+		gl::lineWidth(2);
+		gl::drawLine(dvec2(-1,-1), dvec2(+1,-1));
+		gl::drawLine(dvec2(+1,-1), dvec2(+1,+1));
+		gl::drawLine(dvec2(+1,+1), dvec2(-1,+1));
+		gl::drawLine(dvec2(-1,+1), dvec2(-1,-1));
+		gl::drawLine(dvec2(-1,-1), dvec2(+1,+1));
+	}
+}
+
+
 #pragma mark - CameraControlComponent
 
 CameraControlComponent::CameraControlComponent(core::Camera2DInterfaceRef viewport, int dispatchReceiptIndex):

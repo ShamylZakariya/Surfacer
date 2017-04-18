@@ -42,9 +42,6 @@ protected:
 	void testSimpleSvgLoad();
 	void testSimpleSvgGroupOriginTransforms();
 
-private:
-
-	gl::GlslProgRef _shader;
 };
 
 #endif /* SvgTestScenario_hpp */

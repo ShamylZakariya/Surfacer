@@ -36,6 +36,35 @@ private:
 
 };
 
+class WorldCartesianGridDrawComponent : public core::DrawComponent {
+public:
+
+	WorldCartesianGridDrawComponent(gl::TextureRef tex, double baseRepeatPeriod);
+
+	cpBB getBB() const override {
+		return cpBBInfinity;
+	}
+
+	void draw(const core::render_state &state) override;
+
+	core::VisibilityDetermination::style getVisibilityDetermination() const override {
+		return core::VisibilityDetermination::ALWAYS_DRAW;
+	}
+
+	int getLayer() const override { return -1; }
+
+private:
+
+	gl::TextureRef _texture;
+	double _baseRepeatPeriod;
+	gl::GlslProgRef _shader;
+	gl::BatchRef _batch;
+	
+};
+
+
+
+
 class CameraControlComponent : public core::InputComponent {
 public:
 
