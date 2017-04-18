@@ -225,11 +225,6 @@ inline cpFloat cpBBRadius( const cpBB &bb )
 	return (std::max( bb.r - bb.l, bb.t - bb.b ) * 0.5) * 1.414213562;
 }
 
-inline cpVect cpBBCenter( const cpBB &bb )
-{
-	return cpv( (bb.l + bb.r) * 0.5, (bb.b + bb.t) * 0.5 );
-}
-
 inline cpFloat cpBBWidth( const cpBB &bb )
 {
 	return bb.r - bb.l;
