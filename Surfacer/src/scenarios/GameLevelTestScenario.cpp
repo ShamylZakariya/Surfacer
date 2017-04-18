@@ -48,7 +48,7 @@ void GameLevelTestScenario::setup() {
 		make_shared<CameraControlComponent>(getViewportController())
 	});
 
-	auto grid = GameObject::with("Grid", { make_shared<WorldCoordinateSystemDrawComponent>() });
+	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
 
 	getLevel()->addGameObject(dragger);
 	getLevel()->addGameObject(cutter);

@@ -8,43 +8,6 @@
 
 #include "DevComponents.hpp"
 
-void WorldCoordinateSystemDrawComponent::draw(const core::render_state &state) {
-	const cpBB frustum = state.viewport->getFrustum();
-	const int gridSize = _gridSize;
-	const int majorGridSize = _gridSize * 10;
-	const int firstY = static_cast<int>(floor(frustum.b / gridSize) * gridSize);
-	const int lastY = static_cast<int>(floor(frustum.t / gridSize) * gridSize) + gridSize;
-	const int firstX = static_cast<int>(floor(frustum.l / gridSize) * gridSize);
-	const int lastX = static_cast<int>(floor(frustum.r / gridSize) * gridSize) + gridSize;
-
-	const auto MinorLineColor = ColorA(1,1,1,0.05);
-	const auto MajorLineColor = ColorA(1,1,1,0.25);
-	const auto AxisColor = ColorA(1,0,0,1);
-	gl::lineWidth(1.0 / state.viewport->getScale());
-
-	for (int y = firstY; y <= lastY; y+= gridSize) {
-		if (y == 0) {
-			gl::color(AxisColor);
-		} else if ( y % majorGridSize == 0) {
-			gl::color(MajorLineColor);
-		} else {
-			gl::color(MinorLineColor);
-		}
-		gl::drawLine(vec2(firstX, y), vec2(lastX, y));
-	}
-
-	for (int x = firstX; x <= lastX; x+= gridSize) {
-		if (x == 0) {
-			gl::color(AxisColor);
-		} else if ( x % majorGridSize == 0) {
-			gl::color(MajorLineColor);
-		} else {
-			gl::color(MinorLineColor);
-		}
-		gl::drawLine(vec2(x, firstY), vec2(x, lastY));
-	}
-}
-
 #pragma mark - WorldCartesianGridDrawComponent
 
 /*
@@ -54,6 +17,11 @@ gl::GlslProgRef _shader;
 gl::BatchRef _batch;
 */
 
+shared_ptr<WorldCartesianGridDrawComponent> WorldCartesianGridDrawComponent::create(double baseRepeatPeriod) {
+	auto tex = gl::Texture2d::create(loadImage(app::loadAsset("cartesian_grid.png")), gl::Texture2d::Format().mipmap());
+	return make_shared<WorldCartesianGridDrawComponent>(tex,baseRepeatPeriod);
+}
+
 WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef tex, double baseRepeatPeriod):
 _texture(tex),
 _baseRepeatPeriod(baseRepeatPeriod)
@@ -61,6 +29,7 @@ _baseRepeatPeriod(baseRepeatPeriod)
 	_texture->setWrap(GL_REPEAT, GL_REPEAT);
 	_texture->setMagFilter(GL_NEAREST);
 	_texture->setMinFilter(GL_LINEAR_MIPMAP_LINEAR);
+
 	auto vsh = CI_GLSL(150,
 					   uniform mat4 ciModelViewProjection;
 					   uniform mat4 ModelView;
@@ -84,9 +53,16 @@ _baseRepeatPeriod(baseRepeatPeriod)
 
 					   out vec4 oColor;
 
-					   void main(void) {
-						   vec2 texCoord = worldPosition / BaseRepeatPeriod;
+					   float getGridForPeriod(float period) {
+						   vec2 texCoord = worldPosition / period;
 						   float alpha = texture(Tex0, texCoord).a;
+						   return alpha;
+					   }
+
+					   void main(void) {
+						   float baseAlpha = getGridForPeriod(BaseRepeatPeriod);
+						   float secondAlpha = getGridForPeriod(BaseRepeatPeriod * 10);
+						   float alpha = baseAlpha + secondAlpha;
 						   oColor = vec4(Color.r, Color.g, Color.b, Color.a * alpha);
 					   }
 					   );
@@ -96,18 +72,21 @@ _baseRepeatPeriod(baseRepeatPeriod)
 }
 
 void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
+
 	// set up a scale to fill viewport with plane
-	cpBB frustum = state.viewport->getFrustum();
-	dvec2 centerWorld(v2(cpBBCenter(frustum)));
-	dvec2 scale(cpBBWidth(frustum)/2, cpBBHeight(frustum)/2);
+	dvec2 centerWorld = state.viewport->screenToWorld(state.viewport->getViewportCenter());
+	dvec2 topLeftWorld = state.viewport->screenToWorld(dvec2(0,0));
+	dvec2 scale = centerWorld - topLeftWorld;
+	double periodScale = scale.x / _baseRepeatPeriod;
+
 	dmat4 mv = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
 
-	//CI_LOG_D("frustum: " << frustum << "centerWorld: " << centerWorld << " scale: " << scale);
+	CI_LOG_D("centerWorld: " << centerWorld << " scale: " << scale << " periodScale: " << periodScale);
 
 	gl::ScopedModelMatrix smm;
 	gl::multModelMatrix(mv);
 
-	if (true) {
+	if (/* DISABLES CODE */ (true)) {
 
 		_texture->bind(0);
 		_shader->uniform("ModelView", mv);

@@ -12,31 +12,11 @@
 #include "Core.hpp"
 #include "Terrain.hpp"
 
-class WorldCoordinateSystemDrawComponent : public core::DrawComponent {
+class WorldCartesianGridDrawComponent : public core::DrawComponent {
 public:
 
-	WorldCoordinateSystemDrawComponent(int gridSize = 10):
-	_gridSize(gridSize){}
+	static shared_ptr<WorldCartesianGridDrawComponent> create(double baseRepeatPeriod = 100);
 
-	cpBB getBB() const override {
-		return cpBBInfinity;
-	}
-
-	void draw(const core::render_state &state) override;
-
-	core::VisibilityDetermination::style getVisibilityDetermination() const override {
-		return core::VisibilityDetermination::ALWAYS_DRAW;
-	}
-
-	int getLayer() const override { return -1; }
-
-private:
-
-	int _gridSize;
-
-};
-
-class WorldCartesianGridDrawComponent : public core::DrawComponent {
 public:
 
 	WorldCartesianGridDrawComponent(gl::TextureRef tex, double baseRepeatPeriod);

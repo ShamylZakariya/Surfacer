@@ -54,16 +54,9 @@ void SvgTestScenario::setup() {
 		make_shared<CameraControlComponent>(getViewportController())
 	});
 
-	auto img = loadImage(app::loadAsset("cartesian_grid.png"));
-	auto tex = gl::Texture2d::create(img, gl::Texture2d::Format().mipmap());
-	auto debugGrid = GameObject::with("Grid", {
-		make_shared<WorldCartesianGridDrawComponent>(tex,100)
-	});
+	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
 
-	auto grid = GameObject::with("Grid", { make_shared<WorldCoordinateSystemDrawComponent>() });
-
-	getLevel()->addGameObject(debugGrid);
-	//	getLevel()->addGameObject(grid);
+	getLevel()->addGameObject(grid);
 	getLevel()->addGameObject(cameraController);
 
 	//testSimpleSvgLoad();
