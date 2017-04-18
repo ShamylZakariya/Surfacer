@@ -495,6 +495,42 @@ namespace terrain {
 
 #pragma mark - Svg
 
+		void svg_traverse_elements(XmlTree node, dmat4 worldTransform, vector<pair<string,PolyLine2d>> &idsAndContours) {
+
+			if ( node.hasAttribute( "transform" )) {
+				worldTransform = worldTransform * util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
+			}
+
+			const std::string tag = node.getTag();
+			if (tag == "g") {
+
+				//
+				//	Descend
+				//
+
+				for ( auto childNode = node.begin(); childNode != node.end(); ++childNode ) {
+					svg_traverse_elements(*childNode, worldTransform, idsAndContours);
+				}
+			} else if (util::svg::canParseShape(tag)) {
+
+				Shape2d shape;
+				util::svg::parseShape(node,shape);
+
+				//
+				//	Elements can have ONE contour each. We use the first,
+				//	and move it to world space while generating it
+				//
+
+				PolyLine2d contour;
+				for (const dvec2 v : shape.getContour(0).subdivide()) {
+					contour.push_back(worldTransform * v);
+				}
+
+				string id = node.getAttribute("id").getValue();
+				idsAndContours.push_back(make_pair(id,contour));
+			}
+		}
+
 		void svg_traverse_anchors(XmlTree node, dmat4 worldTransform, vector<PolyLine2d> &contours) {
 
 			if ( node.hasAttribute( "transform" )) {
@@ -565,7 +601,11 @@ namespace terrain {
 		}
 
 
-		void svg_descend(XmlTree node, dmat4 worldTransform, vector<PolyLine2d> &shapeContours, vector<PolyLine2d> &anchorContours) {
+		void svg_descend(XmlTree node, dmat4 worldTransform,
+						 vector<PolyLine2d> &shapeContours,
+						 vector<PolyLine2d> &anchorContours,
+						 vector<pair<string,PolyLine2d>> &elementIdsAndContours)
+		{
 			if ( node.hasAttribute( "transform" )) {
 				worldTransform = worldTransform * util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
 			}
@@ -582,16 +622,21 @@ namespace terrain {
 						svg_traverse_anchors(*childNode, worldTransform, anchorContours);
 					}
 					return;
+				} else if (id == "elements" ) {
+					for ( auto childNode = node.begin(); childNode != node.end(); ++childNode ) {
+						svg_traverse_elements(*childNode, worldTransform, elementIdsAndContours);
+					}
+					return;
 				}
 			}
 
 			for ( auto childNode = node.begin(); childNode != node.end(); ++childNode ) {
-				svg_descend(*childNode, worldTransform, shapeContours, anchorContours);
+				svg_descend(*childNode, worldTransform, shapeContours, anchorContours, elementIdsAndContours);
 			}
 
 		}
 
-		void svg_load(XmlTree node, dmat4 worldTransform, vector<ShapeRef> &outShapes, vector<AnchorRef> &outAnchors) {
+		void svg_load(XmlTree node, dmat4 worldTransform, vector<ShapeRef> &outShapes, vector<AnchorRef> &outAnchors, vector<ElementRef> &outElements) {
 
 			//
 			// collect world shapes and anchors contours. Note, the world is made up
@@ -599,13 +644,18 @@ namespace terrain {
 			//
 
 			vector<PolyLine2d> shapeContours, anchorContours;
-			svg_descend(node, worldTransform, shapeContours, anchorContours);
+			vector<pair<string,PolyLine2d>> elementIdsAndContours;
+			svg_descend(node, worldTransform, shapeContours, anchorContours, elementIdsAndContours);
 
 			auto shapes = Shape::fromContours(shapeContours);
-			auto anchors = Anchor::fromContours(anchorContours);
-
 			outShapes.insert(outShapes.end(), shapes.begin(), shapes.end());
+
+			auto anchors = Anchor::fromContours(anchorContours);
 			outAnchors.insert(outAnchors.end(), anchors.begin(), anchors.end());
+
+			for (auto e : elementIdsAndContours) {
+				outElements.push_back(Element::fromContour(e.first, e.second));
+			}
 		}
 
 	}

@@ -15,6 +15,28 @@
 
 namespace core {
 
+#pragma mark - SpaceAccess
+
+	SpaceAccess::SpaceAccess(cpSpace *space):
+	_space(space)
+	{}
+
+	void SpaceAccess::addBody(cpBody *body) {
+		cpSpaceAddBody(_space, body);
+		bodyWasAddedToSpace(body);
+	}
+
+	void SpaceAccess::addShape(cpShape *shape) {
+		cpSpaceAddShape(_space, shape);
+		shapeWasAddedToSpace(shape);
+	}
+
+	void SpaceAccess::addConstraint(cpConstraint *constraint) {
+		cpSpaceAddConstraint(_space, constraint);
+		constraintWasAddedToSpace(constraint);
+	}
+
+
 #pragma mark - DrawDispatcher
 
 	namespace {
@@ -249,8 +271,32 @@ namespace core {
 
 #pragma mark - Level
 
+	namespace {
+
+		void radialGravityVelocityFunc(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt) {
+			cpSpace *space = cpBodyGetSpace(body);
+			Level *level = static_cast<Level*>(cpSpaceGetUserData(space));
+			Level::radial_gravity_info rgi = level->getRadialGravity();
+
+			// Gravitational acceleration is proportional to the inverse square of
+			// distance - in the real world - and directed toward the center of mass.
+			// we allow tuning of falloff via falloffPower
+
+			dvec2 body_2_com = rgi.centerOfMass - v2(cpBodyGetPosition(body));
+			double dist = length(body_2_com);
+			if (dist > 1e-5) {
+				dvec2 g = body_2_com * (rgi.strength / pow(dist, rgi.faloffPower));
+				cpBodyUpdateVelocity(body, cpv(g), damping, dt);
+			} else {
+				cpBodyUpdateVelocity(body, cpv(0,0), damping, dt);
+			}
+		}
+
+	}
+
 	/*
 		cpSpace *_space;
+		SpaceAccessRef _spaceAccess;
 		bool _ready, _paused;
 		ScenarioWeakRef _scenario;
 		set<GameObjectRef> _objects;
@@ -275,6 +321,14 @@ namespace core {
 		cpSpaceSetDamping( _space, 0.95 );
 		cpSpaceSetSleepTimeThreshold( _space, 1 );
 		cpSpaceSetUserData(_space, this);
+
+		_spaceAccess = make_shared<SpaceAccess>(_space);
+		_spaceAccess->bodyWasAddedToSpace.connect(this, &Level::onBodyAddedToSpace);
+		_spaceAccess->shapeWasAddedToSpace.connect(this, &Level::onShapeAddedToSpace);
+		_spaceAccess->constraintWasAddedToSpace.connect(this, &Level::onConstraintAddedToSpace);
+
+		setGravityType(DIRECTIONAL);
+		setDirectionalGravityDirection(dvec2(0,-9.8));
 	}
 
 	Level::~Level() {
@@ -427,18 +481,37 @@ namespace core {
 	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
 		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
 
-		// now we need to update everything in the level
-		for (const auto &obj : _objects) {
-			if (PhysicsComponentRef physics = obj->getComponent<PhysicsComponent>()) {
-				for (auto body : physics->getBodies()) {
-					cpBodySetVelocityUpdateFunc(body, f);
-				}
-			}
-		}
+		// update every body in sim
+		cpSpaceEachBody(_space, [](cpBody *body, void *data){
+			auto l = static_cast<Level*>(data);
+			cpBodySetVelocityUpdateFunc(body, l->_bodyVelocityFunc);
+		}, this);
+
 	}
 
 	ViewportRef Level::getViewport() {
 		return getScenario()->getViewport();
+	}
+
+	void Level::setGravityType(GravityType type) {
+		_gravityType = type;
+		switch(_gravityType) {
+			case DIRECTIONAL:
+				setCpBodyVelocityUpdateFunc(cpBodyUpdateVelocity);
+				break;
+			case RADIAL:
+				setCpBodyVelocityUpdateFunc(radialGravityVelocityFunc);
+				break;
+		}
+	}
+
+	void Level::setDirectionalGravityDirection(dvec2 dir) {
+		_directionalGravityDir = dir;
+		cpSpaceSetGravity(_space, cpv(_directionalGravityDir));
+	}
+
+	void Level::setRadialGravity(radial_gravity_info rgi) {
+		_radialGravityInfo = rgi;
 	}
 
 	void Level::addedToScenario(ScenarioRef scenario) {
@@ -458,6 +531,20 @@ namespace core {
 		}
 		_ready = true;
 	}
+
+	void Level::onBodyAddedToSpace(cpBody *body) {
+		//CI_LOG_D("onBodyAddedToSpace body: " << body);
+		cpBodySetVelocityUpdateFunc(body, getCpBodyVelocityUpdateFunc());
+	}
+
+	void Level::onShapeAddedToSpace(cpShape *shape) {
+		//CI_LOG_D("onShapeAddedToSpace shape: " << shape);
+	}
+
+	void Level::onConstraintAddedToSpace(cpConstraint *constraint) {
+		//CI_LOG_D("onConstraintAddedToSpace constraint: " << constraint);
+	}
+	
 
 
 }

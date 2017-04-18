@@ -5,21 +5,24 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 ##Currently
 
 Make an XML level file, which is loaded by GameLevel::load
-	- this file specifies path to terrain svg
-	- file specifies stuff to do with the ids specified in terrain svg
+	✓ this file specifies path to terrain svg
+	✓ file specifies stuff to do with the ids specified in terrain svg
 	- file has stuff like friction, gravity, etc
 
 ## BUGS
 
-CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
+Move various numeric parse functions from util::svg SvgParsing to util::xml
 
-InputDispatcher should not dispatch any input events until the level is loaded. InputComponents can consume an event before things are running... which is troubling
-	- this can crash because components assume that getLevel() returns a valid pointer.
+CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
+	- is this an ordering issue? who's gobbling the input?
+	- is there a robust way to respond to this from a design standpoint?
 
 SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
 
-Rewrite the cartesian coordinate renderer using a shader. Make it handle rotation.
+Rewrite the cartesian coordinate renderer using a shader. Make it handle rotation. Probably want to use textures.
+	- must handle rotation!
 	- CPU can compute the origin and step, pass that to shader. Shader uses gl_FragCoord - or shader does a line distance calculation with some kind of modulo
+	- can be repurposed to render galaxy/starfield in production game by swapping textures... maybe
 
 When a dynamic shape has stopped moving, if I zoom in really close, it disappears, as if the spatial index culling alg stops working. If I move it a smidge, culling starts working again.
 - REPRO: Cut a shape, move it, let it stop moving on its own. Zoom in real close. Pop, it's gone. Zoom back out, give it a wee toss, culling works again.

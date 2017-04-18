@@ -170,9 +170,10 @@ namespace terrain {
 			}
 
 			drawable = *it;
-
-			shader->uniform("Color", ColorA(drawable->getColor(), 1));
-			gl::draw(drawable->getVboMesh());
+			if (drawable->shouldDraw(state)) {
+				shader->uniform("Color", ColorA(drawable->getColor(), 1));
+				gl::draw(drawable->getVboMesh());
+			}
 		}
 
 		return it - 1;
@@ -184,9 +185,10 @@ namespace terrain {
 
 	size_t World::_idCounter = 0;
 
-	void World::loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, bool flip) {
+	void World::loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, vector<ElementRef> &elements, bool flip) {
 		shapes.clear();
 		anchors.clear();
+		elements.clear();
 
 		XmlTree svgNode = XmlTree( svgData ).getChild( "svg" );
 
@@ -195,7 +197,7 @@ namespace terrain {
 			transform = transform * translate(dvec3(0,documentFrame.getY2(),0)) * glm::scale(dvec3(1,-1,1));
 		}
 
-		detail::svg_load(svgNode, transform, shapes, anchors);
+		detail::svg_load(svgNode, transform, shapes, anchors, elements);
 	}
 
 	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize) {
@@ -255,7 +257,7 @@ namespace terrain {
 
 	/*
 		material _worldMaterial, _anchorMaterial;
-		cpSpace *_space;
+		core::SpaceAccessRef _space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
@@ -264,7 +266,7 @@ namespace terrain {
 		ci::gl::GlslProgRef _shader;
 	 */
 	
-	World::World(cpSpace *space, material worldMaterial, material anchorMaterial):
+	World::World(SpaceAccessRef space, material worldMaterial, material anchorMaterial):
 	_worldMaterial(worldMaterial),
 	_anchorMaterial(anchorMaterial),
 	_space(space)
@@ -301,7 +303,7 @@ namespace terrain {
 		_anchors.clear();
 	}
 
-	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors) {
+	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors, const vector<ElementRef> &elements) {
 
 		// build the anchors, adding all that triangulated and made physics representations
 		for (auto anchor : anchors) {
@@ -309,6 +311,14 @@ namespace terrain {
 				_anchors.push_back(anchor);
 				_drawDispatcher.add(anchor);
 			}
+		}
+
+		// add all the elements
+		_elements.insert(_elements.end(), elements.begin(), elements.end());
+		for (auto element : elements) {
+			CI_LOG_D("element: " + element->getId() << " pos: " << (element->getModelview() * element->getModelCentroid()));
+			_elementsById[element->getId()] = element;
+			_drawDispatcher.add(element);
 		}
 
 		// now build
@@ -365,8 +375,8 @@ namespace terrain {
 			//
 
 			cpVect verts[] = { cpv(cd), cpv(cc), cpv(cb), cpv(ca) };
-			cpShape *cuttingShape = cpPolyShapeNew(cpSpaceGetStaticBody(_space), 4, verts, cpTransformIdentity, radius * 2);
-			cpSpaceShapeQuery(_space, cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
+			cpShape *cuttingShape = cpPolyShapeNew(cpSpaceGetStaticBody(_space->getSpace()), 4, verts, cpTransformIdentity, radius * 2);
+			cpSpaceShapeQuery(_space->getSpace(), cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
 				cut_collector *collector = static_cast<cut_collector*>(data);
 				if (!cpShapeFilterReject(collector->filter, cpShapeGetFilter(collisionShape))) {
 					Shape *terrainShapePtr = static_cast<Shape*>(cpShapeGetUserData(collisionShape));
@@ -501,6 +511,14 @@ namespace terrain {
 		}
 	}
 
+	ElementRef World::getElementById(string id) const {
+		auto pos = _elementsById.find(id);
+		if (pos != _elementsById.end()) {
+			return pos->second;
+		}
+		return nullptr;
+	}
+
 	void World::build(const vector<ShapeRef> &affectedShapes, const map<ShapeRef,GroupBaseRef> &parentage) {
 
 		//
@@ -633,14 +651,14 @@ namespace terrain {
 	/*
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
-		cpSpace *_space;
+		SpaceAccessRef _space;
 		material _material;
 		string _name;
 		Color _color;
 		cpHashValue _hash;
 	 */
 
-	GroupBase::GroupBase(cpSpace *space, material m, DrawDispatcher &dispatcher):
+	GroupBase::GroupBase(SpaceAccessRef space, material m, DrawDispatcher &dispatcher):
 	_drawDispatcher(dispatcher),
 	_drawingBatchId(World::nextId()),
 	_space(space),
@@ -658,7 +676,7 @@ namespace terrain {
 		mutable cpBB _worldBB;
 	 */
 
-	StaticGroup::StaticGroup(cpSpace *space, material m, DrawDispatcher &dispatcher):
+	StaticGroup::StaticGroup(SpaceAccessRef space, material m, DrawDispatcher &dispatcher):
 	terrain::GroupBase(space, m, dispatcher),
 	_body(nullptr),
 	_worldBB(cpBBInvalid) {
@@ -666,7 +684,7 @@ namespace terrain {
 		_color = Color(0.15,0.15,0.15);
 		_body = cpBodyNewStatic();
 		cpBodySetUserData(_body, this);
-		cpSpaceAddBody(space,_body);
+		space->addBody(_body);
 	}
 	
 	StaticGroup::~StaticGroup() {
@@ -741,7 +759,7 @@ namespace terrain {
 						for (cpShape *collisionShape : collisionShapes) {
 							cpShapeSetFilter(collisionShape, _material.filter);
 							cpShapeSetFriction(collisionShape, _material.friction);
-							cpSpaceAddShape(_space, collisionShape);
+							_space->addShape(collisionShape);
 						}
 					}
 
@@ -774,7 +792,7 @@ namespace terrain {
 
 		bool _dynamic;
 		material _material;
-		cpSpace *_space;
+		SpaceAccessRef _space;
 		cpBody *_body;
 		cpVect _position;
 		cpFloat _angle;
@@ -788,7 +806,7 @@ namespace terrain {
 		Color _color;
 	 */
 
-	DynamicGroup::DynamicGroup(cpSpace *space, material m, DrawDispatcher &dispatcher):
+	DynamicGroup::DynamicGroup(SpaceAccessRef space, material m, DrawDispatcher &dispatcher):
 	GroupBase(space, m, dispatcher),
 	_body(nullptr),
 	_position(cpv(0,0)),
@@ -963,7 +981,7 @@ namespace terrain {
 					for (cpShape *collisionShape : collisionShapes) {
 						cpShapeSetFilter(collisionShape, _material.filter);
 						cpShapeSetFriction(collisionShape, _material.friction);
-						cpSpaceAddShape(_space, collisionShape);
+						_space->addShape(collisionShape);
 					}
 				} else {
 					garbage.insert(shape);
@@ -989,7 +1007,7 @@ namespace terrain {
 					drawDispatcher.add(shape);
 				}
 
-				cpSpaceAddBody(_space, _body);
+				_space->addBody(_body);
 
 				syncToCpBody();
 
@@ -1066,6 +1084,40 @@ namespace terrain {
 
 	Drawable::~Drawable(){}
 
+#pragma mark - Element
+
+	/*
+		cpBB _bb;
+		string _id;
+		TriMeshRef _trimesh;
+		ci::gl::VboMeshRef _vboMesh;
+	 */
+	Element::Element(string id, const PolyLine2d &contour):
+	_bb(cpBBInvalid),
+	_id(id) {
+
+		for (auto v : contour) {
+			cpBBExpand(_bb, v);
+		}
+
+		Triangulator triangulator;
+		triangulator.addPolyLine(detail::polyline2d_to_2f(contour));
+		_trimesh = triangulator.createMesh();
+		if (_trimesh->getNumTriangles() > 0) {
+			_vboMesh = gl::VboMesh::create(*_trimesh);
+		}
+	}
+	Element::~Element() {}
+
+	dvec2 Element::getModelCentroid() const {
+		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
+	}
+
+	bool Element::shouldDraw(const core::render_state &state) const {
+		return state.mode == RenderMode::DEVELOPMENT;
+	}
+
+
 
 #pragma mark - Anchor
 
@@ -1119,7 +1171,7 @@ namespace terrain {
 		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
 
-	bool Anchor::build(cpSpace *space, material m) {
+	bool Anchor::build(SpaceAccessRef space, material m) {
 		assert(_shapes.empty());
 
 		_material = m;
@@ -1152,9 +1204,9 @@ namespace terrain {
 			// looks like we got some valid collision hulls, set them up
 			//
 
-			cpSpaceAddBody(space, _staticBody);
+			space->addBody(_staticBody);
 			for (auto shape : _shapes) {
-				cpSpaceAddShape(space, shape);
+				space->addShape(shape);
 				cpShapeSetUserData(shape, this);
 				cpShapeSetFilter(shape, _material.filter);
 				cpShapeSetFriction(shape, _material.friction);

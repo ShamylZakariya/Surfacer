@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <level name="Hello">
 	<terrain path="svg_tests/complex_world_test.svg"/>
+	<gravity type="radial" dir="0,-9.8" strength="10" falloff_power="0.5" />
 </level>

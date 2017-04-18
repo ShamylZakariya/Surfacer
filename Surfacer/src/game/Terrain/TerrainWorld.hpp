@@ -24,6 +24,7 @@ namespace terrain {
 	SMART_PTR(Drawable);
 	SMART_PTR(Shape);
 	SMART_PTR(Anchor);
+	SMART_PTR(Element);
 
 	/**
 	 If we're considering 1 unit to be 1m, then a precision of 100 means we have a precision of 1cm, e.g.,
@@ -195,7 +196,9 @@ namespace terrain {
 	class World : public enable_shared_from_this<World> {
 	public:
 
-		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, bool flip = true);
+		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform,
+							vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, vector<ElementRef> &elements,
+							bool flip = true);
 
 		/**
 		 Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.
@@ -209,7 +212,7 @@ namespace terrain {
 		}
 
 	public:
-		World(cpSpace *space, material worldMaterial, material anchorMaterial);
+		World(core::SpaceAccessRef space, material worldMaterial, material anchorMaterial);
 		~World();
 
 		/**
@@ -217,7 +220,9 @@ namespace terrain {
 		 Pieces cut off a static shape will become dynamic provided they don't overlap another anchor.
 		 */
 
-		void build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors = vector<AnchorRef>());
+		void build(const vector<ShapeRef> &shapes,
+				   const vector<AnchorRef> &anchors = vector<AnchorRef>(),
+				   const vector<ElementRef> &elements = vector<ElementRef>());
 
 		/**
 		 Perform a cut in world space from a to b, with half-thickness of radius
@@ -228,9 +233,11 @@ namespace terrain {
 		void step(const core::time_state &timeState);
 		void update(const core::time_state &timeState);
 
-		const set<DynamicGroupRef> getDynamicGroups() const { return _dynamicGroups; }
+		const set<DynamicGroupRef> &getDynamicGroups() const { return _dynamicGroups; }
 		StaticGroupRef getStaticGroup() const { return _staticGroup; }
-		const vector<AnchorRef> getAnchors() const { return _anchors; }
+		const vector<AnchorRef> &getAnchors() const { return _anchors; }
+		const vector<ElementRef> &getElements() const { return _elements; }
+		ElementRef getElementById(string id) const;
 
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
@@ -246,10 +253,12 @@ namespace terrain {
 		static size_t _idCounter;
 
 		material _worldMaterial, _anchorMaterial;
-		cpSpace *_space;
+		core::SpaceAccessRef _space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
+		vector<ElementRef> _elements;
+		map<string,ElementRef> _elementsById;
 
 		DrawDispatcher _drawDispatcher;
 		ci::gl::GlslProgRef _shader;
@@ -262,11 +271,11 @@ namespace terrain {
 	class GroupBase {
 	public:
 
-		GroupBase(cpSpace *space, material m, DrawDispatcher &dispatcher);
+		GroupBase(core::SpaceAccessRef space, material m, DrawDispatcher &dispatcher);
 		virtual ~GroupBase();
 
 		DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
-		cpSpace *getSpace() const { return _space; }
+		const core::SpaceAccessRef &getSpace() const { return _space; }
 		const material &getMaterial() const { return _material; }
 		virtual string getName() const { return _name; }
 		virtual Color getColor() const { return _color; }
@@ -300,7 +309,7 @@ namespace terrain {
 
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
-		cpSpace *_space;
+		core::SpaceAccessRef _space;
 		material _material;
 		string _name;
 		Color _color;
@@ -312,7 +321,7 @@ namespace terrain {
 
 	class StaticGroup : public GroupBase, public enable_shared_from_this<StaticGroup> {
 	public:
-		StaticGroup(cpSpace *space, material m, DrawDispatcher &dispatcher);
+		StaticGroup(core::SpaceAccessRef space, material m, DrawDispatcher &dispatcher);
 		virtual ~StaticGroup();
 
 		virtual cpBody* getBody() const override { return _body; }
@@ -347,7 +356,7 @@ namespace terrain {
 
 	class DynamicGroup : public GroupBase, public enable_shared_from_this<DynamicGroup>{
 	public:
-		DynamicGroup(cpSpace *space, material m, DrawDispatcher &dispatcher);
+		DynamicGroup(core::SpaceAccessRef space, material m, DrawDispatcher &dispatcher);
 		virtual ~DynamicGroup();
 
 		virtual string getName() const override;
@@ -400,6 +409,7 @@ namespace terrain {
 		virtual const TriMeshRef &getTriMesh() const = 0;
 		virtual const gl::VboMeshRef &getVboMesh() const = 0;
 		virtual Color getColor() const = 0;
+		virtual bool shouldDraw(const core::render_state &state) const = 0;
 
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
 		template<typename T>
@@ -417,6 +427,50 @@ namespace terrain {
 		size_t _id;
 	};
 
+#pragma mark - Element
+
+	/**
+	 @class Element
+	 An element is a shape specified in the <g id="elements">...</g> section of a level SVG file.
+	 Each element represents simply a shape in space with an associated ID. Elements can be used
+	 as location markers for enemy spawn points, or possibly as trigger geometry.
+	 */
+	class Element : public Drawable {
+	public:
+
+		static const size_t DRAWING_BATCH_ID = 0;
+		static const size_t LAYER = 2;
+
+		static ElementRef fromContour(string id, const PolyLine2d &contour) {
+			return make_shared<Element>(id, contour);
+		}
+
+	public:
+
+		Element(string id, const PolyLine2d &contour);
+		~Element();
+
+		string getId() const { return _id; }
+
+		cpBB getBB() const override { return _bb; }
+		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
+		size_t getLayer() const override { return LAYER; }
+		dmat4 getModelview() const override { return dmat4(1); } // identity
+		double getAngle() const override { return 0; };
+		dvec2 getModelCentroid() const override;
+		const TriMeshRef &getTriMesh() const override { return _trimesh; }
+		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
+		Color getColor() const override { return Color(1,0,1); }
+		bool shouldDraw(const core::render_state &state) const override;
+
+	private:
+
+		cpBB _bb;
+		string _id;
+		TriMeshRef _trimesh;
+		ci::gl::VboMeshRef _vboMesh;
+
+	};
 
 #pragma mark - Anchor
 
@@ -429,7 +483,7 @@ namespace terrain {
 	class Anchor : public Drawable {
 	public:
 
-		static const size_t DRAWING_BATCH_ID = ~0;
+		static const size_t DRAWING_BATCH_ID = 0;
 		static const size_t LAYER = 1;
 
 		static AnchorRef fromContour(const PolyLine2d &contour) {
@@ -463,11 +517,12 @@ namespace terrain {
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 		Color getColor() const override { return Color(0,0,0); }
+		bool shouldDraw(const core::render_state &state) const override { return true; }
 
 	protected:
 
 		friend class World;
-		bool build(cpSpace *space, material m);
+		bool build(core::SpaceAccessRef space, material m);
 
 	private:
 
@@ -557,6 +612,8 @@ namespace terrain {
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 
 		Color getColor() const override { return getGroup()->getColor(); }
+
+		bool shouldDraw(const core::render_state &state) const override { return true; }
 
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();

@@ -34,18 +34,6 @@ namespace Filters {
 
 class GameLevel : public core::Level {
 public:
-
-	struct gravity_info {
-		dvec2 center_of_mass;
-		double strength;
-
-		gravity_info(dvec2 com, double s):
-		center_of_mass(com),
-		strength(s)
-		{}
-	};
-
-public:
 	GameLevel();
 	virtual ~GameLevel();
 
@@ -60,18 +48,12 @@ public:
 
 protected:
 
-	struct svg_element {
-		dvec2 position;
-		string id;
-	};
-
+	void loadGravity(XmlTree gravityNode);
 	void loadTerrain(ci::DataSourceRef svgData);
 
 private:
 
-
 	terrain::TerrainObjectRef _terrain;
-	map<string, svg_element> _svgElements;
 
 };
 

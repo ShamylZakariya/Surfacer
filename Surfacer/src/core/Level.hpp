@@ -20,6 +20,31 @@ namespace core {
 	SMART_PTR(Scenario);
 	SMART_PTR(Level);
 	SMART_PTR(DrawDispatcher);
+	SMART_PTR(SpaceAccess);
+
+#pragma mark - SpaceAccess
+
+	class SpaceAccess {
+	public:
+
+		signals::signal< void(cpBody*) > bodyWasAddedToSpace;
+		signals::signal< void(cpShape*) > shapeWasAddedToSpace;
+		signals::signal< void(cpConstraint*) > constraintWasAddedToSpace;
+
+	public:
+
+		SpaceAccess(cpSpace *space);
+
+		void addBody(cpBody *body);
+		void addShape(cpShape *shape);
+		void addConstraint(cpConstraint *constraint);
+
+		cpSpace *getSpace() const { return _space; }
+
+	private:
+		cpSpace *_space;
+	};
+
 
 #pragma mark - DrawDispatcher
 
@@ -77,7 +102,7 @@ namespace core {
 
 #pragma mark - Level
 
-	class Level : public enable_shared_from_this<Level> {
+	class Level : public enable_shared_from_this<Level>, public core::signals::receiver {
 	public:
 
 		static LevelRef getLevelFromSpace(cpSpace *space) {
@@ -90,6 +115,17 @@ namespace core {
 
 		signals::signal< void(const LevelRef &) > levelWasPaused;
 		signals::signal< void(const LevelRef &) > levelWasUnpaused;
+
+		enum GravityType {
+			DIRECTIONAL,
+			RADIAL
+		};
+
+		struct radial_gravity_info {
+			dvec2 centerOfMass;
+			double strength;
+			double faloffPower;
+		};
 
 	public:
 
@@ -110,7 +146,7 @@ namespace core {
 
 		const string &getName() const { return _name; }
 		ScenarioRef getScenario() const { return _scenario.lock(); }
-		cpSpace* getSpace() const { return _space; }
+		SpaceAccessRef getSpace() const { return _spaceAccess; }
 
 		bool isReady() const { return _ready; }
 		bool isPaused() const { return _paused; }
@@ -130,11 +166,19 @@ namespace core {
 		const time_state &getTime() const { return _time; }
 		ViewportRef getViewport();
 
-		void setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f);
-		cpBodyVelocityFunc getCpBodyVelocityUpdateFunc() const { return _bodyVelocityFunc; }
+		void setGravityType(GravityType type);
+		GravityType getGravityType() const { return _gravityType; }
+
+		void setDirectionalGravityDirection(dvec2 dir);
+		dvec2 getDirectionalGravityDirection(void) const { return _directionalGravityDir; }
+
+		void setRadialGravity(radial_gravity_info rgi);
+		radial_gravity_info getRadialGravity() const { return _radialGravityInfo; }
 
 	protected:
 
+		void setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f);
+		cpBodyVelocityFunc getCpBodyVelocityUpdateFunc() const { return _bodyVelocityFunc; }
 		void setName(string name) { _name = name; }
 
 		friend class Scenario;
@@ -142,9 +186,15 @@ namespace core {
 		virtual void removeFromScenario();
 		virtual void onReady();
 
+		virtual void onBodyAddedToSpace(cpBody *body);
+		virtual void onShapeAddedToSpace(cpShape *shape);
+		virtual void onConstraintAddedToSpace(cpConstraint *constraint);
+
+
 	private:
 
 		cpSpace *_space;
+		SpaceAccessRef _spaceAccess;
 		bool _ready, _paused;
 		ScenarioWeakRef _scenario;
 		set<GameObjectRef> _objects;
@@ -153,6 +203,10 @@ namespace core {
 		string _name;
 		DrawDispatcherRef _drawDispatcher;
 		cpBodyVelocityFunc _bodyVelocityFunc;
+
+		GravityType _gravityType;
+		dvec2 _directionalGravityDir;
+		radial_gravity_info _radialGravityInfo;
 
 	};
 

@@ -16,9 +16,7 @@
 #include "DevComponents.hpp"
 
 namespace {
-
-	const float CUT_WIDTH = 4;
-
+	
 	PolyLine2d rect(float left, float bottom, float right, float top) {
 		PolyLine2d pl;
 		pl.push_back(vec2(left,bottom));
@@ -101,7 +99,6 @@ void TerrainTestScenario::setup() {
 	setRenderMode(RenderMode::DEVELOPMENT);
 
 	setLevel(make_shared<Level>("Terrain Test Level"));
-	cpSpaceSetDamping(getLevel()->getSpace(), 0.95);
 
 	//auto world = testDistantTerrain();
 	//auto world = testBasicTerrain();
@@ -204,7 +201,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 
 terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 
-	cpSpaceSetDamping(getLevel()->getSpace(), 0.5);
+	cpSpaceSetDamping(getLevel()->getSpace()->getSpace(), 0.5);
 
 	getViewportController()->lookAt(vec2(0,0));
 
@@ -284,7 +281,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 	getViewportController()->lookAt(vec2(0,0));
 
-	cpSpaceSetGravity(getLevel()->getSpace(), cpv(0,-9.8 * 10));
+	cpSpaceSetGravity(getLevel()->getSpace()->getSpace(), cpv(0,-9.8 * 10));
 
 
 	const vec2 boxSize(50,50);
@@ -404,7 +401,8 @@ terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
 	// load shapes and anchors from SVG
 	vector<terrain::ShapeRef> shapes;
 	vector<terrain::AnchorRef> anchors;
-	terrain::World::loadSvg(app::loadAsset("svg_tests/world_anchor_test.svg"), dmat4(), shapes, anchors, true);
+	vector<terrain::ElementRef> elements;
+	terrain::World::loadSvg(app::loadAsset("svg_tests/world_anchor_test.svg"), dmat4(), shapes, anchors, elements, true);
 
 	// partition
 	//auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 50);
@@ -413,7 +411,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
-	world->build(shapes, anchors);
+	world->build(shapes, anchors, elements);
 
 	return world;
 }
@@ -423,7 +421,8 @@ terrain::WorldRef TerrainTestScenario::testComplexSvgLoad() {
 	// load shapes and anchors from SVG
 	vector<terrain::ShapeRef> shapes;
 	vector<terrain::AnchorRef> anchors;
-	terrain::World::loadSvg(app::loadAsset("svg_tests/complex_world_test.svg"), dmat4(), shapes, anchors, true);
+	vector<terrain::ElementRef> elements;
+	terrain::World::loadSvg(app::loadAsset("svg_tests/complex_world_test.svg"), dmat4(), shapes, anchors, elements, true);
 
 	// partition
 	auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 500);
@@ -432,7 +431,7 @@ terrain::WorldRef TerrainTestScenario::testComplexSvgLoad() {
 	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
 	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
-	world->build(partitionedShapes, anchors);
+	world->build(partitionedShapes, anchors, elements);
 
 	return world;
 

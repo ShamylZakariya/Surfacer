@@ -18,6 +18,7 @@ namespace core {
 
 	SMART_PTR(GameObject);
 	SMART_PTR(Level);
+	SMART_PTR(SpaceAccess);
 
 	SMART_PTR(Component);
 	class Component : public enable_shared_from_this<Component>{
@@ -73,13 +74,13 @@ namespace core {
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
 
-		cpSpace* getSpace() const { return _space; }
+		const core::SpaceAccessRef &getSpace() const { return _space; }
 
 		// return a vector of all bodies in use
 		virtual vector<cpBody*> getBodies() const = 0;
 
 	private:
-		cpSpace *_space;
+		core::SpaceAccessRef _space;
 	};
 
 

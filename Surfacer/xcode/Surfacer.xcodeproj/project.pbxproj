@@ -37,6 +37,7 @@
 		639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */; };
 		63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* GameObject.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
+		63C8E27D1EA50EF300709C3C /* Xml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63C8E27B1EA50EF300709C3C /* Xml.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		C268CB28315B4D8CA1F329A4 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 25DBEB1187074B2580185053 /* CinderApp.icns */; };
 /* End PBXBuildFile section */
@@ -111,6 +112,8 @@
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
 		63BFD8181E89ED2A00D821E4 /* Level.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Level.cpp; sourceTree = "<group>"; };
 		63BFD8191E89ED2A00D821E4 /* Level.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Level.hpp; sourceTree = "<group>"; };
+		63C8E27B1EA50EF300709C3C /* Xml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Xml.cpp; sourceTree = "<group>"; };
+		63C8E27C1EA50EF300709C3C /* Xml.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Xml.hpp; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Surfacer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Surfacer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B91D377257F74A9D8692D6AD /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -304,6 +307,8 @@
 				632623121E7D9A630051ABE2 /* ContourSimplification.hpp */,
 				632623131E7D9A630051ABE2 /* SvgParsing.cpp */,
 				632623141E7D9A630051ABE2 /* SvgParsing.hpp */,
+				63C8E27B1EA50EF300709C3C /* Xml.cpp */,
+				63C8E27C1EA50EF300709C3C /* Xml.hpp */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -387,6 +392,7 @@
 				632064211E9FB84F00C84686 /* GameLevel.cpp in Sources */,
 				6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */,
 				63711EA21E8DE4900086332B /* Terrain.cpp in Sources */,
+				63C8E27D1EA50EF300709C3C /* Xml.cpp in Sources */,
 				63254AEC1E8ABD6800AFED94 /* LevelTestScenario.cpp in Sources */,
 				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
 				63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */,

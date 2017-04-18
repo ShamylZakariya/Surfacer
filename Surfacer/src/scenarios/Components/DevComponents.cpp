@@ -143,7 +143,7 @@ bool MousePickComponent::mouseDown( const ci::app::MouseEvent &event ) {
 
 	const float distance = 1.f;
 	cpPointQueryInfo info = {};
-	cpShape *pick = cpSpacePointQueryNearest(getLevel()->getSpace(), cpv(_mouseWorld), distance, _pickFilter, &info);
+	cpShape *pick = cpSpacePointQueryNearest(getLevel()->getSpace()->getSpace(), cpv(_mouseWorld), distance, _pickFilter, &info);
 	if (pick) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
@@ -153,7 +153,7 @@ bool MousePickComponent::mouseDown( const ci::app::MouseEvent &event ) {
 			_draggingBody = pickBody;
 			_mouseJoint = cpPivotJointNew2(_mouseBody, _draggingBody, cpvzero, cpBodyWorldToLocal(_draggingBody,nearest));
 
-			cpSpaceAddConstraint(getLevel()->getSpace(), _mouseJoint);
+			getLevel()->getSpace()->addConstraint(_mouseJoint);
 
 			return true;
 		}
@@ -181,9 +181,7 @@ bool MousePickComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec
 
 void MousePickComponent::releaseDragConstraint() {
 	if (_mouseJoint) {
-		cpSpaceRemoveConstraint(getLevel()->getSpace(), _mouseJoint);
-		cpConstraintFree(_mouseJoint);
-		_mouseJoint = nullptr;
+		cpCleanupAndFree(_mouseJoint);
 		_draggingBody = nullptr;
 	}
 }

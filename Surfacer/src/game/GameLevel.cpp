@@ -7,40 +7,9 @@
 //
 
 #include "GameLevel.hpp"
+#include "Xml.hpp"
 
 using namespace core;
-
-namespace {
-
-	pair<XmlTree,bool> findElement(const XmlTree &node, string tag) {
-		if (node.isElement() && node.getTag() == tag) {
-			return make_pair(node,true);
-		} else {
-			for ( auto childNode : node ) {
-				auto result = findElement(childNode, tag);
-				if (result.second) {
-					return result;
-				}
-			}
-		}
-		return make_pair(XmlTree(), false);
-	}
-
-	pair<XmlTree,bool> findNodeWithId(const XmlTree &node, string id ) {
-		if (node.isElement() && node.hasAttribute("id") && node.getAttribute("id").getValue() == id) {
-			return make_pair(node,true);
-		} else {
-			for ( auto childNode : node ) {
-				auto result = findNodeWithId(childNode, id);
-				if (result.second) {
-					return result;
-				}
-			}
-		}
-		return make_pair(XmlTree(),false);
-	}
-
-}
 
 namespace Filters {
 	cpShapeFilter TERRAIN = cpShapeFilterNew(CP_NO_GROUP, Categories::TERRAIN, Categories::TERRAIN | Categories::CUTTER | Categories::PICK | Categories::ANCHOR);
@@ -56,8 +25,7 @@ namespace Filters {
 */
 
 GameLevel::GameLevel():
-Level("Unnamed")
-{}
+Level("Unnamed") {}
 
 GameLevel::~GameLevel()
 {}
@@ -66,17 +34,42 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 	XmlTree levelNode = XmlTree(levelXmlData).getChild("level");
 	setName(levelNode.getAttribute("name").getValue());
 
+	XmlTree gravityNode = core::util::xml::findElement(levelNode, "gravity").first;
+	loadGravity(gravityNode);
+
 	//
 	//	Load terrain
 	//
 
-	XmlTree terrainNode = findElement(levelNode, "terrain").first;
+	XmlTree terrainNode = core::util::xml::findElement(levelNode, "terrain").first;
 	string terrainSvgPath = terrainNode.getAttribute("path").getValue();
 	loadTerrain(app::loadAsset(terrainSvgPath));
 }
 
 void GameLevel::addGameObject(core::GameObjectRef obj) {
 	Level::addGameObject(obj);
+}
+
+void GameLevel::loadGravity(XmlTree gravityNode) {
+	string type = gravityNode.getAttribute("type").getValue();
+	if (type == "radial") {
+		radial_gravity_info rgi = getRadialGravity();
+		rgi.strength = strtod(gravityNode.getAttribute("strength").getValue().c_str(), nullptr);
+		rgi.faloffPower = strtod(gravityNode.getAttribute("falloff_power").getValue().c_str(), nullptr);
+		setRadialGravity(rgi);
+		setGravityType(RADIAL);
+
+		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower);
+
+	} else if (type == "directional") {
+		string dirStr = gravityNode.getAttribute("dir").getValue();
+		vector<double> vals = core::util::xml::readNumericSequence(dirStr);
+		dvec2 dir(vals[0], vals[1]);
+		setDirectionalGravityDirection(dir);
+		setGravityType(DIRECTIONAL);
+
+		CI_LOG_D("gravity DIRECTIONAL dir: " << dir );
+	}
 }
 
 void GameLevel::loadTerrain(ci::DataSourceRef svgData) {
@@ -91,46 +84,36 @@ void GameLevel::loadTerrain(ci::DataSourceRef svgData) {
 	// load shapes and anchors
 	vector<terrain::ShapeRef> shapes;
 	vector<terrain::AnchorRef> anchors;
-	terrain::World::loadSvg(svgData, dmat4(), shapes, anchors, true);
+	vector<terrain::ElementRef> elements;
+	terrain::World::loadSvg(svgData, dmat4(), shapes, anchors, elements, true);
 	if (!shapes.empty()) {
 		// partition
 		auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 500);
 
 		// construct
 		auto world = make_shared<terrain::World>(getSpace(),terrainMaterial, anchorMaterial);
-		world->build(partitionedShapes, anchors);
+		world->build(partitionedShapes, anchors, elements);
 
 		_terrain = terrain::TerrainObject::create("Terrain", world);
 		addGameObject(_terrain);
 	}
 
 	//
-	//	Read the elements part of the svg file
+	//	Look for a center_of_mass for gravity
 	//
 
-	XmlTree svgNode = XmlTree( svgData ).getChild( "svg" );
-	auto elements = findNodeWithId(svgNode, "elements");
-	if (elements.second) {
-		for ( auto element : elements.first ) {
-			if (element.getTag() == "circle") {
-				svg_element e;
-				e.position.x = strtod(element.getAttribute("cx").getValue().c_str(), nullptr);
-				e.position.y = strtod(element.getAttribute("cy").getValue().c_str(), nullptr);
-				e.id = element.getAttribute("id").getValue();
-				_svgElements[e.id] = e;
-			}
-		}
+	if (terrain::ElementRef e = _terrain->getWorld()->getElementById("center_of_mass")) {
+		radial_gravity_info rgi = getRadialGravity();
+		rgi.centerOfMass = e->getModelview() * e->getModelCentroid();
+		setRadialGravity(rgi);
+		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower << " centerOfMass: " << rgi.centerOfMass);
 	}
 
-
-	//
-	//	Look for a center_of_mass to build gravity
-	//
-
-	auto centerOfMassPos = _svgElements.find("center_of_mass");
-	if (centerOfMassPos != _svgElements.end()) {
-		svg_element centerOfMass = centerOfMassPos->second;
-		CI_LOG_D("centerOfMass: " << centerOfMass.position);
-		// TODO: Do something with the center of mass
-	}
+//	auto centerOfMassPos = _svgElements.find("center_of_mass");
+//	if (centerOfMassPos != _svgElements.end()) {
+//		radial_gravity_info rgi = getRadialGravity();
+//		rgi.centerOfMass = centerOfMassPos->second.position;
+//		setRadialGravity(rgi);
+//		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower << " centerOfMass: " << rgi.centerOfMass);
+//	}
 }
