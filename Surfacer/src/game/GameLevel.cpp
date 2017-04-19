@@ -104,7 +104,7 @@ void GameLevel::loadTerrain(ci::DataSourceRef svgData) {
 
 	if (terrain::ElementRef e = _terrain->getWorld()->getElementById("center_of_mass")) {
 		radial_gravity_info rgi = getRadialGravity();
-		rgi.centerOfMass = e->getModelview() * e->getModelCentroid();
+		rgi.centerOfMass = e->getModelMatrix() * e->getModelCentroid();
 		setRadialGravity(rgi);
 		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower << " centerOfMass: " << rgi.centerOfMass);
 	}

@@ -155,7 +155,7 @@ namespace terrain {
 		const size_t batchId = drawable->getDrawingBatchId();
 
 		gl::ScopedModelMatrix smm;
-		gl::multModelMatrix(drawable->getModelview());
+		gl::multModelMatrix(drawable->getModelMatrix());
 
 		for( ; it != storageEnd; ++it )
 		{
@@ -316,7 +316,7 @@ namespace terrain {
 		// add all the elements
 		_elements.insert(_elements.end(), elements.begin(), elements.end());
 		for (auto element : elements) {
-			CI_LOG_D("element: " + element->getId() << " pos: " << (element->getModelview() * element->getModelCentroid()));
+			CI_LOG_D("element: " + element->getId() << " pos: " << (element->getModelMatrix() * element->getModelCentroid()));
 			_elementsById[element->getId()] = element;
 			_drawDispatcher.add(element);
 		}
@@ -478,7 +478,7 @@ namespace terrain {
 				gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
 
 				// draw the shape id
-				const auto R = drawable->getModelview();
+				const auto R = drawable->getModelMatrix();
 				const double angle = drawable->getAngle();
 				const dvec3 modelCentroid = dvec3(drawable->getModelCentroid(), 0);
 
@@ -797,7 +797,7 @@ namespace terrain {
 		cpVect _position;
 		cpFloat _angle;
 		cpBB _worldBB, _modelBB;
-		dmat4 _modelview, _modelviewInverse;
+		dmat4 _modelMatrix, _inverseModelMatrix;
 
 		set<ShapeRef> _shapes;
 
@@ -813,8 +813,8 @@ namespace terrain {
 	_angle(0),
 	_worldBB(cpBBInvalid),
 	_modelBB(cpBBInvalid),
-	_modelview(1),
-	_modelviewInverse(1) {
+	_modelMatrix(1),
+	_inverseModelMatrix(1) {
 		_name = str(World::nextId());
 		_hash = hash<string>{}(_name);
 		_color = detail::next_random_color();
@@ -882,7 +882,7 @@ namespace terrain {
 			GroupBaseRef body = shape->getGroup();
 			if (body && body.get() != this) {
 
-				const dmat4 T = shape->getModelview();
+				const dmat4 T = shape->getModelMatrix();
 				detail::transform(shape->_outerContour.model, shape->_outerContour.world, T);
 				shape->_outerContour.model = shape->_outerContour.world;
 
@@ -927,8 +927,8 @@ namespace terrain {
 			}
 		}
 
-		_modelview = _modelview * translate(dvec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0));
-		_modelviewInverse = inverse(_modelview);
+		_modelMatrix = _modelMatrix * translate(dvec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0));
+		_inverseModelMatrix = inverse(_modelMatrix);
 
 		//
 		//	Triangulate - any which fail should be collected to garbage
@@ -963,8 +963,8 @@ namespace terrain {
 
 			// glm::dmat4 is column major
 			dvec2 position;
-			position.x = _modelview[3][0];
-			position.y = _modelview[3][1];
+			position.x = _modelMatrix[3][0];
+			position.y = _modelMatrix[3][1];
 			cpBodySetPosition(_body, cpv(position));
 
 			for (auto &shape : shapes) {
@@ -1035,7 +1035,7 @@ namespace terrain {
 	}
 
 	void DynamicGroup::syncToCpBody() {
-		// extract position and rotation from body and apply to _modelview
+		// extract position and rotation from body and apply to _modelMatrix
 		cpVect position = cpBodyGetPosition(_body);
 		cpVect rotation = cpBodyGetRotation(_body);
 		cpFloat angle = cpBodyGetAngle(_body);
@@ -1047,16 +1047,16 @@ namespace terrain {
 		_angle = angle;
 
 		// dmat4 - column major, each column is a vec4
-		_modelview = dmat4(
-						  vec4(rotation.x, rotation.y, 0, 0),
-						  vec4(-rotation.y, rotation.x, 0, 0),
-						  vec4(0,0,1,0),
-						  vec4(position.x, position.y, 0, 1));
+		_modelMatrix = dmat4(
+			vec4(rotation.x, rotation.y, 0, 0),
+			vec4(-rotation.y, rotation.x, 0, 0),
+			vec4(0,0,1,0),
+			vec4(position.x, position.y, 0, 1));
 
-		_modelviewInverse = inverse(_modelview);
+		_inverseModelMatrix = inverse(_modelMatrix);
 
 		// update our world BB
-		_worldBB = cpTransformbBB(getModelviewTransform(), _modelBB);
+		_worldBB = cpTransformbBB(getModelTransform(), _modelBB);
 
 		//
 		//	If this shape moved we need to mark our edges as dirty (so world space edges and bounds
@@ -1314,7 +1314,7 @@ namespace terrain {
 	}
 
 	cpBB Shape::getBB() const {
-		return cpBBTransform(_shapesModelBB, getModelview());
+		return cpBBTransform(_shapesModelBB, getModelMatrix());
 	}
 
 	cpBB Shape::getWorldSpaceContourEdgesBB() {
@@ -1329,7 +1329,7 @@ namespace terrain {
 			// move the shape to subtract from world space to the our model space, and convert to a boost poly
 			//
 
-			PolyLine2d transformedShapeToSubtract = detail::transformed(contourToSubtract, getModelviewInverse());
+			PolyLine2d transformedShapeToSubtract = detail::transformed(contourToSubtract, getInverseModelMatrix());
 			detail::polygon polyToSubtract = detail::convertPolyLineToBoostGeometry( transformedShapeToSubtract );
 
 			//
@@ -1349,7 +1349,7 @@ namespace terrain {
 			// convert output to Shapes - they need to have our modelview applied to them to move them back to world space
 			//
 
-			vector<ShapeRef> newShapes = detail::convertBoostGeometryToTerrainShapes( output, getModelview() );
+			vector<ShapeRef> newShapes = detail::convertBoostGeometryToTerrainShapes( output, getModelMatrix() );
 
 			if (!newShapes.empty()) {
 				return newShapes;
@@ -1366,8 +1366,8 @@ namespace terrain {
 
 			assert(_outerContour.model.size() > 1);
 
-			const dmat4 mv = getModelview();
-			dvec2 worldPoint = mv * _outerContour.model.getPoints().front();
+			const dmat4 modelMatrix = getModelMatrix();
+			dvec2 worldPoint = modelMatrix * _outerContour.model.getPoints().front();
 
 			_worldSpaceContourEdges.clear();
 			cpBB bb = cpBBInvalid;
@@ -1377,7 +1377,7 @@ namespace terrain {
 				if (next == end) {
 					next = _outerContour.model.begin();
 				}
-				const dvec2 worldNext = mv * (*next);
+				const dvec2 worldNext = modelMatrix * (*next);
 				_worldSpaceContourEdges.insert(poly_edge(worldPoint, worldNext));
 				worldPoint = worldNext;
 				cpBBExpand(bb, worldPoint);

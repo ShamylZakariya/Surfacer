@@ -283,8 +283,8 @@ namespace terrain {
 
 		virtual cpBody* getBody() const = 0;
 		virtual cpBB getBB() const = 0;
-		virtual dmat4 getModelview() const = 0;
-		virtual dmat4 getModelviewInverse() const = 0;
+		virtual dmat4 getModelMatrix() const = 0;
+		virtual dmat4 getInverseModelMatrix() const = 0;
 		virtual dvec2 getPosition() const = 0;
 		virtual double getAngle() const = 0;
 		virtual set<ShapeRef> getShapes() const = 0;
@@ -295,13 +295,13 @@ namespace terrain {
 		virtual void update(const core::time_state &timeState) = 0;
 
 
-		cpTransform getModelviewTransform() const {
-			dmat4 mv = getModelview();
-			return cpTransform { mv[0].x, mv[0].y, mv[1].x, mv[1].y, mv[3].x, mv[3].y };
+		cpTransform getModelTransform() const {
+			dmat4 mm = getModelMatrix();
+			return cpTransform { mm[0].x, mm[0].y, mm[1].x, mm[1].y, mm[3].x, mm[3].y };
 		}
 
-		cpTransform getModelviewInverseTransform() const {
-			dmat4 mvi = getModelviewInverse();
+		cpTransform getInverseModelTransform() const {
+			dmat4 mvi = getInverseModelMatrix();
 			return cpTransform { mvi[0].x, mvi[0].y, mvi[1].x, mvi[1].y, mvi[3].x, mvi[3].y };
 		}
 
@@ -326,8 +326,8 @@ namespace terrain {
 
 		virtual cpBody* getBody() const override { return _body; }
 		virtual cpBB getBB() const override;
-		virtual dmat4 getModelview() const override { return dmat4(1); }
-		virtual dmat4 getModelviewInverse() const override { return dmat4(1); }
+		virtual dmat4 getModelMatrix() const override { return dmat4(1); }
+		virtual dmat4 getInverseModelMatrix() const override { return dmat4(1); }
 		virtual dvec2 getPosition() const override { return dvec2(0); }
 		virtual double getAngle() const override { return 0; }
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
@@ -362,8 +362,8 @@ namespace terrain {
 		virtual string getName() const override;
 		virtual cpBody* getBody() const override { return _body; }
 		cpBB getBB() const override { return _worldBB; }
-		virtual dmat4 getModelview() const override { return _modelview; }
-		virtual dmat4 getModelviewInverse() const override { return _modelviewInverse; }
+		virtual dmat4 getModelMatrix() const override { return _modelMatrix; }
+		virtual dmat4 getInverseModelMatrix() const override { return _inverseModelMatrix; }
 		virtual dvec2 getPosition() const override { return v2(_position); }
 		virtual double getAngle() const override { return static_cast<double>(_angle); }
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
@@ -386,7 +386,7 @@ namespace terrain {
 		cpVect _position;
 		cpFloat _angle;
 		cpBB _worldBB, _modelBB;
-		dmat4 _modelview, _modelviewInverse;
+		dmat4 _modelMatrix, _inverseModelMatrix;
 
 		set<ShapeRef> _shapes;
 	};
@@ -403,7 +403,7 @@ namespace terrain {
 		virtual cpBB getBB() const = 0;
 		virtual size_t getDrawingBatchId() const = 0;
 		virtual size_t getLayer() const = 0;
-		virtual dmat4 getModelview() const = 0;
+		virtual dmat4 getModelMatrix() const = 0;
 		virtual double getAngle() const = 0;
 		virtual dvec2 getModelCentroid() const = 0;
 		virtual const TriMeshRef &getTriMesh() const = 0;
@@ -455,7 +455,7 @@ namespace terrain {
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
 		size_t getLayer() const override { return LAYER; }
-		dmat4 getModelview() const override { return dmat4(1); } // identity
+		dmat4 getModelMatrix() const override { return dmat4(1); } // identity
 		double getAngle() const override { return 0; };
 		dvec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
@@ -511,7 +511,7 @@ namespace terrain {
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
 		size_t getLayer() const override { return LAYER; }
-		dmat4 getModelview() const override { return dmat4(1); } // identity
+		dmat4 getModelMatrix() const override { return dmat4(1); } // identity
 		double getAngle() const override { return 0; };
 		dvec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
@@ -572,17 +572,17 @@ namespace terrain {
 		GroupBaseRef getGroup() const { return _group.lock(); }
 		cpHashValue getGroupHash() const { return _groupHash; }
 
-		dmat4 getModelview() const override {
+		dmat4 getModelMatrix() const override {
 			if (GroupBaseRef group = _group.lock()) {
-				return group->getModelview();
+				return group->getModelMatrix();
 			} else {
 				return dmat4();
 			}
 		}
 
-		dmat4 getModelviewInverse() const {
+		dmat4 getInverseModelMatrix() const {
 			if (GroupBaseRef group = _group.lock()) {
-				return group->getModelviewInverse();
+				return group->getInverseModelMatrix();
 			} else {
 				return dmat4();
 			}

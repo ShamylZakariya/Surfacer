@@ -30,7 +30,7 @@ namespace core {
 	class Camera2DInterface {
 	public:
 
-		static inline void modelviewFor( const dvec2 &pan, double scale, dmat4 &mv )
+		static inline void createModelViewMatrix( const dvec2 &pan, double scale, dmat4 &mv )
 		{
 			mv = translate(dvec3(pan.x, pan.y, 0)) * ::scale(dvec3(scale, scale, 1));
 		}
@@ -118,12 +118,12 @@ namespace core {
 		/**
 		 get the current modelview matrix
 		 */
-		virtual dmat4 getModelview() const = 0;
+		virtual dmat4 getModelViewMatrix() const = 0;
 
 		/**
 		 get the current inverse modelview matrix
 		 */
-		virtual dmat4 getInverseModelview() const = 0;
+		virtual dmat4 getInverseModelViewMatrix() const = 0;
 
 		/**
 		 convert a point in world coordinate system to screen
@@ -131,7 +131,7 @@ namespace core {
 		 */
 		virtual dvec2 worldToScreen( const dvec2 &world ) const
 		{
-			return getModelview() * world;
+			return getModelViewMatrix() * world;
 		}
 
 		/**
@@ -140,14 +140,14 @@ namespace core {
 		 */
 		virtual dvec2 screenToWorld( const dvec2 &screen ) const
 		{
-			return getInverseModelview() * screen;
+			return getInverseModelViewMatrix() * screen;
 		}
 
 		/**
 		 get the current viewport frustum in world coordinates
 		 */
 		virtual cpBB getFrustum() const {
-			const dmat4 imv = getInverseModelview();
+			const dmat4 imv = getInverseModelViewMatrix();
 			const dvec2 lb = imv * dvec2( 0,0 );
 			const dvec2 tr = imv * dvec2( getWidth(), getHeight() );
 			return cpBBNew( lb.x, lb.y, tr.x, tr.y );
@@ -173,7 +173,7 @@ namespace core {
 			{
 				gl::pushMatrices();
 				gl::setMatricesWindow( vp->getBounds().getWidth(), vp->getBounds().getHeight(), false );
-				gl::multViewMatrix(vp->getModelview());
+				gl::multViewMatrix(vp->getModelViewMatrix());
 			}
 
 			~ScopedState() {
@@ -203,6 +203,7 @@ namespace core {
 		void setScale( double z ) override;
 		void setScale( double z, const dvec2 &about ) override;
 		double getScale() const override { return _scale; }
+		double getReciprocalScale() const override { return _rScale; }
 		void setPan( const dvec2 &p ) override;
 		dvec2 getPan() const override { return _pan; }
 		void lookAt( const dvec2 &world, double scale, const dvec2 &screen ) override;
@@ -217,8 +218,8 @@ namespace core {
 		}
 
 		void setPanAndScale( const dvec2 &pan, double scale ) override;
-		dmat4 getModelview() const override { return _modelview; }
-		dmat4 getInverseModelview() const override { return _inverseModelview; }
+		dmat4 getModelViewMatrix() const override { return _modelViewMatrix; }
+		dmat4 getInverseModelViewMatrix() const override { return _inverseModelViewMatrix; }
 
 	protected:
 
@@ -226,7 +227,7 @@ namespace core {
 		
 	protected:
 		
-		dmat4 _modelview, _inverseModelview;
+		dmat4 _modelViewMatrix, _inverseModelViewMatrix;
 		dvec2 _pan;
 		double _scale, _rScale;
 		ci::Area _bounds;

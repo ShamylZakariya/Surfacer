@@ -12,7 +12,7 @@
 namespace core {
 
 	/*
-	 dmat4				_modelview, _inverseModelview;
+	 dmat4				_modelViewMatrix, _inverseModelViewMatrix;
 	 dvec2				_pan;
 	 double				_scale, _rScale;
 	 AreaID				_bounds;
@@ -39,7 +39,7 @@ namespace core {
 
 		gl::viewport( _bounds.getX1(), _bounds.getY1(), _bounds.getWidth(), _bounds.getHeight() );
 		gl::setMatricesWindow( getWidth(), getHeight(), false );
-		gl::multViewMatrix(_modelview);
+		gl::multViewMatrix(_modelViewMatrix);
 	}
 
 	void Viewport::setViewport( int width, int height )
@@ -61,12 +61,12 @@ namespace core {
 	void Viewport::setScale( double s, const dvec2 &aboutScreen )
 	{
 		dmat4 mv, imv;
-		modelviewFor( getPan(), getScale(), mv );
+		createModelViewMatrix( getPan(), getScale(), mv );
 		imv = inverse(mv);
 
 		dvec2 aboutWorld = imv * aboutScreen;
 
-		modelviewFor( getPan(), s, mv );
+		createModelViewMatrix( getPan(), s, mv );
 
 		dvec2 postScaleAboutScreen = mv * aboutWorld;
 
@@ -90,7 +90,7 @@ namespace core {
 		_scale = scale;
 
 		dmat4 mv;
-		Viewport::modelviewFor( _pan, _scale, mv );
+		Viewport::createModelViewMatrix( _pan, _scale, mv );
 
 		// update pan accordingly
 		_pan = _pan + (screen - (mv * world));
@@ -108,8 +108,8 @@ namespace core {
 	void Viewport::_update()
 	{
 		_rScale = 1.0 / _scale;
-		modelviewFor( _pan, _scale, _modelview );
-		_inverseModelview = inverse(_modelview);
+		createModelViewMatrix( _pan, _scale, _modelViewMatrix );
+		_inverseModelViewMatrix = inverse(_modelViewMatrix);
 		
 		motion( *this );
 	}

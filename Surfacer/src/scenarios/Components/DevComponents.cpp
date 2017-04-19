@@ -32,7 +32,7 @@ _baseRepeatPeriod(baseRepeatPeriod)
 
 	auto vsh = CI_GLSL(150,
 					   uniform mat4 ciModelViewProjection;
-					   uniform mat4 ModelView;
+					   uniform mat4 ciModelMatrix;
 
 					   in vec4 ciPosition;
 
@@ -40,7 +40,7 @@ _baseRepeatPeriod(baseRepeatPeriod)
 
 					   void main(void){
 						   gl_Position = ciModelViewProjection * ciPosition;
-						   worldPosition = (ModelView * ciPosition).xy;
+						   worldPosition = (ciModelMatrix * ciPosition).xy;
 					   }
 					   );
 
@@ -79,17 +79,16 @@ void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 	dvec2 scale = centerWorld - topLeftWorld;
 	double periodScale = scale.x / _baseRepeatPeriod;
 
-	dmat4 mv = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
+	dmat4 modelMatrix = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
 
 	CI_LOG_D("centerWorld: " << centerWorld << " scale: " << scale << " periodScale: " << periodScale);
 
 	gl::ScopedModelMatrix smm;
-	gl::multModelMatrix(mv);
+	gl::multModelMatrix(modelMatrix);
 
 	if (/* DISABLES CODE */ (true)) {
 
 		_texture->bind(0);
-		_shader->uniform("ModelView", mv);
 		_shader->uniform("Tex0", 0);
 		_shader->uniform("BaseRepeatPeriod", static_cast<float>(_baseRepeatPeriod));
 		_shader->uniform("Color", ColorA(1,1,1,1));

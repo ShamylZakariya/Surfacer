@@ -112,12 +112,12 @@ namespace core {
 	void ViewportController::setScale( double z, const dvec2 &aboutScreen )
 	{
 		dmat4 mv, imv;
-		Viewport::modelviewFor( _pan, _scale, mv );
+		Viewport::createModelViewMatrix( _pan, _scale, mv );
 
 		imv = inverse(mv);
 		dvec2 aboutWorld = imv * aboutScreen;
 
-		Viewport::modelviewFor( _pan, _constrainScale(z), mv );
+		Viewport::createModelViewMatrix( _pan, _constrainScale(z), mv );
 
 		dvec2 postScaleAboutScreen = mv * aboutWorld;
 
@@ -130,17 +130,17 @@ namespace core {
 		_scale = _constrainScale(scale);
 
 		dmat4 mv;
-		Viewport::modelviewFor( _pan, _scale, mv );
+		Viewport::createModelViewMatrix( _pan, _scale, mv );
 
 		_pan = _constrainPan( _pan + (screen - (mv*world)));
 	}
 
-	dmat4 ViewportController::getModelview() const {
-		return _viewport->getModelview();
+	dmat4 ViewportController::getModelViewMatrix() const {
+		return _viewport->getModelViewMatrix();
 	}
 
-	dmat4 ViewportController::getInverseModelview() const {
-		return _viewport->getInverseModelview();
+	dmat4 ViewportController::getInverseModelViewMatrix() const {
+		return _viewport->getInverseModelViewMatrix();
 	}
 
 #pragma mark -

@@ -102,8 +102,8 @@ namespace core {
 			Camera2DInterface::lookAt(world);
 		}
 
-		dmat4 getModelview() const override;
-		dmat4 getInverseModelview() const override;
+		dmat4 getModelViewMatrix() const override;
+		dmat4 getInverseModelViewMatrix() const override;
 
 
 	protected:
