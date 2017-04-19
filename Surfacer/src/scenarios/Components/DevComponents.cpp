@@ -45,67 +45,101 @@ _baseRepeatPeriod(baseRepeatPeriod)
 					   );
 
 	auto fsh = CI_GLSL(150,
-					   uniform float BaseRepeatPeriod;
+					   uniform float FirstLevelRepeatPeriod;
+					   uniform float SecondLevelRepeatPeriod;
+					   uniform float FirstLevelAlpha;
+					   uniform float SecondLevelAlpha;
+					   uniform float TexelSize;
 					   uniform vec4 Color;
+					   uniform vec4 AxisColor;
 					   uniform sampler2D Tex0;
 
 					   in vec2 worldPosition;
 
 					   out vec4 oColor;
 
-					   float getGridForPeriod(float period) {
+					   vec4 getGridForPeriod(float period) {
 						   vec2 texCoord = worldPosition / period;
+						   vec2 aTexCoord = abs(texCoord);
+
+						   float onAxis = (1.0 - step(TexelSize, aTexCoord.s)) + (1.0 - step(TexelSize, aTexCoord.t));
+						   onAxis = clamp(onAxis, 0.0, 1.0);
+						   vec4 color = mix(Color, AxisColor, onAxis);
+
 						   float alpha = texture(Tex0, texCoord).a;
-						   return alpha;
+						   color.a *= alpha;
+						   return color;
 					   }
 
 					   void main(void) {
-						   float baseAlpha = getGridForPeriod(BaseRepeatPeriod);
-						   float secondAlpha = getGridForPeriod(BaseRepeatPeriod * 10);
-						   float alpha = baseAlpha + secondAlpha;
-						   oColor = vec4(Color.r, Color.g, Color.b, Color.a * alpha);
+						   vec4 firstLevelValue = getGridForPeriod(FirstLevelRepeatPeriod);
+						   vec4 secondLevelValue = getGridForPeriod(SecondLevelRepeatPeriod);
+
+						   firstLevelValue.a *= FirstLevelAlpha;
+						   secondLevelValue.a *= SecondLevelAlpha;
+						   oColor = mix(firstLevelValue, secondLevelValue, secondLevelValue.a);
 					   }
 					   );
 
 	_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
-	_batch = gl::Batch::create(geom::Plane().size(dvec2(2,2)), _shader); // plane of size 2,2 centered on 0
+	_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)), _shader);
 }
 
 void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 
 	// set up a scale to fill viewport with plane
-	dvec2 centerWorld = state.viewport->screenToWorld(state.viewport->getViewportCenter());
-	dvec2 topLeftWorld = state.viewport->screenToWorld(dvec2(0,0));
-	dvec2 scale = centerWorld - topLeftWorld;
-	double periodScale = scale.x / _baseRepeatPeriod;
+	cpBB frustum = state.viewport->getFrustum();
+	dvec2 centerWorld = v2(cpBBCenter(frustum));
+	dvec2 scale = centerWorld - dvec2(frustum.l, frustum.t);
+
+	/*
+	TODO: Redesign how grid pattern period alpha is computed
+	
+	 First, instead of magic numbers below, I should figure out how big a texel is on screen.
+		The patterns should be visible if the texel at a given scale is, say, 0.5 < texel-screen-size < 2
+		
+	 Second, we don't need hard coded scale 1, scale 2 - rather, we should loop, bumping the 
+	 _baseRepeatPeriod up by 10 until we find something visible, and then handle the next * 10
+	 */
+
+	double textureSize = _texture->getWidth();
+	double viewportScale = state.viewport->getScale();
+	double baseSizeOnScreen = _baseRepeatPeriod * viewportScale;
+	double baseScaleOnScreen = baseSizeOnScreen / textureSize;
+	double secondRepeatPeriod = _baseRepeatPeriod * 10;
+
+	// we need to scale the alpha of each level
+
+	float firstLevelAlpha = 1;
+	double baseScaleMin = 0.2, baseScaleMinEnd = 0.15;
+	if (baseScaleOnScreen < baseScaleMin) {
+		double f = (baseScaleOnScreen - baseScaleMin) / (baseScaleMinEnd - baseScaleMin);
+		firstLevelAlpha *= 1 - max(f, 0.0);
+	}
+
+	float secondLevelAlpha = 0;
+	baseScaleMin = 0.4;
+	baseScaleMinEnd *= 0.35;
+	if (baseScaleOnScreen < baseScaleMin) {
+		double f = (baseScaleOnScreen - baseScaleMin) / (baseScaleMinEnd - baseScaleMin);
+		secondLevelAlpha += clamp(f, 0.0, 1.0);
+	}
 
 	dmat4 modelMatrix = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
-
-	CI_LOG_D("centerWorld: " << centerWorld << " scale: " << scale << " periodScale: " << periodScale);
 
 	gl::ScopedModelMatrix smm;
 	gl::multModelMatrix(modelMatrix);
 
-	if (/* DISABLES CODE */ (true)) {
-
-		_texture->bind(0);
-		_shader->uniform("Tex0", 0);
-		_shader->uniform("BaseRepeatPeriod", static_cast<float>(_baseRepeatPeriod));
-		_shader->uniform("Color", ColorA(1,1,1,1));
-		gl::ScopedGlslProg sglp(_shader);
-		gl::drawSolidRect(Rectf(-1,-1,1,1));
-
-		//		_batch->draw();
-	} else {
-
-		gl::color(1,0,1);
-		gl::lineWidth(2);
-		gl::drawLine(dvec2(-1,-1), dvec2(+1,-1));
-		gl::drawLine(dvec2(+1,-1), dvec2(+1,+1));
-		gl::drawLine(dvec2(+1,+1), dvec2(-1,+1));
-		gl::drawLine(dvec2(-1,+1), dvec2(-1,-1));
-		gl::drawLine(dvec2(-1,-1), dvec2(+1,+1));
-	}
+	_texture->bind(0);
+	_shader->uniform("Tex0", 0);
+	_shader->uniform("TexelSize", static_cast<float>(1.0 / _texture->getWidth()));
+	_shader->uniform("FirstLevelRepeatPeriod", static_cast<float>(_baseRepeatPeriod));
+	_shader->uniform("SecondLevelRepeatPeriod", static_cast<float>(secondRepeatPeriod));
+	_shader->uniform("FirstLevelAlpha", firstLevelAlpha);
+	_shader->uniform("SecondLevelAlpha", secondLevelAlpha);
+	_shader->uniform("Color", ColorA(1,1,1,1));
+	_shader->uniform("AxisColor", ColorA(1,0,0,1));
+	_batch->draw();
 }
 
 
