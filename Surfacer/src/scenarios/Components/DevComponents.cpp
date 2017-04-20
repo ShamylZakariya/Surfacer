@@ -61,6 +61,15 @@ _periodStep(periodStep)
 
 					   out vec4 oColor;
 
+					   /*
+						TODO: Fix the haloing in the onAxis determination. It might make sense to switch from 
+						attemping to do this in texel space (right now we're using the 0th texel in S & T when
+						world position is at zero. This blurs because of mipmapping. Disabling mip interpolation fixes
+						the issue... but causes shit moire artifacting.
+						The correct fix is likely to be to detect fragment size (think dFdx, dFdy) and light up
+						fragments with axis color when inside N fragments of axis lines.
+						*/
+
 					   vec4 getGridForPeriod(float period, float texelSize, vec4 gridColor, vec4 axisColor) {
 						   vec2 texCoord = worldPosition / period;
 						   vec2 aTexCoord = abs(texCoord);
@@ -85,6 +94,7 @@ _periodStep(periodStep)
 
 						   alphaValue.a *= AlphaPeriodAlpha;
 						   betaValue.a *= BetaPeriodAlpha;
+
 						   oColor = alphaValue + betaValue;
 					   }
 					   );
@@ -160,7 +170,8 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	double alphaPeriodTexelSize = pow(2, alphaPeriodMip+1) / _texture->getWidth();
 	double betaPeriodTexelSize = pow(2, betaPeriodMip+1) / _texture->getWidth();
 
-//	app::console() << "scale: " << dvec2(alphaPeriodTexelScale, betaPeriodTexelScale)
+//	app::console() << " viewportScale: " << viewportScale
+//		<< "scale: " << dvec2(alphaPeriodTexelScale, betaPeriodTexelScale)
 //		<< " mip: " << dvec2(alphaPeriodMip, betaPeriodMip)
 //		<< " texelSize: " << dvec2(alphaPeriodTexelSize, betaPeriodTexelSize)
 //		<< endl;
@@ -173,7 +184,9 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	_shader->uniform("BetaPeriodTexelSize", static_cast<float>(betaPeriodTexelSize));
 	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
 	_shader->uniform("Color", ColorA(1,1,1,1));
-	_shader->uniform("AxisColor", ColorA(1,0,0,1));
+
+	// TODO: Turn this back to red when I fix haloing
+	_shader->uniform("AxisColor", ColorA(1,1,1,1));
 }
 
 void WorldCartesianGridDrawComponent::onViewportMotion(const core::Viewport &vp) {
