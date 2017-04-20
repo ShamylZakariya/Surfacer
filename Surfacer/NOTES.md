@@ -7,11 +7,9 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 Make an XML level file, which is loaded by GameLevel::load
 	✓ this file specifies path to terrain svg
 	✓ file specifies stuff to do with the ids specified in terrain svg
-	- file has stuff like friction, gravity, etc
+	✓ file has stuff like friction, gravity, etc
 
 ## BUGS
-
-Move various numeric parse functions from util::svg SvgParsing to util::xml
 
 CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
 	- is this an ordering issue? who's gobbling the input?

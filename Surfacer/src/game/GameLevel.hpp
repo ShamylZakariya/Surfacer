@@ -48,8 +48,9 @@ public:
 
 protected:
 
-	void loadGravity(XmlTree gravityNode);
-	void loadTerrain(ci::DataSourceRef svgData);
+	void applySpaceAttributes(XmlTree spaceNode);
+	void applyGravityAttributes(XmlTree gravityNode);
+	void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
 
 private:
 

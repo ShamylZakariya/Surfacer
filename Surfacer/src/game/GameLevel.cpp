@@ -34,8 +34,12 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 	XmlTree levelNode = XmlTree(levelXmlData).getChild("level");
 	setName(levelNode.getAttribute("name").getValue());
 
+	XmlTree spaceNode = core::util::xml::findElement(levelNode, "space").first;
+	applySpaceAttributes(spaceNode);
+
+
 	XmlTree gravityNode = core::util::xml::findElement(levelNode, "gravity").first;
-	loadGravity(gravityNode);
+	applyGravityAttributes(gravityNode);
 
 	//
 	//	Load terrain
@@ -43,14 +47,22 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 
 	XmlTree terrainNode = core::util::xml::findElement(levelNode, "terrain").first;
 	string terrainSvgPath = terrainNode.getAttribute("path").getValue();
-	loadTerrain(app::loadAsset(terrainSvgPath));
+	loadTerrain(terrainNode, app::loadAsset(terrainSvgPath));
 }
 
 void GameLevel::addGameObject(core::GameObjectRef obj) {
 	Level::addGameObject(obj);
 }
 
-void GameLevel::loadGravity(XmlTree gravityNode) {
+void GameLevel::applySpaceAttributes(XmlTree spaceNode) {
+	if (spaceNode.hasAttribute("damping")) {
+		double damping = strtod(spaceNode.getAttribute("damping").getValue().c_str(), nullptr);
+		damping = clamp(damping, 0.0, 1.0);
+		cpSpaceSetDamping(getSpace()->getSpace(), damping);
+	}
+}
+
+void GameLevel::applyGravityAttributes(XmlTree gravityNode) {
 	string type = gravityNode.getAttribute("type").getValue();
 	if (type == "radial") {
 		radial_gravity_info rgi = getRadialGravity();
@@ -72,10 +84,23 @@ void GameLevel::loadGravity(XmlTree gravityNode) {
 	}
 }
 
-void GameLevel::loadTerrain(ci::DataSourceRef svgData) {
+void GameLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	double friction = 1;
+	double density = 1;
+	if (terrainNode.hasAttribute("friction")) {
+		friction = strtod(terrainNode.getAttribute("friction").getValue().c_str(), nullptr);
+	}
+
+	if (terrainNode.hasAttribute("density")) {
+		density = strtod(terrainNode.getAttribute("density").getValue().c_str(), nullptr);
+	}
+
+	const double minDensity = 1e-3;
+	density = max(density, minDensity);
+
+	const terrain::material terrainMaterial(density, friction, Filters::TERRAIN);
+	const terrain::material anchorMaterial(1, friction, Filters::ANCHOR);
 	
 	//
 	//	Load terrain
@@ -109,11 +134,4 @@ void GameLevel::loadTerrain(ci::DataSourceRef svgData) {
 		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower << " centerOfMass: " << rgi.centerOfMass);
 	}
 
-//	auto centerOfMassPos = _svgElements.find("center_of_mass");
-//	if (centerOfMassPos != _svgElements.end()) {
-//		radial_gravity_info rgi = getRadialGravity();
-//		rgi.centerOfMass = centerOfMassPos->second.position;
-//		setRadialGravity(rgi);
-//		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower << " centerOfMass: " << rgi.centerOfMass);
-//	}
 }
