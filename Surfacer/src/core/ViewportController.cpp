@@ -167,6 +167,12 @@ namespace core {
 
 	double ViewportController::_constrainScale( double scale ) const
 	{
+		// this is just a sanity check. Shit gets weird past this otherwise arbitrary value.
+		const double maxScale = 5000;
+		if (scale > maxScale) {
+			scale = maxScale;
+		}
+
 		if ( _levelBounds == cpBBInfinity ) return scale;
 
 		if ( _constraintMask & ConstrainScale )
