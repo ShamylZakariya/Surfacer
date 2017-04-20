@@ -48,10 +48,11 @@ _periodStep(periodStep)
 
 	auto fsh = CI_GLSL(150,
 					   uniform float AlphaPeriod;
-					   uniform float BetaPeriod;
+					   uniform float AlphaPeriodTexelSize;
 					   uniform float AlphaPeriodAlpha;
+					   uniform float BetaPeriod;
+					   uniform float BetaPeriodTexelSize;
 					   uniform float BetaPeriodAlpha;
-					   uniform float TexelSize;
 					   uniform vec4 Color;
 					   uniform vec4 AxisColor;
 					   uniform sampler2D Tex0;
@@ -60,26 +61,30 @@ _periodStep(periodStep)
 
 					   out vec4 oColor;
 
-					   vec4 getGridForPeriod(float period) {
+					   vec4 getGridForPeriod(float period, float texelSize, vec4 gridColor, vec4 axisColor) {
 						   vec2 texCoord = worldPosition / period;
 						   vec2 aTexCoord = abs(texCoord);
 
-						   float onAxis = (1.0 - step(TexelSize, aTexCoord.s)) + (1.0 - step(TexelSize, aTexCoord.t));
+						   // determine if texCoord is on either the x or y axis, "binary" in that value is 0, 1 or 2 for being on both axes
+						   // then clamp that to 0->1
+						   float onAxis = (1.0 - step(texelSize, aTexCoord.s)) + (1.0 - step(texelSize, aTexCoord.t));
 						   onAxis = clamp(onAxis, 0.0, 1.0);
-						   vec4 color = mix(Color, AxisColor, onAxis);
+
+						   // mix between primary color and axis color
+						   vec4 color = mix(gridColor, axisColor, onAxis);
 
 						   float alpha = texture(Tex0, texCoord).a;
-						   color.a *= alpha;
+						   color.a = mix(alpha,1.0,onAxis);
+
 						   return color;
 					   }
 
 					   void main(void) {
-						   vec4 alphaValue = getGridForPeriod(AlphaPeriod);
-						   vec4 betaValue = getGridForPeriod(BetaPeriod);
+						   vec4 alphaValue = getGridForPeriod(AlphaPeriod, AlphaPeriodTexelSize, Color, AxisColor);
+						   vec4 betaValue = getGridForPeriod(BetaPeriod, BetaPeriodTexelSize, Color, vec4(0,0,0,0));
 
 						   alphaValue.a *= AlphaPeriodAlpha;
 						   betaValue.a *= BetaPeriodAlpha;
-
 						   oColor = alphaValue + betaValue;
 					   }
 					   );
@@ -111,7 +116,7 @@ void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 }
 
 namespace {
-	inline double calcTexelSize(double scale, double period, double textureSize) {
+	inline double calcTexelScale(double scale, double period, double textureSize) {
 		return period * scale / textureSize;
 	}
 }
@@ -119,44 +124,56 @@ namespace {
 void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	core::ViewportRef vp = getLevel()->getViewport();
 
-	// find the first visible period
-	double textureSize = _texture->getWidth();
-	double viewportScale = vp->getScale();
+	// find largest period where rendered texel scale (ratio of one texel to one pixel) is less than or equal to maxTexelScale
+	const double textureSize = _texture->getWidth();
+	const double viewportScale = vp->getScale();
+	const double maxTexelScale = 3;
+	const double minTexelScale = 1/_periodStep;
 
-	// find largest period where rendered texels are less than or equal to maxTexelSize
-	const double maxTexelSize = 3;
-	const double minTexelSize = 1/_periodStep;
 	double period = _basePeriod;
-	double texelSize = calcTexelSize(viewportScale, period, textureSize);
+	double texelScale = calcTexelScale(viewportScale, period, textureSize);
 
-	while (texelSize < maxTexelSize) {
+	while (texelScale < maxTexelScale) {
 		period *= _periodStep;
-		texelSize = calcTexelSize(viewportScale, period, textureSize);
+		texelScale = calcTexelScale(viewportScale, period, textureSize);
 	}
 
 	// step back one since the above loop oversteps
 	period /= _periodStep;
-	texelSize /= _periodStep;
+	texelScale /= _periodStep;
 
-	double betaPeriod = period;
-	double betaPeriodTexelSize = texelSize;
-	double alphaPeriod = betaPeriod / _periodStep;
+	const double betaPeriod = period;
+	const double betaPeriodTexelScale = texelScale;
+	const double alphaPeriod = betaPeriod / _periodStep;
+	const double alphaPeriodTexelScale = texelScale / _periodStep;
 
-	// alpha of beta period falls as it approaches max texel size
-	double betaPeriodAlpha = 1 - (betaPeriodTexelSize - minTexelSize) / (maxTexelSize - minTexelSize);
-	double alphaPeriodAlpha = 1 - betaPeriodAlpha;
+	// alpha of beta period falls as it approaches max texel size, and alpha period is the remainder
+	const double betaPeriodAlpha = 1 - (betaPeriodTexelScale - minTexelScale) / (maxTexelScale - minTexelScale);
+	const double alphaPeriodAlpha = 1 - betaPeriodAlpha;
 
+	// compute the mip level so we can pass texel size [0...1] to the shader.
+	// This is used by shader to detect axis edges
+	double alphaPeriodMip = max(ceil(log2(1/alphaPeriodTexelScale)), 0.0);
+	double betaPeriodMip = max(ceil(log2(1/betaPeriodTexelScale)), 0.0);
+
+	// note we bump mip up to handle slop
+	double alphaPeriodTexelSize = pow(2, alphaPeriodMip+1) / _texture->getWidth();
+	double betaPeriodTexelSize = pow(2, betaPeriodMip+1) / _texture->getWidth();
+
+//	app::console() << "scale: " << dvec2(alphaPeriodTexelScale, betaPeriodTexelScale)
+//		<< " mip: " << dvec2(alphaPeriodMip, betaPeriodMip)
+//		<< " texelSize: " << dvec2(alphaPeriodTexelSize, betaPeriodTexelSize)
+//		<< endl;
 
 	_shader->uniform("Tex0", 0);
-	_shader->uniform("TexelSize", static_cast<float>(1.0 / _texture->getWidth()));
 	_shader->uniform("AlphaPeriod", static_cast<float>(alphaPeriod));
-	_shader->uniform("BetaPeriod", static_cast<float>(betaPeriod));
+	_shader->uniform("AlphaPeriodTexelSize", static_cast<float>(alphaPeriodTexelSize));
 	_shader->uniform("AlphaPeriodAlpha", static_cast<float>(alphaPeriodAlpha));
+	_shader->uniform("BetaPeriod", static_cast<float>(betaPeriod));
+	_shader->uniform("BetaPeriodTexelSize", static_cast<float>(betaPeriodTexelSize));
 	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
 	_shader->uniform("Color", ColorA(1,1,1,1));
-
-	// TODO: Fix axis coloring. We need to know the mip level (1,2,4,8) etc of the fragment to successfully scale an edge to step() against.
-	_shader->uniform("AxisColor", ColorA(1,1,1,1));
+	_shader->uniform("AxisColor", ColorA(1,0,0,1));
 }
 
 void WorldCartesianGridDrawComponent::onViewportMotion(const core::Viewport &vp) {
