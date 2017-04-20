@@ -15,11 +15,11 @@
 class WorldCartesianGridDrawComponent : public core::DrawComponent {
 public:
 
-	static shared_ptr<WorldCartesianGridDrawComponent> create(double baseRepeatPeriod = 100);
+	static shared_ptr<WorldCartesianGridDrawComponent> create(double basePeriod = 10, double periodStep = 10);
 
 public:
 
-	WorldCartesianGridDrawComponent(gl::TextureRef tex, double baseRepeatPeriod);
+	WorldCartesianGridDrawComponent(gl::TextureRef tex, double basePeriod, double periodStep);
 
 	cpBB getBB() const override {
 		return cpBBInfinity;
@@ -36,7 +36,8 @@ public:
 private:
 
 	gl::TextureRef _texture;
-	double _baseRepeatPeriod;
+	double _basePeriod;
+	double _periodStep;
 	gl::GlslProgRef _shader;
 	gl::BatchRef _batch;
 	

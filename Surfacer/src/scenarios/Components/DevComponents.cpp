@@ -11,20 +11,22 @@
 #pragma mark - WorldCartesianGridDrawComponent
 
 /*
-gl::TextureRef _texture;
-double _baseRepeatPeriod;
-gl::GlslProgRef _shader;
-gl::BatchRef _batch;
+	gl::TextureRef _texture;
+	double _basePeriod;
+	double _periodStep;
+	gl::GlslProgRef _shader;
+	gl::BatchRef _batch;
 */
 
-shared_ptr<WorldCartesianGridDrawComponent> WorldCartesianGridDrawComponent::create(double baseRepeatPeriod) {
+shared_ptr<WorldCartesianGridDrawComponent> WorldCartesianGridDrawComponent::create(double basePeriod, double periodStep) {
 	auto tex = gl::Texture2d::create(loadImage(app::loadAsset("cartesian_grid.png")), gl::Texture2d::Format().mipmap());
-	return make_shared<WorldCartesianGridDrawComponent>(tex,baseRepeatPeriod);
+	return make_shared<WorldCartesianGridDrawComponent>(tex,basePeriod, periodStep);
 }
 
-WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef tex, double baseRepeatPeriod):
+WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef tex, double basePeriod, double periodStep):
 _texture(tex),
-_baseRepeatPeriod(baseRepeatPeriod)
+_basePeriod(basePeriod),
+_periodStep(periodStep)
 {
 	_texture->setWrap(GL_REPEAT, GL_REPEAT);
 	_texture->setMagFilter(GL_NEAREST);
@@ -45,10 +47,10 @@ _baseRepeatPeriod(baseRepeatPeriod)
 					   );
 
 	auto fsh = CI_GLSL(150,
-					   uniform float FirstLevelRepeatPeriod;
-					   uniform float SecondLevelRepeatPeriod;
-					   uniform float FirstLevelAlpha;
-					   uniform float SecondLevelAlpha;
+					   uniform float AlphaPeriod;
+					   uniform float BetaPeriod;
+					   uniform float AlphaPeriodAlpha;
+					   uniform float BetaPeriodAlpha;
 					   uniform float TexelSize;
 					   uniform vec4 Color;
 					   uniform vec4 AxisColor;
@@ -72,17 +74,24 @@ _baseRepeatPeriod(baseRepeatPeriod)
 					   }
 
 					   void main(void) {
-						   vec4 firstLevelValue = getGridForPeriod(FirstLevelRepeatPeriod);
-						   vec4 secondLevelValue = getGridForPeriod(SecondLevelRepeatPeriod);
+						   vec4 alphaValue = getGridForPeriod(AlphaPeriod);
+						   vec4 betaValue = getGridForPeriod(BetaPeriod);
 
-						   firstLevelValue.a *= FirstLevelAlpha;
-						   secondLevelValue.a *= SecondLevelAlpha;
-						   oColor = mix(firstLevelValue, secondLevelValue, secondLevelValue.a);
+						   alphaValue.a *= AlphaPeriodAlpha;
+						   betaValue.a *= BetaPeriodAlpha;
+
+						   oColor = alphaValue + betaValue;
 					   }
 					   );
 
 	_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
 	_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)), _shader);
+}
+
+namespace {
+	inline double calcTexelSize(double scale, double period, double textureSize) {
+		return period * scale / textureSize;
+	}
 }
 
 void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
@@ -92,53 +101,51 @@ void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 	dvec2 centerWorld = v2(cpBBCenter(frustum));
 	dvec2 scale = centerWorld - dvec2(frustum.l, frustum.t);
 
-	/*
-	TODO: Redesign how grid pattern period alpha is computed
-	
-	 First, instead of magic numbers below, I should figure out how big a texel is on screen.
-		The patterns should be visible if the texel at a given scale is, say, 0.5 < texel-screen-size < 2
-		
-	 Second, we don't need hard coded scale 1, scale 2 - rather, we should loop, bumping the 
-	 _baseRepeatPeriod up by 10 until we find something visible, and then handle the next * 10
-	 */
 
+	// find the first visible period
 	double textureSize = _texture->getWidth();
 	double viewportScale = state.viewport->getScale();
-	double baseSizeOnScreen = _baseRepeatPeriod * viewportScale;
-	double baseScaleOnScreen = baseSizeOnScreen / textureSize;
-	double secondRepeatPeriod = _baseRepeatPeriod * 10;
 
-	// we need to scale the alpha of each level
+	// find largest period where rendered texels are less than or equal to maxTexelSize
+	const double maxTexelSize = 3;
+	const double minTexelSize = 1/_periodStep;
+	double period = _basePeriod;
+	double texelSize = calcTexelSize(viewportScale, period, textureSize);
 
-	float firstLevelAlpha = 1;
-	double baseScaleMin = 0.2, baseScaleMinEnd = 0.15;
-	if (baseScaleOnScreen < baseScaleMin) {
-		double f = (baseScaleOnScreen - baseScaleMin) / (baseScaleMinEnd - baseScaleMin);
-		firstLevelAlpha *= 1 - max(f, 0.0);
+	while (texelSize < maxTexelSize) {
+		period *= _periodStep;
+		texelSize = calcTexelSize(viewportScale, period, textureSize);
 	}
 
-	float secondLevelAlpha = 0;
-	baseScaleMin = 0.4;
-	baseScaleMinEnd *= 0.35;
-	if (baseScaleOnScreen < baseScaleMin) {
-		double f = (baseScaleOnScreen - baseScaleMin) / (baseScaleMinEnd - baseScaleMin);
-		secondLevelAlpha += clamp(f, 0.0, 1.0);
-	}
+	// step back one since the above loop oversteps
+	period /= _periodStep;
+	texelSize /= _periodStep;
 
-	dmat4 modelMatrix = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
+	double betaPeriod = period;
+	double betaPeriodTexelSize = texelSize;
+	double alphaPeriod = betaPeriod / _periodStep;
+
+	// alpha of beta period falls as it approaches max texel size
+	double betaPeriodAlpha = 1 - (betaPeriodTexelSize - minTexelSize) / (maxTexelSize - minTexelSize);
+	double alphaPeriodAlpha = 1 - betaPeriodAlpha;
+
 
 	gl::ScopedModelMatrix smm;
+	dmat4 modelMatrix = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
 	gl::multModelMatrix(modelMatrix);
 
 	_texture->bind(0);
 	_shader->uniform("Tex0", 0);
 	_shader->uniform("TexelSize", static_cast<float>(1.0 / _texture->getWidth()));
-	_shader->uniform("FirstLevelRepeatPeriod", static_cast<float>(_baseRepeatPeriod));
-	_shader->uniform("SecondLevelRepeatPeriod", static_cast<float>(secondRepeatPeriod));
-	_shader->uniform("FirstLevelAlpha", firstLevelAlpha);
-	_shader->uniform("SecondLevelAlpha", secondLevelAlpha);
+	_shader->uniform("AlphaPeriod", static_cast<float>(alphaPeriod));
+	_shader->uniform("BetaPeriod", static_cast<float>(betaPeriod));
+	_shader->uniform("AlphaPeriodAlpha", static_cast<float>(alphaPeriodAlpha));
+	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
 	_shader->uniform("Color", ColorA(1,1,1,1));
-	_shader->uniform("AxisColor", ColorA(1,0,0,1));
+
+	// TODO: Fix axis coloring
+	_shader->uniform("AxisColor", ColorA(1,1,1,1));
+
 	_batch->draw();
 }
 
