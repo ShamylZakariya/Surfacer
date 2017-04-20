@@ -21,6 +21,8 @@ public:
 
 	WorldCartesianGridDrawComponent(gl::TextureRef tex, double basePeriod, double periodStep);
 
+	void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+
 	cpBB getBB() const override {
 		return cpBBInfinity;
 	}
@@ -32,6 +34,11 @@ public:
 	}
 
 	int getLayer() const override { return -1; }
+
+protected:
+
+	void setupShaderUniforms();
+	void onViewportMotion(const core::Viewport &vp);
 
 private:
 

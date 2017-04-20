@@ -12,6 +12,7 @@
 #include "Common.hpp"
 #include "InputDispatcher.hpp"
 #include "RenderState.hpp"
+#include "Signals.hpp"
 #include "TimeState.hpp"
 
 namespace core {
@@ -21,7 +22,7 @@ namespace core {
 	SMART_PTR(SpaceAccess);
 
 	SMART_PTR(Component);
-	class Component : public enable_shared_from_this<Component>{
+	class Component : public enable_shared_from_this<Component>, public signals::receiver {
 	public:
 
 		Component(){}

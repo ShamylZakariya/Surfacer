@@ -88,10 +88,9 @@ _periodStep(periodStep)
 	_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)), _shader);
 }
 
-namespace {
-	inline double calcTexelSize(double scale, double period, double textureSize) {
-		return period * scale / textureSize;
-	}
+void WorldCartesianGridDrawComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+	level->getViewport()->motion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
+	setupShaderUniforms();
 }
 
 void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
@@ -101,10 +100,28 @@ void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 	dvec2 centerWorld = v2(cpBBCenter(frustum));
 	dvec2 scale = centerWorld - dvec2(frustum.l, frustum.t);
 
+	gl::ScopedModelMatrix smm;
+	dmat4 modelMatrix = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
+	gl::multModelMatrix(modelMatrix);
+
+	_texture->bind(0);
+	_shader->uniform("Tex0", 0);
+
+	_batch->draw();
+}
+
+namespace {
+	inline double calcTexelSize(double scale, double period, double textureSize) {
+		return period * scale / textureSize;
+	}
+}
+
+void WorldCartesianGridDrawComponent::setupShaderUniforms() {
+	core::ViewportRef vp = getLevel()->getViewport();
 
 	// find the first visible period
 	double textureSize = _texture->getWidth();
-	double viewportScale = state.viewport->getScale();
+	double viewportScale = vp->getScale();
 
 	// find largest period where rendered texels are less than or equal to maxTexelSize
 	const double maxTexelSize = 3;
@@ -130,11 +147,6 @@ void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 	double alphaPeriodAlpha = 1 - betaPeriodAlpha;
 
 
-	gl::ScopedModelMatrix smm;
-	dmat4 modelMatrix = glm::translate(dvec3(centerWorld,0)) * glm::scale(dvec3(scale,1));
-	gl::multModelMatrix(modelMatrix);
-
-	_texture->bind(0);
 	_shader->uniform("Tex0", 0);
 	_shader->uniform("TexelSize", static_cast<float>(1.0 / _texture->getWidth()));
 	_shader->uniform("AlphaPeriod", static_cast<float>(alphaPeriod));
@@ -143,10 +155,12 @@ void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
 	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
 	_shader->uniform("Color", ColorA(1,1,1,1));
 
-	// TODO: Fix axis coloring
+	// TODO: Fix axis coloring. We need to know the mip level (1,2,4,8) etc of the fragment to successfully scale an edge to step() against.
 	_shader->uniform("AxisColor", ColorA(1,1,1,1));
+}
 
-	_batch->draw();
+void WorldCartesianGridDrawComponent::onViewportMotion(const core::Viewport &vp) {
+	setupShaderUniforms();
 }
 
 
