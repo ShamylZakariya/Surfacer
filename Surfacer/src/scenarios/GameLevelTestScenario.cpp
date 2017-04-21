@@ -85,6 +85,9 @@ void GameLevelTestScenario::draw( const render_state &state ) {
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 
+	stringstream ss;
+	ss << "(" << state.viewport->getPan().x << ", " << state.viewport->getPan().y  << ") scale: " << state.viewport->getScale() << " rotation: " << (state.viewport->getRotation() * 180 / M_PI);
+	gl::drawString(ss.str(), vec2(10,40), Color(1,1,1));
 }
 
 bool GameLevelTestScenario::keyDown( const ci::app::KeyEvent &event ) {

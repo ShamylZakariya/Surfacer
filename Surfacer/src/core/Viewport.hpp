@@ -14,6 +14,7 @@
 #include <cinder/gl/scoped.h>
 
 #include "Common.hpp"
+#include "ChipmunkHelpers.hpp"
 #include "MathHelpers.hpp"
 #include "Signals.hpp"
 #include "TimeState.hpp"
@@ -30,10 +31,7 @@ namespace core {
 	class Camera2DInterface {
 	public:
 
-		static inline void createModelViewMatrix( const dvec2 &pan, double scale, dmat4 &mv )
-		{
-			mv = translate(dvec3(pan.x, pan.y, 0)) * ::scale(dvec3(scale, scale, 1));
-		}
+		static dmat4 createModelViewMatrix( const dvec2 &pan, double scale, double rotation);
 
 
 	public:
@@ -84,6 +82,16 @@ namespace core {
 		virtual dvec2 getPan() const = 0;
 
 		/**
+			set rotation in radians about the center of the viewport
+		 */
+		virtual void setRotation(double rads) = 0;
+
+		/**
+			get the rotation in radians about the center of the viewport
+		 */
+		virtual double getRotation() const = 0;
+
+		/**
 			cause the viewport to pan such that @a world is at location @a screen with @a scale
 			@a world Location of interest in world coordinates
 			@a scale desired level of scale
@@ -110,9 +118,10 @@ namespace core {
 		 @a pan the pan
 		 @a scale the scale
 		 */
-		virtual void setPanAndScale( const dvec2 &pan, double scale ) {
+		virtual void set( const dvec2 &pan, double scale, double rotationRads ) {
 			setPan(pan);
 			setScale(scale);
+			setRotation(rotationRads);
 		}
 
 		/**
@@ -146,12 +155,7 @@ namespace core {
 		/**
 		 get the current viewport frustum in world coordinates
 		 */
-		virtual cpBB getFrustum() const {
-			const dmat4 imv = getInverseModelViewMatrix();
-			const dvec2 lb = imv * dvec2( 0,0 );
-			const dvec2 tr = imv * dvec2( getWidth(), getHeight() );
-			return cpBBNew( lb.x, lb.y, tr.x, tr.y );
-		}
+		virtual cpBB getFrustum() const;
 
 		/**	
 		 If a camera needs to be time stepped
@@ -206,6 +210,9 @@ namespace core {
 		double getReciprocalScale() const override { return _rScale; }
 		void setPan( const dvec2 &p ) override;
 		dvec2 getPan() const override { return _pan; }
+		void setRotation(double rads) override;
+		double getRotation() const override { return _rotation; }
+
 		void lookAt( const dvec2 &world, double scale, const dvec2 &screen ) override;
 
 		// TODO: Figure out why I have to explicitly define these overrides, when they should be found automatically
@@ -217,7 +224,7 @@ namespace core {
 			Camera2DInterface::lookAt(world);
 		}
 
-		void setPanAndScale( const dvec2 &pan, double scale ) override;
+		void set( const dvec2 &pan, double scale, double rotationRads) override;
 		dmat4 getModelViewMatrix() const override { return _modelViewMatrix; }
 		dmat4 getInverseModelViewMatrix() const override { return _inverseModelViewMatrix; }
 
@@ -229,7 +236,7 @@ namespace core {
 		
 		dmat4 _modelViewMatrix, _inverseModelViewMatrix;
 		dvec2 _pan;
-		double _scale, _rScale;
+		double _scale, _rScale, _rotation;
 		ci::Area _bounds;
 		
 	};

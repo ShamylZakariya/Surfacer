@@ -183,7 +183,7 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	_shader->uniform("BetaPeriod", static_cast<float>(betaPeriod));
 	_shader->uniform("BetaPeriodTexelSize", static_cast<float>(betaPeriodTexelSize));
 	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
-	_shader->uniform("Color", ColorA(1,1,1,1));
+	_shader->uniform("Color", ColorA(1,1,1,0.5));
 
 	// TODO: Turn this back to red when I fix haloing
 	_shader->uniform("AxisColor", ColorA(1,1,1,1));
@@ -200,6 +200,15 @@ CameraControlComponent::CameraControlComponent(core::Camera2DInterfaceRef viewpo
 InputComponent(dispatchReceiptIndex),
 _viewport(viewport)
 {}
+
+void CameraControlComponent::step(const core::time_state &time) {
+	const double radsPerSec = 10 * M_PI / 180;
+	if (isKeyDown(ci::app::KeyEvent::KEY_q)) {
+		_viewport->setRotation(_viewport->getRotation() - radsPerSec * time.deltaT);
+	} else if (isKeyDown(ci::app::KeyEvent::KEY_e)) {
+		_viewport->setRotation(_viewport->getRotation() + radsPerSec * time.deltaT);
+	}
+}
 
 bool CameraControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();

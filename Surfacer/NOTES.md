@@ -11,6 +11,10 @@ Make an XML level file, which is loaded by GameLevel::load
 
 ## BUGS
 
+When rotating, my clipping frustum is NOT respected! Because it's instrinsically bound to viewport ortho space.
+
+Why isn't max zoom respected? Or is it, but it needs to be smarter than a hardcoded 5000?
+
 CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
 	- is this an ordering issue? who's gobbling the input?
 	- is there a robust way to respond to this from a design standpoint?

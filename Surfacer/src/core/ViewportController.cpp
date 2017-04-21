@@ -21,14 +21,14 @@ namespace {
 namespace core {
 
 	/*
-		core::Viewport		&_viewport;
-		unsigned int		_constraintMask;
-		control_method		_controlMethod;
-		cpBB				_levelBounds;
-		double				_scale;
-		dvec2				_pan;
-		zeno_config			_zenoConfig;
-		bool				_disregardViewportMotion;
+		ViewportRef _viewport;
+		unsigned int _constraintMask;
+		control_method _controlMethod;
+		cpBB _levelBounds;
+		double _scale, _rotation;
+		dvec2 _pan;
+		zeno_config _zenoConfig;
+		bool _disregardViewportMotion;
 	 */
 
 	ViewportController::ViewportController(control_method cm):
@@ -37,6 +37,7 @@ namespace core {
 	_controlMethod(cm),
 	_levelBounds( cpBBInfinity ),
 	_scale(1),
+	_rotation(0),
 	_pan(0,0),
 	_disregardViewportMotion(false)
 	{}
@@ -47,6 +48,7 @@ namespace core {
 	_controlMethod(cm),
 	_levelBounds( cpBBInfinity ),
 	_scale(1),
+	_rotation(0),
 	_pan(0,0),
 	_disregardViewportMotion(false)
 	{
@@ -111,26 +113,26 @@ namespace core {
 
 	void ViewportController::setScale( double z, const dvec2 &aboutScreen )
 	{
-		dmat4 mv, imv;
-		Viewport::createModelViewMatrix( _pan, _scale, mv );
+		dmat4 mv = Viewport::createModelViewMatrix( _pan, _scale, _rotation );
+		dmat4 imv = inverse(mv);
 
-		imv = inverse(mv);
+		mv = createModelViewMatrix( _pan, _constrainScale(z), _rotation);
 		dvec2 aboutWorld = imv * aboutScreen;
-
-		Viewport::createModelViewMatrix( _pan, _constrainScale(z), mv );
-
 		dvec2 postScaleAboutScreen = mv * aboutWorld;
 
 		_pan = _constrainPan( _pan + ( aboutScreen - postScaleAboutScreen ) );
 		_scale = _constrainScale( z );
 	}
 
+	void ViewportController::setRotation(double rads) {
+		_rotation = rads;
+		CI_LOG_D("rotation: " << _rotation * 180 / M_PI);
+	}
+
 	void ViewportController::lookAt( const dvec2 &world, double scale, const dvec2 &screen )
 	{
 		_scale = _constrainScale(scale);
-
-		dmat4 mv;
-		Viewport::createModelViewMatrix( _pan, _scale, mv );
+		dmat4 mv = createModelViewMatrix( _pan, _scale, _rotation );
 
 		_pan = _constrainPan( _pan + (screen - (mv*world)));
 	}
@@ -197,10 +199,12 @@ namespace core {
 
 		const dvec2 PanError = _pan - _viewport->getPan();
 		const double ScaleError = _scale - _viewport->getScale();
+		const double RotationError = _rotation - _viewport->getRotation();
 		const double Rate = 1.0 / time.deltaT;
 		const dvec2 Pan = _viewport->getPan() + PanError * std::pow(_zenoConfig.panFactor, Rate);
 		const double Scale = _viewport->getScale() + ScaleError * std::pow(_zenoConfig.scaleFactor, Rate );
-		_viewport->setPanAndScale(Pan, Scale);
+		const double Rotation = _viewport->getRotation() + RotationError * std::pow(_zenoConfig.rotationFactor, Rate);
+		_viewport->set(Pan, Scale, Rotation);
 
 		_disregardViewportMotion = false;
 	}

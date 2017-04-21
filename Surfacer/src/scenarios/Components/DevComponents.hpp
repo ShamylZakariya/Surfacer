@@ -58,6 +58,8 @@ public:
 
 	CameraControlComponent(core::Camera2DInterfaceRef viewport, int dispatchReceiptIndex = 1000);
 
+	void step(const core::time_state &time) override;
+
 	bool mouseDown( const ci::app::MouseEvent &event ) override;
 	bool mouseUp( const ci::app::MouseEvent &event ) override;
 	bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) override;

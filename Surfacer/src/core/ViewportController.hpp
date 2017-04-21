@@ -42,16 +42,18 @@ namespace core {
 
 		 */
 		struct zeno_config {
-			double panFactor, scaleFactor;
+			double panFactor, scaleFactor, rotationFactor;
 
 			zeno_config():
 			panFactor(0.98),
-			scaleFactor(0.98)
+			scaleFactor(0.98),
+			rotationFactor(0.98)
 			{}
 
-			zeno_config( double pf, double zf ):
+			zeno_config( double pf, double sf, double rf ):
 			panFactor(pf),
-			scaleFactor(zf)
+			scaleFactor(sf),
+			rotationFactor(rf)
 			{}
 
 		};
@@ -88,6 +90,8 @@ namespace core {
 		void setScale( double z ) override { _scale = _constrainScale(z); }
 		void setScale( double z, const dvec2 &about ) override;
 		double getScale() const override { return _scale; }
+		void setRotation(double rads) override;
+		double getRotation() const override { return _rotation; }
 
 		void setPan( const dvec2 &p ) override { _pan = _constrainPan( p ); }
 		dvec2 getPan() const override { return _pan; }
@@ -123,7 +127,7 @@ namespace core {
 		unsigned int _constraintMask;
 		control_method _controlMethod;
 		cpBB _levelBounds;
-		double _scale;
+		double _scale, _rotation;
 		dvec2 _pan;
 		zeno_config _zenoConfig;
 		bool _disregardViewportMotion;
