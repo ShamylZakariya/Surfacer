@@ -20,7 +20,6 @@
 		632064211E9FB84F00C84686 /* GameLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6320641F1E9FB84F00C84686 /* GameLevel.cpp */; };
 		632064241EA05BB400C84686 /* GameLevelTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632064221EA05BB400C84686 /* GameLevelTestScenario.cpp */; };
 		6320642C1EA2874C00C84686 /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6320642A1EA2874C00C84686 /* DevComponents.cpp */; };
-		63254AEC1E8ABD6800AFED94 /* LevelTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63254AEA1E8ABD6800AFED94 /* LevelTestScenario.cpp */; };
 		632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
 		632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
 		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
@@ -65,8 +64,6 @@
 		632064231EA05BB400C84686 /* GameLevelTestScenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameLevelTestScenario.hpp; sourceTree = "<group>"; };
 		6320642A1EA2874C00C84686 /* DevComponents.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DevComponents.cpp; sourceTree = "<group>"; };
 		6320642B1EA2874C00C84686 /* DevComponents.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DevComponents.hpp; sourceTree = "<group>"; };
-		63254AEA1E8ABD6800AFED94 /* LevelTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LevelTestScenario.cpp; sourceTree = "<group>"; };
-		63254AEB1E8ABD6800AFED94 /* LevelTestScenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = LevelTestScenario.hpp; sourceTree = "<group>"; };
 		632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkHelpers.cpp; sourceTree = "<group>"; };
 		632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ChipmunkHelpers.hpp; sourceTree = "<group>"; };
 		632622F01E7D9A630051ABE2 /* Core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Core.hpp; sourceTree = "<group>"; };
@@ -289,8 +286,6 @@
 				632064291EA2874C00C84686 /* Components */,
 				6326230E1E7D9A630051ABE2 /* TerrainTestScenario.cpp */,
 				6326230F1E7D9A630051ABE2 /* TerrainTestScenario.hpp */,
-				63254AEA1E8ABD6800AFED94 /* LevelTestScenario.cpp */,
-				63254AEB1E8ABD6800AFED94 /* LevelTestScenario.hpp */,
 				639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */,
 				639168B01E96832A007FD4FA /* SvgTestScenario.hpp */,
 				632064221EA05BB400C84686 /* GameLevelTestScenario.cpp */,
@@ -393,7 +388,6 @@
 				6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */,
 				63711EA21E8DE4900086332B /* Terrain.cpp in Sources */,
 				63C8E27D1EA50EF300709C3C /* Xml.cpp in Sources */,
-				63254AEC1E8ABD6800AFED94 /* LevelTestScenario.cpp in Sources */,
 				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
 				63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */,
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,

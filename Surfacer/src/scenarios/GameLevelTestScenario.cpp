@@ -86,7 +86,9 @@ void GameLevelTestScenario::draw( const render_state &state ) {
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 
 	stringstream ss;
-	ss << "(" << state.viewport->getPan().x << ", " << state.viewport->getPan().y  << ") scale: " << state.viewport->getScale() << " rotation: " << (state.viewport->getRotation() * 180 / M_PI);
+	Viewport::look look = state.viewport->getLook();
+
+	ss << std::setprecision(3) << "world (" << look.world.x << ", " << look.world.y  << ") scale: " << state.viewport->getScale() << " up: (" << look.up.x << ", " << look.up.y << ")";
 	gl::drawString(ss.str(), vec2(10,40), Color(1,1,1));
 }
 

@@ -184,7 +184,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 
 	const vec2 origin(30000,30000);
 
-	getViewportController()->lookAt(origin);
+	getViewportController()->setLook(origin);
 
 
 	vector<terrain::ShapeRef> shapes = { terrain::Shape::fromContour(rect(origin.x-200,origin.y-200,origin.x+200,origin.y+200)) };
@@ -203,7 +203,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 
 	cpSpaceSetDamping(getLevel()->getSpace()->getSpace(), 0.5);
 
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 	vector<terrain::ShapeRef> shapes = {
 		terrain::Shape::fromContour(rect(0, 0, 100, 50)),		// 0
@@ -224,7 +224,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
@@ -256,7 +256,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 }
 
 terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 
 	vector<terrain::ShapeRef> shapes = {
@@ -279,7 +279,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 }
 
 terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 	cpSpaceSetGravity(getLevel()->getSpace()->getSpace(), cpv(0,-9.8 * 10));
 
@@ -336,7 +336,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 		return polyLine;
 	};
 
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
@@ -373,7 +373,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 		return polyLine;
 	};
 
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),
@@ -452,7 +452,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 		return polyLine;
 	};
 
-	getViewportController()->lookAt(vec2(0,0));
+	getViewportController()->setLook(vec2(0,0));
 
 	auto rings = vector<PolyLine2d> {
 		ring(vec2(0,0), 500, 600, 0),

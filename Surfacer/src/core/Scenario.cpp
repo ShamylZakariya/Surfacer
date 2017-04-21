@@ -122,7 +122,7 @@ namespace core {
 
 	void Scenario::_dispatchResize( const ivec2 &size )
 	{
-		_viewport->setViewport(size.x, size.y);
+		_viewport->setSize(size.x, size.y);
 		if (_level) {
 			_level->resize(size);
 		}
@@ -141,9 +141,6 @@ namespace core {
 		if (_level) {
 			_level->step(_stepTime);
 		}
-
-		_viewport->step(_stepTime);
-		_viewportController->step(_stepTime);
 	}
 
 	void Scenario::_dispatchUpdate()
@@ -156,7 +153,6 @@ namespace core {
 			_level->update(_time);
 		}
 
-		_viewport->update(_time);
 		_viewportController->update(_time);
 	}
 
@@ -170,7 +166,8 @@ namespace core {
 		clear(_renderState);
 
 		if (_level) {
-			Viewport::ScopedState vs(getViewport());
+			gl::ScopedMatrices sm;
+			_viewport->applyGLMatrices();
 			_level->draw(_renderState);
 		}
 
