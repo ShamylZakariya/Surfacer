@@ -113,7 +113,6 @@ namespace core {
 
 		/**
 		 convert a point in world coordinate system to screen
-		 @note Assumes lower-left origin screen coordinate system
 		 */
 		dvec2 worldToScreen( const dvec2 &world ) const
 		{
@@ -121,12 +120,27 @@ namespace core {
 		}
 
 		/**
+		 convert a direction in world coordinate system to screen
+		 */
+		dvec2 worldToScreenDir( const dvec2 &world ) const
+		{
+			return dvec2(_viewProjectionMatrix * dvec4(world.x, world.y, 0.0, 0.0));
+		}
+
+		/**
 		 convert a point in screen coordinate system to world.
-		 @note Assumes lower-left origin screen coordinate system
 		 */
 		dvec2 screenToWorld( const dvec2 &screen ) const
 		{
 			return _inverseViewProjectionMatrix * screen;
+		}
+
+		/**
+		 convert a direction in screen coordinate system to world.
+		 */
+		dvec2 screenToWorldDir( const dvec2 &screen ) const
+		{
+			return dvec2(_inverseViewProjectionMatrix * dvec4(screen.x, screen.y, 0.0, 0.0));
 		}
 
 		/**

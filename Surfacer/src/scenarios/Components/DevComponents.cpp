@@ -225,6 +225,8 @@ bool CameraControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 
+	CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld);
+
 	// capture alt key for re-centering
 	if ( event.isAltDown() )
 	{
@@ -256,9 +258,9 @@ bool CameraControlComponent::mouseDrag( const ci::app::MouseEvent &event, const 
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
+		dvec2 deltaWorld = _viewportController->getViewport()->screenToWorldDir(dvec2(delta));
 		core::Viewport::look look = _viewportController->getLook();
-		_viewportController->getViewport()->screenToWorld(dvec2(delta));
-		look.world -= delta;
+		look.world -= deltaWorld;
 		_viewportController->setLook(look);
 		return true;
 	}

@@ -41,12 +41,11 @@ namespace core {
 		if (abs(z - _scale) > 1e-4) {
 			_scale = z;
 			_calcMatrices();
-			motion(*this);
 		}
 	}
 
 	void Viewport::setLook( const look &l ) {
-		if (distanceSquared(l.world, _look.world) > 1e-4 || distanceSquared(l.up, _look.up) > 1e-4) {
+		if (distanceSquared(l.world, _look.world) > 1e-6 || distanceSquared(l.up, _look.up) > 1e-6) {
 			_look.world = l.world;
 
 			// normalize up, falling back to (0,1) for invalid
@@ -56,8 +55,8 @@ namespace core {
 			} else {
 				_look.up = dvec2(0,1);
 			}
+
 			_calcMatrices();
-			motion(*this);
 		}
 	}
 
@@ -83,8 +82,6 @@ namespace core {
 	}
 
 	void Viewport::_calcMatrices() {
-		// HERE THERE BE DRAGONS - use glm::ortho and glm::lookAt
-
 		double rs = 1.0/_scale;
 		_projectionMatrix = glm::translate(dvec3(getCenter(), 0)) * glm::ortho(-rs, rs, -rs, rs, -1.0, 1.0);
 		_inverseProjectionMatrix = glm::inverse(_projectionMatrix);
@@ -95,6 +92,7 @@ namespace core {
 		_viewProjectionMatrix = _projectionMatrix * _viewMatrix;
 		_inverseViewProjectionMatrix = glm::inverse(_viewProjectionMatrix);
 
+		motion(*this);
 	}
 
 
