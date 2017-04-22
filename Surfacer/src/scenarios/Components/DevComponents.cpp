@@ -201,14 +201,23 @@ InputComponent(dispatchReceiptIndex),
 _viewportController(viewportController)
 {}
 
+namespace {
+	dvec2 rotate(dvec2 up, double by) {
+		return glm::rotate(up, by);
+	}
+}
+
 void CameraControlComponent::step(const core::time_state &time) {
-	//const double radsPerSec = 10 * M_PI / 180;
+	const double radsPerSec = 10 * M_PI / 180;
 	if (isKeyDown(ci::app::KeyEvent::KEY_q)) {
-		CI_LOG_W("Rotation unimplemented, right now");
+		core::Viewport::look look = _viewportController->getLook();
+		look.up = rotate(look.up, -radsPerSec * time.deltaT);
+		_viewportController->setLook(look);
 		//_viewport->setRotation(_viewport->getRotation() - radsPerSec * time.deltaT);
 	} else if (isKeyDown(ci::app::KeyEvent::KEY_e)) {
-		CI_LOG_W("Rotation unimplemented, right now");
-		//_viewport->setRotation(_viewport->getRotation() + radsPerSec * time.deltaT);
+		core::Viewport::look look = _viewportController->getLook();
+		look.up = rotate(look.up, +radsPerSec * time.deltaT);
+		_viewportController->setLook(look);
 	}
 }
 

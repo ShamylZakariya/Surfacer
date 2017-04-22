@@ -38,21 +38,27 @@ namespace core {
 
 	void Viewport::setScale( double z )
 	{
-		_scale = z;
-		_calcMatrices();
+		if (abs(z - _scale) > 1e-4) {
+			_scale = z;
+			_calcMatrices();
+			motion(*this);
+		}
 	}
 
 	void Viewport::setLook( const look &l ) {
-		_look.world = l.world;
+		if (distanceSquared(l.world, _look.world) > 1e-4 || distanceSquared(l.up, _look.up) > 1e-4) {
+			_look.world = l.world;
 
-		// normalize up, falling back to (0,1) for invalid
-		double len = glm::length(l.up);
-		if (len > 1e-3) {
-			_look.up = l.up / len;
-		} else {
-			_look.up = dvec2(0,1);
+			// normalize up, falling back to (0,1) for invalid
+			double len = glm::length(l.up);
+			if (len > 1e-3) {
+				_look.up = l.up / len;
+			} else {
+				_look.up = dvec2(0,1);
+			}
+			_calcMatrices();
+			motion(*this);
 		}
-		_calcMatrices();
 	}
 
 	cpBB Viewport::getFrustum() const {
@@ -71,6 +77,7 @@ namespace core {
 
 	void Viewport::applyGLMatrices() {
 		gl::viewport( 0, 0, _width, _height );
+		gl::setMatricesWindow(_width, _height, false);
 		gl::multProjectionMatrix(_projectionMatrix);
 		gl::multViewMatrix(_viewMatrix);
 	}
@@ -78,17 +85,16 @@ namespace core {
 	void Viewport::_calcMatrices() {
 		// HERE THERE BE DRAGONS - use glm::ortho and glm::lookAt
 
-		dvec2 center = getCenter();
-		double halfWidth = _width/2.0;
-		double halfHeight = _height/2.0;
-		_projectionMatrix = glm::ortho(center.x - _scale * halfWidth, center.x + _scale * halfWidth, center.y - _scale * halfHeight, center.y + _scale * halfHeight, -0.1, 100.0);
+		double rs = 1.0/_scale;
+		_projectionMatrix = glm::translate(dvec3(getCenter(), 0)) * glm::ortho(-rs, rs, -rs, rs, -1.0, 1.0);
 		_inverseProjectionMatrix = glm::inverse(_projectionMatrix);
 
-		_viewMatrix = glm::lookAt(dvec3(_look.world, -1), dvec3(_look.world,0), dvec3(_look.up,0));
-		_inverseViewMatrix = glm::inverse(_viewMatrix);
+		_viewMatrix = glm::lookAt(dvec3(_look.world, 1), dvec3(_look.world, 0), dvec3(_look.up,0));
+		_inverseViewMatrix = inverse(_viewMatrix);
 
 		_viewProjectionMatrix = _projectionMatrix * _viewMatrix;
 		_inverseViewProjectionMatrix = glm::inverse(_viewProjectionMatrix);
+
 	}
 
 

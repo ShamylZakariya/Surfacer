@@ -27,7 +27,7 @@ public:
 
 	virtual void setup() override {
 		GameApp::setup();
-		setScenario(make_shared<GameLevelTestScenario>());
+		setScenario(make_shared<SvgTestScenario>());
 	}
 
 };

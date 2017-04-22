@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000px" height="1000px" viewBox="0 0 1000 1000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+    <title>cartesian_quadrants</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="cartesian_quadrants">
+            <g id="root" transform="translate(162.000000, 162.000000)">
+                <g id="Rectangle">
+                    <rect fill="#FF0000" stroke="#979797" stroke-width="1" x="338.5" y="0.5" width="337" height="337"></rect>
+                </g>
+                <g id="Rectangle-Copy-2">
+                    <rect fill="#7ED321" stroke="#979797" stroke-width="1" x="338.5" y="338.5" width="337" height="337"></rect>
+                </g>
+                <g id="Rectangle-Copy">
+                    <rect fill="#9012FE" stroke="#979797" stroke-width="1" x="0.5" y="0.5" width="337" height="337"></rect>
+                </g>
+                <g id="Rectangle-Copy-3">
+                    <rect fill="#50E3C2" stroke="#979797" stroke-width="1" x="0.5" y="338.5" width="337" height="337"></rect>
+                </g>
+                <circle id="Oval" fill="#F8E81C" cx="338" cy="338" r="95"></circle>
+            </g>
+        </g>
+    </g>
+</svg>
