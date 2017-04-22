@@ -8,72 +8,43 @@
 
 #include "ViewportController.hpp"
 
-#include <algorithm>
-
-#include "ChipmunkHelpers.hpp"
-
-namespace {
-
-	const double Epsilon = 1e-3;
-
-}
-
 namespace core {
 
 	/*
 		ViewportRef _viewport;
-		unsigned int _constraintMask;
-		control_method _controlMethod;
-		cpBB _levelBounds;
-		double _scale, _rotation;
-		dvec2 _pan;
+		Viewport::look _look;
+		double _scale;
+
 		zeno_config _zenoConfig;
 		bool _disregardViewportMotion;
 	 */
 
-	ViewportController::ViewportController(control_method cm):
+	ViewportController::ViewportController( ViewportRef vp):
 	_viewport(nullptr),
-	_constraintMask(NoConstraint),
-	_controlMethod(cm),
-	_levelBounds( cpBBInfinity ),
-	_scale(1),
-	_rotation(0),
-	_pan(0,0),
-	_disregardViewportMotion(false)
-	{}
-
-	ViewportController::ViewportController( ViewportRef vp, control_method cm ):
-	_viewport(nullptr),
-	_constraintMask(NoConstraint),
-	_controlMethod(cm),
-	_levelBounds( cpBBInfinity ),
-	_scale(1),
-	_rotation(0),
-	_pan(0,0),
 	_disregardViewportMotion(false)
 	{
 		setViewport(vp);
 	}
 
-	ViewportController::~ViewportController()
-	{}
-
 	void ViewportController::update( const time_state &time )
 	{
-		//
-		//	smoothly apply the changes
-		//
+		_disregardViewportMotion = true;
 
-		switch( _controlMethod )
-		{
-			case Zeno:
-				_updateZeno( time );
-				break;
+		const double Rate = 1.0 / time.deltaT;
+		Viewport::look look = _viewport->getLook();
 
-			case PID:
-				_updatePID( time );
-				break;
-		}
+		const dvec2 lookWorldError = _look.world - look.world;
+		const dvec2 lookUpError = _look.up - look.up;
+		const double scaleError = _scale - _viewport->getScale();
+
+		look.world = look.world + lookWorldError * std::pow(_zenoConfig.lookTargetFactor, Rate);
+		look.up = look.up + lookUpError * std::pow(_zenoConfig.lookUpFactor, Rate);
+		const double newScale = _viewport->getScale() + scaleError * std::pow(_zenoConfig.scaleFactor, Rate);
+
+		_viewport->setScale(newScale);
+		_viewport->setLook(look);
+
+		_disregardViewportMotion = false;
 	}
 
 	void ViewportController::setViewport(ViewportRef vp) {
@@ -84,153 +55,48 @@ namespace core {
 		_viewport = vp;
 		if (_viewport) {
 			_scale = _viewport->getScale();
-			_pan = _viewport->getPan();
+			_look = _viewport->getLook();
 			_viewport->motion.connect(this, &ViewportController::_viewportInitiatedChange );
 			_viewport->boundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
 		} else {
 			_scale = 1;
-			_pan = dvec2(0,0);
+			_look = { dvec2(0,0), dvec2(0,1) };
 		}
 	}
 
-	void ViewportController::setConstraintMask( unsigned int cmask )
-	{
-		_constraintMask = cmask;
-		if ( _constraintMask )
-		{
-			_pan = _constrainPan( _pan );
-			_scale = _constrainScale( _scale );
+	void ViewportController::setLook( const Viewport::look l ) {
+		_look.world = l.world;
+
+		double len = glm::length(l.up);
+		if (len > 1e-3) {
+			_look.up = l.up / len;
+		} else {
+			_look.up = dvec2(0,1);
 		}
 	}
 
-	void ViewportController::setViewport( int width, int height ) {
-		_viewport->setViewport(width, height);
-	}
-
-	ci::Area ViewportController::getBounds() const {
-		return _viewport->getBounds();
-	}
-
-	void ViewportController::setScale( double z, const dvec2 &aboutScreen )
-	{
-		dmat4 mv = Viewport::createModelViewMatrix( _pan, _scale, _rotation );
-		dmat4 imv = inverse(mv);
-
-		mv = createModelViewMatrix( _pan, _constrainScale(z), _rotation);
-		dvec2 aboutWorld = imv * aboutScreen;
-		dvec2 postScaleAboutScreen = mv * aboutWorld;
-
-		_pan = _constrainPan( _pan + ( aboutScreen - postScaleAboutScreen ) );
-		_scale = _constrainScale( z );
-	}
-
-	void ViewportController::setRotation(double rads) {
-		_rotation = rads;
-		CI_LOG_D("rotation: " << _rotation * 180 / M_PI);
-	}
-
-	void ViewportController::lookAt( const dvec2 &world, double scale, const dvec2 &screen )
-	{
-		_scale = _constrainScale(scale);
-		dmat4 mv = createModelViewMatrix( _pan, _scale, _rotation );
-
-		_pan = _constrainPan( _pan + (screen - (mv*world)));
-	}
-
-	dmat4 ViewportController::getModelViewMatrix() const {
-		return _viewport->getModelViewMatrix();
-	}
-
-	dmat4 ViewportController::getInverseModelViewMatrix() const {
-		return _viewport->getInverseModelViewMatrix();
+	void ViewportController::setScale(double scale) {
+		_scale = clamp(scale, 0.05, 2000.0);
 	}
 
 #pragma mark -
 #pragma mark Private
 
-	dvec2 ViewportController::_constrainPan( dvec2 pan ) const
-	{
-		if ( _levelBounds == cpBBInfinity ) return pan;
-
-		if ( _constraintMask & ConstrainPan )
-		{
-			pan.x = std::min( pan.x, _levelBounds.l * _scale);
-			pan.y = std::min( pan.y, _levelBounds.b * _scale);
-
-			double right = (_levelBounds.r * _scale) - _viewport->getWidth(),
-			top = (_levelBounds.t * _scale) - _viewport->getHeight();
-
-			pan.x = std::max( pan.x, -right );
-			pan.y = std::max( pan.y, -top );
-		}
-
-		return pan;
-	}
-
-	double ViewportController::_constrainScale( double scale ) const
-	{
-		// this is just a sanity check. Shit gets weird past this otherwise arbitrary value.
-		const double maxScale = 5000;
-		if (scale > maxScale) {
-			scale = maxScale;
-		}
-
-		if ( _levelBounds == cpBBInfinity ) return scale;
-
-		if ( _constraintMask & ConstrainScale )
-		{
-			double minScaleWidth = _viewport->getWidth() / (_levelBounds.r - _levelBounds.l),
-			minScaleHeight = _viewport->getHeight() / (_levelBounds.t - _levelBounds.b );
-
-			scale = std::max( scale, std::max( minScaleWidth, minScaleHeight ));
-		}
-		else
-		{
-			scale = std::max( scale, Epsilon );
-		}
-
-		return scale;
-	}
-
-
-	void ViewportController::_updateZeno( const time_state &time )
-	{
-		_disregardViewportMotion = true;
-
-		const dvec2 PanError = _pan - _viewport->getPan();
-		const double ScaleError = _scale - _viewport->getScale();
-		const double RotationError = _rotation - _viewport->getRotation();
-		const double Rate = 1.0 / time.deltaT;
-		const dvec2 Pan = _viewport->getPan() + PanError * std::pow(_zenoConfig.panFactor, Rate);
-		const double Scale = _viewport->getScale() + ScaleError * std::pow(_zenoConfig.scaleFactor, Rate );
-		const double Rotation = _viewport->getRotation() + RotationError * std::pow(_zenoConfig.rotationFactor, Rate);
-		_viewport->set(Pan, Scale, Rotation);
-
-		_disregardViewportMotion = false;
-	}
-
-	void ViewportController::_updatePID( const time_state &time )
-	{
-		_disregardViewportMotion = true;
-
-		// TODO: unimplemented...
-
-		_disregardViewportMotion = false;
-	}
-
 	void ViewportController::_viewportInitiatedChange( const Viewport &vp )
 	{
 		if ( !_disregardViewportMotion )
 		{
-			_pan = vp.getPan();
+			_look = vp.getLook();
 			_scale = vp.getScale();
 		}
 	}
 
-	void ViewportController::_viewportBoundsChanged( const Viewport &vp, const Area &bounds )
+	void ViewportController::_viewportBoundsChanged( const Viewport &vp )
 	{
-		_pan = _constrainPan( _pan );
-		_scale = _constrainScale( _scale );
+		if (!_disregardViewportMotion) {
+			_look = vp.getLook();
+			_scale = vp.getScale();
+		}
 	}
 	
 	

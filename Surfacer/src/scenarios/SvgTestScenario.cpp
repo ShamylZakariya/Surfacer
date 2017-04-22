@@ -59,8 +59,8 @@ void SvgTestScenario::setup() {
 	getLevel()->addGameObject(grid);
 	getLevel()->addGameObject(cameraController);
 
-	//testSimpleSvgLoad();
-	testSimpleSvgGroupOriginTransforms();
+	testSimpleSvgLoad();
+	//testSimpleSvgGroupOriginTransforms();
 }
 
 void SvgTestScenario::cleanup() {
@@ -93,6 +93,12 @@ void SvgTestScenario::draw( const render_state &state ) {
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 
+	stringstream ss;
+	Viewport::look look = state.viewport->getLook();
+
+	ss << std::setprecision(3) << "world (" << look.world.x << ", " << look.world.y  << ") scale: " << state.viewport->getScale() << " up: (" << look.up.x << ", " << look.up.y << ")";
+	gl::drawString(ss.str(), vec2(10,40), Color(1,1,1));
+
 }
 
 bool SvgTestScenario::keyDown( const ci::app::KeyEvent &event ) {
@@ -116,7 +122,7 @@ void SvgTestScenario::reset() {
 #pragma mark - Tests
 
 void SvgTestScenario::testSimpleSvgLoad() {
-	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/group_origin_test.svg"), 1);
+	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/cartesian_quadrants.svg"), 1);
 	doc->trace();
 	getLevel()->addGameObject(GameObject::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
 }
@@ -131,6 +137,7 @@ void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
 	auto purple1 = purple->find("purple-1");
 	auto purple2 = purple->find("purple-2");
 
+	root->setPosition(-root->getDocumentSize()/2.0);
 
 	class Wiggler : public core::Component {
 	public:

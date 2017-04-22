@@ -23,6 +23,12 @@ namespace cinder {
 		return glm::tvec2<T,P>(m * glm::tvec4<T,P>(v.x, v.y, T(0), T(1)));
 	}
 
+	template< class T, glm::precision P >
+	inline glm::tvec2<T,P> operator * ( const glm::tmat3x3<T,P> &m, const glm::tvec2<T,P> &v )
+	{
+		return glm::tvec2<T,P>(m * glm::tvec4<T,P>(v.x, v.y, T(0), T(1)));
+	}
+
 }
 
 template < typename T, glm::precision P >

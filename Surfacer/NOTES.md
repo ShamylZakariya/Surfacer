@@ -15,6 +15,8 @@ When rotating, my clipping frustum is NOT respected! Because it's instrinsically
 
 Why isn't max zoom respected? Or is it, but it needs to be smarter than a hardcoded 5000?
 
+glm::inverseTranspose exists. I can use it instead of glm::inverse in a lot of places
+
 CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
 	- is this an ordering issue? who's gobbling the input?
 	- is there a robust way to respond to this from a design standpoint?

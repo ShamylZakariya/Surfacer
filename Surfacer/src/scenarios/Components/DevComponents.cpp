@@ -196,17 +196,28 @@ void WorldCartesianGridDrawComponent::onViewportMotion(const core::Viewport &vp)
 
 #pragma mark - CameraControlComponent
 
-CameraControlComponent::CameraControlComponent(core::Camera2DInterfaceRef viewport, int dispatchReceiptIndex):
+CameraControlComponent::CameraControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex):
 InputComponent(dispatchReceiptIndex),
-_viewport(viewport)
+_viewportController(viewportController)
 {}
+
+namespace {
+	dvec2 rotate(dvec2 up, double by) {
+		return glm::rotate(up, by);
+	}
+}
 
 void CameraControlComponent::step(const core::time_state &time) {
 	const double radsPerSec = 10 * M_PI / 180;
 	if (isKeyDown(ci::app::KeyEvent::KEY_q)) {
-		_viewport->setRotation(_viewport->getRotation() - radsPerSec * time.deltaT);
+		core::Viewport::look look = _viewportController->getLook();
+		look.up = rotate(look.up, -radsPerSec * time.deltaT);
+		_viewportController->setLook(look);
+		//_viewport->setRotation(_viewport->getRotation() - radsPerSec * time.deltaT);
 	} else if (isKeyDown(ci::app::KeyEvent::KEY_e)) {
-		_viewport->setRotation(_viewport->getRotation() + radsPerSec * time.deltaT);
+		core::Viewport::look look = _viewportController->getLook();
+		look.up = rotate(look.up, +radsPerSec * time.deltaT);
+		_viewportController->setLook(look);
 	}
 }
 
@@ -214,10 +225,12 @@ bool CameraControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 
+	CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld);
+
 	// capture alt key for re-centering
 	if ( event.isAltDown() )
 	{
-		_viewport->lookAt( _mouseWorld );
+		_viewportController->setLook( _mouseWorld );
 		return true;
 	}
 
@@ -245,7 +258,10 @@ bool CameraControlComponent::mouseDrag( const ci::app::MouseEvent &event, const 
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
-		_viewport->setPan( _viewport->getPan() + dvec2(delta) );
+		dvec2 deltaWorld = _viewportController->getViewport()->screenToWorldDir(dvec2(delta));
+		core::Viewport::look look = _viewportController->getLook();
+		look.world -= deltaWorld;
+		_viewportController->setLook(look);
 		return true;
 	}
 
@@ -253,10 +269,10 @@ bool CameraControlComponent::mouseDrag( const ci::app::MouseEvent &event, const 
 }
 
 bool CameraControlComponent::mouseWheel( const ci::app::MouseEvent &event ){
-	const float zoom = _viewport->getScale(),
+	const float zoom = _viewportController->getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
-	_viewport->setScale( std::max( zoom + dz, 0.1f ), event.getPos() );
+	_viewportController->setScale(zoom + dz);
 
 	return true;
 }

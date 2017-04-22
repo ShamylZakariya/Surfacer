@@ -11,141 +11,90 @@
 
 namespace core {
 
-#pragma mark - Camera2DInterface
-
-	dmat4 Camera2DInterface::createModelViewMatrix( const dvec2 &pan, double scale, double rotation) {
-		/*
-		 Pan is describing the location of the origin in screen space. Does this make sense????
-		 
-		 1) Perhaps I need to drop ViewportController for a while, so I don't have to write code twice. 
-		 2) Consider a re-ordering of operations, - this will affect lookAt, etc
-
-		 */
-		auto t = glm::translate(dvec3(pan.x, pan.y, 0));
-		//auto it = glm::translate(dvec3(-pan.x, -pan.y, 0));
-		auto s = glm::scale(dvec3(scale, scale, 1));
-		//auto r = glm::rotate(rotation, dvec3(0,0,1));
-
-		return t * s;
-	}
-
-	cpBB Camera2DInterface::getFrustum() const {
-		const dmat4 imv = getInverseModelViewMatrix();
-		const double width = getWidth(), height = getHeight();
-		cpBB bb = cpBBInvalid;
-		cpBBExpand(bb, imv * dvec2( 0,0 ));
-		cpBBExpand(bb, imv * dvec2( width,0 ));
-		cpBBExpand(bb, imv * dvec2( width,height ));
-		cpBBExpand(bb, imv * dvec2( 0,height ));
-		return bb;
-	}
-
-#pragma mark - Viewport
-
 	/*
-		dmat4 _modelViewMatrix, _inverseModelViewMatrix;
-		dvec2 _pan;
-		double _scale, _rScale, _rotation;
-		ci::Area _bounds;
+		int _width, _height;
+		double _scale;
+		look _look;
+		dmat4 _viewMatrix, _inverseViewMatrix, _projectionMatrix, _inverseProjectionMatrix, _viewProjectionMatrix, _inverseViewProjectionMatrix;
 	 */
 
 	Viewport::Viewport():
-	_pan( 0,0 ),
-	_scale(1),
-	_rScale(1),
-	_rotation(0),
-	_bounds(0,0,0,0)
+	_width(0),
+	_height(0),
+	_scale(1)
 	{
-		setViewport( app::getWindowWidth(), app::getWindowHeight() );
-		set( dvec2(0,0), 1, 0 );
+		setSize( app::getWindowWidth(), app::getWindowHeight() );
+		setLook(dvec2(0,0));
 	}
 
-	Viewport::~Viewport()
-	{}
-
-	void Viewport::set() const
-	{
-		//
-		//	set viewport, projection for a bottom-left coordinate system and modelview
-		//
-
-		gl::viewport( _bounds.getX1(), _bounds.getY1(), _bounds.getWidth(), _bounds.getHeight() );
-		gl::setMatricesWindow( getWidth(), getHeight(), false );
-		gl::multViewMatrix(_modelViewMatrix);
-	}
-
-	void Viewport::setViewport( int width, int height )
-	{
-		if (width != _bounds.getWidth() || height != _bounds.getHeight()) {
-			_bounds.set( 0,0, width, height );
-			_update();
-
-			boundsChanged( *this, _bounds );
+	void Viewport::setSize(int width, int height) {
+		if (_width != width || _height != height) {
+			_width = width;
+			_height = height;
+			_calcMatrices();
+			boundsChanged(*this);
 		}
 	}
 
 	void Viewport::setScale( double z )
 	{
-		_scale = z;
-		_update();
+		if (abs(z - _scale) > 1e-4) {
+			_scale = z;
+			_calcMatrices();
+		}
 	}
 
-	void Viewport::setScale( double s, const dvec2 &aboutScreen )
-	{
-		dmat4 mv = createModelViewMatrix(getPan(), getScale(), getRotation());
-		dmat4 imv = inverse(mv);
+	void Viewport::setLook( const look &l ) {
+		if (distanceSquared(l.world, _look.world) > 1e-6 || distanceSquared(l.up, _look.up) > 1e-6) {
+			_look.world = l.world;
 
-		dvec2 aboutWorld = imv * aboutScreen;
-		mv = createModelViewMatrix( getPan(), s, getRotation());
+			// normalize up, falling back to (0,1) for invalid
+			double len = glm::length(l.up);
+			if (len > 1e-3) {
+				_look.up = l.up / len;
+			} else {
+				_look.up = dvec2(0,1);
+			}
 
-		dvec2 postScaleAboutScreen = mv * aboutWorld;
-
-		_pan += aboutScreen - postScaleAboutScreen;
-		_scale = s;
-		_update();
+			_calcMatrices();
+		}
 	}
 
-	void Viewport::setPan( const dvec2 &p )
-	{
-		_pan = p;
-		_update();
+	cpBB Viewport::getFrustum() const {
+
+		// frustum is axis-aligned box in world space wrapping the edges of the screen
+
+		const double width = getWidth(), height = getHeight();
+		cpBB bb = cpBBInvalid;
+		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( 0,0 ));
+		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( width,0 ));
+		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( width,height ));
+		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( 0,height ));
+
+		return bb;
 	}
 
-	void Viewport::setRotation(double rads) {
-		_rotation = rads;
-		_update();
+	void Viewport::applyGLMatrices() {
+		gl::viewport( 0, 0, _width, _height );
+		gl::setMatricesWindow(_width, _height, false);
+		gl::multProjectionMatrix(_projectionMatrix);
+		gl::multViewMatrix(_viewMatrix);
 	}
 
-	void Viewport::lookAt( const dvec2 &world, double scale, const dvec2 &screen )
-	{
-		//
-		//	Update scale and compute appropriate modelview
-		//
+	void Viewport::_calcMatrices() {
+		double rs = 1.0/_scale;
+		_projectionMatrix = glm::translate(dvec3(getCenter(), 0)) * glm::ortho(-rs, rs, -rs, rs, -1.0, 1.0);
+		_inverseProjectionMatrix = glm::inverse(_projectionMatrix);
 
-		_scale = scale;
-		dmat4 mv = createModelViewMatrix( _pan, _scale, _rotation );
+		_viewMatrix = glm::lookAt(dvec3(_look.world, 1), dvec3(_look.world, 0), dvec3(_look.up,0));
+		_inverseViewMatrix = inverse(_viewMatrix);
 
-		// update pan accordingly
-		_pan = _pan + (screen - (mv * world));
+		_viewProjectionMatrix = _projectionMatrix * _viewMatrix;
+		_inverseViewProjectionMatrix = glm::inverse(_viewProjectionMatrix);
 
-		_update();
+		motion(*this);
 	}
 
-	void Viewport::set( const dvec2 &pan, double scale, double rotationRads )
-	{
-		_pan = pan;
-		_scale = scale;
-		_rotation = rotationRads;
-		_update();
-	}
 
-	void Viewport::_update()
-	{
-		_rScale = 1.0 / _scale;
-		_modelViewMatrix = createModelViewMatrix( _pan, _scale, _rotation );
-		_inverseModelViewMatrix = inverse(_modelViewMatrix);
-		
-		motion( *this );
-	}
 	
 }

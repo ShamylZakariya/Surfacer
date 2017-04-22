@@ -10,7 +10,6 @@
 #include "GameApp.hpp"
 
 #include "TerrainTestScenario.hpp"
-#include "LevelTestScenario.hpp"
 #include "SvgTestScenario.hpp"
 #include "GameLevelTestScenario.hpp"
 

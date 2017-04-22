@@ -56,7 +56,7 @@ private:
 class CameraControlComponent : public core::InputComponent {
 public:
 
-	CameraControlComponent(core::Camera2DInterfaceRef viewport, int dispatchReceiptIndex = 1000);
+	CameraControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
 
 	void step(const core::time_state &time) override;
 
@@ -69,7 +69,7 @@ public:
 private:
 
 	vec2 _mouseScreen, _mouseWorld;
-	core::Camera2DInterfaceRef _viewport;
+	core::ViewportControllerRef _viewportController;
 
 };
 
