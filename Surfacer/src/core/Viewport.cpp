@@ -74,9 +74,7 @@ namespace core {
 		return bb;
 	}
 
-	void Viewport::applyGLMatrices() {
-		gl::viewport( 0, 0, _width, _height );
-		gl::setMatricesWindow(_width, _height, false);
+	void Viewport::set() {
 		gl::multProjectionMatrix(_projectionMatrix);
 		gl::multViewMatrix(_viewMatrix);
 	}

@@ -33,8 +33,22 @@ namespace core {
 		virtual void resize( ivec2 size );
 		virtual void step( const time_state &time );
 		virtual void update( const time_state &time );
+
+		/**
+		 Clear the screen. No drawing should be done in here.
+		 */
 		virtual void clear( const render_state &state );
+
+		/**
+		 performs draw with viewport set with its current scale, look, etc.
+		 */
 		virtual void draw( const render_state &state );
+
+		/**
+		 performs draw with a top-left 1-to-1 ortho projection suitable for UI.
+		 Note, there's no ViewportRef available in this pass since it's screen-direct.
+		 */
+		virtual void drawScreen( const render_state &state );
 
 		const ViewportRef& getViewport() const { return _viewport; }
 		const ViewportControllerRef getViewportController() const { return _viewportController; }
@@ -77,6 +91,7 @@ namespace core {
 		time_state _time, _stepTime;
 		render_state _renderState;
 		LevelRef _level;
+		int _width, _height;
 		
 	};
 	

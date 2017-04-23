@@ -153,7 +153,7 @@ void TerrainTestScenario::clear( const render_state &state ) {
 	gl::clear( Color( 0.2, 0.225, 0.25 ) );
 }
 
-void TerrainTestScenario::draw( const render_state &state ) {
+void TerrainTestScenario::drawScreen( const render_state &state ) {
 	// draw fpf/sps
 	float fps = core::GameApp::get()->getAverageFps();
 	float sps = core::GameApp::get()->getAverageSps();

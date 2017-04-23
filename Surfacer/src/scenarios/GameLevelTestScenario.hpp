@@ -28,15 +28,11 @@ public:
 	virtual void step( const time_state &time ) override;
 	virtual void update( const time_state &time ) override;
 	virtual void clear( const render_state &state ) override;
-	virtual void draw( const render_state &state ) override;
+	virtual void drawScreen( const render_state &state ) override;
 
 	virtual bool keyDown( const ci::app::KeyEvent &event ) override;
 
 	void reset();
-
-private:
-
-	terrain::TerrainObjectRef _terrain;
 
 };
 

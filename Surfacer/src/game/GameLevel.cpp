@@ -71,7 +71,7 @@ void GameLevel::applyGravityAttributes(XmlTree gravityNode) {
 		setRadialGravity(rgi);
 		setGravityType(RADIAL);
 
-		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " faloffPower: " << rgi.faloffPower);
+		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.faloffPower);
 
 	} else if (type == "directional") {
 		string dirStr = gravityNode.getAttribute("dir").getValue();

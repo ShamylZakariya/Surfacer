@@ -82,7 +82,7 @@ void SvgTestScenario::clear( const render_state &state ) {
 	gl::clear( Color( 0.2, 0.2, 0.2 ) );
 }
 
-void SvgTestScenario::draw( const render_state &state ) {
+void SvgTestScenario::drawScreen( const render_state &state ) {
 
 	//
 	// NOTE: we're in screen space, with coordinate system origin at top left
@@ -94,9 +94,10 @@ void SvgTestScenario::draw( const render_state &state ) {
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 
 	stringstream ss;
-	Viewport::look look = state.viewport->getLook();
+	Viewport::look look = getViewport()->getLook();
+	double scale = getViewport()->getScale();
 
-	ss << std::setprecision(3) << "world (" << look.world.x << ", " << look.world.y  << ") scale: " << state.viewport->getScale() << " up: (" << look.up.x << ", " << look.up.y << ")";
+	ss << std::setprecision(3) << "world (" << look.world.x << ", " << look.world.y  << ") scale: " << scale << " up: (" << look.up.x << ", " << look.up.y << ")";
 	gl::drawString(ss.str(), vec2(10,40), Color(1,1,1));
 
 }

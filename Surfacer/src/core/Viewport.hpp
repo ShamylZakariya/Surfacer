@@ -148,7 +148,10 @@ namespace core {
 		 */
 		cpBB getFrustum() const;
 
-		void applyGLMatrices();
+		/**
+		 apply the camera for rendering. sets gl::viewport, projection and view matrices
+		 */
+		void set();
 
 	private:
 

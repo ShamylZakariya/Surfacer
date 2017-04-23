@@ -39,8 +39,11 @@ namespace core {
 
 	/*
 		ViewportRef _viewport;
+		ViewportControllerRef _viewportController;
 		time_state _time, _stepTime;
 		render_state _renderState;
+		LevelRef _level;
+		int _width, _height;
 	 */
 
 	Scenario::Scenario():
@@ -49,7 +52,9 @@ namespace core {
 	_viewportController(make_shared<ViewportController>(_viewport)),
 	_time(app::getElapsedSeconds(), 1.0/60.0, 0),
 	_stepTime(app::getElapsedSeconds(), 1.0/60.0, 0),
-	_renderState(_viewport, RenderMode::GAME, 0,0,0,0 )
+	_renderState(_viewport, RenderMode::GAME, 0,0,0,0 ),
+	_width(app::getWindowWidth()),
+	_height(app::getWindowHeight())
 	{
 		setListening(true);
 	}
@@ -74,6 +79,9 @@ namespace core {
 	{}
 
 	void Scenario::draw( const render_state &state )
+	{}
+
+	void Scenario::drawScreen( const render_state &state )
 	{}
 
 	void Scenario::setViewportController(ViewportControllerRef vp) {
@@ -122,10 +130,16 @@ namespace core {
 
 	void Scenario::_dispatchResize( const ivec2 &size )
 	{
+		_width = size.x;
+		_height = size.y;
+
+		gl::viewport(0, 0, size.x, size.y);
 		_viewport->setSize(size.x, size.y);
+
 		if (_level) {
 			_level->resize(size);
 		}
+
 		resize(size);
 	}
 
@@ -167,11 +181,16 @@ namespace core {
 
 		if (_level) {
 			gl::ScopedMatrices sm;
-			_viewport->applyGLMatrices();
+			gl::setMatricesWindow(_width, _height, false);
+			_viewport->set();
+
 			_level->draw(_renderState);
+			draw( _renderState );
 		}
 
-		draw( _renderState );
+		gl::ScopedMatrices sm;
+		gl::setMatricesWindow(_width, _height, true);
+		drawScreen(render_state(nullptr, _renderState.mode, _renderState.frame, _renderState.pass, _renderState.time, _renderState.deltaT));
 	}
 
 
