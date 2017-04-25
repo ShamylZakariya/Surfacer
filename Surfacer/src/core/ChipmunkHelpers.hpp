@@ -44,6 +44,10 @@ static const cpBB cpBBInvalid = {
 	-std::numeric_limits<cpFloat>::max()
 };
 
+static const cpBB cpBBZero = {
+	0.0, 0.0, 0.0, 0.0
+};
+
 /**
 	create an aabb which fits a circle given position and radius.
  */

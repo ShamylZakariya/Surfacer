@@ -118,17 +118,20 @@ namespace terrain {
 		cpFloat density;
 		cpFloat friction;
 		cpShapeFilter filter;
+		cpCollisionType collisionType;
 
 		material():
 		density(1),
 		friction(1),
-		filter({0,0,0})
+		filter({0,0,0}),
+		collisionType(0)
 		{}
 
-		material(cpFloat d, cpFloat f, cpShapeFilter flt):
+		material(cpFloat d, cpFloat f, cpShapeFilter flt, cpCollisionType ct):
 		density(d),
 		friction(f),
-		filter(flt)
+		filter(flt),
+		collisionType(ct)
 		{}
 	};
 
@@ -432,7 +435,7 @@ namespace terrain {
 	/**
 	 @class Element
 	 An element is a shape specified in the <g id="elements">...</g> section of a level SVG file.
-	 Each element represents simply a shape in space with an associated ID. Elements can be used
+	 Each element represents simply a shape in world space with an associated ID. Elements can be used
 	 as location markers for enemy spawn points, or possibly as trigger geometry.
 	 */
 	class Element : public Drawable {
@@ -450,8 +453,11 @@ namespace terrain {
 		Element(string id, const PolyLine2d &contour);
 		~Element();
 
+		// Element
 		string getId() const { return _id; }
+		dvec2 getPosition() const;
 
+		// Drawable
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
 		size_t getLayer() const override { return LAYER; }

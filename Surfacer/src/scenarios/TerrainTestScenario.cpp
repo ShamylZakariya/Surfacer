@@ -115,17 +115,17 @@ void TerrainTestScenario::setup() {
 	getLevel()->addGameObject(_terrain);
 
 	auto dragger = GameObject::with("Dragger", {
-		make_shared<MousePickComponent>(Filters::PICK),
+		make_shared<MousePickComponent>(CollisionFilters::PICK),
 		make_shared<MousePickDrawComponent>()
 	});
 
 	auto cutter = GameObject::with("Cutter", {
-		make_shared<MouseCutterComponent>(_terrain, Filters::CUTTER, 4),
+		make_shared<MouseCutterComponent>(_terrain, CollisionFilters::CUTTER, 4),
 		make_shared<MouseCutterDrawComponent>()
 	});
 
 	auto cameraController = GameObject::with("ViewportControlComponent", {
-		make_shared<CameraControlComponent>(getViewportController())
+		make_shared<ManualViewportControlComponent>(getViewportController())
 	});
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
@@ -190,8 +190,8 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 	vector<terrain::ShapeRef> shapes = { terrain::Shape::fromContour(rect(origin.x-200,origin.y-200,origin.x+200,origin.y+200)) };
 	shapes = terrain::World::partition(shapes, vec2(0,0), 30);
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
@@ -215,8 +215,8 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 		//terrain::Shape::fromContour(rect(200,0,210,0)),		// empty rect - should be garbage collected
 	};
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
@@ -246,8 +246,8 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 		boxShape(boxPos(0,1),boxSize),
 	};
 
-	terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes);
@@ -270,8 +270,8 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 		terrain::Anchor::fromContour(rect(200,20,260,30))
 	};
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 
 	world->build(shapes, anchors);
@@ -311,8 +311,8 @@ terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 		terrain::Anchor::fromContour(rect(vec2(25,25), vec2(10,10)))
 	};
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors);
@@ -348,8 +348,8 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
-	const auto terrainMaterial = terrain::material(1, 0.5, Filters::TERRAIN);
-	terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const auto terrainMaterial = terrain::material(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes);
@@ -388,8 +388,8 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)))
 	};
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
 
@@ -408,8 +408,8 @@ terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
 	//auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 50);
 
 	// construct
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors, elements);
 
@@ -428,8 +428,8 @@ terrain::WorldRef TerrainTestScenario::testComplexSvgLoad() {
 	auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 500);
 
 	// construct
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors, elements);
 
@@ -467,8 +467,8 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 		terrain::Anchor::fromContour(rect(vec2(0,-450), vec2(10,10)))
 	};
 
-	const terrain::material terrainMaterial(1, 0.5, Filters::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, Filters::ANCHOR);
+	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
@@ -500,15 +500,15 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 
 	// we know the last cut causes weirdness so cut all but the last
 	for (int i = 0; i < cuts.size() - 1; i++) {
-		world->cut(cuts[i].a, cuts[i].b, cuts[i].radius, Filters::CUTTER);
+		world->cut(cuts[i].a, cuts[i].b, cuts[i].radius, CollisionFilters::CUTTER);
 	}
 
 	cut lastCut = cuts[cuts.size()-1];
-	world->cut(lastCut.a, lastCut.b, lastCut.radius, Filters::CUTTER);
+	world->cut(lastCut.a, lastCut.b, lastCut.radius, CollisionFilters::CUTTER);
 
 
 //	// this leaves shape 31 improperly cut - there's a tiny tab on lower left which should be excised but isn't
-//	world->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, Filters::CUTTER);
+//	world->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, CollisionFilters::CUTTER);
 
 	return world;
 }

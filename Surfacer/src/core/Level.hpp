@@ -33,16 +33,24 @@ namespace core {
 
 	public:
 
-		SpaceAccess(cpSpace *space);
 
 		void addBody(cpBody *body);
 		void addShape(cpShape *shape);
 		void addConstraint(cpConstraint *constraint);
 
+		/**
+		 Get gravity vector (direction and magnitude) for a given position in space.
+		 */
+		dvec2 getGravity(const dvec2 &atPositionInWorld);
+
 		cpSpace *getSpace() const { return _space; }
 
 	private:
+		friend class Level;
+		SpaceAccess(cpSpace *space, Level *level);
+
 		cpSpace *_space;
+		Level *_level;
 	};
 
 
@@ -124,7 +132,7 @@ namespace core {
 		struct radial_gravity_info {
 			dvec2 centerOfMass;
 			double strength;
-			double faloffPower;
+			double falloffPower;
 		};
 
 	public:

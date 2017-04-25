@@ -17,8 +17,9 @@ namespace core {
 
 #pragma mark - SpaceAccess
 
-	SpaceAccess::SpaceAccess(cpSpace *space):
-	_space(space)
+	SpaceAccess::SpaceAccess(cpSpace *space, Level *level):
+	_space(space),
+	_level(level)
 	{}
 
 	void SpaceAccess::addBody(cpBody *body) {
@@ -34,6 +35,24 @@ namespace core {
 	void SpaceAccess::addConstraint(cpConstraint *constraint) {
 		cpSpaceAddConstraint(_space, constraint);
 		constraintWasAddedToSpace(constraint);
+	}
+
+	dvec2 SpaceAccess::getGravity(const dvec2 &atPositionInWorld) {
+		switch(_level->getGravityType()) {
+			case Level::RADIAL: {
+				Level::radial_gravity_info rgi = _level->getRadialGravity();
+				dvec2 p_2_com = rgi.centerOfMass - atPositionInWorld;
+				double dist = length(p_2_com);
+				if (dist > 1e-5) {
+					dvec2 g = p_2_com * (rgi.strength / pow(dist, rgi.falloffPower));
+					return g;
+				}
+				return dvec2(0,0);
+			}
+
+			case Level::DIRECTIONAL:
+				return v2(cpSpaceGetGravity(_space));
+		}
 	}
 
 
@@ -285,7 +304,7 @@ namespace core {
 			dvec2 body_2_com = rgi.centerOfMass - v2(cpBodyGetPosition(body));
 			double dist = length(body_2_com);
 			if (dist > 1e-5) {
-				dvec2 g = body_2_com * (rgi.strength / pow(dist, rgi.faloffPower));
+				dvec2 g = body_2_com * (rgi.strength / pow(dist, rgi.falloffPower));
 				cpBodyUpdateVelocity(body, cpv(g), damping, dt);
 			} else {
 				cpBodyUpdateVelocity(body, cpv(0,0), damping, dt);
@@ -322,7 +341,7 @@ namespace core {
 		cpSpaceSetSleepTimeThreshold( _space, 1 );
 		cpSpaceSetUserData(_space, this);
 
-		_spaceAccess = make_shared<SpaceAccess>(_space);
+		_spaceAccess = SpaceAccessRef(new SpaceAccess(_space, this));
 		_spaceAccess->bodyWasAddedToSpace.connect(this, &Level::onBodyAddedToSpace);
 		_spaceAccess->shapeWasAddedToSpace.connect(this, &Level::onShapeAddedToSpace);
 		_spaceAccess->constraintWasAddedToSpace.connect(this, &Level::onConstraintAddedToSpace);

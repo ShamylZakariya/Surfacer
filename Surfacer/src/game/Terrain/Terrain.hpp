@@ -14,8 +14,6 @@
 
 namespace terrain {
 
-	static const int LAYER = 0;
-
 	SMART_PTR(TerrainObject);
 
 	class TerrainObject : public core::GameObject {
@@ -53,7 +51,7 @@ namespace terrain {
 		cpBB getBB() const override { return cpBBInfinity; }
 		void draw(const core::render_state &renderState) override;
 		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::ALWAYS_DRAW; }
-		int getLayer() const override { return LAYER; };
+		int getLayer() const override;
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
 

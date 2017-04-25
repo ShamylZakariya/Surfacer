@@ -8,6 +8,7 @@
 
 #include "DevComponents.hpp"
 
+using namespace core;
 #pragma mark - WorldCartesianGridDrawComponent
 
 /*
@@ -103,12 +104,12 @@ _periodStep(periodStep)
 	_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)), _shader);
 }
 
-void WorldCartesianGridDrawComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+void WorldCartesianGridDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 	level->getViewport()->motion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
 	setupShaderUniforms();
 }
 
-void WorldCartesianGridDrawComponent::draw(const core::render_state &state) {
+void WorldCartesianGridDrawComponent::draw(const render_state &state) {
 
 	// set up a scale to fill viewport with plane
 	cpBB frustum = state.viewport->getFrustum();
@@ -132,7 +133,7 @@ namespace {
 }
 
 void WorldCartesianGridDrawComponent::setupShaderUniforms() {
-	core::ViewportRef vp = getLevel()->getViewport();
+	ViewportRef vp = getLevel()->getViewport();
 
 	// find largest period where rendered texel scale (ratio of one texel to one pixel) is less than or equal to maxTexelScale
 	const double textureSize = _texture->getWidth();
@@ -189,14 +190,18 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	_shader->uniform("AxisColor", ColorA(1,1,1,1));
 }
 
-void WorldCartesianGridDrawComponent::onViewportMotion(const core::Viewport &vp) {
+void WorldCartesianGridDrawComponent::onViewportMotion(const Viewport &vp) {
 	setupShaderUniforms();
 }
 
 
-#pragma mark - CameraControlComponent
+#pragma mark - ManualViewportControlComponent
+/*
+	vec2 _mouseScreen, _mouseWorld;
+	ViewportControllerRef _viewportController;
+*/
 
-CameraControlComponent::CameraControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex):
+ManualViewportControlComponent::ManualViewportControlComponent(ViewportControllerRef viewportController, int dispatchReceiptIndex):
 InputComponent(dispatchReceiptIndex),
 _viewportController(viewportController)
 {}
@@ -207,21 +212,21 @@ namespace {
 	}
 }
 
-void CameraControlComponent::step(const core::time_state &time) {
+void ManualViewportControlComponent::step(const time_state &time) {
 	const double radsPerSec = 10 * M_PI / 180;
 	if (isKeyDown(ci::app::KeyEvent::KEY_q)) {
-		core::Viewport::look look = _viewportController->getLook();
+		Viewport::look look = _viewportController->getLook();
 		look.up = rotate(look.up, -radsPerSec * time.deltaT);
 		_viewportController->setLook(look);
 		//_viewport->setRotation(_viewport->getRotation() - radsPerSec * time.deltaT);
 	} else if (isKeyDown(ci::app::KeyEvent::KEY_e)) {
-		core::Viewport::look look = _viewportController->getLook();
+		Viewport::look look = _viewportController->getLook();
 		look.up = rotate(look.up, +radsPerSec * time.deltaT);
 		_viewportController->setLook(look);
 	}
 }
 
-bool CameraControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
+bool ManualViewportControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 
@@ -242,24 +247,24 @@ bool CameraControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	return false;
 }
 
-bool CameraControlComponent::mouseUp( const ci::app::MouseEvent &event ) {
+bool ManualViewportControlComponent::mouseUp( const ci::app::MouseEvent &event ) {
 	return false;
 }
 
-bool CameraControlComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
+bool ManualViewportControlComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 	return false;
 }
 
-bool CameraControlComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
+bool ManualViewportControlComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
 		dvec2 deltaWorld = _viewportController->getViewport()->screenToWorldDir(dvec2(delta));
-		core::Viewport::look look = _viewportController->getLook();
+		Viewport::look look = _viewportController->getLook();
 		look.world -= deltaWorld;
 		_viewportController->setLook(look);
 		return true;
@@ -268,7 +273,7 @@ bool CameraControlComponent::mouseDrag( const ci::app::MouseEvent &event, const 
 	return false;
 }
 
-bool CameraControlComponent::mouseWheel( const ci::app::MouseEvent &event ){
+bool ManualViewportControlComponent::mouseWheel( const ci::app::MouseEvent &event ){
 	const float zoom = _viewportController->getScale(),
 	wheelScale = 0.1 * zoom,
 	dz = (event.getWheelIncrement() * wheelScale);
@@ -276,6 +281,55 @@ bool CameraControlComponent::mouseWheel( const ci::app::MouseEvent &event ){
 
 	return true;
 }
+
+#pragma mark - TargetTrackingViewportController
+
+/*
+ViewportControllerRef _viewportController;
+weak_ptr<TrackingTarget> _trackingTarget;
+double _scale;
+*/
+
+TargetTrackingViewportControlComponent::TargetTrackingViewportControlComponent(shared_ptr<TrackingTarget> target, core::ViewportControllerRef viewportController, int dispatchReceiptIndex):
+InputComponent(dispatchReceiptIndex),
+_viewportController(viewportController),
+_trackingTarget(target),
+_scale(1)
+{}
+
+TargetTrackingViewportControlComponent::TargetTrackingViewportControlComponent(ViewportControllerRef viewportController, int dispatchReceiptIndex):
+InputComponent(dispatchReceiptIndex),
+_viewportController(viewportController),
+_scale(1)
+{}
+
+void TargetTrackingViewportControlComponent::setTrackingTarget(shared_ptr<TrackingTarget> target) {
+	_trackingTarget = target;
+}
+
+// InputComponent
+void TargetTrackingViewportControlComponent::step(const time_state &time) {
+	if (auto target = _trackingTarget.lock()) {
+
+		const auto Tracking = target->getViewportTracking();
+		const ivec2 Size = _viewportController->getViewport()->getSize();
+		const double Scale = min(Size.x, Size.y) / (2 * Tracking.radius);
+
+		_viewportController->setLook(Viewport::look(Tracking.look, Tracking.up));
+		_viewportController->setScale(Scale * _scale);
+	}
+}
+
+bool TargetTrackingViewportControlComponent::mouseWheel( const ci::app::MouseEvent &event ) {
+	if (auto target = _trackingTarget.lock()) {
+		const double wheelScale = 0.1 * _scale;
+		_scale += (event.getWheelIncrement() * wheelScale);
+		return true;
+	}
+	return false;
+}
+
+
 
 #pragma mark - MousePickComponent
 
@@ -292,12 +346,12 @@ MousePickComponent::~MousePickComponent() {
 	cpBodyFree(_mouseBody);
 }
 
-void MousePickComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+void MousePickComponent::onReady(GameObjectRef parent, LevelRef level) {
 	InputComponent::onReady(parent, level);
 	_mouseBody = cpBodyNewKinematic();
 }
 
-void MousePickComponent::step(const core::time_state &time){
+void MousePickComponent::step(const time_state &time){
 	cpVect mouseBodyPos = cpv(_mouseWorld);
 	cpVect newMouseBodyPos = cpvlerp(cpBodyGetPosition(_mouseBody), mouseBodyPos, 0.75);
 
@@ -367,12 +421,12 @@ _color(color),
 _radius(radius)
 {}
 
-void MousePickDrawComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+void MousePickDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 	DrawComponent::onReady(parent,level);
 	_pickComponent = getSibling<MousePickComponent>();
 }
 
-void MousePickDrawComponent::draw(const core::render_state &renderState) {
+void MousePickDrawComponent::draw(const render_state &renderState) {
 	if (shared_ptr<MousePickComponent> pc = _pickComponent.lock()) {
 		if (pc->isDragging()) {
 			const float radius = _radius * renderState.viewport->getReciprocalScale();
@@ -439,12 +493,12 @@ MouseCutterDrawComponent::MouseCutterDrawComponent(ColorA color):
 _color(color)
 {}
 
-void MouseCutterDrawComponent::onReady(core::GameObjectRef parent, core::LevelRef level){
+void MouseCutterDrawComponent::onReady(GameObjectRef parent, LevelRef level){
 	DrawComponent::onReady(parent,level);
 	_cutterComponent = getSibling<MouseCutterComponent>();
 }
 
-void MouseCutterDrawComponent::draw(const core::render_state &renderState){
+void MouseCutterDrawComponent::draw(const render_state &renderState){
 	if (shared_ptr<MouseCutterComponent> cc = _cutterComponent.lock()) {
 		if (cc->isCutting()) {
 			float radius = cc->getRadius() / renderState.viewport->getScale();

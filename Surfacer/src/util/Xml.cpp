@@ -10,32 +10,32 @@
 
 namespace core { namespace util { namespace xml {
 
-	pair<ci::XmlTree,bool> findElement(const ci::XmlTree &node, string tag) {
+	pair<bool, ci::XmlTree> findElement(const ci::XmlTree &node, string tag) {
 		if (node.isElement() && node.getTag() == tag) {
-			return make_pair(node,true);
+			return make_pair(true, node);
 		} else {
 			for ( auto childNode : node ) {
 				auto result = findElement(childNode, tag);
-				if (result.second) {
+				if (result.first) {
 					return result;
 				}
 			}
 		}
-		return make_pair(XmlTree(), false);
+		return make_pair(false, XmlTree());
 	}
 
-	pair<ci::XmlTree,bool> findNodeWithId(const ci::XmlTree &node, string id ) {
+	pair<bool, ci::XmlTree> findNodeWithId(const ci::XmlTree &node, string id ) {
 		if (node.isElement() && node.hasAttribute("id") && node.getAttribute("id").getValue() == id) {
-			return make_pair(node,true);
+			return make_pair(true, node);
 		} else {
 			for ( auto childNode : node ) {
 				auto result = findNodeWithId(childNode, id);
-				if (result.second) {
+				if (result.first) {
 					return result;
 				}
 			}
 		}
-		return make_pair(XmlTree(),false);
+		return make_pair(false, XmlTree());
 	}
 
 	vector<double> readNumericSequence(const string &sequence) {
@@ -59,6 +59,20 @@ namespace core { namespace util { namespace xml {
 			values.push_back(value);
 		}
 		return values;
+	}
+
+	double readNumericAttribute(ci::XmlTree &node, string attributeName, double defaultValue) {
+		if (node.hasAttribute(attributeName)) {
+			return strtod(node.getAttribute(attributeName).getValue().c_str(), nullptr);
+		}
+		return defaultValue;
+	}
+
+	vector<double> readNumericSequenceAttribute(ci::XmlTree &node, string attributeName, vector<double> defaultValue) {
+		if (node.hasAttribute(attributeName)) {
+			return readNumericSequence(node.getAttribute(attributeName));
+		}
+		return defaultValue;
 	}
 
 }}}

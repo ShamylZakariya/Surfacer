@@ -758,6 +758,7 @@ namespace terrain {
 					if (didCreateNewShapes) {
 						for (cpShape *collisionShape : collisionShapes) {
 							cpShapeSetFilter(collisionShape, _material.filter);
+							cpShapeSetCollisionType(collisionShape, _material.collisionType);
 							cpShapeSetFriction(collisionShape, _material.friction);
 							_space->addShape(collisionShape);
 						}
@@ -980,6 +981,7 @@ namespace terrain {
 
 					for (cpShape *collisionShape : collisionShapes) {
 						cpShapeSetFilter(collisionShape, _material.filter);
+						cpShapeSetCollisionType(collisionShape, _material.collisionType);
 						cpShapeSetFriction(collisionShape, _material.friction);
 						_space->addShape(collisionShape);
 					}
@@ -1109,6 +1111,10 @@ namespace terrain {
 	}
 	Element::~Element() {}
 
+	dvec2 Element::getPosition() const {
+		return getModelCentroid();
+	}
+
 	dvec2 Element::getModelCentroid() const {
 		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
@@ -1209,6 +1215,7 @@ namespace terrain {
 				space->addShape(shape);
 				cpShapeSetUserData(shape, this);
 				cpShapeSetFilter(shape, _material.filter);
+				cpShapeSetCollisionType(shape, _material.collisionType);
 				cpShapeSetFriction(shape, _material.friction);
 			}
 

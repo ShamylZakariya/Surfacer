@@ -2,5 +2,6 @@
 <level name="Hello">
 	<terrain path="svg_tests/complex_world_test.svg" friction="0.5" density="1"/>
 	<space damping="0.99"/>
-	<gravity type="radial" dir="0,-9.8" strength="10" falloff_power="0.5" />
+	<gravity type="radial" strength="10" falloff_power="0.5" />
+	<player path="player/player.xml"/>
 </level>

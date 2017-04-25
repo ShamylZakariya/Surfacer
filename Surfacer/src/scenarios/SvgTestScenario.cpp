@@ -51,7 +51,7 @@ void SvgTestScenario::setup() {
 	setLevel(make_shared<Level>("Hello Svg"));
 
 	auto cameraController = GameObject::with("ViewportControlComponent", {
-		make_shared<CameraControlComponent>(getViewportController())
+		make_shared<ManualViewportControlComponent>(getViewportController())
 	});
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create(1) });

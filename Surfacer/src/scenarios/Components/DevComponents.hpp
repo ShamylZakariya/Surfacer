@@ -50,16 +50,13 @@ private:
 	
 };
 
-
-
-
-class CameraControlComponent : public core::InputComponent {
+class ManualViewportControlComponent : public core::InputComponent {
 public:
 
-	CameraControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
+	ManualViewportControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
 
+	// InputComponent
 	void step(const core::time_state &time) override;
-
 	bool mouseDown( const ci::app::MouseEvent &event ) override;
 	bool mouseUp( const ci::app::MouseEvent &event ) override;
 	bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) override;
@@ -70,6 +67,59 @@ private:
 
 	vec2 _mouseScreen, _mouseWorld;
 	core::ViewportControllerRef _viewportController;
+
+};
+
+class TargetTrackingViewportControlComponent : public core::InputComponent {
+public:
+
+	struct tracking {
+		// target to look at
+		dvec2 look;
+		// up vector
+		dvec2 up;
+		// scale will adjust to fit everything within this radius of look to fit in viewport 
+		double radius;
+
+		tracking(const dvec2 &l, const dvec2 &u, double r):
+		look(l),
+		up(u),
+		radius(r)
+		{}
+
+		tracking(const tracking &c):
+		look(c.look),
+		up(c.up),
+		radius(c.radius)
+		{}
+
+	};
+
+	class TrackingTarget {
+	public:
+
+		virtual tracking getViewportTracking() const = 0;
+
+	};
+
+public:
+
+	TargetTrackingViewportControlComponent(shared_ptr<TrackingTarget> target, core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
+	TargetTrackingViewportControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
+
+	virtual void setTrackingTarget(shared_ptr<TrackingTarget> target);
+	shared_ptr<TrackingTarget> getTrackingTarget() const { return _trackingTarget.lock(); }
+
+	// InputComponent
+	void step(const core::time_state &time) override;
+	bool mouseWheel( const ci::app::MouseEvent &event ) override;
+
+private:
+
+	core::ViewportControllerRef _viewportController;
+	weak_ptr<TrackingTarget> _trackingTarget;
+	double _scale;
+
 
 };
 

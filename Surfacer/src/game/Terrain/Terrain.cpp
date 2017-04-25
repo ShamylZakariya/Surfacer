@@ -44,6 +44,10 @@ namespace terrain {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
 	}
 
+	int TerrainDrawComponent::getLayer() const {
+		return DrawLevels::TERRAIN;
+	}
+
 	void TerrainDrawComponent::draw(const render_state &renderState) {
 		_world->draw(renderState);
 	}

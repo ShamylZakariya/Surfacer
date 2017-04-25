@@ -28,19 +28,20 @@ void GameLevelTestScenario::setup() {
 
 	level->load(app::loadAsset("levels/test0.xml"));
 	auto terrain = level->getTerrain();
+	auto player = level->getPlayer();
 
 	auto dragger = GameObject::with("Dragger", {
-		make_shared<MousePickComponent>(Filters::PICK),
+		make_shared<MousePickComponent>(CollisionFilters::PICK),
 		make_shared<MousePickDrawComponent>()
 	});
 
 	auto cutter = GameObject::with("Cutter", {
-		make_shared<MouseCutterComponent>(terrain, Filters::CUTTER, 4),
+		make_shared<MouseCutterComponent>(terrain, CollisionFilters::CUTTER, 4),
 		make_shared<MouseCutterDrawComponent>()
 	});
 
 	auto cameraController = GameObject::with("ViewportControlComponent", {
-		make_shared<CameraControlComponent>(getViewportController())
+		make_shared<TargetTrackingViewportControlComponent>(player, getViewportController())
 	});
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });

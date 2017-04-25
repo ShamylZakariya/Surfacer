@@ -44,6 +44,11 @@ namespace core {
 		LevelRef getLevel() const;
 
 		template<typename T>
+		shared_ptr<T> getGameObjectAs() {
+			return dynamic_pointer_cast<T>(_gameObject.lock());
+		}
+
+		template<typename T>
 		shared_ptr<T> getSibling() const;
 
 		virtual void onReady(GameObjectRef parent, LevelRef level){}

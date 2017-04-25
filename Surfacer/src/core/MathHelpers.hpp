@@ -300,7 +300,7 @@ inline glm::tvec2<T,P> rotateCW( const glm::tvec2<T,P> &v )
 	Linear interpolate between @a min and @a max
 	For range = 0, return min, for range = 1, return max.
  */
-template <class T> T lrp( float range, T min, T max )
+template <class T, class V> T lrp( V range, T min, T max )
 {
 	return min + (( max - min ) * range);
 }

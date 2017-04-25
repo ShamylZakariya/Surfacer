@@ -34,6 +34,7 @@
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		639168AE1E952680007FD4FA /* Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168AC1E952680007FD4FA /* Svg.cpp */; };
 		639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */; };
+		63B4816B1EAD44CD0080EC0D /* Player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63B481691EAD44CD0080EC0D /* Player.cpp */; };
 		63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* GameObject.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
 		63C8E27D1EA50EF300709C3C /* Xml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63C8E27B1EA50EF300709C3C /* Xml.cpp */; };
@@ -104,6 +105,8 @@
 		639168AF1E96832A007FD4FA /* SvgTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SvgTestScenario.cpp; sourceTree = "<group>"; };
 		639168B01E96832A007FD4FA /* SvgTestScenario.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SvgTestScenario.hpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
+		63B481691EAD44CD0080EC0D /* Player.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Player.cpp; sourceTree = "<group>"; };
+		63B4816A1EAD44CD0080EC0D /* Player.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Player.hpp; sourceTree = "<group>"; };
 		63BFD8141E89565600D821E4 /* GameObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameObject.cpp; sourceTree = "<group>"; };
 		63BFD8151E89565600D821E4 /* GameObject.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameObject.hpp; sourceTree = "<group>"; };
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
@@ -271,6 +274,7 @@
 		632623031E7D9A630051ABE2 /* game */ = {
 			isa = PBXGroup;
 			children = (
+				63B481681EAD44CD0080EC0D /* Player */,
 				63711E9C1E8DE4410086332B /* Terrain */,
 				632623041E7D9A630051ABE2 /* GameApp.cpp */,
 				632623051E7D9A630051ABE2 /* GameApp.hpp */,
@@ -318,6 +322,15 @@
 				63711E9E1E8DE4410086332B /* TerrainWorld.hpp */,
 			);
 			path = Terrain;
+			sourceTree = "<group>";
+		};
+		63B481681EAD44CD0080EC0D /* Player */ = {
+			isa = PBXGroup;
+			children = (
+				63B481691EAD44CD0080EC0D /* Player.cpp */,
+				63B4816A1EAD44CD0080EC0D /* Player.hpp */,
+			);
+			path = Player;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -392,6 +405,7 @@
 				63BFD8161E89565600D821E4 /* GameObject.cpp in Sources */,
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
 				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
+				63B4816B1EAD44CD0080EC0D /* Player.cpp in Sources */,
 				632623221E7D9A630051ABE2 /* SvgParsing.cpp in Sources */,
 				639168AE1E952680007FD4FA /* Svg.cpp in Sources */,
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
