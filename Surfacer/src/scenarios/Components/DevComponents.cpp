@@ -285,38 +285,52 @@ bool ManualViewportControlComponent::mouseWheel( const ci::app::MouseEvent &even
 #pragma mark - TargetTrackingViewportController
 
 /*
-ViewportControllerRef _viewportController;
-weak_ptr<TrackingTarget> _trackingTarget;
-double _scale;
+	core::ViewportControllerRef _viewportController;
+	weak_ptr<TrackingTarget> _trackingTarget;
+	double _scale, _trackingAreaRadius, _trackingAreaDeadZoneRadius, _trackingAreaCorrectiveRampPower, _trackingAreaCorrectiveTightness;
 */
 
 TargetTrackingViewportControlComponent::TargetTrackingViewportControlComponent(shared_ptr<TrackingTarget> target, core::ViewportControllerRef viewportController, int dispatchReceiptIndex):
 InputComponent(dispatchReceiptIndex),
 _viewportController(viewportController),
 _trackingTarget(target),
-_scale(1)
+_scale(1),
+_trackingAreaRadius(0),
+_trackingAreaDeadZoneRadius(0),
+_trackingAreaCorrectiveRampPower(0),
+_trackingAreaCorrectiveTightness(0)
 {}
 
 TargetTrackingViewportControlComponent::TargetTrackingViewportControlComponent(ViewportControllerRef viewportController, int dispatchReceiptIndex):
 InputComponent(dispatchReceiptIndex),
 _viewportController(viewportController),
-_scale(1)
+_scale(1),
+_trackingAreaRadius(0),
+_trackingAreaDeadZoneRadius(0),
+_trackingAreaCorrectiveRampPower(0),
+_trackingAreaCorrectiveTightness(0)
 {}
 
 void TargetTrackingViewportControlComponent::setTrackingTarget(shared_ptr<TrackingTarget> target) {
 	_trackingTarget = target;
 }
 
+void TargetTrackingViewportControlComponent::setTrackingRegion(double trackingAreaRadius, double deadZoneRadius, double correctiveRampPower, double tightness) {
+	_trackingAreaRadius = max(trackingAreaRadius, 0.0);
+	_trackingAreaDeadZoneRadius = clamp(deadZoneRadius, 0.0, trackingAreaRadius * 0.9);
+	_trackingAreaCorrectiveRampPower = max(correctiveRampPower, 1.0);
+	_trackingAreaCorrectiveTightness = clamp(tightness, 0.0, 1.0);
+}
+
 // InputComponent
 void TargetTrackingViewportControlComponent::step(const time_state &time) {
 	if (auto target = _trackingTarget.lock()) {
-
-		const auto Tracking = target->getViewportTracking();
-		const ivec2 Size = _viewportController->getViewport()->getSize();
-		const double Scale = min(Size.x, Size.y) / (2 * Tracking.radius);
-
-		_viewportController->setLook(Viewport::look(Tracking.look, Tracking.up));
-		_viewportController->setScale(Scale * _scale);
+		const auto t = target->getViewportTracking();
+		if (_trackingAreaRadius > 0) {
+			_track(t, time);
+		} else {
+			_trackNoSlop(t, time);
+		}
 	}
 }
 
@@ -327,6 +341,41 @@ bool TargetTrackingViewportControlComponent::mouseWheel( const ci::app::MouseEve
 		return true;
 	}
 	return false;
+}
+
+void TargetTrackingViewportControlComponent::_trackNoSlop(const tracking &t, const time_state &time) {
+	const ivec2 size = _viewportController->getViewport()->getSize();
+	const double scale = min(size.x, size.y) / (2 * t.radius);
+
+	_viewportController->setLook(Viewport::look(t.world, t.up));
+	_viewportController->setScale(scale * _scale);
+}
+
+void TargetTrackingViewportControlComponent::_track(const tracking &t, const time_state &time) {
+	Viewport::look currentLook = _viewportController->getLook();
+
+	const double outerDistance = distance(t.world, currentLook.world) + t.radius;
+	if (outerDistance > _trackingAreaDeadZoneRadius) {
+		// compute error as factor from 0 (no error) to 1
+		double error = outerDistance - _trackingAreaDeadZoneRadius;
+		error = min(error, _trackingAreaRadius);
+		error = (error - _trackingAreaDeadZoneRadius) / (_trackingAreaRadius - _trackingAreaDeadZoneRadius);
+
+		// this is the distance the viewport has to move (this step)
+		double correction = (outerDistance - _trackingAreaDeadZoneRadius) * pow(error,_trackingAreaCorrectiveRampPower)  * _trackingAreaCorrectiveTightness;
+
+		// apply correction to look world target
+		dvec2 deltaLook = normalize(t.world - currentLook.world) * correction;
+		currentLook.world += deltaLook;
+		currentLook.up = t.up;
+
+		// now apply scale and look::up
+		const ivec2 size = _viewportController->getViewport()->getSize();
+		const double scale = min(size.x, size.y) / (2 * _trackingAreaRadius);
+
+		_viewportController->setLook(currentLook);
+		_viewportController->setScale(scale * _scale);
+	}
 }
 
 

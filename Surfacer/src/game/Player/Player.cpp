@@ -167,7 +167,7 @@ namespace player {
 			HalfHeight = Height/ 2,
 			Mass = Width * Height * Density,
 			Moment = cpMomentForBox( Mass, Width, Height ),
-			WheelRadius = HalfWidth * 0.85,
+			WheelRadius = HalfWidth * 1.25,
 			WheelSensorRadius = WheelRadius * 1.1,
 			WheelMass = Density * M_PI * WheelRadius * WheelRadius;
 
@@ -193,7 +193,7 @@ namespace player {
 		_wheelMotor = _add(cpSimpleMotorNew( _body, _wheelBody, 0 ));
 
 		_springParams.restLength = cpvlength(cpvsub(cpBodyGetPosition(_body), cpBodyGetPosition(_wheelBody)));
-		_springParams.stiffness = 250 * Mass;
+		_springParams.stiffness = getConfig().jumpSpringStrength * Mass * level->getGravityStrength();
 		_springParams.damping = 1000;
 
 		_jumpSpring = _add( cpDampedSpringNew( _body, _wheelBody, cpvzero, cpvzero, _springParams.restLength, _springParams.stiffness, _springParams.damping ));
@@ -219,7 +219,6 @@ namespace player {
 
 		// group just has to be a unique integer so the player parts don't collide with eachother
 		cpShapeFilter filter = CollisionFilters::PLAYER;
-		//filter = CP_SHAPE_FILTER_ALL;
 		filter.group = reinterpret_cast<cpGroup>(player.get());
 
 		for( cpShape *s : getShapes() )
@@ -269,8 +268,8 @@ namespace player {
 			_groundNormal = normalize( lrp( 0.2, _groundNormal, _getGroundNormal()));
 
 			const double
-				SlopeWeight = 0.5,
-				DirWeight = 0.5;
+				SlopeWeight = 0.125,
+				DirWeight = 0.125;
 
 			// compute up vector based on gravitational direction and the slope, and direction of motion (we lean into motion)
 			const dvec2 ActualUp = -normalize(getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody))));
@@ -629,6 +628,7 @@ namespace player {
 		config.physics.width = util::xml::readNumericAttribute(physicsNode, "width", 5);
 		config.physics.height = util::xml::readNumericAttribute(physicsNode, "height", 20);
 		config.physics.density = util::xml::readNumericAttribute(physicsNode, "density", 1);
+		config.physics.jumpSpringStrength = util::xml::readNumericAttribute(physicsNode, "jumpSpringStrength", 250);
 
 		PlayerRef player = make_shared<Player>(name);
 		player->build(config);
@@ -668,7 +668,7 @@ namespace player {
 	}
 
 	TargetTrackingViewportControlComponent::tracking Player::getViewportTracking() const {
-		return TargetTrackingViewportControlComponent::tracking(_physics->getPosition(), _physics->getUp(), 250);
+		return TargetTrackingViewportControlComponent::tracking(_physics->getPosition(), _physics->getUp(), getConfig().physics.height * 2);
 	}
 
 	void Player::build(config c) {

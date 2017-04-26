@@ -75,20 +75,20 @@ public:
 
 	struct tracking {
 		// target to look at
-		dvec2 look;
+		dvec2 world;
 		// up vector
 		dvec2 up;
 		// scale will adjust to fit everything within this radius of look to fit in viewport 
 		double radius;
 
-		tracking(const dvec2 &l, const dvec2 &u, double r):
-		look(l),
+		tracking(const dvec2 &w, const dvec2 &u, double r):
+		world(w),
 		up(u),
 		radius(r)
 		{}
 
 		tracking(const tracking &c):
-		look(c.look),
+		world(c.world),
 		up(c.up),
 		radius(c.radius)
 		{}
@@ -110,15 +110,25 @@ public:
 	virtual void setTrackingTarget(shared_ptr<TrackingTarget> target);
 	shared_ptr<TrackingTarget> getTrackingTarget() const { return _trackingTarget.lock(); }
 
+	void setTrackingRegion(double trackingAreaRadius, double deadZoneRadius, double correctiveRampPower=2, double correctiveTightness=0.99);
+	double getTrackingRegionRadius() const { return _trackingAreaRadius; }
+	double getTrackingRegionDeadZoneRadius() const { return _trackingAreaDeadZoneRadius; }
+	double getTrackingRegionCorrectiveRampPower() const { return _trackingAreaCorrectiveRampPower; }
+
 	// InputComponent
 	void step(const core::time_state &time) override;
 	bool mouseWheel( const ci::app::MouseEvent &event ) override;
+
+protected:
+
+	virtual void _trackNoSlop(const tracking &t, const core::time_state &time);
+	virtual void _track(const tracking &t, const core::time_state &time);
 
 private:
 
 	core::ViewportControllerRef _viewportController;
 	weak_ptr<TrackingTarget> _trackingTarget;
-	double _scale;
+	double _scale, _trackingAreaRadius, _trackingAreaDeadZoneRadius, _trackingAreaCorrectiveRampPower, _trackingAreaCorrectiveTightness;
 
 
 };

@@ -4,29 +4,23 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##Currently
 
-Make an XML level file, which is loaded by GameLevel::load
-	✓ this file specifies path to terrain svg
-	✓ file specifies stuff to do with the ids specified in terrain svg
-	✓ file has stuff like friction, gravity, etc
+Player gets "crushed" sometimes, where the lozenge shape length is zero
+Player wheel friction needs to be higher (or terrain needs to be higher?)
 
-## BUGS
-
-When rotating, my clipping frustum is NOT respected! Because it's instrinsically bound to viewport ortho space.
-
-Why isn't max zoom respected? Or is it, but it needs to be smarter than a hardcoded 5000?
+## BUGS PRIORITY 0
 
 glm::inverseTranspose exists. I can use it instead of glm::inverse in a lot of places
 
+SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
+- in fact, there's a lot of valid SVG being exported from Sketch which I don't support :(
+
+## BUGS PRIORITY 1
+
 CameraControllerComponent is acting oddly - it no longer allows camera re-centering when alt key is pressed.
+	- this is not a bug but the architecture acting as designed. The input is gobbled.
 	- is this an ordering issue? who's gobbling the input?
 	- is there a robust way to respond to this from a design standpoint?
 
-SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
-
-Rewrite the cartesian coordinate renderer using a shader. Make it handle rotation. Probably want to use textures.
-	- must handle rotation!
-	- CPU can compute the origin and step, pass that to shader. Shader uses gl_FragCoord - or shader does a line distance calculation with some kind of modulo
-	- can be repurposed to render galaxy/starfield in production game by swapping textures... maybe
 
 When a dynamic shape has stopped moving, if I zoom in really close, it disappears, as if the spatial index culling alg stops working. If I move it a smidge, culling starts working again.
 - REPRO: Cut a shape, move it, let it stop moving on its own. Zoom in real close. Pop, it's gone. Zoom back out, give it a wee toss, culling works again.

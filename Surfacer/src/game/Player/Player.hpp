@@ -34,6 +34,8 @@ namespace player {
 			double width;
 			double height;
 			double density;
+
+			double jumpSpringStrength;
 		};
 
 	public:

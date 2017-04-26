@@ -497,6 +497,15 @@ namespace core {
 		return result;
 	}
 
+	double Level::getGravityStrength() const {
+		switch(getGravityType()) {
+			case DIRECTIONAL:
+				return length(_directionalGravityDir);
+			case RADIAL:
+				return length(_radialGravityInfo.strength);
+		}
+	}
+
 	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
 		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
 

@@ -40,9 +40,9 @@ void GameLevelTestScenario::setup() {
 		make_shared<MouseCutterDrawComponent>()
 	});
 
-	auto cameraController = GameObject::with("ViewportControlComponent", {
-		make_shared<TargetTrackingViewportControlComponent>(player, getViewportController())
-	});
+	auto tracker = make_shared<TargetTrackingViewportControlComponent>(player, getViewportController());
+	tracker->setTrackingRegion(300, 60, 2, 0.99);
+	auto cameraController = GameObject::with("ViewportControlComponent", { tracker });
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
 

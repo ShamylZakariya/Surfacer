@@ -183,6 +183,9 @@ namespace core {
 		void setRadialGravity(radial_gravity_info rgi);
 		radial_gravity_info getRadialGravity() const { return _radialGravityInfo; }
 
+		// get the strength of gravity regardless of type (directional or radial)
+		double getGravityStrength() const;
+
 	protected:
 
 		void setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f);
