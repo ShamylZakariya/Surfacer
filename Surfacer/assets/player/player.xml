@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <player walkSpeed="20" runMultiplier="10">
-	<physics width="20" height="60" density="1" jumpSpringStrength="500"/>
+	<physics width="20" height="60" density="1">
+		<jetpack antigravity="2" fuelMax="1" consumption="0.3" regeneration="0.3"/>
+	</physics>
 </player>

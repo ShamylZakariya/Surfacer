@@ -54,17 +54,16 @@ namespace player {
 
 
 	/**
-	 config _config;
-	 vector<cpBody*> _bodies;
-	 vector<cpShape*> _shapes;
-	 vector<cpConstraint*> _constraints;
-	 bool _crouching, _jumping;
-	 double _speed;
+		config _config;
+		vector<cpBody*> _bodies;
+		vector<cpShape*> _shapes;
+		vector<cpConstraint*> _constraints;
+		bool _flying;
+		double _speed;
 	 */
 	PlayerPhysicsComponent::PlayerPhysicsComponent(config c):
 	_config(c),
-	_crouching(false),
-	_jumping(false),
+	_flying(false),
 	_speed(0)
 	{}
 
@@ -120,17 +119,17 @@ namespace player {
 		return touchingGroundQuery;
 	}
 
-#pragma mark - PogoCyclePlayerPhysicsComponent 
+#pragma mark - JetpackUnicyclePlayerPhysicsComponent 
 
 	/*
 		cpBody *_body, *_wheelBody;
 		cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
-		cpConstraint *_wheelMotor, *_jumpSpring, *_jumpGroove, *_orientationGear;
-		double _wheelRadius, _wheelFriction, _crouch, _touchingGroundAcc;
-		jump_spring_params _springParams;
-		dvec2 _up, _groundNormal, _positionOffset;
+		cpConstraint *_wheelMotor, *_orientationGear;
+		double _wheelRadius, _wheelFriction, _touchingGroundAcc;
+		double _jetpackFuelLevel, _jetpackFuelMax;
+		dvec2 _up, _characterUp, _groundNormal, _positionOffset;
 	 */
-	PogoCyclePlayerPhysicsComponent::PogoCyclePlayerPhysicsComponent(config c):
+	JetpackUnicyclePlayerPhysicsComponent::JetpackUnicyclePlayerPhysicsComponent(config c):
 	PlayerPhysicsComponent(c),
 	_body(nullptr),
 	_wheelBody(nullptr),
@@ -138,26 +137,29 @@ namespace player {
 	_wheelShape(nullptr),
 	_groundContactSensorShape(nullptr),
 	_wheelMotor(nullptr),
-	_jumpSpring(nullptr),
-	_jumpGroove(nullptr),
 	_orientationGear(nullptr),
 	_wheelRadius(0),
 	_wheelFriction(0),
-	_crouch(0),
 	_touchingGroundAcc(0),
-	_up(0),
-	_groundNormal(0),
-	_positionOffset(0)
+	_jetpackFuelLevel(0),
+	_jetpackFuelMax(0),
+	_up(0,0),
+	_characterUp(0,0),
+	_groundNormal(0,0),
+	_positionOffset(0,0)
 	{}
 
-	PogoCyclePlayerPhysicsComponent::~PogoCyclePlayerPhysicsComponent()
+	JetpackUnicyclePlayerPhysicsComponent::~JetpackUnicyclePlayerPhysicsComponent()
 	{}
 
 	// PhysicsComponent
-	void PogoCyclePlayerPhysicsComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+	void JetpackUnicyclePlayerPhysicsComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
 		PlayerPhysicsComponent::onReady(parent, level);
 
 		const PlayerRef player = dynamic_pointer_cast<Player>(parent);
+		const PlayerPhysicsComponent::config &config = getConfig();
+
+		_jetpackFuelLevel = _jetpackFuelMax = config.jetpackFuelMax;
 
 		const double
 			Width = getConfig().width,
@@ -172,39 +174,37 @@ namespace player {
 			WheelMass = Density * M_PI * WheelRadius * WheelRadius;
 
 		const cpVect
-			WheelPositionOffset = cpv(0,-(HalfHeight - HalfWidth));
+			WheelPositionOffset = cpv(0,-HalfHeight);
 
+		_totalMass = Mass + WheelMass;
 		_body = _add(cpBodyNew( Mass, Moment ));
 		cpBodySetPosition(_body, cpv(getConfig().position));
 
-		// lozenge shape for body
-		_bodyShape = _add(cpSegmentShapeNew( _body, cpv(0,-(HalfHeight-HalfWidth)), cpv(0,HalfHeight-HalfWidth), Width/2 ));
+		//
+		// lozenge shape for body and motor to orient it
+		//
+
+		_bodyShape = _add(cpSegmentShapeNew( _body, cpv(0,-(HalfHeight)), cpv(0,HalfHeight), Width/2 ));
 		cpShapeSetFriction( _bodyShape, 0.1 );
+		_orientationGear = _add(cpGearJointNew( cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 1));
 
+		//
 		// make wheel at bottom of body
-		_wheelRadius = WheelRadius;
+		//
 
+		_wheelRadius = WheelRadius;
 		_wheelBody = _add(cpBodyNew( WheelMass, cpMomentForCircle( WheelMass, 0, _wheelRadius, cpvzero )));
 		cpBodySetPosition( _wheelBody, cpvadd( cpBodyGetPosition( _body ), WheelPositionOffset ));
 		_positionOffset = v2( cpvsub( cpBodyGetPosition( _body ), cpBodyGetPosition(_wheelBody)));
-
 		_wheelShape = _add(cpCircleShapeNew( _wheelBody, _wheelRadius, cpvzero ));
-
 		_wheelMotor = _add(cpSimpleMotorNew( _body, _wheelBody, 0 ));
 
-		_springParams.restLength = cpvlength(cpvsub(cpBodyGetPosition(_body), cpBodyGetPosition(_wheelBody)));
-		_springParams.stiffness = getConfig().jumpSpringStrength * Mass * level->getGravityStrength();
-		_springParams.damping = 1000;
-
-		_jumpSpring = _add( cpDampedSpringNew( _body, _wheelBody, cpvzero, cpvzero, _springParams.restLength, _springParams.stiffness, _springParams.damping ));
-		_jumpGroove = _add( cpGrooveJointNew( _body, _wheelBody, cpv(0,-Height * 0.125), cpv(0,-Height), cpvzero));
-
-
 		//
-		//	create constraint to control rotation
+		//	pin joint connecting wheel and body
 		//
 
-		_orientationGear = _add(cpGearJointNew( cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 1));
+		_add(cpPivotJointNew(_body, _wheelBody, cpBodyLocalToWorld(_wheelBody, cpvzero)));
+
 
 		//
 		//	create jump sensor shape
@@ -243,7 +243,7 @@ namespace player {
 		}
 	}
 
-	void PogoCyclePlayerPhysicsComponent::step(const core::time_state &timeState) {
+	void JetpackUnicyclePlayerPhysicsComponent::step(const core::time_state &timeState) {
 		PlayerRef player = getGameObjectAs<Player>();
 
 		const PlayerPhysicsComponent::config config = getConfig();
@@ -253,49 +253,42 @@ namespace player {
 			Restrained = false; // player->isRestrained();
 
 		const double
-			Vel = getSpeed() * (isCrouching() ? 0.25 : 1),
+			Vel = getSpeed(),
 			Dir = sign( getSpeed() );
+
+		const dvec2
+			Gravity = getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody)));
 
 		//
 		//	Update touchingGround average (to smooth out vibrations) and ground slope
 		//
 
 		{
-			_touchingGroundAcc = lrp<double>(0.2,
-										   _touchingGroundAcc,
-										   _isTouchingGround(_groundContactSensorShape) ? 1.0 : 0.0);
+			_touchingGroundAcc = lrp<double>(0.2,_touchingGroundAcc,_isTouchingGround(_groundContactSensorShape) ? 1.0 : 0.0);
 
 			_groundNormal = normalize( lrp( 0.2, _groundNormal, _getGroundNormal()));
 
 			const double
-				SlopeWeight = 0.125,
-				DirWeight = 0.125;
+				SlopeWeight = 0.25,
+				DirWeight = 0.5;
 
-			// compute up vector based on gravitational direction and the slope, and direction of motion (we lean into motion)
-			const dvec2 ActualUp = -normalize(getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody))));
+			//
+			// compute character model up vector based on gravitational direction and the slope,
+			// and direction of motion (we lean into motion)
+			//
+
+			const dvec2 ActualUp = -normalize(Gravity);
 			const dvec2 NewUp = (SlopeWeight * _groundNormal) + ActualUp + dvec2( DirWeight * Dir,0);
-			_up = normalize( lrp( 0.2, _up, NewUp ));
+			_characterUp = normalize( lrp( 0.2, _characterUp, NewUp ));
+			const double characterRotation = std::atan2( _characterUp.y, _characterUp.x ) - M_PI_2;
+			cpGearJointSetPhase(_orientationGear, characterRotation);
 
-			cpGearJointSetPhase( _orientationGear, std::atan2( _up.y, _up.x ) - M_PI_2 );
+			//
+			//	Now update actual up-vector
+			//
+
+			_up = normalize(lrp( 0.2, _up, ActualUp));
 		}
-
-		//
-		//	Apply crouching by shrinking body line segment top to match head-height. Also, since
-		//	jumping moves foot downwards, keep body segment bottom synced to foot position.
-		//
-
-		{
-			_crouch = lrp<double>( 0.1, _crouch, ((Alive && isCrouching()) ? 1 : 0 ));
-			const double
-				HalfWidth = config.width/2,
-				HalfHeight = config.height/2,
-				HeightExtent = HalfHeight - HalfWidth,
-				UpperBodyHeightExtent = lrp<double>( _crouch, HeightExtent, -HeightExtent*0 ),
-				LowerBodyHeightExtent = (cpBodyGetPosition( _wheelBody ).y - cpBodyGetPosition( _body ).y) + HalfWidth;
-
-			cpSegmentShapeSetEndpoints( _bodyShape, cpv(0,UpperBodyHeightExtent), cpv(0,LowerBodyHeightExtent));
-		}
-
 
 		//
 		// rotate the wheel motor
@@ -318,44 +311,21 @@ namespace player {
 			cpSimpleMotorSetRate( _wheelMotor, 0 );
 		}
 
-
 		//
-		//	Kick out unicycle wheel to jump
+		//	Apply jetpack impulse
 		//
 
-		bool kicking = false;
+		bool flying = isFlying() && _jetpackFuelLevel > 0;
 
-		if ( Alive && !Restrained && isJumping() && isTouchingGround() )
-		{
-			const double
-				IncreaseRate = 0.2,
-				RestLength = lrp<double>(IncreaseRate, cpDampedSpringGetRestLength(_jumpSpring), _springParams.restLength * 3 ),
-				Damping = lrp<double>(IncreaseRate, cpDampedSpringGetDamping( _jumpSpring ), _springParams.damping * 0.01 ),
-				Stiffness = lrp<double>(IncreaseRate, cpDampedSpringGetStiffness( _jumpSpring ), _springParams.stiffness * 2 );
-
-			CI_LOG_D("JUMP - RestLength: " << RestLength << " Damping: " << Damping << " Stiffness: " << Stiffness);
-
-			cpDampedSpringSetRestLength( _jumpSpring, RestLength );
-			cpDampedSpringSetDamping( _jumpSpring, Damping );
-			cpDampedSpringSetStiffness( _jumpSpring, Stiffness );
-			kicking = true;
-		}
-		else
-		{
-			//
-			//	So long as the jump key is still pressed, use a lighter regression rate. This allows taller jumps
-			//	when the jump key is held longer.
-			//
-
-			const double
-				ReturnRate = 0.1,
-				RestLength = lrp<double>(ReturnRate, cpDampedSpringGetRestLength(_jumpSpring), _springParams.restLength ),
-				Damping = lrp<double>(ReturnRate, cpDampedSpringGetDamping( _jumpSpring ), _springParams.damping ),
-				Stiffness = lrp<double>(ReturnRate, cpDampedSpringGetStiffness( _jumpSpring ), _springParams.stiffness );
-
-			cpDampedSpringSetRestLength( _jumpSpring, RestLength );
-			cpDampedSpringSetDamping( _jumpSpring, Damping );
-			cpDampedSpringSetStiffness( _jumpSpring, Stiffness );
+		if (flying) {
+			dvec2 force = -config.jetpackAntigravity * _totalMass * Gravity;
+			cpBodyApplyForceAtWorldPoint(_body, cpv(force), cpBodyLocalToWorld(_wheelBody, cpvzero));
+			_jetpackFuelLevel -= config.jetpackFuelConsumptionPerSecond * timeState.deltaT;
+		} else if (!isFlying()) {
+			if (_jetpackFuelLevel < _config.jetpackFuelMax) {
+				_jetpackFuelLevel += config.jetpackFuelRegenerationPerSecond * timeState.deltaT;
+				_jetpackFuelLevel = min(_jetpackFuelLevel, _config.jetpackFuelMax);
+			}
 		}
 
 		//
@@ -370,7 +340,7 @@ namespace player {
 
 			double
 				baseImpulseToApply = 0,
-				baseImpulse = 0.15;
+				baseImpulse = flying ? 1 : 0.5;
 
 			//
 			//	We want to apply force so long as applying force won't take us faster
@@ -391,7 +361,7 @@ namespace player {
 
 			if ( abs( baseImpulseToApply) > 1e-3 )
 			{
-				cpBodyApplyImpulseAtWorldPoint( _body, cpv( Dir * baseImpulseToApply * cpBodyGetMass(_body),0), cpBodyGetPosition(_body));
+				cpBodyApplyImpulseAtWorldPoint( _body, cpv( Dir * baseImpulseToApply * _totalMass,0), cpBodyGetPosition(_body));
 			}
 		}
 
@@ -405,17 +375,12 @@ namespace player {
 		if ( !Restrained )
 		{
 			const double
-				KickingFriction = 0.25,
-				DefaultWheelFriction = 3,
-				CrouchingWheelFriction = 4,
-				LockdownWheelFrictionMultiplier = 4,
-
-				BasicFriction = lrp<double>( _crouch, DefaultWheelFriction, CrouchingWheelFriction ),
+				Friction = getConfig().friction,
+				LockdownFriction = 1000 * Friction,
 				Stillness = (1-abs( sign( Vel ))),
-				Lockdown = _crouch * Stillness,
-				LockdownFriction = lrp<double>( Lockdown, BasicFriction, BasicFriction * LockdownWheelFrictionMultiplier );
+				WheelFriction = lrp<double>( Stillness, Friction, LockdownFriction );
 
-				_wheelFriction = lrp<double>( 0.35, _wheelFriction, kicking ? KickingFriction : LockdownFriction );
+				_wheelFriction = lrp<double>( 0.35, _wheelFriction, WheelFriction );
 
 			cpShapeSetFriction( _wheelShape, _wheelFriction );
 		}
@@ -433,6 +398,9 @@ namespace player {
 			cpConstraintSetMaxForce( _orientationGear, 0 );
 			cpConstraintSetMaxBias( _orientationGear, 0 );
 			cpConstraintSetErrorBias( _orientationGear, 0 );
+			for (cpShape *shape : getShapes()) {
+				cpShapeSetFriction(shape, 0);
+			}
 		}
 		else
 		{
@@ -455,35 +423,43 @@ namespace player {
 		player->getDrawComponent()->notifyMoved();
 	}
 
-	cpBB PogoCyclePlayerPhysicsComponent::getBB() const {
+	cpBB JetpackUnicyclePlayerPhysicsComponent::getBB() const {
 		return cpBBNewForCircle(cpv(getPosition()), getConfig().height);
 	}
 
-	dvec2 PogoCyclePlayerPhysicsComponent::getPosition() const {
+	dvec2 JetpackUnicyclePlayerPhysicsComponent::getPosition() const {
 		return v2(cpBodyGetPosition( _wheelBody )) + _positionOffset;
 	}
 
-	dvec2 PogoCyclePlayerPhysicsComponent::getUp() const {
+	dvec2 JetpackUnicyclePlayerPhysicsComponent::getUp() const {
 		return _up;
 	}
 
-	dvec2 PogoCyclePlayerPhysicsComponent::getGroundNormal() const {
+	dvec2 JetpackUnicyclePlayerPhysicsComponent::getGroundNormal() const {
 		return _groundNormal;
 	}
 
-	bool PogoCyclePlayerPhysicsComponent::isTouchingGround() const {
+	bool JetpackUnicyclePlayerPhysicsComponent::isTouchingGround() const {
 		return _touchingGroundAcc >= 0.5;
 	}
 
-	cpBody* PogoCyclePlayerPhysicsComponent::getBody() const {
+	cpBody* JetpackUnicyclePlayerPhysicsComponent::getBody() const {
 		return _body;
 	}
 
-	cpBody* PogoCyclePlayerPhysicsComponent::getFootBody() const {
+	cpBody* JetpackUnicyclePlayerPhysicsComponent::getFootBody() const {
 		return _wheelBody;
 	}
 
-	PogoCyclePlayerPhysicsComponent::capsule PogoCyclePlayerPhysicsComponent::getBodyCapsule() const {
+	double JetpackUnicyclePlayerPhysicsComponent::getJetpackFuelLevel() const {
+		return _jetpackFuelLevel;
+	}
+
+	double JetpackUnicyclePlayerPhysicsComponent::getJetpackFuelMax() const {
+		return _jetpackFuelMax;
+	}
+
+	JetpackUnicyclePlayerPhysicsComponent::capsule JetpackUnicyclePlayerPhysicsComponent::getBodyCapsule() const {
 		capsule cap;
 		cap.a = v2(cpBodyLocalToWorld(cpShapeGetBody(_bodyShape), cpSegmentShapeGetA(_bodyShape)));
 		cap.b = v2(cpBodyLocalToWorld(cpShapeGetBody(_bodyShape), cpSegmentShapeGetB(_bodyShape)));
@@ -491,7 +467,7 @@ namespace player {
 		return cap;
 	}
 
-	PogoCyclePlayerPhysicsComponent::wheel PogoCyclePlayerPhysicsComponent::getFootWheel() const {
+	JetpackUnicyclePlayerPhysicsComponent::wheel JetpackUnicyclePlayerPhysicsComponent::getFootWheel() const {
 		wheel w;
 		w.position = v2(cpBodyGetPosition(_wheelBody));
 		w.radius = cpCircleShapeGetRadius(_wheelShape);
@@ -551,7 +527,7 @@ namespace player {
 
 	void PlayerDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		DrawComponent::onReady(parent, level);
-		_physics = getSibling<PogoCyclePlayerPhysicsComponent>();
+		_physics = getSibling<JetpackUnicyclePlayerPhysicsComponent>();
 	}
 
 	cpBB PlayerDrawComponent::getBB() const {
@@ -564,9 +540,9 @@ namespace player {
 
 	void PlayerDrawComponent::draw(const core::render_state &renderState) {
 
-		PogoCyclePlayerPhysicsComponentRef pogo = _physics.lock();
-		const PogoCyclePlayerPhysicsComponent::wheel FootWheel = pogo->getFootWheel();
-		const PogoCyclePlayerPhysicsComponent::capsule BodyCapsule = pogo->getBodyCapsule();
+		JetpackUnicyclePlayerPhysicsComponentRef pogo = _physics.lock();
+		const JetpackUnicyclePlayerPhysicsComponent::wheel FootWheel = pogo->getFootWheel();
+		const JetpackUnicyclePlayerPhysicsComponent::capsule BodyCapsule = pogo->getBodyCapsule();
 
 		// draw the wheel
 		gl::color(1,1,1); 
@@ -628,7 +604,13 @@ namespace player {
 		config.physics.width = util::xml::readNumericAttribute(physicsNode, "width", 5);
 		config.physics.height = util::xml::readNumericAttribute(physicsNode, "height", 20);
 		config.physics.density = util::xml::readNumericAttribute(physicsNode, "density", 1);
-		config.physics.jumpSpringStrength = util::xml::readNumericAttribute(physicsNode, "jumpSpringStrength", 250);
+		config.physics.friction = util::xml::readNumericAttribute(physicsNode, "friction", 3);
+
+		XmlTree jetpackNode = physicsNode.getChild("jetpack");
+		config.physics.jetpackAntigravity = util::xml::readNumericAttribute(jetpackNode, "antigravity", 10);
+		config.physics.jetpackFuelMax = util::xml::readNumericAttribute(jetpackNode, "fuelMax", 1);
+		config.physics.jetpackFuelConsumptionPerSecond = util::xml::readNumericAttribute(jetpackNode, "consumption", 0.3);
+		config.physics.jetpackFuelRegenerationPerSecond = util::xml::readNumericAttribute(jetpackNode, "regeneration", 0.3);
 
 		PlayerRef player = make_shared<Player>(name);
 		player->build(config);
@@ -661,8 +643,7 @@ namespace player {
 			}
 
 			_physics->setSpeed( direction * _config.walkSpeed * (_input->isRunning() ? _config.runMultiplier : 1.0) );
-			_physics->setJumping( _input->isJumping() );
-			_physics->setCrouching( _input->isCrouching() );
+			_physics->setFlying( _input->isJumping() );
 		}
 
 	}
@@ -675,7 +656,7 @@ namespace player {
 		_config = c;
 		_input = make_shared<PlayerInputComponent>();
 		_drawing = make_shared<PlayerDrawComponent>();
-		_physics = make_shared<PogoCyclePlayerPhysicsComponent>(c.physics);
+		_physics = make_shared<JetpackUnicyclePlayerPhysicsComponent>(c.physics);
 
 		addComponent(_input);
 		addComponent(_drawing);

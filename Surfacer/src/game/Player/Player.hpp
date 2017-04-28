@@ -18,7 +18,7 @@ namespace player {
 
 	SMART_PTR(Player);
 	SMART_PTR(PlayerPhysicsComponent);
-	SMART_PTR(PogoCyclePlayerPhysicsComponent);
+	SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
 	SMART_PTR(PlayerDrawComponent);
 	SMART_PTR(PlayerInputComponent);
 
@@ -34,8 +34,12 @@ namespace player {
 			double width;
 			double height;
 			double density;
+			double friction;
 
-			double jumpSpringStrength;
+			double jetpackAntigravity;
+			double jetpackFuelMax;
+			double jetpackFuelConsumptionPerSecond;
+			double jetpackFuelRegenerationPerSecond;
 		};
 
 	public:
@@ -57,6 +61,8 @@ namespace player {
 		virtual bool isTouchingGround() const = 0;
 		virtual cpBody *getBody() const = 0;
 		virtual cpBody *getFootBody() const = 0;
+		virtual double getJetpackFuelLevel() const = 0;
+		virtual double getJetpackFuelMax() const = 0;
 
 		vector<cpShape*> getShapes() const { return _shapes; }
 		vector<cpConstraint*> getConstraints() const { return _constraints; }
@@ -66,11 +72,8 @@ namespace player {
 		virtual void setSpeed( double vel ) { _speed = vel; }
 		double getSpeed() const { return _speed; }
 
-		virtual void setCrouching( bool crouching ) { _crouching = crouching; }
-		bool isCrouching() { return _crouching; }
-
-		virtual void setJumping( bool j ) { _jumping = j; }
-		bool isJumping() const { return _jumping; }
+		virtual void setFlying( bool j ) { _flying = j; }
+		bool isFlying() const { return _flying; }
 
 	protected:
 
@@ -87,16 +90,16 @@ namespace player {
 		vector<cpBody*> _bodies;
 		vector<cpShape*> _shapes;
 		vector<cpConstraint*> _constraints;
-		bool _crouching, _jumping;
+		bool _flying;
 		double _speed;
 
 	};
 
-	class PogoCyclePlayerPhysicsComponent : public PlayerPhysicsComponent {
+	class JetpackUnicyclePlayerPhysicsComponent : public PlayerPhysicsComponent {
 	public:
 
-		PogoCyclePlayerPhysicsComponent(config c);
-		virtual ~PogoCyclePlayerPhysicsComponent();
+		JetpackUnicyclePlayerPhysicsComponent(config c);
+		virtual ~JetpackUnicyclePlayerPhysicsComponent();
 
 		// PhysicsComponent
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
@@ -110,6 +113,8 @@ namespace player {
 		bool isTouchingGround() const override;
 		cpBody *getBody() const override;
 		cpBody *getFootBody() const override;
+		double getJetpackFuelLevel() const override;
+		double getJetpackFuelMax() const override;
 
 		//PogoCyclePlayerPhysicsComponent
 
@@ -131,17 +136,12 @@ namespace player {
 
 	private:
 
-		struct jump_spring_params
-		{
-			double restLength, stiffness, damping;
-		};
-
 		cpBody *_body, *_wheelBody;
 		cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
-		cpConstraint *_wheelMotor, *_jumpSpring, *_jumpGroove, *_orientationGear;
-		double _wheelRadius, _wheelFriction, _crouch, _touchingGroundAcc;
-		jump_spring_params _springParams;
-		dvec2 _up, _groundNormal, _positionOffset;
+		cpConstraint *_wheelMotor, *_orientationGear;
+		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
+		double _jetpackFuelLevel, _jetpackFuelMax;
+		dvec2 _up, _characterUp, _groundNormal, _positionOffset;
 
 	};
 
@@ -181,7 +181,7 @@ namespace player {
 		
 	private:
 		
-		PogoCyclePlayerPhysicsComponentWeakRef _physics;
+		JetpackUnicyclePlayerPhysicsComponentWeakRef _physics;
 		
 	};
 
