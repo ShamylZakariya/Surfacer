@@ -44,6 +44,7 @@ namespace core {
 				dvec2 p_2_com = rgi.centerOfMass - atPositionInWorld;
 				double dist = length(p_2_com);
 				if (dist > 1e-5) {
+					p_2_com /= dist;
 					dvec2 g = p_2_com * (rgi.strength / pow(dist, rgi.falloffPower));
 					return g;
 				}
@@ -304,6 +305,7 @@ namespace core {
 			dvec2 body_2_com = rgi.centerOfMass - v2(cpBodyGetPosition(body));
 			double dist = length(body_2_com);
 			if (dist > 1e-5) {
+				body_2_com /= dist;
 				dvec2 g = body_2_com * (rgi.strength / pow(dist, rgi.falloffPower));
 				cpBodyUpdateVelocity(body, cpv(g), damping, dt);
 			} else {
