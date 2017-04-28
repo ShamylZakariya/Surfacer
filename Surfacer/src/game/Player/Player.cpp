@@ -81,30 +81,32 @@ namespace player {
 	{
 		const double
 			HalfWidth = getConfig().width * 0.5,
-			SegmentRadius = HalfWidth * 0.125;
+			SegmentRadius = HalfWidth * 0.125,
+			CastDistance = 10000;
 
 		const dvec2
-			Position(getPosition()),
-			Right( HalfWidth, 0 );
+			Position(v2(cpBodyGetPosition(getFootBody()))),
+			Down = normalize(getSpace()->getGravity(Position)),
+			Right = rotateCCW(Down);
 
 		const cpVect
-			Down = cpv( 0, -5000 );
+			DownCast = cpvmult(cpv(Down), CastDistance);
 
 		ground_slope_handler_data handlerData;
 		cpSpace *space = getSpace()->getSpace();
 
 		handlerData.start = cpv(Position + Right);
-		handlerData.end = cpvadd( handlerData.start, Down );
+		handlerData.end = cpvadd( handlerData.start, DownCast );
 		cpSpaceSegmentQuery(space, handlerData.start, handlerData.end, SegmentRadius, CP_SHAPE_FILTER_ALL, groundSlopeRaycastHandler, &handlerData);
 		cpVect normal = handlerData.normal;
 
 		handlerData.start = cpv(Position);
-		handlerData.end = cpvadd( handlerData.start, Down );
+		handlerData.end = cpvadd( handlerData.start, DownCast );
 		cpSpaceSegmentQuery(space, handlerData.start, handlerData.end, SegmentRadius, CP_SHAPE_FILTER_ALL, groundSlopeRaycastHandler, &handlerData);
 		normal = cpvadd( normal, handlerData.normal );
 
-		handlerData.start = cpv(Position-Right);
-		handlerData.end = cpvadd( handlerData.start, Down );
+		handlerData.start = cpv(Position - Right);
+		handlerData.end = cpvadd( handlerData.start, DownCast );
 		cpSpaceSegmentQuery(space, handlerData.start, handlerData.end, SegmentRadius, CP_SHAPE_FILTER_ALL, groundSlopeRaycastHandler, &handlerData);
 		normal = cpvadd( normal, handlerData.normal );
 
@@ -127,7 +129,7 @@ namespace player {
 		cpConstraint *_wheelMotor, *_orientationGear;
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc;
 		double _jetpackFuelLevel, _jetpackFuelMax;
-		dvec2 _up, _characterUp, _groundNormal, _positionOffset;
+		dvec2 _up, _characterUp, _groundNormal;
 	 */
 	JetpackUnicyclePlayerPhysicsComponent::JetpackUnicyclePlayerPhysicsComponent(config c):
 	PlayerPhysicsComponent(c),
@@ -145,8 +147,7 @@ namespace player {
 	_jetpackFuelMax(0),
 	_up(0,0),
 	_characterUp(0,0),
-	_groundNormal(0,0),
-	_positionOffset(0,0)
+	_groundNormal(0,0)
 	{}
 
 	JetpackUnicyclePlayerPhysicsComponent::~JetpackUnicyclePlayerPhysicsComponent()
@@ -195,7 +196,6 @@ namespace player {
 		_wheelRadius = WheelRadius;
 		_wheelBody = _add(cpBodyNew( WheelMass, cpMomentForCircle( WheelMass, 0, _wheelRadius, cpvzero )));
 		cpBodySetPosition( _wheelBody, cpvadd( cpBodyGetPosition( _body ), WheelPositionOffset ));
-		_positionOffset = v2( cpvsub( cpBodyGetPosition( _body ), cpBodyGetPosition(_wheelBody)));
 		_wheelShape = _add(cpCircleShapeNew( _wheelBody, _wheelRadius, cpvzero ));
 		_wheelMotor = _add(cpSimpleMotorNew( _body, _wheelBody, 0 ));
 
@@ -207,7 +207,7 @@ namespace player {
 
 
 		//
-		//	create jump sensor shape
+		//	create sensor for recording ground contact
 		//
 
 		_groundContactSensorShape = _add(cpCircleShapeNew( _wheelBody, WheelSensorRadius, cpvzero ));
@@ -257,7 +257,9 @@ namespace player {
 			Dir = sign( getSpeed() );
 
 		const dvec2
-			Gravity = getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody)));
+			Gravity = getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody))),
+			Down = normalize(Gravity),
+			Right = rotateCCW(Down);
 
 		//
 		//	Update touchingGround average (to smooth out vibrations) and ground slope
@@ -269,7 +271,7 @@ namespace player {
 			_groundNormal = normalize( lrp( 0.2, _groundNormal, _getGroundNormal()));
 
 			const double
-				SlopeWeight = 0.25,
+				SlopeWeight = 0.125,
 				DirWeight = 0.5;
 
 			//
@@ -277,10 +279,18 @@ namespace player {
 			// and direction of motion (we lean into motion)
 			//
 
-			const dvec2 ActualUp = -normalize(Gravity);
-			const dvec2 NewUp = (SlopeWeight * _groundNormal) + ActualUp + dvec2( DirWeight * Dir,0);
+			const dvec2 ActualUp = -Down;
+			const dvec2 NewUp = ActualUp + (SlopeWeight * _groundNormal) + dvec2( DirWeight * Dir,0);
 			_characterUp = normalize( lrp( 0.2, _characterUp, NewUp ));
-			const double characterRotation = std::atan2( _characterUp.y, _characterUp.x ) - M_PI_2;
+
+			double characterRotation = std::atan2( _characterUp.y, _characterUp.x ) - M_PI_2;
+			while (characterRotation < 0) {
+				characterRotation += 2 * M_PI;
+			}
+			while (characterRotation > 2 * M_PI) {
+				characterRotation -= 2 * M_PI;
+			}
+
 			cpGearJointSetPhase(_orientationGear, characterRotation);
 
 			//
@@ -361,7 +371,8 @@ namespace player {
 
 			if ( abs( baseImpulseToApply) > 1e-3 )
 			{
-				cpBodyApplyImpulseAtWorldPoint( _body, cpv( Dir * baseImpulseToApply * _totalMass,0), cpBodyGetPosition(_body));
+				dvec2 impulse = Dir * baseImpulseToApply * _totalMass * Right;
+				cpBodyApplyImpulseAtWorldPoint( _body, cpv(impulse), cpBodyGetPosition(_body));
 			}
 		}
 
@@ -428,7 +439,7 @@ namespace player {
 	}
 
 	dvec2 JetpackUnicyclePlayerPhysicsComponent::getPosition() const {
-		return v2(cpBodyGetPosition( _wheelBody )) + _positionOffset;
+		return v2(cpBodyGetPosition( _body ));
 	}
 
 	dvec2 JetpackUnicyclePlayerPhysicsComponent::getUp() const {
@@ -540,9 +551,9 @@ namespace player {
 
 	void PlayerDrawComponent::draw(const core::render_state &renderState) {
 
-		JetpackUnicyclePlayerPhysicsComponentRef pogo = _physics.lock();
-		const JetpackUnicyclePlayerPhysicsComponent::wheel FootWheel = pogo->getFootWheel();
-		const JetpackUnicyclePlayerPhysicsComponent::capsule BodyCapsule = pogo->getBodyCapsule();
+		JetpackUnicyclePlayerPhysicsComponentRef physics = _physics.lock();
+		const JetpackUnicyclePlayerPhysicsComponent::wheel FootWheel = physics->getFootWheel();
+		const JetpackUnicyclePlayerPhysicsComponent::capsule BodyCapsule = physics->getBodyCapsule();
 
 		// draw the wheel
 		gl::color(1,1,1); 
@@ -565,6 +576,10 @@ namespace player {
 			gl::color(Color(1,1,1));
 			gl::drawSolidRoundedRect(Rectf(-len/2, -radius, +len/2, +radius), radius, 8);
 		}
+
+		gl::color(1,0,0);
+		gl::drawLine(physics->getPosition(), physics->getPosition() + physics->getGroundNormal() * 10.0);
+		gl::drawSolidCircle(physics->getPosition(), 1, 12);
 
 		cpBB bb = getBB();
 		gl::color(0,1,1);

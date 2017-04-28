@@ -141,7 +141,7 @@ namespace player {
 		cpConstraint *_wheelMotor, *_orientationGear;
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
 		double _jetpackFuelLevel, _jetpackFuelMax;
-		dvec2 _up, _characterUp, _groundNormal, _positionOffset;
+		dvec2 _up, _characterUp, _groundNormal;
 
 	};
 

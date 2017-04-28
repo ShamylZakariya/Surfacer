@@ -4,8 +4,8 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##Currently
 
-Player gets "crushed" sometimes, where the lozenge shape length is zero
-Jumping doesn't work well. Options? Making spring stronger doesn't help. Maybe make it go farther?
+Player wigs after transiting to "southern hemisphere" (a bit after _up.y < 0)
+Tilt is wrong
 
 ## BUGS PRIORITY 0
 
