@@ -249,8 +249,8 @@ namespace player {
 		const PlayerPhysicsComponent::config config = getConfig();
 
 		const bool
-			Alive = true, //player->alive(),
-			Restrained = false; // player->restrained();
+			Alive = true, //player->iaAlive(),
+			Restrained = false; // player->isRestrained();
 
 		const double
 			Vel = getSpeed() * (isCrouching() ? 0.25 : 1),

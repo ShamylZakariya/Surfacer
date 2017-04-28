@@ -336,7 +336,7 @@ namespace core {
 	_bodyVelocityFunc(cpBodyUpdateVelocity)
 	{
 		// some defaults
-		cpSpaceSetIterations( _space, 20 );
+		cpSpaceSetIterations( _space, 30 );
 		cpSpaceSetDamping( _space, 0.95 );
 		cpSpaceSetSleepTimeThreshold( _space, 1 );
 		cpSpaceSetUserData(_space, this);
@@ -517,8 +517,12 @@ namespace core {
 
 	}
 
-	ViewportRef Level::getViewport() {
+	ViewportRef Level::getViewport() const {
 		return getScenario()->getViewport();
+	}
+
+	ViewportControllerRef Level::getViewportController() const {
+		return getScenario()->getViewportController();
 	}
 
 	void Level::setGravityType(GravityType type) {

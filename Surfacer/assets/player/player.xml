@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <player walkSpeed="20" runMultiplier="10">
-	<physics width="5" height="20" density="1" jumpSpringStrength="500"/>
+	<physics width="20" height="60" density="1" jumpSpringStrength="500"/>
 </player>

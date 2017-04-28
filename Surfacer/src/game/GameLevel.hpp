@@ -91,7 +91,8 @@ protected:
 	void applySpaceAttributes(XmlTree spaceNode);
 	void applyGravityAttributes(XmlTree gravityNode);
 	void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
-	
+	void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
+
 private:
 
 	terrain::TerrainObjectRef _terrain;

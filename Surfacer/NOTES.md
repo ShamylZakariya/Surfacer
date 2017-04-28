@@ -5,7 +5,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 ##Currently
 
 Player gets "crushed" sometimes, where the lozenge shape length is zero
-Player wheel friction needs to be higher (or terrain needs to be higher?)
+Jumping doesn't work well. Options? Making spring stronger doesn't help. Maybe make it go farther?
 
 ## BUGS PRIORITY 0
 

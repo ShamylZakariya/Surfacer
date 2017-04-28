@@ -14,6 +14,7 @@
 #include "Signals.hpp"
 #include "RenderState.hpp"
 #include "TimeState.hpp"
+#include "ViewportController.hpp"
 
 namespace core {
 
@@ -172,7 +173,8 @@ namespace core {
 
 		const DrawDispatcherRef &getDrawDispatcher() const { return _drawDispatcher; }
 		const time_state &getTime() const { return _time; }
-		ViewportRef getViewport();
+		ViewportRef getViewport() const;
+		ViewportControllerRef getViewportController() const;
 
 		void setGravityType(GravityType type);
 		GravityType getGravityType() const { return _gravityType; }

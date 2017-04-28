@@ -7,7 +7,10 @@
 //
 
 #include "GameLevel.hpp"
+
+#include "DevComponents.hpp"
 #include "Xml.hpp"
+
 
 using namespace core;
 
@@ -60,10 +63,8 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 	auto maybePlayerNode = core::util::xml::findElement(levelNode, "player");
 	if (maybePlayerNode.first) {
 		terrain::ElementRef playerElement = _terrain->getWorld()->getElementById("player");
-
 		ci::DataSourceRef playerXmlData = app::loadAsset(maybePlayerNode.second.getAttribute("path").getValue());
-		_player = player::Player::create("Player", playerXmlData, playerElement->getPosition());
-		addGameObject(_player);
+		loadPlayer(maybePlayerNode.second, playerXmlData, playerElement);
 	}
 }
 
@@ -105,6 +106,7 @@ void GameLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
 
 	double friction = util::xml::readNumericAttribute(terrainNode, "friction", 1);
 	double density = util::xml::readNumericAttribute(terrainNode, "density", 1);
+	double scale = util::xml::readNumericAttribute(terrainNode, "scale", 1);
 
 	const double minDensity = 1e-3;
 	density = max(density, minDensity);
@@ -120,7 +122,7 @@ void GameLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
 	vector<terrain::ShapeRef> shapes;
 	vector<terrain::AnchorRef> anchors;
 	vector<terrain::ElementRef> elements;
-	terrain::World::loadSvg(svgData, dmat4(), shapes, anchors, elements, true);
+	terrain::World::loadSvg(svgData, dmat4(scale), shapes, anchors, elements, true);
 	if (!shapes.empty()) {
 		// partition
 		auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 500);
@@ -143,4 +145,23 @@ void GameLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
 		setRadialGravity(rgi);
 		CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.falloffPower << " centerOfMass: " << rgi.centerOfMass);
 	}
+}
+
+void GameLevel::loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement) {
+	_player = player::Player::create("Player", playerXmlData, playerElement->getPosition());
+	addGameObject(_player);
+
+	if (playerNode.hasChild("tracking")) {
+		XmlTree trackingNode = playerNode.getChild("tracking");
+		double areaRadius = util::xml::readNumericAttribute(trackingNode, "areaRadius", 200);
+		double deadZoneRadius = util::xml::readNumericAttribute(trackingNode, "deadZoneRadius", 30);
+		double tightness = util::xml::readNumericAttribute(trackingNode, "tightness", 0.99);
+		double correctiveRampPower = util::xml::readNumericAttribute(trackingNode, "correctiveRampPower", 2);
+
+		auto t = make_shared<TargetTrackingViewportControlComponent>(_player, getViewportController());
+		t->setTrackingRegion(areaRadius, deadZoneRadius, correctiveRampPower, tightness);
+
+		_player->addComponent(t);
+	}
+
 }
