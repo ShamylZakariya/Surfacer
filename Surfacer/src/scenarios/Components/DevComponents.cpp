@@ -338,6 +338,9 @@ bool TargetTrackingViewportControlComponent::mouseWheel( const ci::app::MouseEve
 	if (auto target = _trackingTarget.lock()) {
 		const double wheelScale = 0.1 * _scale;
 		_scale += (event.getWheelIncrement() * wheelScale);
+
+		_scale = clamp(_scale, 0.05, 1000.0);
+
 		return true;
 	}
 	return false;

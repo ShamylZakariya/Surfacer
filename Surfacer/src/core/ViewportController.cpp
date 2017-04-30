@@ -76,7 +76,7 @@ namespace core {
 	}
 
 	void ViewportController::setScale(double scale) {
-		_scale = clamp(scale, 0.05, 2000.0);
+		_scale = max(scale, 0.0);
 	}
 
 #pragma mark -
