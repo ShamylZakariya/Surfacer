@@ -276,19 +276,19 @@ T reflect( const T &I, const T &N )
 }
 
 /**
-	rotate vector 90 degrees counter-clockwise
+	rotate vector 90 degrees counter-clockwise, assuming a bottom-left coordinate system
  */
 template< class T, glm::precision P >
-inline glm::tvec2<T,P> rotateCCW( const glm::tvec2<T,P> &v )
+inline glm::tvec2<T,P> rotateCW( const glm::tvec2<T,P> &v )
 {
 	return glm::tvec2<T,P>( -v.y, v.x );
 }
 
 /**
-	rotate vector 90 degrees clockwise
+	rotate vector 90 degrees clockwise, assuming a bottom-left coordinate system
  */
 template< class T, glm::precision P >
-inline glm::tvec2<T,P> rotateCW( const glm::tvec2<T,P> &v )
+inline glm::tvec2<T,P> rotateCCW( const glm::tvec2<T,P> &v )
 {
 	return glm::tvec2<T,P>( v.y, -v.x );
 }
@@ -442,6 +442,16 @@ inline unsigned nextPowerOf2(unsigned x)
 	return x + 1;
 }
 
+template <typename T>
+T to_degrees(T rads) {
+	return 180 * rads / M_PI;
+}
+
+template <typename T>
+T to_radians(T degrees) {
+	return degrees * M_PI / 180;
+}
+
 /**
 	@brief determines if an integer is a power of two
 	@ingroup maths
@@ -498,5 +508,8 @@ using glm::distance;
 using glm::dot;
 using glm::cross;
 using glm::normalize;
+using glm::translate;
+using glm::rotate;
+using glm::scale;
 
 #endif /* MathHelpers_h */
