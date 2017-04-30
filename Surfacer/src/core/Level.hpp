@@ -32,6 +32,22 @@ namespace core {
 		signals::signal< void(cpShape*) > shapeWasAddedToSpace;
 		signals::signal< void(cpConstraint*) > constraintWasAddedToSpace;
 
+		struct gravitation {
+			dvec2 dir;
+			double force;
+
+			gravitation(const dvec2 &d, double f):
+			dir(d),
+			force(f)
+			{}
+
+			gravitation(const gravitation &g):
+			dir(g.dir),
+			force(g.force)
+			{}
+		};
+
+
 	public:
 
 
@@ -42,7 +58,7 @@ namespace core {
 		/**
 		 Get gravity vector (direction and magnitude) for a given position in space.
 		 */
-		dvec2 getGravity(const dvec2 &atPositionInWorld);
+		 gravitation getGravity(const dvec2 &world);
 
 		cpSpace *getSpace() const { return _space; }
 
@@ -185,8 +201,10 @@ namespace core {
 		void setRadialGravity(radial_gravity_info rgi);
 		radial_gravity_info getRadialGravity() const { return _radialGravityInfo; }
 
-		// get the strength of gravity regardless of type (directional or radial)
-		double getGravityStrength() const;
+		/**
+		 get the direction and strength of gravity at a point in world space
+		 */
+		SpaceAccess::gravitation getGravitation(dvec2 world) const;
 
 	protected:
 

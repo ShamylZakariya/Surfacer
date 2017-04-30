@@ -138,10 +138,10 @@ namespace player {
 
 		cpBody *_body, *_wheelBody;
 		cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
-		cpConstraint *_wheelMotor, *_orientationGear;
+		cpConstraint *_wheelMotor, *_orientationConstraint;
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
-		double _jetpackFuelLevel, _jetpackFuelMax;
-		dvec2 _up, _characterUp, _groundNormal;
+		double _jetpackFuelLevel, _jetpackFuelMax, _lean;
+		dvec2 _up, _groundNormal;
 
 	};
 

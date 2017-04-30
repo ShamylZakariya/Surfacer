@@ -4,8 +4,8 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##Currently
 
-Player wigs after transiting to "southern hemisphere" (a bit after _up.y < 0)
-Tilt is wrong
+When at top of globe, player wigs when changing direction. I think the gear rotation wraparound normalization isn't helping. Maybe I want to maintain an angle and add deltas to it
+
 
 ## BUGS PRIORITY 0
 

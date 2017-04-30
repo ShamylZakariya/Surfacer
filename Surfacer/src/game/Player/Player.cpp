@@ -84,9 +84,12 @@ namespace player {
 			SegmentRadius = HalfWidth * 0.125,
 			CastDistance = 10000;
 
+		const dvec2 Position(v2(cpBodyGetPosition(getFootBody())));
+
+		const auto G = getSpace()->getGravity(Position);
+
 		const dvec2
-			Position(v2(cpBodyGetPosition(getFootBody()))),
-			Down = normalize(getSpace()->getGravity(Position)),
+			Down = G.dir,
 			Right = rotateCCW(Down);
 
 		const cpVect
@@ -128,8 +131,8 @@ namespace player {
 		cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
 		cpConstraint *_wheelMotor, *_orientationGear;
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc;
-		double _jetpackFuelLevel, _jetpackFuelMax;
-		dvec2 _up, _characterUp, _groundNormal;
+		double _jetpackFuelLevel, _jetpackFuelMax, _lean;
+		dvec2 _up, _groundNormal;
 	 */
 	JetpackUnicyclePlayerPhysicsComponent::JetpackUnicyclePlayerPhysicsComponent(config c):
 	PlayerPhysicsComponent(c),
@@ -139,14 +142,14 @@ namespace player {
 	_wheelShape(nullptr),
 	_groundContactSensorShape(nullptr),
 	_wheelMotor(nullptr),
-	_orientationGear(nullptr),
+	_orientationConstraint(nullptr),
 	_wheelRadius(0),
 	_wheelFriction(0),
 	_touchingGroundAcc(0),
 	_jetpackFuelLevel(0),
 	_jetpackFuelMax(0),
+	_lean(0),
 	_up(0,0),
-	_characterUp(0,0),
 	_groundNormal(0,0)
 	{}
 
@@ -182,12 +185,13 @@ namespace player {
 		cpBodySetPosition(_body, cpv(getConfig().position));
 
 		//
-		// lozenge shape for body and motor to orient it
+		// lozenge shape for body and gear joint to orient it
 		//
 
 		_bodyShape = _add(cpSegmentShapeNew( _body, cpv(0,-(HalfHeight)), cpv(0,HalfHeight), Width/2 ));
 		cpShapeSetFriction( _bodyShape, 0.1 );
-		_orientationGear = _add(cpGearJointNew( cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 1));
+
+		_orientationConstraint = _add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 1));
 
 		//
 		// make wheel at bottom of body
@@ -243,6 +247,57 @@ namespace player {
 		}
 	}
 
+	namespace {
+
+		double normalize_radians(double r) {
+			while (r > 2 * M_PI) {
+				r -= 2 * M_PI;
+			}
+			while (r < 0) {
+				r += 2 * M_PI;
+			}
+			return r;
+		}
+
+		double normalize_degrees(double d) {
+			while (d > 360) {
+				d -= 360;
+			}
+			while (d < 0) {
+				d += 360;
+			}
+			return d;
+		}
+
+		double shortest_turn_to_target_radians(double start, double end) {
+			start = normalize_radians(start);
+			end = normalize_radians(end);
+
+			double cwDist = abs((start + 2 * M_PI) - end);
+			double ccwDist = abs(start - end);
+
+			if (cwDist < ccwDist) {
+				return cwDist;
+			}
+			return -ccwDist;
+		}
+
+		double shortest_turn_to_target_degrees(double start, double end) {
+			start = normalize_degrees(start);
+			end = normalize_degrees(end);
+
+			double cwDist = abs((start + 360) - end);
+			double ccwDist = abs(start - end);
+
+			if (cwDist < ccwDist) {
+				return -cwDist;
+			}
+
+			return +ccwDist;
+		}
+
+	}
+
 	void JetpackUnicyclePlayerPhysicsComponent::step(const core::time_state &timeState) {
 		PlayerRef player = getGameObjectAs<Player>();
 
@@ -256,48 +311,46 @@ namespace player {
 			Vel = getSpeed(),
 			Dir = sign( getSpeed() );
 
+		const auto G = getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody)));
+
 		const dvec2
-			Gravity = getSpace()->getGravity(v2(cpBodyGetPosition(_wheelBody))),
-			Down = normalize(Gravity),
+			Down = G.dir,
 			Right = rotateCCW(Down);
 
 		//
-		//	Update touchingGround average (to smooth out vibrations) and ground slope
+		//	Smoothly update touching ground state as well as ground normal
 		//
 
+		_touchingGroundAcc = lrp<double>(0.2,_touchingGroundAcc,_isTouchingGround(_groundContactSensorShape) ? 1.0 : 0.0);
+		_groundNormal = normalize( lrp( 0.2, _groundNormal, _getGroundNormal()));
+
 		{
-			_touchingGroundAcc = lrp<double>(0.2,_touchingGroundAcc,_isTouchingGround(_groundContactSensorShape) ? 1.0 : 0.0);
-
-			_groundNormal = normalize( lrp( 0.2, _groundNormal, _getGroundNormal()));
-
-			const double
-				SlopeWeight = 0.125,
-				DirWeight = 0.5;
-
-			//
-			// compute character model up vector based on gravitational direction and the slope,
-			// and direction of motion (we lean into motion)
-			//
-
 			const dvec2 ActualUp = -Down;
-			const dvec2 NewUp = ActualUp + (SlopeWeight * _groundNormal) + dvec2( DirWeight * Dir,0);
-			_characterUp = normalize( lrp( 0.2, _characterUp, NewUp ));
-
-			double characterRotation = std::atan2( _characterUp.y, _characterUp.x ) - M_PI_2;
-			while (characterRotation < 0) {
-				characterRotation += 2 * M_PI;
-			}
-			while (characterRotation > 2 * M_PI) {
-				characterRotation -= 2 * M_PI;
-			}
-
-			cpGearJointSetPhase(_orientationGear, characterRotation);
-
-			//
-			//	Now update actual up-vector
-			//
-
 			_up = normalize(lrp( 0.2, _up, ActualUp));
+
+			double currentCharacterRotation = to_degrees(cpBodyGetAngle(_body));
+			double currentPhase = to_degrees(cpGearJointGetPhase(_orientationConstraint));
+			double targetCharacterRotation = to_degrees(std::atan2( _up.y, _up.x ) - M_PI_2);
+
+//			double leanInRads = -30 * M_PI / 180;
+//			_lean = lrp(0.2, _lean, Dir * leanInRads);
+//			targetCharacterRotation += _lean;
+
+			double delta = shortest_turn_to_target_degrees(currentCharacterRotation, targetCharacterRotation);
+			delta = clamp(delta, -1.0, 1.0);
+//			if (abs(delta) > 10) {
+//				delta = clamp(delta, -5.0, +5.0);
+//			}
+
+			CI_LOG_D(" angle: " << currentCharacterRotation
+					 << " phase: " << currentPhase
+					 << " target: " << targetCharacterRotation
+					 << " delta: " << delta
+					 << " target: " << (currentCharacterRotation + delta)
+					 );
+
+			cpGearJointSetPhase(_orientationConstraint, to_radians(0));
+
 		}
 
 		//
@@ -328,7 +381,8 @@ namespace player {
 		bool flying = isFlying() && _jetpackFuelLevel > 0;
 
 		if (flying) {
-			dvec2 force = -config.jetpackAntigravity * _totalMass * Gravity;
+			dvec2 antiGravForceDir = normalize((0.5 * Dir * Right) + G.dir);
+			dvec2 force = -config.jetpackAntigravity * _totalMass * G.force * antiGravForceDir;
 			cpBodyApplyForceAtWorldPoint(_body, cpv(force), cpBodyLocalToWorld(_wheelBody, cpvzero));
 			_jetpackFuelLevel -= config.jetpackFuelConsumptionPerSecond * timeState.deltaT;
 		} else if (!isFlying()) {
@@ -406,26 +460,26 @@ namespace player {
 
 		if ( !Alive )
 		{
-			cpConstraintSetMaxForce( _orientationGear, 0 );
-			cpConstraintSetMaxBias( _orientationGear, 0 );
-			cpConstraintSetErrorBias( _orientationGear, 0 );
+			cpConstraintSetMaxForce( _orientationConstraint, 0 );
+			cpConstraintSetMaxBias( _orientationConstraint, 0 );
+			cpConstraintSetErrorBias( _orientationConstraint, 0 );
 			for (cpShape *shape : getShapes()) {
 				cpShapeSetFriction(shape, 0);
 			}
 		}
-		else
-		{
-			// orientation constraint may have been lessened when player was crushed, we always want to ramp it back up
-			const double MaxForce = cpConstraintGetMaxForce(_orientationGear);
-			if ( MaxForce < 10000 )
-			{
-				cpConstraintSetMaxForce( _orientationGear, max(MaxForce,10.0) * 1.1 );
-			}
-			else
-			{
-				cpConstraintSetMaxForce( _orientationGear, INFINITY );
-			}
-		}
+//		else
+//		{
+//			// orientation constraint may have been lessened when player was crushed, we always want to ramp it back up
+//			const double MaxForce = cpConstraintGetMaxForce(_orientationConstraint);
+//			if ( MaxForce < 10000 )
+//			{
+//				cpConstraintSetMaxForce( _orientationConstraint, max(MaxForce,10.0) * 1.1 );
+//			}
+//			else
+//			{
+//				cpConstraintSetMaxForce( _orientationConstraint, INFINITY );
+//			}
+//		}
 
 		//
 		//	Draw component needs update its BB for draw dispatch

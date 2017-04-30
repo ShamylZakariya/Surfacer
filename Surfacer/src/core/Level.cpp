@@ -37,23 +37,8 @@ namespace core {
 		constraintWasAddedToSpace(constraint);
 	}
 
-	dvec2 SpaceAccess::getGravity(const dvec2 &atPositionInWorld) {
-		switch(_level->getGravityType()) {
-			case Level::RADIAL: {
-				Level::radial_gravity_info rgi = _level->getRadialGravity();
-				dvec2 p_2_com = rgi.centerOfMass - atPositionInWorld;
-				double dist = length(p_2_com);
-				if (dist > 1e-5) {
-					p_2_com /= dist;
-					dvec2 g = p_2_com * (rgi.strength / pow(dist, rgi.falloffPower));
-					return g;
-				}
-				return dvec2(0,0);
-			}
-
-			case Level::DIRECTIONAL:
-				return v2(cpSpaceGetGravity(_space));
-		}
+	SpaceAccess::gravitation SpaceAccess::getGravity(const dvec2 &world) {
+		return _level->getGravitation(world);
 	}
 
 
@@ -296,21 +281,8 @@ namespace core {
 		void radialGravityVelocityFunc(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt) {
 			cpSpace *space = cpBodyGetSpace(body);
 			Level *level = static_cast<Level*>(cpSpaceGetUserData(space));
-			Level::radial_gravity_info rgi = level->getRadialGravity();
-
-			// Gravitational acceleration is proportional to the inverse square of
-			// distance - in the real world - and directed toward the center of mass.
-			// we allow tuning of falloff via falloffPower
-
-			dvec2 body_2_com = rgi.centerOfMass - v2(cpBodyGetPosition(body));
-			double dist = length(body_2_com);
-			if (dist > 1e-5) {
-				body_2_com /= dist;
-				dvec2 g = body_2_com * (rgi.strength / pow(dist, rgi.falloffPower));
-				cpBodyUpdateVelocity(body, cpv(g), damping, dt);
-			} else {
-				cpBodyUpdateVelocity(body, cpv(0,0), damping, dt);
-			}
+			auto g = level->getGravitation(v2(cpBodyGetPosition(body)));
+			cpBodyUpdateVelocity(body, cpv(g.dir * g.force), damping, dt);
 		}
 
 	}
@@ -499,15 +471,6 @@ namespace core {
 		return result;
 	}
 
-	double Level::getGravityStrength() const {
-		switch(getGravityType()) {
-			case DIRECTIONAL:
-				return length(_directionalGravityDir);
-			case RADIAL:
-				return length(_radialGravityInfo.strength);
-		}
-	}
-
 	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
 		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
 
@@ -546,6 +509,27 @@ namespace core {
 
 	void Level::setRadialGravity(radial_gravity_info rgi) {
 		_radialGravityInfo = rgi;
+	}
+
+	SpaceAccess::gravitation Level::getGravitation(dvec2 world) const {
+		switch(_gravityType) {
+			case RADIAL: {
+				dvec2 p_2_com = _radialGravityInfo.centerOfMass - world;
+				double dist = length(p_2_com);
+				if (dist > 1e-5) {
+					p_2_com /= dist;
+					dvec2 g = p_2_com * (_radialGravityInfo.strength / pow(dist, _radialGravityInfo.falloffPower));
+					double f = length(g);
+					return SpaceAccess::gravitation(g/f, f);
+				}
+				return SpaceAccess::gravitation(dvec2(0,0), 0);
+			}
+
+			case Level::DIRECTIONAL:
+				dvec2 g = v2(cpSpaceGetGravity(_space));
+				double f = length(g);
+				return SpaceAccess::gravitation(g/f, f);
+		}
 	}
 
 	void Level::addedToScenario(ScenarioRef scenario) {
