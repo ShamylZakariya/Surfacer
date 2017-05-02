@@ -247,57 +247,6 @@ namespace player {
 		}
 	}
 
-	namespace {
-
-		double normalize_radians(double r) {
-			while (r > 2 * M_PI) {
-				r -= 2 * M_PI;
-			}
-			while (r < 0) {
-				r += 2 * M_PI;
-			}
-			return r;
-		}
-
-		double normalize_degrees(double d) {
-			while (d > 360) {
-				d -= 360;
-			}
-			while (d < 0) {
-				d += 360;
-			}
-			return d;
-		}
-
-		double shortest_turn_to_target_radians(double start, double end) {
-			start = normalize_radians(start);
-			end = normalize_radians(end);
-
-			double cwDist = abs((start + 2 * M_PI) - end);
-			double ccwDist = abs(start - end);
-
-			if (cwDist < ccwDist) {
-				return cwDist;
-			}
-			return -ccwDist;
-		}
-
-		double shortest_turn_to_target_degrees(double start, double end) {
-			start = normalize_degrees(start);
-			end = normalize_degrees(end);
-
-			double cwDist = abs((start + 360) - end);
-			double ccwDist = abs(start - end);
-
-			if (cwDist < ccwDist) {
-				return -cwDist;
-			}
-
-			return +ccwDist;
-		}
-
-	}
-
 	void JetpackUnicyclePlayerPhysicsComponent::step(const core::time_state &timeState) {
 		PlayerRef player = getGameObjectAs<Player>();
 
@@ -328,29 +277,11 @@ namespace player {
 			const dvec2 ActualUp = -Down;
 			_up = normalize(lrp( 0.2, _up, ActualUp));
 
-			double currentCharacterRotation = to_degrees(cpBodyGetAngle(_body));
-			double currentPhase = to_degrees(cpGearJointGetPhase(_orientationConstraint));
-			double targetCharacterRotation = to_degrees(std::atan2( _up.y, _up.x ) - M_PI_2);
-
-//			double leanInRads = -30 * M_PI / 180;
-//			_lean = lrp(0.2, _lean, Dir * leanInRads);
-//			targetCharacterRotation += _lean;
-
-			double delta = shortest_turn_to_target_degrees(currentCharacterRotation, targetCharacterRotation);
-			delta = clamp(delta, -1.0, 1.0);
-//			if (abs(delta) > 10) {
-//				delta = clamp(delta, -5.0, +5.0);
-//			}
-
-			CI_LOG_D(" angle: " << currentCharacterRotation
-					 << " phase: " << currentPhase
-					 << " target: " << targetCharacterRotation
-					 << " delta: " << delta
-					 << " target: " << (currentCharacterRotation + delta)
-					 );
-
-			cpGearJointSetPhase(_orientationConstraint, to_radians(0));
-
+			double target = std::atan2( _up.y, _up.x ) - M_PI_2;
+			double phase = cpGearJointGetPhase(_orientationConstraint);
+			double turn = closest_turn_radians(phase, target);
+			double newPhase = phase + turn;
+			cpGearJointSetPhase(_orientationConstraint, newPhase);
 		}
 
 		//

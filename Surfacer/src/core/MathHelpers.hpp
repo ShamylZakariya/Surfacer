@@ -452,6 +452,55 @@ T to_radians(T degrees) {
 	return degrees * M_PI / 180;
 }
 
+template <typename T>
+T normalize_radians(T r) {
+	return 2*M_PI * ((r / (2*M_PI)) - floor(r / (2*M_PI)));
+}
+
+template <typename T>
+T normalize_degrees(T d) {
+	return 360 * ((d / 360) - floor(d / 360));
+}
+
+/**
+ Get the shortest distance to turn to change an angle (in degrees) from start to end.
+ */
+
+template <typename T>
+T closest_turn_degrees(T start, T end) {
+	T n_start = 360 * ((start / 360) - floor(start / 360));
+	T n_end = 360 * ((end / 360) - floor(end / 360));
+
+	if (n_end > n_start + 180) {
+		n_end -= 360;
+	}
+
+	if (n_end < n_start - 180) {
+		n_end += 360;
+	}
+
+	return n_end - n_start;
+}
+
+/**
+ Get the shortest distance to turn to change an angle (in radians) from start to end.
+ */
+template <typename T>
+T closest_turn_radians(T start, T end) {
+	T n_start = (2*M_PI) * ((start / (2*M_PI)) - floor(start / (2*M_PI)));
+	T n_end = (2*M_PI) * ((end / (2*M_PI)) - floor(end / (2*M_PI)));
+
+	if (n_end > n_start + M_PI) {
+		n_end -= (2*M_PI);
+	}
+
+	if (n_end < n_start - M_PI) {
+		n_end += (2*M_PI);
+	}
+
+	return n_end - n_start;
+}
+
 /**
 	@brief determines if an integer is a power of two
 	@ingroup maths
