@@ -73,7 +73,12 @@ namespace core {
 		/**
 			Convenience function to get the current mouse position in screen coordinates
 		 */
-		inline ivec2 mousePosition() const { return _lastMouseEvent.getPos(); }
+		inline ivec2 getMousePosition() const { return _lastMouseEvent.getPos(); }
+
+		/**	
+		 Get the last mouse event - this can be queried for position, button status, etc
+		 */
+		inline ci::app::MouseEvent getLastMouseEvent() const { return _lastMouseEvent; }
 
 		void hideMouse();
 		void unhideMouse();
@@ -177,7 +182,10 @@ namespace core {
 		 */
 		virtual bool isKeyDown( int keyCode ) const { return InputDispatcher::get()->isKeyDown( keyCode ); }
 
-		ivec2 mousePosition() const { return InputDispatcher::get()->mousePosition(); }
+		ivec2 getMousePosition() const { return InputDispatcher::get()->getMousePosition(); }
+		bool isLeftMouseButtonDown() const { return InputDispatcher::get()->getLastMouseEvent().isLeftDown(); }
+		bool isRightMouseButtonDown() const { return InputDispatcher::get()->getLastMouseEvent().isRightDown(); }
+		bool isMiddleMouseButtonDown() const { return InputDispatcher::get()->getLastMouseEvent().isMiddleDown(); }
 		bool isShiftDown() const { return InputDispatcher::get()->isShiftDown(); }
 		bool isAltDown() const { return InputDispatcher::get()->isAltDown(); }
 		bool isControlDown() const { return InputDispatcher::get()->isControlDown(); }
