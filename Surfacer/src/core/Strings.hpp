@@ -423,6 +423,24 @@ namespace core {
 		return joined;
 	}
 
+	template<typename T>
+	std::string join( const std::vector<T> &tokens, const std::string &delimeter) {
+		using namespace std;
+
+		string joined;
+		for ( auto it = tokens.begin(); it != tokens.end(); ++it )
+		{
+			joined += str(*it);
+
+			auto next = it;
+			++next;
+			if (next != tokens.end())
+				joined += delimeter;
+		}
+
+		return joined;
+	}
+
 	/**
 	 @brief Strip whitespace from left side of string
 	 @ingroup stringutil
