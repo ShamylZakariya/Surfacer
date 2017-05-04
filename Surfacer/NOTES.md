@@ -4,8 +4,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##Currently
 
-When at top of globe, player wigs when changing direction. I think the gear rotation wraparound normalization isn't helping. Maybe I want to maintain an angle and add deltas to it
-
+GunBeamContacts is presently unable to associate a GameObject target.
 
 ## BUGS PRIORITY 0
 

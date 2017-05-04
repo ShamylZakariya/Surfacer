@@ -17,12 +17,69 @@
 namespace player {
 
 	SMART_PTR(Player);
+	SMART_PTR(PlayerGunComponent);
 	SMART_PTR(PlayerPhysicsComponent);
 	SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
 	SMART_PTR(PlayerDrawComponent);
 	SMART_PTR(PlayerInputComponent);
 
 #pragma mark - Player Components
+
+	class PlayerGunComponent : public core::Component {
+	public:
+
+		struct config {
+			double beamLength;
+			double beamWidth;
+			double cutDepth;
+		};
+
+		struct beam_contact {
+			dvec2 position;
+			dvec2 normal;
+			core::GameObjectRef target;
+
+			beam_contact(const dvec2 &p, const dvec2 &n, const core::GameObjectRef &t):
+			position(p),
+			normal(n),
+			target(t)
+			{}
+		};		
+
+	public:
+
+		PlayerGunComponent(config c);
+		virtual ~PlayerGunComponent();
+
+		void setShooting(bool shooting) { _isShooting = shooting; }
+		bool isShooting() const { return _isShooting; }
+
+		// origin of gun beam in world space
+		void setBeamOrigin(dvec2 origin) { _beamOrigin = origin; }
+		dvec2 getBeamOrigin() const { return _beamOrigin; }
+
+		// normalized direction of gun beam in world space
+		void setBeamDirection(dvec2 dir) { _beamDir = dir; }
+		dvec2 getBeamDirection() const { return _beamDir; }
+
+		// max length/width of beam
+		double getBeamLength() const { return _config.beamLength; }
+		double getBeamWidth() const { return _config.beamWidth; }
+
+		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
+		const vector<beam_contact> &getGunBeamContacts() const;
+
+
+	private:
+
+		config _config;
+		bool _isShooting;
+		dvec2 _beamOrigin, _beamDir;
+
+		mutable size_t _lastContactCalcTimestep;
+		mutable vector<beam_contact> _contacts;
+
+	};
 
 	class PlayerPhysicsComponent : public core::PhysicsComponent {
 	public:
@@ -34,7 +91,8 @@ namespace player {
 			double width;
 			double height;
 			double density;
-			double friction;
+			double footFriction;
+			double bodyFriction;
 
 			double jetpackAntigravity;
 			double jetpackFuelMax;
@@ -49,7 +107,8 @@ namespace player {
 
 		// PhysicsComponent
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
-		virtual vector<cpBody*> getBodies() const override { return _bodies; }
+		vector<cpBody*> getBodies() const override { return _bodies; }
+
 
 		// PlayerPhysicsComponent
 		const config& getConfig()const { return _config; }
@@ -68,7 +127,6 @@ namespace player {
 		vector<cpConstraint*> getConstraints() const { return _constraints; }
 
 		// Control inputs, called by Player in Player::update
-
 		virtual void setSpeed( double vel ) { _speed = vel; }
 		double getSpeed() const { return _speed; }
 
@@ -83,6 +141,7 @@ namespace player {
 
 		dvec2 _getGroundNormal() const;
 		bool _isTouchingGround( cpShape *shape ) const;
+
 
 	protected:
 
@@ -116,8 +175,6 @@ namespace player {
 		double getJetpackFuelLevel() const override;
 		double getJetpackFuelMax() const override;
 
-		//PogoCyclePlayerPhysicsComponent
-
 		struct capsule {
 			dvec2 a,b;
 			double radius;
@@ -142,7 +199,7 @@ namespace player {
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
 		double _jetpackFuelLevel, _jetpackFuelMax, _lean;
 		dvec2 _up, _groundNormal;
-
+		PlayerInputComponentWeakRef _input;
 	};
 
 	class PlayerInputComponent : public core::InputComponent {
@@ -157,10 +214,13 @@ namespace player {
 		bool isGoingLeft() const;
 		bool isJumping() const;
 		bool isCrouching() const;
+		bool isShooting() const;
+		dvec2 getShootingTargetWorld() const;
 
 	private:
 
 		int _keyRun, _keyLeft, _keyRight, _keyJump, _keyCrouch;
+		bool _shooting;
 
 	};
 
@@ -178,10 +238,16 @@ namespace player {
 		int getLayer() const override;
 		int getDrawPasses() const override;
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
-		
+
+	protected:
+
+		void drawPlayer(const core::render_state &renderState);
+		void drawGun(const core::render_state &renderState);
+
 	private:
 		
 		JetpackUnicyclePlayerPhysicsComponentWeakRef _physics;
+		PlayerGunComponentWeakRef _gun;
 		
 	};
 
@@ -192,6 +258,7 @@ namespace player {
 
 		struct config {
 			PlayerPhysicsComponent::config physics;
+			PlayerGunComponent::config gun;
 			// TODO: Add a PlayerDrawComponent::config for appearance control
 
 			double walkSpeed;
@@ -220,6 +287,10 @@ namespace player {
 		// TrackingTarget
 		TargetTrackingViewportControlComponent::tracking getViewportTracking() const override;
 
+		const PlayerPhysicsComponentRef &getPhysics() const { return _physics; }
+		const PlayerInputComponentRef &getInput() const { return _input; }
+		const PlayerGunComponentRef &getGun() const { return _gun; }
+
 	protected:
 
 		virtual void build(config c);
@@ -230,6 +301,7 @@ namespace player {
 		PlayerPhysicsComponentRef _physics;
 		PlayerDrawComponentRef _drawing;
 		PlayerInputComponentRef _input;
+		PlayerGunComponentRef _gun;
 
 	};
 
