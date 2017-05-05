@@ -74,6 +74,7 @@ namespace core {
 		LevelRef getLevel() const { return _level; }
 
 	protected:
+
 		friend class GameApp;
 
 		virtual void _dispatchSetup();
@@ -83,13 +84,46 @@ namespace core {
 		virtual void _dispatchUpdate();
 		virtual void _dispatchDraw();
 
+	protected:
+
+		class ScreenViewport : public IViewport {
+		public:
+			ScreenViewport(){}
+			virtual ~ScreenViewport(){}
+
+			void setSize( int width, int height ) { _width = width; _height = height; }
+			ivec2 getSize() const override { return ivec2(_width, _height); }
+			int getWidth() const override { return _width; }
+			int getHeight() const override { return _height; }
+			dvec2 getCenter() const override { return dvec2(_width/2.0, _height/2.0); }
+
+			virtual double getScale() const override { return 1.0; };
+			virtual double getReciprocalScale() const override { return 1.0; };
+
+			virtual dmat4 getViewMatrix() const override { return mat4(); };
+			virtual dmat4 getInverseViewMatrix() const override { return mat4(); };
+			virtual dmat4 getProjectionMatrix() const override { return mat4(); };
+			virtual dmat4 getInverseProjectionMatrix() const override { return mat4(); };
+			virtual dmat4 getViewProjectionMatrix() const override { return mat4(); };
+			virtual dmat4 getInverseViewProjectionMatrix() const override { return mat4(); };
+
+			virtual cpBB getFrustum() const override {
+				return cpBBNew(0, 0, _width, _height);
+			};
+
+		private:
+
+			int _width, _height;
+
+		};
 
 	private:
 
 		ViewportRef _viewport;
+		shared_ptr<ScreenViewport> _screenViewport;
 		ViewportControllerRef _viewportController;
 		time_state _time, _stepTime;
-		render_state _renderState;
+		render_state _renderState, _screenRenderState;
 		LevelRef _level;
 		int _width, _height;
 		

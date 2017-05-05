@@ -702,6 +702,10 @@ namespace player {
 		drawGun(renderState);
 	}
 
+	void PlayerDrawComponent::drawScreen(const core::render_state &renderState) {
+		drawGunCharge(renderState);
+	}
+
 	VisibilityDetermination::style PlayerDrawComponent::getVisibilityDetermination() const {
 		return VisibilityDetermination::FRUSTUM_CULLING;
 	}
@@ -833,9 +837,12 @@ namespace player {
 				case RenderMode::COUNT:
 					break;
 			}
-
-
 		}
+	}
+
+	void PlayerDrawComponent::drawGunCharge(const core::render_state &renderState) {
+		// we're in screen space
+		//Rectf chargeBounds(
 	}
 
 

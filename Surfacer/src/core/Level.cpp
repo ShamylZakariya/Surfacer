@@ -421,6 +421,12 @@ namespace core {
 		_drawDispatcher->draw( localState );
 	}
 
+	void Level::drawScreen( const render_state &state ) {
+		for (const auto &dc : _drawDispatcher->all()) {
+			dc->drawScreen(state);
+		}
+	}
+
 	void Level::addGameObject(GameObjectRef obj) {
 		CI_ASSERT_MSG(!obj->getLevel(), "Can't add a GameObject that already has been added to this or another Level");
 

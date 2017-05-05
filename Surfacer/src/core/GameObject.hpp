@@ -149,6 +149,7 @@ namespace core {
 
 		virtual cpBB getBB() const = 0;
 		virtual void draw(const core::render_state &renderState) = 0;
+		virtual void drawScreen( const core::render_state &state ) {};
 		virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
 		virtual int getLayer() const = 0;
 		virtual int getDrawPasses() const { return 1; }

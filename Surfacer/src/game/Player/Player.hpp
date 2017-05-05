@@ -23,7 +23,7 @@ namespace player {
 	SMART_PTR(PlayerDrawComponent);
 	SMART_PTR(PlayerInputComponent);
 
-#pragma mark - Player Components
+#pragma mark - PlayerGunComponent
 
 	class PlayerGunComponent : public core::Component {
 	public:
@@ -80,6 +80,8 @@ namespace player {
 		mutable vector<beam_contact> _contacts;
 
 	};
+
+#pragma mark - PlayerPhysicsComponent
 
 	class PlayerPhysicsComponent : public core::PhysicsComponent {
 	public:
@@ -154,6 +156,8 @@ namespace player {
 
 	};
 
+#pragma mark - JetpackUnicyclePlayerPhysicsComponent
+
 	class JetpackUnicyclePlayerPhysicsComponent : public PlayerPhysicsComponent {
 	public:
 
@@ -202,6 +206,8 @@ namespace player {
 		PlayerInputComponentWeakRef _input;
 	};
 
+#pragma mark - PlayerInputComponent
+
 	class PlayerInputComponent : public core::InputComponent {
 	public:
 
@@ -224,6 +230,8 @@ namespace player {
 
 	};
 
+#pragma mark - PlayerDrawComponent
+
 	class PlayerDrawComponent : public core::DrawComponent {
 	public:
 
@@ -234,6 +242,7 @@ namespace player {
 
 		cpBB getBB() const override;
 		void draw(const core::render_state &renderState) override;
+		void drawScreen(const core::render_state &renderState) override;
 		core::VisibilityDetermination::style getVisibilityDetermination() const override;
 		int getLayer() const override;
 		int getDrawPasses() const override;
@@ -243,6 +252,7 @@ namespace player {
 
 		void drawPlayer(const core::render_state &renderState);
 		void drawGun(const core::render_state &renderState);
+		void drawGunCharge(const core::render_state &renderState);
 
 	private:
 		

@@ -100,6 +100,8 @@ namespace core {
 		void cull( const render_state & );
 		void draw( const render_state & );
 
+		const set< DrawComponentRef > &all() const { return _all; }
+
 		/**
 			Check if @a obj was visible in the last call to cull()
 		 */
@@ -118,8 +120,8 @@ namespace core {
 	private:
 
 		cpSpatialIndex *_index;
-		std::set< DrawComponentRef > _all;
-		std::set< DrawComponentRef > _alwaysVisible;
+		set< DrawComponentRef > _all;
+		set< DrawComponentRef > _alwaysVisible;
 		collector _collector;
 
 	};
@@ -181,6 +183,7 @@ namespace core {
 		virtual void step( const time_state &time );
 		virtual void update( const time_state &time );
 		virtual void draw( const render_state &state );
+		virtual void drawScreen( const render_state &state );
 
 		virtual void addGameObject(GameObjectRef obj);
 		virtual void removeGameObject(GameObjectRef obj);
