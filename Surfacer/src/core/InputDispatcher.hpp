@@ -70,15 +70,7 @@ namespace core {
 			return pos != _keyPressState.end() ? pos->second : false;
 		}
 
-		/**
-			Convenience function to get the current mouse position in screen coordinates
-		 */
-		inline ivec2 getMousePosition() const { return _lastMouseEvent.getPos(); }
 
-		/**	
-		 Get the last mouse event - this can be queried for position, button status, etc
-		 */
-		inline ci::app::MouseEvent getLastMouseEvent() const { return _lastMouseEvent; }
 
 		void hideMouse();
 		void unhideMouse();
@@ -89,6 +81,11 @@ namespace core {
 		bool isControlDown() const { return _lastKeyEvent.isControlDown(); }
 		bool isMetaDown() const { return _lastKeyEvent.isMetaDown(); }
 		bool isAccelDown() const { return _lastKeyEvent.isAccelDown(); }
+		bool isMouseLeftButtonDown() const { return _mouseLeftDown; }
+		bool isMouseMiddleButtonDown() const { return _mouseMiddleDown; }
+		bool isMouseRightButtonDown() const { return _mouseRightDown; }
+		ivec2 getMousePosition() const { return _lastMouseEvent.getPos(); }
+		ci::app::MouseEvent getLastMouseEvent() const { return _lastMouseEvent; }
 
 	private:
 		friend class InputListener;
@@ -113,6 +110,13 @@ namespace core {
 		void _sortListeners();
 
 		ci::ivec2 _mouseDelta( const ci::app::MouseEvent &event );
+		bool _mouseDown( ci::app::MouseEvent event );
+		bool _mouseUp( ci::app::MouseEvent event );
+		bool _mouseWheel( ci::app::MouseEvent event );
+		bool _mouseMove( ci::app::MouseEvent event );
+		bool _mouseDrag( ci::app::MouseEvent event );
+		bool _keyDown( ci::app::KeyEvent event );
+		bool _keyUp( ci::app::KeyEvent event );
 
 	private:
 
@@ -125,15 +129,8 @@ namespace core {
 		ci::app::KeyEvent _lastKeyEvent;
 		ivec2 *_lastMousePosition;
 		cinder::signals::Connection _mouseDownId, _mouseUpId, _mouseWheelId, _mouseMoveId, _mouseDragId, _keyDownId, _keyUpId;
-		bool _mouseHidden;
+		bool _mouseHidden, _mouseLeftDown, _mouseMiddleDown, _mouseRightDown;
 
-		bool _mouseDown( ci::app::MouseEvent event );
-		bool _mouseUp( ci::app::MouseEvent event );
-		bool _mouseWheel( ci::app::MouseEvent event );
-		bool _mouseMove( ci::app::MouseEvent event );
-		bool _mouseDrag( ci::app::MouseEvent event );
-		bool _keyDown( ci::app::KeyEvent event );
-		bool _keyUp( ci::app::KeyEvent event );
 	};
 
 	/**
@@ -183,9 +180,9 @@ namespace core {
 		virtual bool isKeyDown( int keyCode ) const { return InputDispatcher::get()->isKeyDown( keyCode ); }
 
 		ivec2 getMousePosition() const { return InputDispatcher::get()->getMousePosition(); }
-		bool isLeftMouseButtonDown() const { return InputDispatcher::get()->getLastMouseEvent().isLeftDown(); }
-		bool isRightMouseButtonDown() const { return InputDispatcher::get()->getLastMouseEvent().isRightDown(); }
-		bool isMiddleMouseButtonDown() const { return InputDispatcher::get()->getLastMouseEvent().isMiddleDown(); }
+		bool isMouseLeftButtonDown() const { return InputDispatcher::get()->isMouseLeftButtonDown(); }
+		bool isMouseRightButtonDown() const { return InputDispatcher::get()->isMouseRightButtonDown(); }
+		bool isMouseMiddleButtonDown() const { return InputDispatcher::get()->isMouseMiddleButtonDown(); }
 		bool isShiftDown() const { return InputDispatcher::get()->isShiftDown(); }
 		bool isAltDown() const { return InputDispatcher::get()->isAltDown(); }
 		bool isControlDown() const { return InputDispatcher::get()->isControlDown(); }

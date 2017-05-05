@@ -62,16 +62,16 @@ namespace core {
 #pragma InputDispatcher
 
 	/*
-	 static InputDispatcher *_sInstance;
-	 static ScreenCoordinateSystem::origin _screenOrigin;
+		static InputDispatcherRef _sInstance;
+		static ScreenCoordinateSystem::origin _screenOrigin;
 
-	 std::vector< InputListener* > _listeners;
-	 std::map< int, bool > _keyPressState;
-	 app::MouseEvent _lastMouseEvent;
-	 app::KeyEvent _lastKeyEvent;
-	 ivec2 *_lastMousePosition;
-	 Connection _mouseDownId, _mouseUpId, _mouseWheelId, _mouseModeId, _mouseDragId, _keyDownId, _keyUpId;
-	 bool _mouseHidden;
+		std::vector< InputListener* > _listeners;
+		std::map< int, bool > _keyPressState;
+		ci::app::MouseEvent _lastMouseEvent;
+		ci::app::KeyEvent _lastKeyEvent;
+		ivec2 *_lastMousePosition;
+		cinder::signals::Connection _mouseDownId, _mouseUpId, _mouseWheelId, _mouseMoveId, _mouseDragId, _keyDownId, _keyUpId;
+		bool _mouseHidden, _mouseLeftDown, _mouseMiddleDown, _mouseRightDown;
 	 */
 
 	InputDispatcherRef InputDispatcher::_sInstance;
@@ -80,7 +80,10 @@ namespace core {
 	InputDispatcher::InputDispatcher(app::WindowRef window):
 	_lastMousePosition(NULL),
 	_lastKeyEvent(),
-	_mouseHidden(false)
+	_mouseHidden(false),
+	_mouseLeftDown(false),
+	_mouseMiddleDown(false),
+	_mouseRightDown(false)
 	{
 		_mouseDownId = window->getSignalMouseDown().connect([this](app::MouseEvent &e){
 			_mouseDown(e);
@@ -171,6 +174,10 @@ namespace core {
 	bool InputDispatcher::_mouseDown( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
+		_mouseLeftDown = _lastMouseEvent.isLeftDown();
+		_mouseMiddleDown = _lastMouseEvent.isMiddleDown();
+		_mouseRightDown = _lastMouseEvent.isRightDown();
+
 		for ( auto listener : _listeners )
 		{
 			if (listener->isListening() && listener->mouseDown( _lastMouseEvent )) break;
@@ -182,6 +189,11 @@ namespace core {
 	bool InputDispatcher::_mouseUp( app::MouseEvent event )
 	{
 		_lastMouseEvent = TranslateMouseEvent(event, _screenOrigin);
+
+		// this looks weird but the event isLeft, isRight etc mean is the up event on the left mouse, etc
+		_mouseLeftDown = _mouseLeftDown && !_lastMouseEvent.isLeft();
+		_mouseMiddleDown = _mouseMiddleDown && !_lastMouseEvent.isMiddle();
+		_mouseRightDown = _mouseRightDown && !_lastMouseEvent.isRight();
 
 		for ( auto listener : _listeners )
 		{

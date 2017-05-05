@@ -663,7 +663,7 @@ namespace player {
 	}
 
 	bool PlayerInputComponent::isShooting() const {
-		return isLeftMouseButtonDown();
+		return isMouseLeftButtonDown();
 	}
 
 	dvec2 PlayerInputComponent::getShootingTargetWorld() const {
