@@ -123,7 +123,11 @@ namespace player {
 
 			if (dedupedContacts.size() > 2) {
 
-				vector<int> midpointState;
+				//
+				//	TODO: This can be optimized, running halfway queries as we go, instead of building a vector<bool>
+				//
+
+				vector<int> midpointState; // I hear vector<bool> has big problems
 				midpointState.reserve(dedupedContacts.size());
 
 				dvec2 a = origin;
@@ -144,6 +148,7 @@ namespace player {
 				cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, gunBeamMidpointQueryFunc, &hit);
 				midpointState.push_back(hit);
 
+				// now add only those contacts which represent an edge between occupied space and empty space
 				for (size_t i = 0, N = dedupedContacts.size(); i < N; i++) {
 					if (midpointState[i] != midpointState[i+1]) {
 						_contacts.push_back(dedupedContacts[i]);
@@ -752,41 +757,84 @@ namespace player {
 		assert(gun);
 
 		if (gun->isShooting()) {
+			const auto contacts = gun->getGunBeamContacts();
 
-			//
-			//	Draw the beam
-			//
+			switch(renderState.mode) {
+				case RenderMode::GAME: {
 
-			{
-				double radius = gun->getBeamWidth()/2;
-				// scale radius up to not be less than 1px
-				radius = max(radius, 0.5 / renderState.viewport->getScale());
+					//
+					//	Draw the beam
+					//
 
-				double len = gun->getBeamLength();
-				dvec2 dir = gun->getBeamDirection();
-				dvec2 origin = gun->getBeamOrigin();
-				dvec2 end = origin + len * dir;
-				dvec2 center = (origin + end) * 0.5;
-				double angle = atan2(dir.y, dir.x);
+					{
+						double radius = gun->getBeamWidth()/2;
+						// scale radius up to not be less than 1px
+						radius = max(radius, 0.5 / renderState.viewport->getScale());
 
-				dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-				gl::ScopedModelMatrix smm;
-				gl::multModelMatrix(M);
 
-				gl::color(0,1,1);
-				gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+						double maxLength = gun->getBeamLength();
+						dvec2 dir = gun->getBeamDirection();
+						dvec2 origin = gun->getBeamOrigin();
+						dvec2 end = contacts.empty() ? origin + maxLength * dir : contacts.front().position;
+						dvec2 center = (origin + end) * 0.5;
+						double len = distance(end, origin);
+						double angle = atan2(dir.y, dir.x);
+
+						dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+						gl::ScopedModelMatrix smm;
+						gl::multModelMatrix(M);
+
+						gl::color(0,1,1);
+						gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+					}
+
+					break;
+				}
+
+				case RenderMode::DEVELOPMENT: {
+
+					//
+					//	Draw the beam
+					//
+
+					{
+						double radius = gun->getBeamWidth()/2;
+						// scale radius up to not be less than 1px
+						radius = max(radius, 0.5 / renderState.viewport->getScale());
+
+						double len = gun->getBeamLength();
+						dvec2 dir = gun->getBeamDirection();
+						dvec2 origin = gun->getBeamOrigin();
+						dvec2 end = origin + len * dir;
+						dvec2 center = (origin + end) * 0.5;
+						double angle = atan2(dir.y, dir.x);
+
+						dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+						gl::ScopedModelMatrix smm;
+						gl::multModelMatrix(M);
+
+						gl::color(0,1,1);
+						gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+					}
+
+					//
+					//	Draw contacts
+					//
+
+					gl::color(1,0,1);
+					double radius = 4  / renderState.viewport->getScale();
+					for (const auto &contact : contacts) {
+						gl::drawSolidCircle(contact.position, radius, 12);
+					}
+
+					break;
+				}
+
+				case RenderMode::COUNT:
+					break;
 			}
 
-			//
-			//	Draw contacts
-			//
 
-			gl::color(1,0,1);
-			double radius = 4  / renderState.viewport->getScale();
-			vector<PlayerGunComponent::beam_contact> contacts = gun->getGunBeamContacts();
-			for (const auto &contact : contacts) {
-				gl::drawSolidCircle(contact.position, radius, 12);
-			}
 		}
 	}
 
