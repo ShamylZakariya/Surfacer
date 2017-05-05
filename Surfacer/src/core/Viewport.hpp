@@ -36,6 +36,7 @@ namespace core {
 		virtual ivec2 getSize() const = 0;
 		virtual int getWidth() const = 0;
 		virtual int getHeight() const = 0;
+		virtual Rectd getBounds() const { return Rectd(0, 0, getWidth(), getHeight()); }
 		virtual dvec2 getCenter() const = 0;
 		virtual double getScale() const = 0;
 		virtual double getReciprocalScale() const { return 1.0 / getScale(); };

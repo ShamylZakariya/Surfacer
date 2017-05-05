@@ -23,7 +23,7 @@ namespace core {
 		void update_time( time_state &time )
 		{
 			const seconds_t
-				Now = app::getElapsedSeconds(),
+				Now = time_state::now(),
 				Elapsed = Now - time.time;
 
 			//

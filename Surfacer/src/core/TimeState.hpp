@@ -10,6 +10,7 @@
 #define TimeState_h
 
 #include <cstddef>
+#include <cinder/app/App.h>
 
 namespace core {
 
@@ -31,7 +32,11 @@ namespace core {
 		deltaT( dt ),
 		step(s)
 		{}
-		
+
+		static inline core::seconds_t now() {
+			return cinder::app::getElapsedSeconds();
+		}
+
 	};
 
 }
