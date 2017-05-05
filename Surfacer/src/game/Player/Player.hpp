@@ -30,8 +30,14 @@ namespace player {
 
 		struct config {
 			double beamLength;
-			double beamWidth;
 			double cutDepth;
+
+			double pulseBeamWidth;
+			double pulseBeamDurationSeconds;
+
+			double blastBeamWidth;
+			double blastBeamDurationSeconds;
+			double blastBeamChargePerSecond;
 		};
 
 		struct beam_contact {
@@ -44,15 +50,21 @@ namespace player {
 			normal(n),
 			target(t)
 			{}
-		};		
+		};
 
 	public:
 
 		PlayerGunComponent(config c);
 		virtual ~PlayerGunComponent();
 
-		void setShooting(bool shooting) { _isShooting = shooting; }
+		void setShooting(bool shooting);
 		bool isShooting() const { return _isShooting; }
+
+		bool isFiringPulseBeam() const { return _isShootingPulse; }
+		bool isFiringBlastBeam() const { return _isShootingBlast; }
+
+		// get the current charge level [0,1]
+		double getBlastChargeLevel() const { return _blastCharge; }
 
 		// origin of gun beam in world space
 		void setBeamOrigin(dvec2 origin) { _beamOrigin = origin; }
@@ -64,17 +76,22 @@ namespace player {
 
 		// max length/width of beam
 		double getBeamLength() const { return _config.beamLength; }
-		double getBeamWidth() const { return _config.beamWidth; }
+		double getPulseBeamWidth() const { return _config.pulseBeamWidth; }
+		double getBlastBeamWidth() const { return _config.blastBeamWidth; }
 
 		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
 		const vector<beam_contact> &getGunBeamContacts() const;
 
+		// Component
+		void update(const core::time_state &time) override;
 
 	private:
 
 		config _config;
-		bool _isShooting;
+		bool _isShooting, _isShootingPulse, _isShootingBlast;
 		dvec2 _beamOrigin, _beamDir;
+		double _blastCharge;
+		core::seconds_t _pulseStartTime, _blastStartTime;
 
 		mutable size_t _lastContactCalcTimestep;
 		mutable vector<beam_contact> _contacts;
@@ -251,8 +268,11 @@ namespace player {
 	protected:
 
 		void drawPlayer(const core::render_state &renderState);
-		void drawGun(const core::render_state &renderState);
-		void drawGunCharge(const core::render_state &renderState);
+
+		void drawGunPulse(PlayerGunComponentRef gun, const core::render_state &renderState);
+		void drawGunBlast(PlayerGunComponentRef gun, const core::render_state &renderState);
+		void drawGunContacts(PlayerGunComponentRef gun, const core::render_state &renderState);
+		void drawGunCharge(PlayerGunComponentRef gun, const core::render_state &renderState);
 
 	private:
 		

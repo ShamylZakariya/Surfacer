@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <player walkSpeed="200" runMultiplier="3">
-	<gun beamLength="100000" cutDepth="1000"/>
+
+	<gun beamLength="100000" 
+		cutDepth="1000"
+		pulseBeamWidth="4"
+		pulseBeamDurationSeconds="0.05"
+		blastBeamWidth="8"
+		blastBeamDurationSeconds="0.1"
+		blastBeamChargePerSecond="0.3"  />
+
 	<physics width="20" height="60" density="1" wheelFriction="1" bodyFriction="0.2">
 		<jetpack antigravity="2" fuelMax="1" consumption="0.3" regeneration="0.3"/>
 	</physics>
+
 </player>

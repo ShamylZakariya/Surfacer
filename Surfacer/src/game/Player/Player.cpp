@@ -45,8 +45,10 @@ namespace player {
 
 	/*
 		config _config;
-		bool _isShooting;
+		bool _isShooting, _isShootingPulse, _isShootingBlast;
 		dvec2 _beamOrigin, _beamDir;
+		double _blastCharge;
+		core::seconds_t _pulseStartTime, _blastStartTime;
 
 		mutable size_t _lastContactCalcTimestep;
 		mutable vector<beam_contact> _contacts;
@@ -55,12 +57,34 @@ namespace player {
 	PlayerGunComponent::PlayerGunComponent(config c):
 	_config(c),
 	_isShooting(false),
+	_isShootingPulse(false),
+	_isShootingBlast(0),
 	_beamOrigin(0),
 	_beamDir(0),
+	_blastCharge(0),
+	_pulseStartTime(0),
+	_blastStartTime(0),
 	_lastContactCalcTimestep(0)
 	{}
 
 	PlayerGunComponent::~PlayerGunComponent() {}
+
+	void PlayerGunComponent::setShooting(bool shooting) {
+
+		if (shooting && !_isShooting) {
+			_pulseStartTime = time_state::now();
+			_blastCharge = 0;
+		}
+
+		if (_isShooting && !shooting) {
+			if (_blastCharge >= 1) {
+				_blastStartTime = time_state::now();
+				CI_LOG_D("Ready to fire blast!");
+			}
+		}
+
+		_isShooting = shooting;
+	}
 
 	const vector<PlayerGunComponent::beam_contact> &PlayerGunComponent::getGunBeamContacts() const {
 
@@ -83,7 +107,7 @@ namespace player {
 			cpSpace *space = getLevel()->getSpace()->getSpace();
 			cpVect start = cpv(_beamOrigin);
 			cpVect end = cpv(_beamOrigin + (getBeamLength() * _beamDir));
-			double radius = getBeamWidth() / 2;
+			double radius = getPulseBeamWidth() / 2;
 
 			vector<beam_contact> rawContacts;
 			cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, gunBeamSegmentQueryFunc, &rawContacts);
@@ -163,6 +187,27 @@ namespace player {
 		return _contacts;
 	}
 
+	void PlayerGunComponent::update(const core::time_state &time) {
+
+		if (_isShooting) {
+			if (time.time - _pulseStartTime < _config.pulseBeamDurationSeconds) {
+				_isShootingPulse = true;
+				_blastCharge = 0;
+			} else {
+				_isShootingPulse = false;
+				_blastCharge = min(_blastCharge + time.deltaT * _config.blastBeamChargePerSecond, 1.0);
+			}
+		} else {
+
+			// if done shooting, reduce blast charge to zero
+			seconds_t blastDur = time_state::now() - _blastStartTime;
+			_blastCharge = max(1 - (blastDur / _config.blastBeamDurationSeconds), 0.0);
+
+			_isShootingPulse = false;
+			_isShootingBlast = _blastCharge > 0;
+		}
+
+	}
 
 #pragma mark - PlayerPhysicsComponent
 
@@ -699,11 +744,29 @@ namespace player {
 
 	void PlayerDrawComponent::draw(const core::render_state &renderState) {
 		drawPlayer(renderState);
-		drawGun(renderState);
+
+		PlayerGunComponentRef gun = _gun.lock();
+		assert(gun);
+
+		if (gun->isShooting()) {
+			if (renderState.mode == RenderMode::DEVELOPMENT) {
+				drawGunContacts(gun, renderState);
+			}
+		}
+
+		if (gun->isFiringPulseBeam()) {
+			drawGunPulse(gun, renderState);
+		}
+
+		if (gun->isFiringBlastBeam()) {
+			drawGunBlast(gun, renderState);
+		}
 	}
 
 	void PlayerDrawComponent::drawScreen(const core::render_state &renderState) {
-		drawGunCharge(renderState);
+		PlayerGunComponentRef gun = _gun.lock();
+		assert(gun);
+		drawGunCharge(gun, renderState);
 	}
 
 	VisibilityDetermination::style PlayerDrawComponent::getVisibilityDetermination() const {
@@ -756,93 +819,108 @@ namespace player {
 		gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
 	}
 
-    void PlayerDrawComponent::drawGun( const core::render_state &renderState ) {
-	    PlayerGunComponentRef gun = _gun.lock();
-		assert(gun);
+	void PlayerDrawComponent::drawGunPulse(PlayerGunComponentRef gun, const core::render_state &renderState) {
+		const auto contacts = gun->getGunBeamContacts();
 
-		if (gun->isShooting()) {
-			const auto contacts = gun->getGunBeamContacts();
+		// scale width up to not be less than 1px
+		double radius = gun->getPulseBeamWidth()/2;
+		radius = max(radius, 0.5 / renderState.viewport->getScale());
 
-			switch(renderState.mode) {
-				case RenderMode::GAME: {
+		double maxLength = gun->getBeamLength();
+		dvec2 dir = gun->getBeamDirection();
+		dvec2 origin = gun->getBeamOrigin();
+		dvec2 end = contacts.empty() ? origin + maxLength * dir : contacts.front().position;
+		dvec2 center = (origin + end) * 0.5;
+		double len = distance(end, origin);
+		double angle = atan2(dir.y, dir.x);
 
-					//
-					//	Draw the beam
-					//
+		dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+		gl::ScopedModelMatrix smm;
+		gl::multModelMatrix(M);
 
-					{
-						double radius = gun->getBeamWidth()/2;
-						// scale radius up to not be less than 1px
-						radius = max(radius, 0.5 / renderState.viewport->getScale());
+		gl::color(0,1,1);
+		gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
 
+	}
 
-						double maxLength = gun->getBeamLength();
-						dvec2 dir = gun->getBeamDirection();
-						dvec2 origin = gun->getBeamOrigin();
-						dvec2 end = contacts.empty() ? origin + maxLength * dir : contacts.front().position;
-						dvec2 center = (origin + end) * 0.5;
-						double len = distance(end, origin);
-						double angle = atan2(dir.y, dir.x);
+	void PlayerDrawComponent::drawGunBlast(PlayerGunComponentRef gun, const core::render_state &renderState) {
+		const auto contacts = gun->getGunBeamContacts();
 
-						dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-						gl::ScopedModelMatrix smm;
-						gl::multModelMatrix(M);
+		// scale width up to not be less than 2px
+		double radius = gun->getBlastBeamWidth()/2;
+		radius = max(radius, 1 / renderState.viewport->getScale());
 
-						gl::color(0,1,1);
-						gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
-					}
+		double maxLength = gun->getBeamLength();
+		dvec2 dir = gun->getBeamDirection();
+		dvec2 origin = gun->getBeamOrigin();
+		dvec2 end = contacts.empty() ? origin + maxLength * dir : contacts.front().position;
+		dvec2 center = (origin + end) * 0.5;
+		double len = distance(end, origin);
+		double angle = atan2(dir.y, dir.x);
 
-					break;
-				}
+		dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+		gl::ScopedModelMatrix smm;
+		gl::multModelMatrix(M);
 
-				case RenderMode::DEVELOPMENT: {
+		gl::color(0,1,1);
+		gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+	}
 
-					//
-					//	Draw the beam
-					//
+	void PlayerDrawComponent::drawGunContacts(PlayerGunComponentRef gun, const core::render_state &renderState) {
+		const auto contacts = gun->getGunBeamContacts();
 
-					{
-						double radius = gun->getBeamWidth()/2;
-						// scale radius up to not be less than 1px
-						radius = max(radius, 0.5 / renderState.viewport->getScale());
+		//
+		//	Draw the beam
+		//
 
-						double len = gun->getBeamLength();
-						dvec2 dir = gun->getBeamDirection();
-						dvec2 origin = gun->getBeamOrigin();
-						dvec2 end = origin + len * dir;
-						dvec2 center = (origin + end) * 0.5;
-						double angle = atan2(dir.y, dir.x);
+		{
+			double radius = 0.5;
+			// scale radius up to not be less than 1px
+			radius = max(radius, 0.5 / renderState.viewport->getScale());
 
-						dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-						gl::ScopedModelMatrix smm;
-						gl::multModelMatrix(M);
+			double len = gun->getBeamLength();
+			dvec2 dir = gun->getBeamDirection();
+			dvec2 origin = gun->getBeamOrigin();
+			dvec2 end = origin + len * dir;
+			dvec2 center = (origin + end) * 0.5;
+			double angle = atan2(dir.y, dir.x);
 
-						gl::color(0,1,1);
-						gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
-					}
+			dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+			gl::ScopedModelMatrix smm;
+			gl::multModelMatrix(M);
 
-					//
-					//	Draw contacts
-					//
+			gl::color(0,1,1);
+			gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+		}
 
-					gl::color(1,0,1);
-					double radius = 4  / renderState.viewport->getScale();
-					for (const auto &contact : contacts) {
-						gl::drawSolidCircle(contact.position, radius, 12);
-					}
+		//
+		//	Draw contacts
+		//
 
-					break;
-				}
-
-				case RenderMode::COUNT:
-					break;
-			}
+		gl::color(1,0,1);
+		double radius = 4  / renderState.viewport->getScale();
+		for (const auto &contact : contacts) {
+			gl::drawSolidCircle(contact.position, radius, 12);
 		}
 	}
 
-	void PlayerDrawComponent::drawGunCharge(const core::render_state &renderState) {
+
+	void PlayerDrawComponent::drawGunCharge(PlayerGunComponentRef gun, const core::render_state &renderState) {
 		// we're in screen space
-		//Rectf chargeBounds(
+		Rectd bounds = renderState.viewport->getBounds();
+
+		int w = 20;
+		int h = 60;
+		int p = 10;
+		Rectf chargeRectFrame(bounds.getWidth() - p, p, bounds.getWidth() - p - w, p + h);
+
+		gl::color(0,1,1,1);
+		gl::drawStrokedRect(chargeRectFrame);
+
+		double charge = sqrt(gun->getBlastChargeLevel());
+		int fillHeight = static_cast<int>(ceil(charge * h));
+		Rectf chargeRectFill(bounds.getWidth() - p, p + h-fillHeight, bounds.getWidth() - p - w, p + h);
+		gl::drawSolidRect(chargeRectFill);
 	}
 
 
@@ -863,8 +941,14 @@ namespace player {
 
 		XmlTree gunNode = playerNode.getChild("gun");
 		config.gun.beamLength = util::xml::readNumericAttribute(gunNode, "beamLength", 10000);
-		config.gun.beamWidth = util::xml::readNumericAttribute(gunNode, "beamWidth", 4);
 		config.gun.cutDepth = util::xml::readNumericAttribute(gunNode, "cutDepth", 1000);
+
+		config.gun.pulseBeamWidth = util::xml::readNumericAttribute(gunNode, "pulseBeamWidth", 4);
+		config.gun.pulseBeamDurationSeconds = util::xml::readNumericAttribute(gunNode, "pulseBeamDurationSeconds", 0.1);
+
+		config.gun.blastBeamWidth = util::xml::readNumericAttribute(gunNode, "blastBeamWidth", 4);
+		config.gun.blastBeamDurationSeconds = util::xml::readNumericAttribute(gunNode, "blastBeamDurationSeconds", 0.1);
+		config.gun.blastBeamChargePerSecond = util::xml::readNumericAttribute(gunNode, "blastBeamChargePerSecond", 0.5);
 
 		XmlTree physicsNode = playerNode.getChild("physics");
 
@@ -894,6 +978,7 @@ namespace player {
 	Player::~Player(){}
 
 	void Player::update(const time_state &time) {
+		GameObject::update(time);
 
 		//
 		//	Synchronize

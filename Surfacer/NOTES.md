@@ -5,6 +5,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 ##Currently
 
 GunBeamContacts is presently unable to associate a GameObject target.
+May want to redesign PlayerGunComponent pulse and blast to be things which fly out of gun (or at least have fixed start/end points)
 
 ## BUGS PRIORITY 0
 
