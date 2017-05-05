@@ -15,7 +15,6 @@
 #include <cinder/Quaternion.h>
 
 namespace cinder {
-	typedef RectT<int> Recti;
 
 	template< class T, glm::precision P >
 	inline glm::tvec2<T,P> operator * ( const glm::tmat4x4<T,P> &m, const glm::tvec2<T,P> &v )
