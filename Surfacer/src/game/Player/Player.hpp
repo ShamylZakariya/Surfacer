@@ -77,7 +77,7 @@ namespace player {
 		config _config;
 		dvec2 _origin, _dir, _position;
 		double _life;
-		core::seconds_t _birthSeconds;
+		core::seconds_t _birthSeconds, _lastDeltaT;
 		mutable size_t _lastContactCalcTimestep;
 		mutable vector<contact> _contacts;
 		

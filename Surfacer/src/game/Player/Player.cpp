@@ -47,7 +47,7 @@ namespace player {
 		config _config;
 		dvec2 _origin, _dir, _position;
 		double _life;
-		seconds_t _birthSeconds;
+		seconds_t _birthSeconds, _lastDeltaT;
 		mutable size_t _lastContactCalcTimestep;
 		mutable vector<contact> _contacts;
 	 */
@@ -59,6 +59,7 @@ namespace player {
 	_position(0),
 	_life(0),
 	_birthSeconds(0),
+	_lastDeltaT(0),
 	_lastContactCalcTimestep(0)
 	{}
 
@@ -69,14 +70,13 @@ namespace player {
 	_position(0),
 	_life(0),
 	_birthSeconds(0),
+	_lastDeltaT(0),
 	_lastContactCalcTimestep(0)
 	{
 		fire(origin, dir);
 	}
 
-	BeamProjectileComponent::~BeamProjectileComponent(){
-		CI_LOG_D("dtor");
-	}
+	BeamProjectileComponent::~BeamProjectileComponent(){}
 
 	void BeamProjectileComponent::fire(dvec2 origin, dvec2 dir) {
 		_origin = _position = origin;
@@ -93,7 +93,7 @@ namespace player {
 
 	void BeamProjectileComponent::getSegment(dvec2 &a, dvec2 &b, double &len) {
 		// TODO: Take into account collisions/contacts
-		len = 4 * _config.width;
+		len = _lastDeltaT * _config.velocity;
 		a = _position - _dir * len;
 		b = _position + _dir * len;
 	}
@@ -204,6 +204,7 @@ namespace player {
 	}
 
 	void BeamProjectileComponent::update(const time_state &time) {
+		_lastDeltaT = time.deltaT;
 		_life = (time.time - _birthSeconds) / _config.lifetime;
 		_position = _position + _dir * _config.velocity * time.deltaT;
 
@@ -220,9 +221,7 @@ namespace player {
 #pragma mark - BeamProjectileDrawComponent
 
 	BeamProjectileDrawComponent::BeamProjectileDrawComponent(){}
-	BeamProjectileDrawComponent::~BeamProjectileDrawComponent(){
-		CI_LOG_D("dtor");
-	}
+	BeamProjectileDrawComponent::~BeamProjectileDrawComponent(){}
 
 	void BeamProjectileDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		DrawComponent::onReady(parent, level);
@@ -339,7 +338,6 @@ namespace player {
 			make_shared<BeamProjectileDrawComponent>()
 		});
 
-		CI_LOG_D("PULSE!");
 		getLevel()->addGameObject(pulse);
 
 	}
@@ -352,9 +350,8 @@ namespace player {
 			make_shared<BeamProjectileDrawComponent>()
 		});
 
-		CI_LOG_D("BLAST!");
 		getLevel()->addGameObject(blast);
-}
+	}
 
 #pragma mark - PlayerPhysicsComponent
 
@@ -1066,8 +1063,6 @@ namespace player {
 			_gun->setBeamOrigin((_physics->getPosition()));
 			_gun->setBeamDirection(normalize(_input->getShootingTargetWorld() - _gun->getBeamOrigin()));
 			_gun->setShooting(_input->isShooting());
-
-			//CI_LOG_D("origin: " << _gun->getBeamOrigin() << " dir: " << _gun->getBeamDirection() << " shooting: " << _gun->isShooting());
 		}
 	}
 
