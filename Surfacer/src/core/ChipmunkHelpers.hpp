@@ -66,12 +66,9 @@ inline void cpBBNewCircle( cpBB &bb, const V &position, cpFloat radius )
  */
 
 template< class V >
-inline void cpBBNewLineSegment( cpBB &bb, const V &a, const V &b )
+inline cpBB cpBBNewLineSegment(const V &a, const V &b )
 {
-	bb.l = cpfmin( a.x, b.x );
-	bb.b = cpfmin( a.y, b.y );
-	bb.r = cpfmax( a.x, b.x );
-	bb.t = cpfmax( a.y, b.y );
+	return cpBBNew(cpfmin( a.x, b.x ), cpfmin( a.y, b.y ), cpfmax( a.x, b.x ), cpfmax( a.y, b.y ));
 }
 
 /**
@@ -79,33 +76,15 @@ inline void cpBBNewLineSegment( cpBB &bb, const V &a, const V &b )
  */
 
 template< class V >
-inline void cpBBNewLineSegment( cpBB &bb, const V &a, const V &b, cpFloat outset )
+inline cpBB cpBBNewLineSegment(const V &a, const V &b, cpFloat outset )
 {
-	bb.l = cpfmin( a.x, b.x ) - outset;
-	bb.b = cpfmin( a.y, b.y ) - outset;
-	bb.r = cpfmax( a.x, b.x ) + outset;
-	bb.t = cpfmax( a.y, b.y ) + outset;
-}
-
-template< class V >
-inline void cpBBNewTriangle(cpBB &bb, const V &a, const V &b, const V &c, cpFloat outset) {
-	bb.l = cpfmin( a.x, cpfmin(b.x, c.x)) - outset;
-	bb.b = cpfmin( a.y, cpfmin(b.y, c.y)) - outset;
-	bb.r = cpfmax( a.x, cpfmax(b.x, c.x)) + outset;
-	bb.t = cpfmax( a.y, cpfmax(b.y, c.y)) + outset;
+	return cpBBNew(cpfmin( a.x, b.x ) - outset, cpfmin( a.y, b.y ) - outset, cpfmax( a.x, b.x ) + outset, cpfmax( a.y, b.y ) + outset);
 }
 
 template< class V >
 inline cpBB cpBBNewTriangle(const V &a, const V &b, const V &c, cpFloat outset) {
-	cpBB bb = {
-		cpfmin( a.x, cpfmin(b.x, c.x)) - outset,
-		cpfmin( a.y, cpfmin(b.y, c.y)) - outset,
-		cpfmax( a.x, cpfmax(b.x, c.x)) + outset,
-		cpfmax( a.y, cpfmax(b.y, c.y)) + outset
-	};
-	return bb;
+	return cpBBNew(cpfmin( a.x, cpfmin(b.x, c.x)) - outset, cpfmin( a.y, cpfmin(b.y, c.y)) - outset, cpfmax( a.x, cpfmax(b.x, c.x)) + outset,cpfmax( a.y, cpfmax(b.y, c.y)) + outset);
 }
-
 
 /**
 	create an 'infinitely' large aabb which will pass all viewport intersection tests
