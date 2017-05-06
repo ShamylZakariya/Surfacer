@@ -52,6 +52,7 @@ namespace core {
 		shared_ptr<T> getSibling() const;
 
 		virtual void onReady(GameObjectRef parent, LevelRef level){}
+		virtual void onCleanup(){}
 		virtual void step(const time_state &timeState){}
 		virtual void update(const time_state &timeState){}
 
@@ -248,6 +249,9 @@ namespace core {
 
 		virtual void onReady(LevelRef level);
 
+		// called after a GameObject is removed from a Level (directly, or by calling setFinished(true)
+		virtual void onCleanup();
+
 		virtual void step(const time_state &timeState);
 		virtual void update(const time_state &timeState);
 
@@ -255,7 +259,9 @@ namespace core {
 
 		friend class Level;
 		virtual void onAddedToLevel(LevelRef level) { _level = level; }
-		virtual void onRemovedFromLevel() { _level.reset(); }
+		virtual void onRemovedFromLevel() {
+			onCleanup();
+		}
 
 	private:
 

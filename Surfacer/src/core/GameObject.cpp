@@ -164,6 +164,16 @@ namespace core {
 		_ready = true;
 	}
 
+	void GameObject::onCleanup() {
+		for (auto &component : _components){
+			component->onCleanup();
+		}
+
+		_level.reset();
+		_finished = false;
+		_ready = false;
+	}
+
 	void GameObject::step(const time_state &timeState) {
 		for (auto &component : _components) {
 			component->step(timeState);
