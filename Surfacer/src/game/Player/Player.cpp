@@ -23,11 +23,11 @@ namespace player {
 
 		void BeamProjectile_SegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
-				auto contacts = static_cast<vector<BeamProjectileComponent::contact>*>(data);
 
 				// TODO: Figure out the game object associated with this shape. We need a convention?
 				// cpShapeGetUserData is NOT used consistently. Terrain assigns shape user data to Anchor/Shape
 
+				auto contacts = static_cast<vector<BeamProjectileComponent::contact>*>(data);
 				contacts->push_back(BeamProjectileComponent::contact(v2(point), v2(normal), nullptr));
 			}
 		}
@@ -41,37 +41,37 @@ namespace player {
 
 	}
 
+
 #pragma mark - BeamProjectileComponent
 
 	/*
 		config _config;
-		dvec2 _origin, _dir, _position;
+		dvec2 _origin, _dir;
+		segment _segment;
 		double _life;
-		seconds_t _birthSeconds, _lastDeltaT;
-		mutable size_t _lastContactCalcTimestep;
-		mutable vector<contact> _contacts;
+		bool _hasHit;
+		core::seconds_t _birthSeconds, _lastDeltaT;
+		vector<contact> _contacts;
 	 */
 
 	BeamProjectileComponent::BeamProjectileComponent(config c):
 	_config(c),
 	_origin(0),
 	_dir(0),
-	_position(0),
 	_life(0),
+	_hasHit(false),
 	_birthSeconds(0),
-	_lastDeltaT(0),
-	_lastContactCalcTimestep(0)
+	_lastDeltaT(0)
 	{}
 
 	BeamProjectileComponent::BeamProjectileComponent(config c, dvec2 origin, dvec2 dir):
 	_config(c),
 	_origin(0),
 	_dir(0),
-	_position(0),
 	_life(0),
+	_hasHit(false),
 	_birthSeconds(0),
-	_lastDeltaT(0),
-	_lastContactCalcTimestep(0)
+	_lastDeltaT(0)
 	{
 		fire(origin, dir);
 	}
@@ -79,124 +79,13 @@ namespace player {
 	BeamProjectileComponent::~BeamProjectileComponent(){}
 
 	void BeamProjectileComponent::fire(dvec2 origin, dvec2 dir) {
-		_origin = _position = origin;
+		_segment.len = 0;
+		_origin = _segment.head = _segment.tail = origin;
 		_dir = normalize(dir);
-	}
-
-	dvec2 BeamProjectileComponent::getPosition() const {
-		return _position;
 	}
 
 	double BeamProjectileComponent::getWidth() const {
 		return _config.width;
-	}
-
-	void BeamProjectileComponent::getSegment(dvec2 &a, dvec2 &b, double &len) {
-		// TODO: Take into account collisions/contacts
-		len = _lastDeltaT * _config.velocity;
-		a = _position - _dir * len;
-		b = _position + _dir * len;
-	}
-
-	// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
-	const vector<BeamProjectileComponent::contact> &BeamProjectileComponent::getContacts() const {
-		//
-		// this is fairly expensive, so we only want to calculate it once per timestep if it's requested repeatedly
-		//
-
-		size_t step = getLevel()->getTime().step;
-		if (step > _lastContactCalcTimestep) {
-
-			_lastContactCalcTimestep = step;
-			_contacts.clear();
-
-			//
-			//	Collect all contacts
-			//
-
-			const dvec2 origin = _origin;
-
-			cpSpace *space = getLevel()->getSpace()->getSpace();
-			cpVect start = cpv(_origin);
-			cpVect end = cpv(_origin + (_config.range * _dir));
-			double radius = _config.width / 2;
-
-			vector<contact> rawContacts;
-			cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
-			cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
-
-			//
-			// sort contacts by distance from gun
-			//
-
-			std::sort(rawContacts.begin(), rawContacts.end(), [&origin](const contact &a, const contact &b){
-				return distanceSquared(origin, a.position) < distanceSquared(origin, b.position);
-			});
-
-			vector<contact> dedupedContacts;
-			if (rawContacts.size() > 1) {
-
-				//
-				//	Dedup
-				//
-
-				dedupedContacts.reserve(rawContacts.size());
-				dedupedContacts.push_back(rawContacts.front());
-				const double dedupDistanceThreshold2 = 0.1 * 0.1;
-
-				dvec2 lastContactPosition = rawContacts.front().position;
-				for (auto it = rawContacts.begin()+1, end = rawContacts.end(); it != end; ++it) {
-					if (distanceSquared(lastContactPosition, it->position) > dedupDistanceThreshold2) {
-						dedupedContacts.push_back(*it);
-					}
-					lastContactPosition = it->position;
-				}
-			}
-
-			//
-			//	Now run a point query at midpoint of each segment. We want to discard inter-shape terrain contacts
-			//
-
-			if (dedupedContacts.size() > 2) {
-
-				//
-				//	TODO: This can be optimized, running halfway queries as we go, instead of building a vector<bool>
-				//
-
-				vector<int> midpointState; // I hear vector<bool> has big problems
-				midpointState.reserve(dedupedContacts.size());
-
-				dvec2 a = origin;
-				for (auto it = dedupedContacts.begin(), end = dedupedContacts.end(); it != end; ++it) {
-					dvec2 b = it->position;
-					dvec2 mid = (a+b) * 0.5;
-
-					bool hit = false;
-					cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, BeamProjectile_MidpointQueryFunc, &hit);
-					midpointState.push_back(hit ? 1 : 0);
-
-					a = b;
-				}
-
-				// final query to end of beam
-				dvec2 mid = (a + v2(end)) * 0.5;
-				bool hit = false;
-				cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, BeamProjectile_MidpointQueryFunc, &hit);
-				midpointState.push_back(hit);
-
-				// now add only those contacts which represent an edge between occupied space and empty space
-				for (size_t i = 0, N = dedupedContacts.size(); i < N; i++) {
-					if (midpointState[i] != midpointState[i+1]) {
-						_contacts.push_back(dedupedContacts[i]);
-					}
-				}
-
-			} else {
-				_contacts = dedupedContacts;
-			}
-		}
-
-		return _contacts;
 	}
 
 	void BeamProjectileComponent::onReady(GameObjectRef parent, LevelRef level) {
@@ -204,17 +93,90 @@ namespace player {
 	}
 
 	void BeamProjectileComponent::update(const time_state &time) {
+		GameObjectRef go = getGameObject();
+		assert(go);
+
+		bool finished = false;
+
 		_lastDeltaT = time.deltaT;
 		_life = (time.time - _birthSeconds) / _config.lifetime;
-		_position = _position + _dir * _config.velocity * time.deltaT;
 
-		GameObjectRef go = getGameObject();
-		if (go) {
-			if (_life > 1.0) {
-				go->setFinished();
+		if (_life > 1.0) {
+			finished = true;
+		} else {
+
+			//
+			//	Before beam hits, we move the head, compute the length, and track the tail.
+			//	after impact, tail still moves forward, and when length == 0 we're finished.
+			//
+			if (!_hasHit) {
+				_segment.head = _segment.head + _dir * _config.velocity * time.deltaT;
+				_segment.len = min(_config.length, distance(_segment.head, _origin));
+				_segment.tail = _segment.head - _dir * _segment.len;
 			} else {
+
+				_segment.len = max(_segment.len - _config.velocity * time.deltaT, 0.0);
+				_segment.tail = _segment.head - _dir * _segment.len;
+
+				if (_segment.len < 1e-3) {
+					finished = true;
+				}
+			}
+
+			if (!finished) {
+				updateContacts();
 				go->getDrawComponent()->notifyMoved();
 			}
+		}
+
+		if (finished) {
+			go->setFinished();
+		}
+	}
+
+	// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
+	void BeamProjectileComponent::updateContacts() {
+		_contacts.clear();
+
+		//
+		//	Collect all contacts
+		//	Note: This is pretty baroque. Firstly, SegmentQuery only collects collisions where segment facing shape intersects,
+		//	so if a segment crosses a shape (in and out) only the "in" registers a hit. So we need to cast in both
+		//	directions.
+		//	Secondly, we can't segment query a moving segment, it gives... weird results. I don't know why. My workaroud
+		//	is to query the whole potential segment and then filter to the contacts inside our current beam segment.
+		//	Note #2: I was deduping/cleaning up contacts to be only those transiting in/out of shapes, discarding
+		//	internal contacts generated by partitioning, etc, and it was expensive, unreliable, and not necessary.
+		//
+
+		cpSpace *space = getLevel()->getSpace()->getSpace();
+		const auto start = cpv(_origin);
+		const auto end = cpv(_origin + _dir * _config.range);
+		double radius = _config.width / 2;
+
+		vector<contact> rawContacts;
+		cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
+		cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
+
+		// filter to those inside the segment range
+		const auto seg = getSegment();
+		vector<contact> filteredContacts;
+		filteredContacts.reserve(rawContacts.size());
+		for (const auto contact : rawContacts) {
+			if (dot(contact.position - seg.tail, _dir) >= 0 && dot(contact.position - seg.head, -_dir) >= 0) {
+				filteredContacts.push_back(contact);
+			}
+		}
+
+		// sort such that contacts closer to _origin at at front
+		const auto origin = _origin;
+		std::sort(filteredContacts.begin(), filteredContacts.end(), [&origin](const contact &a, const contact &b){
+			return distanceSquared(origin, a.position) < distanceSquared(origin, b.position);
+		});
+
+		_contacts = filteredContacts;
+		if (!_contacts.empty()) {
+			_hasHit = true;
 		}
 	}
 
@@ -230,34 +192,41 @@ namespace player {
 
 	cpBB BeamProjectileDrawComponent::getBB() const {
 		if (BeamProjectileComponentRef projectile = _projectile.lock()) {
-			dvec2 a,b;
-			double len;
-			projectile->getSegment(a, b, len);
-			return cpBBNewLineSegment(a, b);
+			auto seg = projectile->getSegment();
+			return cpBBNewLineSegment(seg.head, seg.tail);
 		}
 		return cpBBInvalid;
 	}
 
 	void BeamProjectileDrawComponent::draw(const render_state &renderState) {
 		if (BeamProjectileComponentRef projectile = _projectile.lock()) {
-			dvec2 a,b;
-			double len;
-			projectile->getSegment(a, b, len);
+			auto seg = projectile->getSegment();
 
 			// scale width up to not be less than 1px
 			double radius = projectile->getWidth() / 2;
 			radius = max(radius, 0.5 / renderState.viewport->getScale());
 
-			dvec2 dir = projectile->getDirection();
-			dvec2 center = (a + b) * 0.5;
-			double angle = atan2(dir.y, dir.x);
+			{
+				dvec2 dir = projectile->getDirection();
+				dvec2 center = (seg.head + seg.tail) * 0.5;
+				double angle = atan2(dir.y, dir.x);
 
-			dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-			gl::ScopedModelMatrix smm;
-			gl::multModelMatrix(M);
+				dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+				gl::ScopedModelMatrix smm;
+				gl::multModelMatrix(M);
 
-			gl::color(0,1,1);
-			gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+				gl::color(0,1,1);
+				gl::drawSolidRect(Rectf(-seg.len/2, -radius, +seg.len/2, +radius));
+			}
+
+			if (renderState.mode == RenderMode::DEVELOPMENT) {
+				const auto &contacts = projectile->getContacts();
+				double r = radius * 8;
+				gl::color(1,0,1);
+				for (const auto &contact : contacts) {
+					gl::drawSolidCircle(contact.position, r, 12);
+				}
+			}
 		}
 	}
 
@@ -292,7 +261,8 @@ namespace player {
 	_beamOrigin(0),
 	_beamDir(0),
 	_blastCharge(0),
-	_pulseStartTime(0)
+	_pulseStartTime(-std::numeric_limits<seconds_t>::max()),
+	_blastStartTime(-std::numeric_limits<seconds_t>::max())
 	{}
 
 	PlayerGunComponent::~PlayerGunComponent() {}
@@ -990,6 +960,7 @@ namespace player {
 		XmlTree pulseNode = gunNode.getChild("pulse");
 		config.gun.pulse.range = util::xml::readNumericAttribute(pulseNode, "range", 1000);
 		config.gun.pulse.width = util::xml::readNumericAttribute(pulseNode, "width", 2);
+		config.gun.pulse.length = util::xml::readNumericAttribute(pulseNode, "length", 100);
 		config.gun.pulse.velocity = util::xml::readNumericAttribute(pulseNode, "velocity", 100);
 		config.gun.pulse.lifetime = util::xml::readNumericAttribute(pulseNode, "lifetime", 1);
 		config.gun.pulse.cutDepth = 0;
@@ -997,6 +968,7 @@ namespace player {
 		XmlTree blastNode = gunNode.getChild("blast");
 		config.gun.blast.range = util::xml::readNumericAttribute(blastNode, "range", 1000);
 		config.gun.blast.width = util::xml::readNumericAttribute(blastNode, "width", 2);
+		config.gun.blast.length = util::xml::readNumericAttribute(blastNode, "length", 100);
 		config.gun.blast.velocity = util::xml::readNumericAttribute(blastNode, "velocity", 100);
 		config.gun.blast.lifetime = util::xml::readNumericAttribute(blastNode, "lifetime", 1);
 		config.gun.blast.cutDepth = util::xml::readNumericAttribute(blastNode, "cutDepth", 300);
@@ -1019,6 +991,10 @@ namespace player {
 		config.physics.jetpackFuelMax = util::xml::readNumericAttribute(jetpackNode, "fuelMax", 1);
 		config.physics.jetpackFuelConsumptionPerSecond = util::xml::readNumericAttribute(jetpackNode, "consumption", 0.3);
 		config.physics.jetpackFuelRegenerationPerSecond = util::xml::readNumericAttribute(jetpackNode, "regeneration", 0.3);
+
+		//
+		//	Construct
+		//
 
 		PlayerRef player = make_shared<Player>(name);
 		player->build(config);
