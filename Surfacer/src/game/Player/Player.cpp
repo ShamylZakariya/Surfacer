@@ -19,22 +19,20 @@ using namespace core;
 
 namespace player {
 
-#pragma mark - PlayerGunComponent
-
 	namespace {
 
-		void gunBeamSegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
+		void BeamProjectile_SegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
-				vector<PlayerGunComponent::beam_contact> *contacts = static_cast<vector<PlayerGunComponent::beam_contact>*>(data);
+				auto contacts = static_cast<vector<BeamProjectileComponent::contact>*>(data);
 
 				// TODO: Figure out the game object associated with this shape. We need a convention?
 				// cpShapeGetUserData is NOT used consistently. Terrain assigns shape user data to Anchor/Shape
 
-				contacts->push_back(PlayerGunComponent::beam_contact(v2(point), v2(normal), nullptr));
+				contacts->push_back(BeamProjectileComponent::contact(v2(point), v2(normal), nullptr));
 			}
 		}
 
-		void gunBeamMidpointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
+		void BeamProjectile_MidpointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
 				bool *hit = static_cast<bool*>(data);
 				*hit = true;
@@ -43,51 +41,65 @@ namespace player {
 
 	}
 
+#pragma mark - BeamProjectileComponent
+
 	/*
 		config _config;
-		bool _isShooting, _isShootingPulse, _isShootingBlast;
-		dvec2 _beamOrigin, _beamDir;
-		double _blastCharge;
-		core::seconds_t _pulseStartTime, _blastStartTime;
-
+		dvec2 _origin, _dir, _position;
+		double _life;
+		seconds_t _birthSeconds;
 		mutable size_t _lastContactCalcTimestep;
-		mutable vector<beam_contact> _contacts;
+		mutable vector<contact> _contacts;
 	 */
 
-	PlayerGunComponent::PlayerGunComponent(config c):
+	BeamProjectileComponent::BeamProjectileComponent(config c):
 	_config(c),
-	_isShooting(false),
-	_isShootingPulse(false),
-	_isShootingBlast(0),
-	_beamOrigin(0),
-	_beamDir(0),
-	_blastCharge(0),
-	_pulseStartTime(0),
-	_blastStartTime(0),
+	_origin(0),
+	_dir(0),
+	_position(0),
+	_life(0),
+	_birthSeconds(0),
 	_lastContactCalcTimestep(0)
 	{}
 
-	PlayerGunComponent::~PlayerGunComponent() {}
-
-	void PlayerGunComponent::setShooting(bool shooting) {
-
-		if (shooting && !_isShooting) {
-			_pulseStartTime = time_state::now();
-			_blastCharge = 0;
-		}
-
-		if (_isShooting && !shooting) {
-			if (_blastCharge >= 1) {
-				_blastStartTime = time_state::now();
-				CI_LOG_D("Ready to fire blast!");
-			}
-		}
-
-		_isShooting = shooting;
+	BeamProjectileComponent::BeamProjectileComponent(config c, dvec2 origin, dvec2 dir):
+	_config(c),
+	_origin(0),
+	_dir(0),
+	_position(0),
+	_life(0),
+	_birthSeconds(0),
+	_lastContactCalcTimestep(0)
+	{
+		fire(origin, dir);
 	}
 
-	const vector<PlayerGunComponent::beam_contact> &PlayerGunComponent::getGunBeamContacts() const {
+	BeamProjectileComponent::~BeamProjectileComponent(){
+		CI_LOG_D("dtor");
+	}
 
+	void BeamProjectileComponent::fire(dvec2 origin, dvec2 dir) {
+		_origin = _position = origin;
+		_dir = normalize(dir);
+	}
+
+	dvec2 BeamProjectileComponent::getPosition() const {
+		return _position;
+	}
+
+	double BeamProjectileComponent::getWidth() const {
+		return _config.width;
+	}
+
+	void BeamProjectileComponent::getSegment(dvec2 &a, dvec2 &b, double &len) {
+		// TODO: Take into account collisions/contacts
+		len = 4 * _config.width;
+		a = _position - _dir * len;
+		b = _position + _dir * len;
+	}
+
+	// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
+	const vector<BeamProjectileComponent::contact> &BeamProjectileComponent::getContacts() const {
 		//
 		// this is fairly expensive, so we only want to calculate it once per timestep if it's requested repeatedly
 		//
@@ -102,26 +114,26 @@ namespace player {
 			//	Collect all contacts
 			//
 
-			const dvec2 origin = _beamOrigin;
+			const dvec2 origin = _origin;
 
 			cpSpace *space = getLevel()->getSpace()->getSpace();
-			cpVect start = cpv(_beamOrigin);
-			cpVect end = cpv(_beamOrigin + (getBeamLength() * _beamDir));
-			double radius = getPulseBeamWidth() / 2;
+			cpVect start = cpv(_origin);
+			cpVect end = cpv(_origin + (_config.range * _dir));
+			double radius = _config.width / 2;
 
-			vector<beam_contact> rawContacts;
-			cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, gunBeamSegmentQueryFunc, &rawContacts);
-			cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, gunBeamSegmentQueryFunc, &rawContacts);
+			vector<contact> rawContacts;
+			cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
+			cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
 
 			//
 			// sort contacts by distance from gun
 			//
 
-			std::sort(rawContacts.begin(), rawContacts.end(), [&origin](const beam_contact &a, const beam_contact &b){
+			std::sort(rawContacts.begin(), rawContacts.end(), [&origin](const contact &a, const contact &b){
 				return distanceSquared(origin, a.position) < distanceSquared(origin, b.position);
 			});
 
-			vector<beam_contact> dedupedContacts;
+			vector<contact> dedupedContacts;
 			if (rawContacts.size() > 1) {
 
 				//
@@ -160,7 +172,7 @@ namespace player {
 					dvec2 mid = (a+b) * 0.5;
 
 					bool hit = false;
-					cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, gunBeamMidpointQueryFunc, &hit);
+					cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, BeamProjectile_MidpointQueryFunc, &hit);
 					midpointState.push_back(hit ? 1 : 0);
 
 					a = b;
@@ -169,7 +181,7 @@ namespace player {
 				// final query to end of beam
 				dvec2 mid = (a + v2(end)) * 0.5;
 				bool hit = false;
-				cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, gunBeamMidpointQueryFunc, &hit);
+				cpSpacePointQuery(space, cpv(mid), 1e-3, CP_SHAPE_FILTER_ALL, BeamProjectile_MidpointQueryFunc, &hit);
 				midpointState.push_back(hit);
 
 				// now add only those contacts which represent an edge between occupied space and empty space
@@ -187,27 +199,162 @@ namespace player {
 		return _contacts;
 	}
 
-	void PlayerGunComponent::update(const core::time_state &time) {
+	void BeamProjectileComponent::onReady(GameObjectRef parent, LevelRef level) {
+		_birthSeconds = time_state::now();
+	}
+
+	void BeamProjectileComponent::update(const time_state &time) {
+		_life = (time.time - _birthSeconds) / _config.lifetime;
+		_position = _position + _dir * _config.velocity * time.deltaT;
+
+		GameObjectRef go = getGameObject();
+		if (go) {
+			if (_life > 1.0) {
+				go->setFinished();
+			} else {
+				go->getDrawComponent()->notifyMoved();
+			}
+		}
+	}
+
+#pragma mark - BeamProjectileDrawComponent
+
+	BeamProjectileDrawComponent::BeamProjectileDrawComponent(){}
+	BeamProjectileDrawComponent::~BeamProjectileDrawComponent(){
+		CI_LOG_D("dtor");
+	}
+
+	void BeamProjectileDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+		DrawComponent::onReady(parent, level);
+		_projectile = getSibling<BeamProjectileComponent>();
+	}
+
+	cpBB BeamProjectileDrawComponent::getBB() const {
+		if (BeamProjectileComponentRef projectile = _projectile.lock()) {
+			dvec2 a,b;
+			double len;
+			projectile->getSegment(a, b, len);
+			return cpBBNewLineSegment(a, b);
+		}
+		return cpBBInvalid;
+	}
+
+	void BeamProjectileDrawComponent::draw(const render_state &renderState) {
+		if (BeamProjectileComponentRef projectile = _projectile.lock()) {
+			dvec2 a,b;
+			double len;
+			projectile->getSegment(a, b, len);
+
+			// scale width up to not be less than 1px
+			double radius = projectile->getWidth() / 2;
+			radius = max(radius, 0.5 / renderState.viewport->getScale());
+
+			dvec2 dir = projectile->getDirection();
+			dvec2 center = (a + b) * 0.5;
+			double angle = atan2(dir.y, dir.x);
+
+			dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
+			gl::ScopedModelMatrix smm;
+			gl::multModelMatrix(M);
+
+			gl::color(0,1,1);
+			gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
+		}
+	}
+
+	VisibilityDetermination::style BeamProjectileDrawComponent::getVisibilityDetermination() const {
+		return VisibilityDetermination::FRUSTUM_CULLING;
+	}
+
+	int BeamProjectileDrawComponent::getLayer() const {
+		return DrawLayers::PLAYER;
+	}
+
+	int BeamProjectileDrawComponent::getDrawPasses() const {
+		return 1;
+	}
+
+
+
+#pragma mark - PlayerGunComponent
+
+
+	/*
+		config _config;
+		bool _isShooting;
+		dvec2 _beamOrigin, _beamDir;
+		double _blastCharge;
+		seconds_t _pulseStartTime, _blastStartTime;
+	 */
+
+	PlayerGunComponent::PlayerGunComponent(config c):
+	_config(c),
+	_isShooting(false),
+	_beamOrigin(0),
+	_beamDir(0),
+	_blastCharge(0),
+	_pulseStartTime(0)
+	{}
+
+	PlayerGunComponent::~PlayerGunComponent() {}
+
+	void PlayerGunComponent::setShooting(bool shooting) {
+
+		if (shooting && !_isShooting) {
+			firePulse();
+		}
+
+		if (_isShooting && !shooting) {
+			if (_blastCharge >= 1) {
+				fireBlast();
+			}
+		}
+
+		_isShooting = shooting;
+	}
+
+	void PlayerGunComponent::update(const time_state &time) {
 
 		if (_isShooting) {
-			if (time.time - _pulseStartTime < _config.pulseBeamDurationSeconds) {
-				_isShootingPulse = true;
+			if (time.time - _pulseStartTime < _config.pulse.lifetime) {
 				_blastCharge = 0;
 			} else {
-				_isShootingPulse = false;
-				_blastCharge = min(_blastCharge + time.deltaT * _config.blastBeamChargePerSecond, 1.0);
+				_blastCharge = min(_blastCharge + time.deltaT * _config.blastChargePerSecond, 1.0);
 			}
 		} else {
 
 			// if done shooting, reduce blast charge to zero
 			seconds_t blastDur = time_state::now() - _blastStartTime;
-			_blastCharge = max(1 - (blastDur / _config.blastBeamDurationSeconds), 0.0);
-
-			_isShootingPulse = false;
-			_isShootingBlast = _blastCharge > 0;
+			_blastCharge = max(1 - (blastDur / _config.blast.lifetime), 0.0);
 		}
 
 	}
+
+	void PlayerGunComponent::firePulse() {
+		_blastCharge = 0;
+		_pulseStartTime = time_state::now();
+
+		auto pulse = GameObject::with("Pulse", {
+			make_shared<BeamProjectileComponent>(_config.pulse, getBeamOrigin(), getBeamDirection()),
+			make_shared<BeamProjectileDrawComponent>()
+		});
+
+		CI_LOG_D("PULSE!");
+		getLevel()->addGameObject(pulse);
+
+	}
+
+	void PlayerGunComponent::fireBlast() {
+		_blastStartTime = time_state::now();
+
+		auto blast = GameObject::with("Blast", {
+			make_shared<BeamProjectileComponent>(_config.blast, getBeamOrigin(), getBeamDirection()),
+			make_shared<BeamProjectileDrawComponent>()
+		});
+
+		CI_LOG_D("BLAST!");
+		getLevel()->addGameObject(blast);
+}
 
 #pragma mark - PlayerPhysicsComponent
 
@@ -263,7 +410,7 @@ namespace player {
 		cpCleanupAndFree(_bodies);
 	}
 
-	void PlayerPhysicsComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+	void PlayerPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		PhysicsComponent::onReady(parent, level);
 	}
 
@@ -347,7 +494,7 @@ namespace player {
 	{}
 
 	// PhysicsComponent
-	void JetpackUnicyclePlayerPhysicsComponent::onReady(core::GameObjectRef parent, core::LevelRef level) {
+	void JetpackUnicyclePlayerPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		PlayerPhysicsComponent::onReady(parent, level);
 
 		_input = getSibling<PlayerInputComponent>();
@@ -440,7 +587,7 @@ namespace player {
 		}
 	}
 
-	void JetpackUnicyclePlayerPhysicsComponent::step(const core::time_state &timeState) {
+	void JetpackUnicyclePlayerPhysicsComponent::step(const time_state &timeState) {
 		PlayerPhysicsComponent::step(timeState);
 
 		const PlayerRef player = getGameObjectAs<Player>();
@@ -742,28 +889,11 @@ namespace player {
 		return cpBBZero;
 	}
 
-	void PlayerDrawComponent::draw(const core::render_state &renderState) {
+	void PlayerDrawComponent::draw(const render_state &renderState) {
 		drawPlayer(renderState);
-
-		PlayerGunComponentRef gun = _gun.lock();
-		assert(gun);
-
-		if (gun->isShooting()) {
-			if (renderState.mode == RenderMode::DEVELOPMENT) {
-				drawGunContacts(gun, renderState);
-			}
-		}
-
-		if (gun->isFiringPulseBeam()) {
-			drawGunPulse(gun, renderState);
-		}
-
-		if (gun->isFiringBlastBeam()) {
-			drawGunBlast(gun, renderState);
-		}
 	}
 
-	void PlayerDrawComponent::drawScreen(const core::render_state &renderState) {
+	void PlayerDrawComponent::drawScreen(const render_state &renderState) {
 		PlayerGunComponentRef gun = _gun.lock();
 		assert(gun);
 		drawGunCharge(gun, renderState);
@@ -781,7 +911,7 @@ namespace player {
 		return 1;
 	}
 
-	void PlayerDrawComponent::drawPlayer(const core::render_state &renderState) {
+	void PlayerDrawComponent::drawPlayer(const render_state &renderState) {
 		JetpackUnicyclePlayerPhysicsComponentRef physics = _physics.lock();
 		assert(physics);
 
@@ -819,93 +949,7 @@ namespace player {
 		gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
 	}
 
-	void PlayerDrawComponent::drawGunPulse(PlayerGunComponentRef gun, const core::render_state &renderState) {
-		const auto contacts = gun->getGunBeamContacts();
-
-		// scale width up to not be less than 1px
-		double radius = gun->getPulseBeamWidth()/2;
-		radius = max(radius, 0.5 / renderState.viewport->getScale());
-
-		double maxLength = gun->getBeamLength();
-		dvec2 dir = gun->getBeamDirection();
-		dvec2 origin = gun->getBeamOrigin();
-		dvec2 end = contacts.empty() ? origin + maxLength * dir : contacts.front().position;
-		dvec2 center = (origin + end) * 0.5;
-		double len = distance(end, origin);
-		double angle = atan2(dir.y, dir.x);
-
-		dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-		gl::ScopedModelMatrix smm;
-		gl::multModelMatrix(M);
-
-		gl::color(0,1,1);
-		gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
-
-	}
-
-	void PlayerDrawComponent::drawGunBlast(PlayerGunComponentRef gun, const core::render_state &renderState) {
-		const auto contacts = gun->getGunBeamContacts();
-
-		// scale width up to not be less than 2px
-		double radius = gun->getBlastBeamWidth()/2;
-		radius = max(radius, 1 / renderState.viewport->getScale());
-
-		double maxLength = gun->getBeamLength();
-		dvec2 dir = gun->getBeamDirection();
-		dvec2 origin = gun->getBeamOrigin();
-		dvec2 end = contacts.empty() ? origin + maxLength * dir : contacts.front().position;
-		dvec2 center = (origin + end) * 0.5;
-		double len = distance(end, origin);
-		double angle = atan2(dir.y, dir.x);
-
-		dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-		gl::ScopedModelMatrix smm;
-		gl::multModelMatrix(M);
-
-		gl::color(0,1,1);
-		gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
-	}
-
-	void PlayerDrawComponent::drawGunContacts(PlayerGunComponentRef gun, const core::render_state &renderState) {
-		const auto contacts = gun->getGunBeamContacts();
-
-		//
-		//	Draw the beam
-		//
-
-		{
-			double radius = 0.5;
-			// scale radius up to not be less than 1px
-			radius = max(radius, 0.5 / renderState.viewport->getScale());
-
-			double len = gun->getBeamLength();
-			dvec2 dir = gun->getBeamDirection();
-			dvec2 origin = gun->getBeamOrigin();
-			dvec2 end = origin + len * dir;
-			dvec2 center = (origin + end) * 0.5;
-			double angle = atan2(dir.y, dir.x);
-
-			dmat4 M = translate(dvec3(center, 0)) * rotate(angle, dvec3(0,0,1));
-			gl::ScopedModelMatrix smm;
-			gl::multModelMatrix(M);
-
-			gl::color(0,1,1);
-			gl::drawSolidRect(Rectf(-len/2, -radius, +len/2, +radius));
-		}
-
-		//
-		//	Draw contacts
-		//
-
-		gl::color(1,0,1);
-		double radius = 4  / renderState.viewport->getScale();
-		for (const auto &contact : contacts) {
-			gl::drawSolidCircle(contact.position, radius, 12);
-		}
-	}
-
-
-	void PlayerDrawComponent::drawGunCharge(PlayerGunComponentRef gun, const core::render_state &renderState) {
+	void PlayerDrawComponent::drawGunCharge(PlayerGunComponentRef gun, const render_state &renderState) {
 		// we're in screen space
 		Rectd bounds = renderState.viewport->getBounds();
 
@@ -939,16 +983,30 @@ namespace player {
 		config.walkSpeed = util::xml::readNumericAttribute(playerNode, "walkSpeed", 1);
 		config.runMultiplier = util::xml::readNumericAttribute(playerNode, "runMultiplier", 10);
 
+		//
+		//	Gun
+		//
+
 		XmlTree gunNode = playerNode.getChild("gun");
-		config.gun.beamLength = util::xml::readNumericAttribute(gunNode, "beamLength", 10000);
-		config.gun.cutDepth = util::xml::readNumericAttribute(gunNode, "cutDepth", 1000);
+		config.gun.blastChargePerSecond = util::xml::readNumericAttribute(gunNode, "blastChargePerSecond", 0.3);
 
-		config.gun.pulseBeamWidth = util::xml::readNumericAttribute(gunNode, "pulseBeamWidth", 4);
-		config.gun.pulseBeamDurationSeconds = util::xml::readNumericAttribute(gunNode, "pulseBeamDurationSeconds", 0.1);
+		XmlTree pulseNode = gunNode.getChild("pulse");
+		config.gun.pulse.range = util::xml::readNumericAttribute(pulseNode, "range", 1000);
+		config.gun.pulse.width = util::xml::readNumericAttribute(pulseNode, "width", 2);
+		config.gun.pulse.velocity = util::xml::readNumericAttribute(pulseNode, "velocity", 100);
+		config.gun.pulse.lifetime = util::xml::readNumericAttribute(pulseNode, "lifetime", 1);
+		config.gun.pulse.cutDepth = 0;
 
-		config.gun.blastBeamWidth = util::xml::readNumericAttribute(gunNode, "blastBeamWidth", 4);
-		config.gun.blastBeamDurationSeconds = util::xml::readNumericAttribute(gunNode, "blastBeamDurationSeconds", 0.1);
-		config.gun.blastBeamChargePerSecond = util::xml::readNumericAttribute(gunNode, "blastBeamChargePerSecond", 0.5);
+		XmlTree blastNode = gunNode.getChild("blast");
+		config.gun.blast.range = util::xml::readNumericAttribute(blastNode, "range", 1000);
+		config.gun.blast.width = util::xml::readNumericAttribute(blastNode, "width", 2);
+		config.gun.blast.velocity = util::xml::readNumericAttribute(blastNode, "velocity", 100);
+		config.gun.blast.lifetime = util::xml::readNumericAttribute(blastNode, "lifetime", 1);
+		config.gun.blast.cutDepth = util::xml::readNumericAttribute(blastNode, "cutDepth", 300);
+
+		//
+		//	Physics
+		//
 
 		XmlTree physicsNode = playerNode.getChild("physics");
 

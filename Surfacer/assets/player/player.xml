@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <player walkSpeed="200" runMultiplier="3">
 
-	<gun beamLength="100000" 
-		cutDepth="1000"
-		pulseBeamWidth="4"
-		pulseBeamDurationSeconds="0.05"
-		blastBeamWidth="8"
-		blastBeamDurationSeconds="0.1"
-		blastBeamChargePerSecond="0.3"  />
+	<gun blastChargePerSecond="0.3">
+		<pulse width="4" lifespan="0.05" range="1000" velocity="10000"/>
+		<blast width="8" lifespan="0.1" range="1000" velocity="10000" cutDepth="500"/>
+	</gun>
 
 	<physics width="20" height="60" density="1" wheelFriction="1" bodyFriction="0.2">
 		<jetpack antigravity="2" fuelMax="1" consumption="0.3" regeneration="0.3"/>

@@ -22,6 +22,92 @@ namespace player {
 	SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
 	SMART_PTR(PlayerDrawComponent);
 	SMART_PTR(PlayerInputComponent);
+	SMART_PTR(BeamProjectileComponent);
+
+#pragma mark - BeamProjectileComponent
+
+	class BeamProjectileComponent : public core::Component {
+	public:
+
+		struct contact {
+			dvec2 position;
+			dvec2 normal;
+			core::GameObjectRef target;
+
+			contact(const dvec2 &p, const dvec2 &n, const core::GameObjectRef &t):
+			position(p),
+			normal(n),
+			target(t)
+			{}
+		};
+
+		struct config {
+			double range;
+			double width;
+			double velocity;
+			double lifetime;
+			double cutDepth;
+		};
+
+	public:
+
+		BeamProjectileComponent(config c);
+		BeamProjectileComponent(config c, dvec2 origin, dvec2 dir);
+		virtual ~BeamProjectileComponent();
+
+		void fire(dvec2 origin, dvec2 dir);
+		dvec2 getOrigin() const { return _origin; }
+		dvec2 getDirection() const { return _dir; }
+		dvec2 getPosition() const;
+		double getWidth() const;
+		double getLife() const { return _life; }
+
+		void getSegment(dvec2 &a, dvec2 &b, double &length);
+
+		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
+		const vector<contact> &getContacts() const;
+
+		// Component
+		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void update(const core::time_state &time) override;
+
+
+	private:
+
+		config _config;
+		dvec2 _origin, _dir, _position;
+		double _life;
+		core::seconds_t _birthSeconds;
+		mutable size_t _lastContactCalcTimestep;
+		mutable vector<contact> _contacts;
+		
+	};
+
+#pragma mark - BeamProjectileDrawComponent
+
+	class BeamProjectileDrawComponent : public core::DrawComponent {
+	public:
+
+		BeamProjectileDrawComponent();
+		virtual ~BeamProjectileDrawComponent();
+
+		// Component
+		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+
+		// DrawComponent
+		cpBB getBB() const override;
+		void draw(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override;
+		int getLayer() const override;
+		int getDrawPasses() const override;
+		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
+
+	private:
+
+		BeamProjectileComponentWeakRef _projectile;
+
+	};
+
 
 #pragma mark - PlayerGunComponent
 
@@ -29,27 +115,9 @@ namespace player {
 	public:
 
 		struct config {
-			double beamLength;
-			double cutDepth;
-
-			double pulseBeamWidth;
-			double pulseBeamDurationSeconds;
-
-			double blastBeamWidth;
-			double blastBeamDurationSeconds;
-			double blastBeamChargePerSecond;
-		};
-
-		struct beam_contact {
-			dvec2 position;
-			dvec2 normal;
-			core::GameObjectRef target;
-
-			beam_contact(const dvec2 &p, const dvec2 &n, const core::GameObjectRef &t):
-			position(p),
-			normal(n),
-			target(t)
-			{}
+			BeamProjectileComponent::config pulse;
+			BeamProjectileComponent::config blast;
+			double blastChargePerSecond;
 		};
 
 	public:
@@ -59,9 +127,6 @@ namespace player {
 
 		void setShooting(bool shooting);
 		bool isShooting() const { return _isShooting; }
-
-		bool isFiringPulseBeam() const { return _isShootingPulse; }
-		bool isFiringBlastBeam() const { return _isShootingBlast; }
 
 		// get the current charge level [0,1]
 		double getBlastChargeLevel() const { return _blastCharge; }
@@ -74,27 +139,21 @@ namespace player {
 		void setBeamDirection(dvec2 dir) { _beamDir = dir; }
 		dvec2 getBeamDirection() const { return _beamDir; }
 
-		// max length/width of beam
-		double getBeamLength() const { return _config.beamLength; }
-		double getPulseBeamWidth() const { return _config.pulseBeamWidth; }
-		double getBlastBeamWidth() const { return _config.blastBeamWidth; }
-
-		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
-		const vector<beam_contact> &getGunBeamContacts() const;
-
 		// Component
 		void update(const core::time_state &time) override;
 
 	private:
 
+		void firePulse();
+		void fireBlast();
+
+	private:
+
 		config _config;
-		bool _isShooting, _isShootingPulse, _isShootingBlast;
+		bool _isShooting;
 		dvec2 _beamOrigin, _beamDir;
 		double _blastCharge;
 		core::seconds_t _pulseStartTime, _blastStartTime;
-
-		mutable size_t _lastContactCalcTimestep;
-		mutable vector<beam_contact> _contacts;
 
 	};
 
@@ -255,6 +314,7 @@ namespace player {
 		PlayerDrawComponent();
 		virtual ~PlayerDrawComponent();
 
+		// DrawComponent
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
 
 		cpBB getBB() const override;
@@ -268,10 +328,6 @@ namespace player {
 	protected:
 
 		void drawPlayer(const core::render_state &renderState);
-
-		void drawGunPulse(PlayerGunComponentRef gun, const core::render_state &renderState);
-		void drawGunBlast(PlayerGunComponentRef gun, const core::render_state &renderState);
-		void drawGunContacts(PlayerGunComponentRef gun, const core::render_state &renderState);
 		void drawGunCharge(PlayerGunComponentRef gun, const core::render_state &renderState);
 
 	private:
