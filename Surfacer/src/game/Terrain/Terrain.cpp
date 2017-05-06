@@ -45,7 +45,7 @@ namespace terrain {
 	}
 
 	int TerrainDrawComponent::getLayer() const {
-		return DrawLevels::TERRAIN;
+		return DrawLayers::TERRAIN;
 	}
 
 	void TerrainDrawComponent::draw(const render_state &renderState) {

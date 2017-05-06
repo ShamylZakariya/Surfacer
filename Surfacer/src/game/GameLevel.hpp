@@ -62,8 +62,8 @@ namespace CollisionFilters {
 	extern cpShapeFilter PLAYER;
 }
 
-namespace DrawLevels {
-	enum Levels {
+namespace DrawLayers {
+	enum layer {
 		BACKGROUND = 0,
 		TERRAIN = 1,
 		ENEMY = 2,

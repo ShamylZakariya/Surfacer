@@ -774,7 +774,7 @@ namespace player {
 	}
 
 	int PlayerDrawComponent::getLayer() const {
-		return DrawLevels::PLAYER;
+		return DrawLayers::PLAYER;
 	}
 
 	int PlayerDrawComponent::getDrawPasses() const {
