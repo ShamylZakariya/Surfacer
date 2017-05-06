@@ -46,7 +46,6 @@ namespace player {
 			double width;
 			double length;
 			double velocity;
-			double lifetime;
 			double cutDepth;
 
 			config():
@@ -54,7 +53,6 @@ namespace player {
 			width(0),
 			length(0),
 			velocity(0),
-			lifetime(0),
 			cutDepth(0)
 			{}
 		};
@@ -62,6 +60,14 @@ namespace player {
 		struct segment {
 			dvec2 head, tail;
 			double len;
+
+			segment(){}
+
+			segment(dvec2 h, dvec2 t, double l):
+			head(h),
+			tail(t),
+			len(l)
+			{}
 		};
 
 	public:
@@ -75,7 +81,6 @@ namespace player {
 		dvec2 getDirection() const { return _dir; }
 		dvec2 getPosition() const { return _segment.head; }
 		double getWidth() const;
-		double getLife() const { return _life; }
 		segment getSegment() const { return _segment; }
 
 		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
@@ -83,6 +88,7 @@ namespace player {
 
 		// Component
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void onCleanup() override;
 		void update(const core::time_state &time) override;
 
 	private:
@@ -93,10 +99,10 @@ namespace player {
 
 		config _config;
 		dvec2 _origin, _dir;
-		segment _segment;
-		double _life;
+		segment _segment, _cutToPerform;
+		double _penetrationRemaining;
 		bool _hasHit;
-		core::seconds_t _birthSeconds, _lastDeltaT;
+		core::seconds_t _lastDeltaT;
 		vector<contact> _contacts;
 		
 	};

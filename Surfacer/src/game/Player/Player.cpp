@@ -13,6 +13,7 @@
 
 #include "GameLevel.hpp"
 #include "Strings.hpp"
+#include "Terrain.hpp"
 #include "Xml.hpp"
 
 using namespace core;
@@ -47,10 +48,10 @@ namespace player {
 	/*
 		config _config;
 		dvec2 _origin, _dir;
-		segment _segment;
-		double _life;
+		segment _segment, _cutToPerform;
+		double _penetrationRemaining;
 		bool _hasHit;
-		core::seconds_t _birthSeconds, _lastDeltaT;
+		core::seconds_t _lastDeltaT;
 		vector<contact> _contacts;
 	 */
 
@@ -58,9 +59,9 @@ namespace player {
 	_config(c),
 	_origin(0),
 	_dir(0),
-	_life(0),
+	_cutToPerform(dvec2(0), dvec2(0),0),
+	_penetrationRemaining(c.cutDepth),
 	_hasHit(false),
-	_birthSeconds(0),
 	_lastDeltaT(0)
 	{}
 
@@ -68,9 +69,9 @@ namespace player {
 	_config(c),
 	_origin(0),
 	_dir(0),
-	_life(0),
+	_cutToPerform(dvec2(0), dvec2(0),0),
+	_penetrationRemaining(c.cutDepth),
 	_hasHit(false),
-	_birthSeconds(0),
 	_lastDeltaT(0)
 	{
 		fire(origin, dir);
@@ -89,48 +90,70 @@ namespace player {
 	}
 
 	void BeamProjectileComponent::onReady(GameObjectRef parent, LevelRef level) {
-		_birthSeconds = time_state::now();
+		Component::onReady(parent, level);
+	}
+
+	void BeamProjectileComponent::onCleanup() {
+
+		//
+		//	If this projectile has a cut depth, and if a computed cut ray exists, do it
+		//
+
+		if (_config.cutDepth > 0 && _cutToPerform.len > 0) {
+			terrain::TerrainObjectRef terrain = dynamic_pointer_cast<GameLevel>(getLevel())->getTerrain();
+			if (terrain) {
+				terrain->getWorld()->cut(_cutToPerform.tail, _cutToPerform.head, _config.width/2, CollisionFilters::CUTTER);
+			}
+		}
 	}
 
 	void BeamProjectileComponent::update(const time_state &time) {
 		GameObjectRef go = getGameObject();
 		assert(go);
 
-		bool finished = false;
-
 		_lastDeltaT = time.deltaT;
-		_life = (time.time - _birthSeconds) / _config.lifetime;
 
-		if (_life > 1.0) {
-			finished = true;
-		} else {
+		//
+		//	Before beam hits, we move the head, compute the length, and track the tail.
+		//	after impact, tail still moves forward, and when length == 0 we're finished.
+		//
+
+		const double dist = _config.velocity * time.deltaT;
+		if (!_hasHit || _penetrationRemaining > 0) {
+			_segment.head = _segment.head + _dir * dist;
+			_segment.len = min(_config.length, distance(_segment.head, _origin));
+			_segment.tail = _segment.head - _dir * _segment.len;
 
 			//
-			//	Before beam hits, we move the head, compute the length, and track the tail.
-			//	after impact, tail still moves forward, and when length == 0 we're finished.
+			// If this projectile can cut, do a point query - if it is in terrain, subtract dist from remainder
 			//
-			if (!_hasHit) {
-				_segment.head = _segment.head + _dir * _config.velocity * time.deltaT;
-				_segment.len = min(_config.length, distance(_segment.head, _origin));
-				_segment.tail = _segment.head - _dir * _segment.len;
-			} else {
 
-				_segment.len = max(_segment.len - _config.velocity * time.deltaT, 0.0);
-				_segment.tail = _segment.head - _dir * _segment.len;
+			if (_config.cutDepth > 0) {
 
-				if (_segment.len < 1e-3) {
-					finished = true;
+				cpSpace *space = go->getLevel()->getSpace()->getSpace();
+				bool didHit = false;
+				cpSpacePointQuery(space, cpv(_segment.head), dist/2, CollisionFilters::CUTTER, BeamProjectile_MidpointQueryFunc, &didHit);
+
+				if (didHit) {
+					_penetrationRemaining -= dist;
+					_cutToPerform.tail = _origin;
+					_cutToPerform.head = _segment.head;
+					_cutToPerform.len = distance(_cutToPerform.tail, _cutToPerform.head);
 				}
 			}
+		} else {
 
-			if (!finished) {
-				updateContacts();
-				go->getDrawComponent()->notifyMoved();
+			_segment.len = max(_segment.len - dist, 0.0);
+			_segment.tail = _segment.head - _dir * _segment.len;
+
+			if (_segment.len < 1e-3) {
+				go->setFinished();
 			}
 		}
 
-		if (finished) {
-			go->setFinished();
+		if (!go->isFinished()) {
+			updateContacts();
+			go->getDrawComponent()->notifyMoved();
 		}
 	}
 
@@ -285,16 +308,11 @@ namespace player {
 	void PlayerGunComponent::update(const time_state &time) {
 
 		if (_isShooting) {
-			if (time.time - _pulseStartTime < _config.pulse.lifetime) {
-				_blastCharge = 0;
-			} else {
-				_blastCharge = min(_blastCharge + time.deltaT * _config.blastChargePerSecond, 1.0);
-			}
+			_blastCharge = clamp((time.time - _pulseStartTime) * _config.blastChargePerSecond, 0.0, 1.0);
 		} else {
 
-			// if done shooting, reduce blast charge to zero
-			seconds_t blastDur = time_state::now() - _blastStartTime;
-			_blastCharge = max(1 - (blastDur / _config.blast.lifetime), 0.0);
+			double t = clamp((time.time - _blastStartTime) * (_config.blastChargePerSecond * 0.5), 0.0, 1.0);
+			_blastCharge = 1.0 - t;
 		}
 
 	}
@@ -962,15 +980,13 @@ namespace player {
 		config.gun.pulse.width = util::xml::readNumericAttribute(pulseNode, "width", 2);
 		config.gun.pulse.length = util::xml::readNumericAttribute(pulseNode, "length", 100);
 		config.gun.pulse.velocity = util::xml::readNumericAttribute(pulseNode, "velocity", 100);
-		config.gun.pulse.lifetime = util::xml::readNumericAttribute(pulseNode, "lifetime", 1);
-		config.gun.pulse.cutDepth = 0;
+		config.gun.pulse.cutDepth = util::xml::readNumericAttribute(pulseNode, "cutDepth", 0);;
 
 		XmlTree blastNode = gunNode.getChild("blast");
 		config.gun.blast.range = util::xml::readNumericAttribute(blastNode, "range", 1000);
 		config.gun.blast.width = util::xml::readNumericAttribute(blastNode, "width", 2);
 		config.gun.blast.length = util::xml::readNumericAttribute(blastNode, "length", 100);
 		config.gun.blast.velocity = util::xml::readNumericAttribute(blastNode, "velocity", 100);
-		config.gun.blast.lifetime = util::xml::readNumericAttribute(blastNode, "lifetime", 1);
 		config.gun.blast.cutDepth = util::xml::readNumericAttribute(blastNode, "cutDepth", 300);
 
 		//

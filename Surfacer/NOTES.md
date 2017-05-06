@@ -2,10 +2,12 @@
 
 This is going to be done in steps; since I need to learn new Cinder APIs (primarily the new vector/matrix/etc stuff), and I need to learn the modern OpenGL stuff.
 
-##Currently
+##TODO
 
-GunBeamContacts is presently unable to associate a GameObject target.
-May want to redesign PlayerGunComponent pulse and blast to be things which fly out of gun (or at least have fixed start/end points)
+- Using time of life for the beam doesn't work. Maybe we need to let bolts fly their max dist. But we still need a timeout before blast charge starts and that can be on the gun itself.
+- Projectile contact stuff is presently unable to associate a GameObject target. Probably want to make some kind of common base class which has a virtual method to get the GameObject.
+ 
+
 
 ## BUGS PRIORITY 0
 
