@@ -174,7 +174,7 @@ namespace player {
 		//
 
 		if (!wasHit && _hasHit) {
-			_segment.head = _contacts.back().position;
+			_segment.head = _contacts.front().position;
 			_segment.len = distance(_segment.tail, _segment.head);
 		}
 
