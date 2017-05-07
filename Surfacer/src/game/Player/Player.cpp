@@ -691,8 +691,8 @@ namespace player {
 		bool flying = isFlying() && _jetpackFuelLevel > 0;
 
 		if (flying) {
-			dvec2 antiGravForceDir = normalize((2 * Dir * Right) + G.dir);
-			dvec2 force = -config.jetpackAntigravity * _totalMass * G.force * antiGravForceDir;
+			_jetpackForceDir = normalize((2 * Dir * Right) + G.dir);
+			dvec2 force = -config.jetpackAntigravity * _totalMass * G.force * _jetpackForceDir;
 			cpBodyApplyForceAtWorldPoint(_body, cpv(force), cpBodyLocalToWorld(_wheelBody, cpvzero));
 			_jetpackFuelLevel -= config.jetpackFuelConsumptionPerSecond * timeState.deltaT;
 		} else if (!isFlying()) {
@@ -834,6 +834,10 @@ namespace player {
 		return _jetpackFuelMax;
 	}
 
+	dvec2 JetpackUnicyclePlayerPhysicsComponent::getJetpackThrustDirection() const {
+		return _jetpackForceDir;
+	}
+
 	JetpackUnicyclePlayerPhysicsComponent::capsule JetpackUnicyclePlayerPhysicsComponent::getBodyCapsule() const {
 		capsule cap;
 		cap.a = v2(cpBodyLocalToWorld(cpShapeGetBody(_bodyShape), cpSegmentShapeGetA(_bodyShape)));
@@ -973,13 +977,23 @@ namespace player {
 			gl::drawSolidRoundedRect(Rectf(-len/2, -radius, +len/2, +radius), radius, 8);
 		}
 
+		// draw the ground normal indicator
 		gl::color(1,0,0);
 		gl::drawLine(physics->getPosition(), physics->getPosition() + physics->getGroundNormal() * 10.0);
 		gl::drawSolidCircle(physics->getPosition(), 1, 12);
 
-		cpBB bb = getBB();
-		gl::color(0,1,1);
-		gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
+		// draw the jetpack thrust
+		if (physics->isFlying()) {
+			const auto thrustDir = physics->getJetpackThrustDirection();
+			const auto angle = atan2(thrustDir.y, thrustDir.x) + M_PI_2;
+			const auto pos = FootWheel.position;
+
+			gl::ScopedModelMatrix smm;
+			gl::multModelMatrix(glm::translate(dvec3(pos, 0)) * glm::rotate(angle, dvec3(0,0,1)));
+
+			gl::color(1,0,0);
+			gl::drawSolidTriangle(dvec2(-FootWheel.radius,0), dvec2(FootWheel.radius,0), dvec2(0,-4*FootWheel.radius));
+		}
 	}
 
 	void PlayerDrawComponent::drawGunCharge(PlayerGunComponentRef gun, const render_state &renderState) {

@@ -275,6 +275,7 @@ namespace player {
 		virtual cpBody *getFootBody() const = 0;
 		virtual double getJetpackFuelLevel() const = 0;
 		virtual double getJetpackFuelMax() const = 0;
+		virtual dvec2 getJetpackThrustDirection() const = 0;
 
 		vector<cpShape*> getShapes() const { return _shapes; }
 		vector<cpConstraint*> getConstraints() const { return _constraints; }
@@ -329,6 +330,7 @@ namespace player {
 		cpBody *getFootBody() const override;
 		double getJetpackFuelLevel() const override;
 		double getJetpackFuelMax() const override;
+		dvec2 getJetpackThrustDirection() const override;
 
 		struct capsule {
 			dvec2 a,b;
@@ -353,7 +355,7 @@ namespace player {
 		cpConstraint *_wheelMotor, *_orientationConstraint;
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
 		double _jetpackFuelLevel, _jetpackFuelMax, _lean;
-		dvec2 _up, _groundNormal;
+		dvec2 _up, _groundNormal, _jetpackForceDir;
 		PlayerInputComponentWeakRef _input;
 	};
 
