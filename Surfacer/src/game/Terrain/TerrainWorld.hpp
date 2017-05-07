@@ -27,12 +27,10 @@ namespace terrain {
 	SMART_PTR(Element);
 
 	/**
-	 If we're considering 1 unit to be 1m, then a precision of 100 means we have a precision of 1cm, e.g.,
-	 poly_edges whos' vertices are within 1cm of eachother will be considered congruent. A precision of 1000 would
-	 increase precision such that only edges with vertices within one mm of one another would be congruent.
+	 Edges whos vertices are within 1/POLY_EDGE_PRECISION distance of eachother are considered congruent, and thus snapped.
 	 */
 
-	#define POLY_EDGE_PRECISION 100.0
+	#define POLY_EDGE_PRECISION 10.0
 
 	/**
 	 poly_edge represents an edge in a PolyLine2d. It is not meant to represent the specific vertices in
