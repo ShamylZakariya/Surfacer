@@ -1011,32 +1011,41 @@ namespace core { namespace util { namespace svg {
 		{
 			if ( name == "opacity" )
 			{
-				style.opacity *= parseNumericAttribute(value);
+				style.opacity = parseNumericAttribute(value);
+				style.hasOpacity = true;
 			}
 			else if ( name == "fill-opacity" )
 			{
-				style.fillOpacity *= parseNumericAttribute(value);
+				style.fillOpacity = parseNumericAttribute(value);
+				style.hasFillOpacity = true;
 			}
 			else if ( name == "fill" )
 			{
-				parseColor( value, style.fillColor );
+				style.hasFillColor = parseColor( value, style.fillColor );
 			}
 			else if ( name == "stroke" )
 			{
-				parseColor( value, style.strokeColor );
+				style.hasStrokeColor = parseColor( value, style.strokeColor );
 			}
 			else if ( name == "stroke-opacity" )
 			{
 				style.strokeOpacity = parseNumericAttribute( value );
+				style.hasStrokeOpacity = true;
 			}
 			else if ( name == "stroke-width" )
 			{
 				style.strokeWidth = parseNumericAttribute( value );
+				style.hasStrokeWidth = true;
 			}
 			else if ( name == "fill-rule" )
 			{
-				if ( value == "evenodd" ) style.fillRule = Triangulator::WINDING_ODD;
-				else if ( value == "nonzero" ) style.fillRule = Triangulator::WINDING_NONZERO;
+				if ( value == "evenodd" ) {
+					style.fillRule = Triangulator::WINDING_ODD;
+					style.hasFillRule = true;
+				} else if ( value == "nonzero" ){
+					style.fillRule = Triangulator::WINDING_NONZERO;
+					style.hasFillRule = true;
+				}
 			}
 		}
 	}

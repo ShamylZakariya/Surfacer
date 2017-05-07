@@ -123,7 +123,7 @@ void SvgTestScenario::reset() {
 #pragma mark - Tests
 
 void SvgTestScenario::testSimpleSvgLoad() {
-	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/cartesian_quadrants.svg"), 1);
+	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/contour_soup_test.svg"), 1);
 	doc->trace();
 	getLevel()->addGameObject(GameObject::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
 }

@@ -113,45 +113,189 @@ namespace core { namespace util { namespace svg {
 
 	} // end anonymous namespace
 
-#pragma mark - Shape::stroke
+#pragma mark - Appearance
 
-	Shape::stroke::~stroke() {
-		if (vao) {
-			glDeleteBuffers(1, &vao);
-			glDeleteBuffers(1, &vbo);
+	/*
+		AppearanceWeakRef _parentAppearance;
+		svg_style _style;
+		BlendMode _blendMode;
+		map< string, string > _attributes;
+	 */
+
+	Appearance::Appearance()
+	{}
+
+	Appearance::~Appearance()
+	{}
+
+	void Appearance::parse( const ci::XmlTree &node ) {
+
+		//
+		//	Cache all attributes, in case we want to query them later
+		//
+
+		for( const XmlTree::Attr &attr : node.getAttributes() ) {
+			_attributes[ attr.getName() ] = attr.getValue();
 		}
+
+		_style = util::svg::parseStyle( node );
 	}
+
+	void Appearance::setFillColor( const ci::ColorA &color ) {
+		_style.fillColor = color;
+		_style.fillOpacity = color.a;
+		_style.hasFillColor = true;
+		_style.hasFillOpacity = true;
+	}
+
+	ci::ColorA Appearance::getFillColor() const {
+		return ci::ColorA(_getFillColor(), _getFillOpacity());
+	}
+
+	void Appearance::setFillAlpha( double a ) {
+		_style.fillOpacity = a;
+		_style.hasFillColor = true;
+	}
+
+	bool Appearance::getFillAlpha() const {
+		return _getFillOpacity();
+	}
+
+	void Appearance::setStrokeColor( const ci::ColorA &color ) {
+		_style.strokeColor = color;
+		_style.strokeOpacity = color.a;
+		_style.hasStrokeColor = true;
+		_style.hasStrokeOpacity = true;
+	}
+
+	ci::ColorA Appearance::getStrokeColor() const {
+		return ci::ColorA(_getStrokeColor(), _getStrokeOpacity());
+	}
+
+	void Appearance::setStrokeWidth( double w ) {
+		_style.strokeWidth = max( w, double(0));
+		_style.hasStrokeWidth = true;;
+	}
+
+	double Appearance::getStrokeWidth() const {
+		return _getStrokeWidth();
+	}
+
+	bool Appearance::isStroked() const {
+		return _getStrokeWidth() > 0 && _getStrokeOpacity() > ALPHA_EPSILON;
+	}
+
+	bool Appearance::isFilled() const {
+		return _getFillOpacity() > ALPHA_EPSILON;
+	}
+
+	void Appearance::setBlendMode( const BlendMode &bm ) {
+		_blendMode = bm;
+	}
+
+	const BlendMode &Appearance::getBlendMode() const {
+		return _blendMode;
+	}
+
+	void Appearance::setFillRule(ci::Triangulator::Winding fr) {
+		_style.fillRule = fr;
+		_style.hasFillRule = true;
+	}
+
+	ci::Triangulator::Winding Appearance::getFillRule() const {
+		return _getFillRule();
+	}
+
+	string Appearance::getAttribute(string name) const {
+		const auto pos = _attributes.find(name);
+		if (pos != _attributes.end()) {
+			return pos->second;
+		}
+
+		if (AppearanceRef parent = _parentAppearance.lock()) {
+			return parent->getAttribute(name);
+		}
+
+		return "";
+	}
+
+	ci::Color Appearance::_getFillColor() const {
+		if (_style.hasFillColor) {
+			return _style.fillColor;
+		} else if (AppearanceRef p = _parentAppearance.lock()) {
+			return p->_getFillColor();
+		}
+		return _style.fillColor; // default
+	}
+
+	double Appearance::_getFillOpacity() const {
+		if (_style.hasFillOpacity) {
+			return _style.fillOpacity;
+		} else if (AppearanceRef p = _parentAppearance.lock()) {
+			return p->_getFillOpacity();
+		}
+		return _style.fillOpacity; // default
+	}
+
+	ci::Color Appearance::_getStrokeColor() const {
+		if (_style.hasStrokeColor) {
+			return _style.strokeColor;
+		} else if (AppearanceRef p = _parentAppearance.lock()) {
+			return p->_getStrokeColor();
+		}
+		return _style.strokeColor; // default
+	}
+
+	double Appearance::_getStrokeOpacity() const {
+		if (_style.hasStrokeOpacity) {
+			return _style.strokeOpacity;
+		} else if (AppearanceRef p = _parentAppearance.lock()) {
+			return p->_getStrokeOpacity();
+		}
+		return _style.strokeOpacity; // default
+	}
+
+	double Appearance::_getStrokeWidth() const {
+		if (_style.hasStrokeWidth) {
+			return _style.strokeWidth;
+		} else if (AppearanceRef p = _parentAppearance.lock()) {
+			return p->_getStrokeWidth();
+		}
+		return _style.strokeWidth; // default
+	}
+
+	ci::Triangulator::Winding Appearance::_getFillRule() const {
+		if (_style.hasFillRule) {
+			return _style.fillRule;
+		} else if (AppearanceRef p = _parentAppearance.lock()) {
+			return p->_getFillRule();
+		}
+		return _style.fillRule; // default
+	}
+
+
+
 
 #pragma mark - Shape
 
 	/*
-		bool _origin, _filled, _stroked;
+		AppearanceRef _appearance;
+		bool _origin;
 		dmat4 _svgTransform;
-		ci::ColorA _fillColor, _strokeColor;
-		double _strokeWidth;
 		map< string, string > _attributes;
 		string _type, _id;
 		cpBB _localBB;
 
-		ci::Triangulator::Winding _fillRule;
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
 		ci::gl::VboMeshRef _localVboMesh;
 
 		vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
-		ci::Rectd _worldBounds, _localBounds;
-
-		BlendMode _blendMode;
-	 */
+		ci::Rectd _worldBounds, _localBounds;	 */
 
 	Shape::Shape():
+	_appearance(make_shared<Appearance>()),
 	_origin(false),
-	_filled(false),
-	_stroked(false),
-	_fillColor(0,0,0,1),
-	_strokeColor(0,0,0,1),
-	_strokeWidth(0),
-	_localBB(cpBBInvalid),
-	_fillRule( Triangulator::WINDING_NONZERO )
+	_localBB(cpBBInvalid)
 	{}
 
 	Shape::~Shape() {}
@@ -173,27 +317,10 @@ namespace core { namespace util { namespace svg {
 		}
 
 		//
-		//	Parse style declarations
+		//	Parse style attributes from this node
 		//
 
-		{
-			util::svg::svg_style style = util::svg::parseStyle( shapeNode );
-
-			_filled = style.isFilled();
-			_stroked = style.isStroked();
-			_fillColor = ColorA( style.fillColor, style.fillOpacity * style.opacity );
-			_strokeColor = ColorA( style.strokeColor, style.strokeOpacity * style.opacity );
-			_strokeWidth = style.strokeWidth;
-			_fillRule = style.fillRule;
-
-			//
-			//	Sanity check
-			//
-
-			if (!_filled && !_stroked) {
-				_filled = true;
-			}
-		}
+		_appearance->parse(shapeNode);
 
 		//
 		//	Get the transform
@@ -268,20 +395,21 @@ namespace core { namespace util { namespace svg {
 		_localStrokes.clear();
 
 		const double ApproximationScale = 0.5;
+		const AppearanceRef appearance = getAppearance();
 
 		//
 		//	we only need to triangulate filled shapes
 		//
 
-		if ( isFilled() ) {
-			_svgMesh = Triangulator(shape, ApproximationScale).createMesh(_fillRule);
+		if ( appearance->isFilled() ) {
+			_svgMesh = Triangulator(shape, ApproximationScale).createMesh(appearance->getFillRule());
 		}
 
 		//
 		// we only need to gather the perimeter vertices if our shape is stroked
 		//
 
-		if ( isStroked() ) {
+		if ( appearance->isStroked() ) {
 			for( const Path2d &path : shape.getContours() ) {
 				_svgStrokes.push_back( stroke() );
 				_svgStrokes.back().closed = path.isClosed();
@@ -343,15 +471,17 @@ namespace core { namespace util { namespace svg {
 			//	Crude immediate-mode style drawing of meshes and strokes
 			//
 
-			if ( isFilled() )
+			const AppearanceRef appearance = getAppearance();
+
+			if ( appearance->isFilled() )
 			{
-				ci::ColorA fc = getFillColor();
+				ci::ColorA fc = appearance->getFillColor();
 				shader->uniform("Color", ColorA(fc.r, fc.g, fc.b, fc.a * opacity));
 				gl::draw(*mesh);
 			}
 
-			if (isStroked()) {
-				ci::ColorA sc = getStrokeColor();
+			if (appearance->isStroked()) {
+				ci::ColorA sc = appearance->getStrokeColor();
 				shader->uniform("Color", ColorA(sc.r, sc.g, sc.b, sc.a * opacity));
 				gl::lineWidth(1);
 
@@ -379,9 +509,10 @@ namespace core { namespace util { namespace svg {
 	}
 
 	void Shape::_drawStrokes( const render_state &state, const GroupRef &owner, double opacity, vector<stroke> &strokes, const ci::gl::GlslProgRef &shader ) {
-		if (isStroked()) {
+		const AppearanceRef appearance = getAppearance();
+		if (appearance->isStroked()) {
 
-			ci::ColorA sc = getStrokeColor();
+			ci::ColorA sc = appearance->getStrokeColor();
 			shader->uniform("Color", ColorA(sc.r, sc.g, sc.b, sc.a * opacity));
 			gl::lineWidth(1);
 
@@ -403,9 +534,10 @@ namespace core { namespace util { namespace svg {
 	}
 
 	void Shape::_drawFills( const render_state &state, const GroupRef &owner, double opacity, const ci::TriMeshRef &mesh, const ci::gl::GlslProgRef &shader ) {
-		if ( isFilled() )
+		const AppearanceRef appearance = getAppearance();
+		if ( appearance->isFilled() )
 		{
-			ci::ColorA fc = getFillColor();
+			ci::ColorA fc = appearance->getFillColor();
 			shader->uniform("Color", ColorA(fc.r, fc.g, fc.b, fc.a * opacity));
 
 			if (!_localVboMesh) {
@@ -420,26 +552,32 @@ namespace core { namespace util { namespace svg {
 #pragma mark - Group
 
 	/*
-	 GroupWeakRef _parent;
-	 ShapeRef _originShape;
+		typedef pair< GroupRef,ShapeRef> drawable;
 
-	 std::string _id;
-	 double _opacity;
-	 bool _transformDirty;
-	 double _localTransformAngle;
-	 dvec2 _localTransformPosition, _localTransformScale, _documentSize;
-	 dmat4 _groupTransform, _transform;
-	 BlendMode _blendMode;
+		GroupWeakRef _parent;
+		ShapeRef _originShape;
+		AppearanceRef _appearance;
 
-	 std::vector< ShapeRef > _shapes;
-	 std::map< std::string, ShapeRef > _shapesByName;
-	 std::vector< GroupRef > _groups;
-	 std::map< std::string, GroupRef > _groupsByName;
-	 std::map< std::string, std::string > _attributes;
-	 std::vector< drawable > _drawables;
+		string _id;
+		double _opacity;
+		bool _transformDirty;
+		double _localTransformAngle;
+		dvec2 _localTransformPosition, _localTransformScale, _documentSize;
+		dmat4 _groupTransform, _transform;
+		BlendMode _blendMode;
+
+		vector< ShapeRef > _shapes;
+		map< string, ShapeRef > _shapesByName;
+		vector< GroupRef > _groups;
+		map< string, GroupRef > _groupsByName;
+		map< string, string > _attributes;
+		vector< drawable > _drawables;
+
+		ci::gl::GlslProgRef _shader;
 	 */
 
 	Group::Group():
+	_appearance(make_shared<Appearance>()),
 	_opacity(1),
 	_transformDirty(true),
 	_localTransformAngle(0),
@@ -493,6 +631,7 @@ namespace core { namespace util { namespace svg {
 	void Group::parse( const ci::XmlTree &svgGroupNode ) {
 		clear();
 		_parseGroupAttributes( svgGroupNode );
+		_loadAppearances( svgGroupNode );
 		_loadGroupsAndShapes( svgGroupNode );
 	}
 
@@ -552,9 +691,10 @@ namespace core { namespace util { namespace svg {
 			app::console() << ind2 << "[SvgShape name: " << shape->getId()
 			<< " type: " << shape->getType()
 			<< " origin: " << str(shape->isOrigin())
-			<< " filled: " << str(shape->isFilled()) << " stroked: " << str(shape->isStroked())
-			<< " fillColor: " << shape->getFillColor()
-			<< " strokeColor: " << shape->getStrokeColor()
+			<< " filled: " << str(shape->getAppearance()->isFilled())
+			<< " stroked: " << str(shape->getAppearance()->isStroked())
+			<< " fillColor: " << shape->getAppearance()->getFillColor()
+			<< " strokeColor: " << shape->getAppearance()->getStrokeColor()
 			<< "]" << std::endl;
 		}
 
@@ -675,8 +815,8 @@ namespace core { namespace util { namespace svg {
 				//	Draw child shape with its blend mode if one was set, or ours otherwise
 				//
 
-				if ( c->second->getBlendMode() != lastBlendMode ) {
-					lastBlendMode = c->second->getBlendMode();
+				if ( c->second->getAppearance()->getBlendMode() != lastBlendMode ) {
+					lastBlendMode = c->second->getAppearance()->getBlendMode();
 					lastBlendMode.bind();
 				}
 
@@ -715,6 +855,8 @@ namespace core { namespace util { namespace svg {
 
 			if ( tag == "g" ) {
 				GroupRef child = make_shared<Group>();
+
+				child->getAppearance()->setParentAppearance(_appearance);
 				child->parse( *childNode );
 				child->_parent = self;
 
@@ -726,7 +868,9 @@ namespace core { namespace util { namespace svg {
 			else if ( util::svg::canParseShape( tag )) {
 				ShapeRef shape = make_shared<Shape>();
 
+				shape->getAppearance()->setParentAppearance(_appearance);
 				shape->parse( *childNode );
+
 				_shapes.push_back( shape );
 				_shapesByName[ shape->getId() ] = shape;
 
@@ -737,6 +881,15 @@ namespace core { namespace util { namespace svg {
 
 				_drawables.push_back( drawable( nullptr, shape ));
 			}
+		}
+	}
+
+	void Group::_loadAppearances( const ci::XmlTree &fromNode ) {
+		_appearance->parse(fromNode); // load style attrs from this node
+
+		// if we have a <use /> child node, load attrs from it
+		if (fromNode.hasChild("use")) {
+			_appearance->parse(fromNode.getChild("use"));
 		}
 	}
 

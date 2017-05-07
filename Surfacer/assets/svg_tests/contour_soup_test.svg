@@ -4,8 +4,8 @@
     <title>contour_soup_test</title>
     <desc>Created with Sketch.</desc>
     <defs></defs>
-    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="contour_soup_test" fill="#000000">
+    <g id="Page-1" stroke="#FF00FF" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="contour_soup_test" fill="#00FFFF">
             <g id="world" transform="translate(323.000000, 296.000000)">
                 <path d="M0,0 L3354,0 L3354,3408 L0,3408 L0,0 Z M793.136555,370.857318 L358.092045,2608.9673 L2560.86345,3037.14268 L2995.90795,799.032704 L793.136555,370.857318 Z" id="Combined-Shape"></path>
             </g>

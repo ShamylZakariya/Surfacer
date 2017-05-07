@@ -23,16 +23,24 @@ namespace cinder {
 namespace core { namespace util { namespace svg {
 
 	struct svg_style {
+		bool hasFillColor, hasStrokeColor, hasOpacity, hasFillOpacity, hasStrokeOpacity, hasStrokeWidth, hasFillRule;
 		ci::Color fillColor, strokeColor;
 		double opacity, fillOpacity, strokeOpacity, strokeWidth;
 		ci::Triangulator::Winding fillRule;
 
 		svg_style():
+		hasFillColor(false),
+		hasStrokeColor(false),
+		hasOpacity(false),
+		hasFillOpacity(false),
+		hasStrokeOpacity(false),
+		hasStrokeWidth(false),
+		hasFillRule(false),
 		fillColor(0,0,0),
 		strokeColor(0,0,0),
 		opacity(1),
 		fillOpacity(1),
-		strokeOpacity(0),
+		strokeOpacity(1),
 		strokeWidth(0),
 		fillRule( ci::Triangulator::WINDING_NONZERO )
 		{}

@@ -3,20 +3,30 @@
     <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
     <title>cartesian_quadrants</title>
     <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="338" y="0" width="338" height="338"></rect>
+        <rect id="path-2" x="338" y="338" width="338" height="338"></rect>
+        <rect id="path-3" x="0" y="0" width="338" height="338"></rect>
+        <rect id="path-4" x="0" y="338" width="338" height="338"></rect>
+    </defs>
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
         <g id="cartesian_quadrants">
             <g id="root" transform="translate(162.000000, 162.000000)">
                 <g id="Rectangle">
-                    <rect fill="#FF0000" stroke="#979797" stroke-width="1" x="338.5" y="0.5" width="337" height="337"></rect>
+                    <use fill="#FF0000" fill-rule="evenodd" xlink:href="#path-1"></use>
+                    <rect stroke="#979797" stroke-width="1" x="338.5" y="0.5" width="337" height="337"></rect>
                 </g>
                 <g id="Rectangle-Copy-2">
-                    <rect fill="#7ED321" stroke="#979797" stroke-width="1" x="338.5" y="338.5" width="337" height="337"></rect>
+                    <use fill="#7ED321" fill-rule="evenodd" xlink:href="#path-2"></use>
+                    <rect stroke="#979797" stroke-width="1" x="338.5" y="338.5" width="337" height="337"></rect>
                 </g>
                 <g id="Rectangle-Copy">
-                    <rect fill="#9012FE" stroke="#979797" stroke-width="1" x="0.5" y="0.5" width="337" height="337"></rect>
+                    <use fill="#9012FE" fill-rule="evenodd" xlink:href="#path-3"></use>
+                    <rect stroke="#979797" stroke-width="1" x="0.5" y="0.5" width="337" height="337"></rect>
                 </g>
                 <g id="Rectangle-Copy-3">
-                    <rect fill="#50E3C2" stroke="#979797" stroke-width="1" x="0.5" y="338.5" width="337" height="337"></rect>
+                    <use fill="#50E3C2" fill-rule="evenodd" xlink:href="#path-4"></use>
+                    <rect stroke="#979797" stroke-width="1" x="0.5" y="338.5" width="337" height="337"></rect>
                 </g>
                 <circle id="Oval" fill="#F8E81C" cx="338" cy="338" r="95"></circle>
             </g>

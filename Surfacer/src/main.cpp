@@ -29,7 +29,7 @@ public:
 		GameApp::setup();
 		setScenario(make_shared<GameLevelTestScenario>());
 	}
-
+ 
 };
 
 CINDER_APP( DemoApp, app::RendererGl, DemoApp::prepareSettings )

@@ -18,12 +18,76 @@
 #include "Exception.hpp"
 #include "MathHelpers.hpp"
 #include "RenderState.hpp"
+#include "SvgParsing.hpp"
 
 namespace core { namespace util { namespace svg {
 
+	SMART_PTR(Appearance);
 	SMART_PTR(Shape);
 	SMART_PTR(Group);
 
+	class Appearance {
+	public:
+
+		Appearance();
+		virtual ~Appearance();
+
+		void parse( const ci::XmlTree &shapeNode );
+
+		void setParentAppearance(AppearanceRef parentAppearance) {
+			_parentAppearance = parentAppearance;
+		}
+
+		AppearanceRef getParentAppearance() const {
+			return _parentAppearance.lock();
+		}
+
+		void setFillColor( const ci::ColorA &color );
+		ci::ColorA getFillColor() const;
+
+		void setFillAlpha( double a );
+		bool getFillAlpha() const;
+
+		void setStrokeColor( const ci::ColorA &color );
+		ci::ColorA getStrokeColor() const;
+
+		void setStrokeWidth( double w );
+		double getStrokeWidth() const;
+
+		bool isStroked() const;
+		bool isFilled() const;
+
+		void setBlendMode( const BlendMode &bm );
+		const BlendMode &getBlendMode() const;
+
+		void setFillRule(ci::Triangulator::Winding fr);
+		ci::Triangulator::Winding getFillRule() const;
+
+		string getAttribute(string name) const;
+
+	private:
+
+		ci::Color _getFillColor() const;
+		double _getFillOpacity() const;
+		ci::Color _getStrokeColor() const;
+		double _getStrokeOpacity() const;
+		double _getStrokeWidth() const;
+		ci::Triangulator::Winding _getFillRule() const;
+
+
+	private:
+
+		AppearanceWeakRef _parentAppearance;
+		svg_style _style;
+		BlendMode _blendMode;
+		map< string, string > _attributes;
+
+	};
+
+	/**
+	 Shape
+	 Represents an Svg node which draws something, e.g, rect/circle/polyline, etc. Everything supported by core::util::svg::canParseShape
+	 */
 	class Shape {
 	public:
 
@@ -31,15 +95,10 @@ namespace core { namespace util { namespace svg {
 			vector< vec2 > vertices;
 			bool closed;
 			ci::gl::VboMeshRef vboMesh;
-			GLuint vao;
-			GLuint vbo;
 
 			stroke():
 			closed(false)
 			{}
-
-			~stroke();
-
 		};
 
 	public:
@@ -50,24 +109,14 @@ namespace core { namespace util { namespace svg {
 		void parse( const ci::XmlTree &shapeNode );
 		void draw( const render_state &, const GroupRef &owner, double opacity, const ci::gl::GlslProgRef &shader );
 
-		void setFillColor( const ci::ColorA &color ) { _fillColor = color; _filled = _fillColor.a > ALPHA_EPSILON; }
-		ci::ColorA getFillColor() const { return _fillColor; }
+		/**
+		 Get appearance info (color, stroke, etc)
+		 */
+		const AppearanceRef &getAppearance() const { return _appearance; }
 
-		void setFillAlpha( double a ) { _fillColor.a = a; _filled = _fillColor.a > ALPHA_EPSILON; }
-		bool getFillAlpha() const { return _fillColor.a; }
-
-		void setStrokeColor( const ci::ColorA &color ) { _strokeColor = color; _stroked = (_strokeWidth > 0 && _strokeColor.a > ALPHA_EPSILON ); }
-		ci::ColorA getStrokeColor() const { return _strokeColor; }
-
-		void setStrokeWidth( double w ) { _strokeWidth = max( w, double(0)); _stroked = (_strokeWidth > 0 && _strokeColor.a > ALPHA_EPSILON ); }
-		double getStrokeWidth() const { return _strokeWidth; }
-
-		bool isStroked() const { return _stroked; }
-		bool isFilled() const { return _filled; }
-
-		void setBlendMode( const BlendMode &bm ) { _blendMode = bm; }
-		const BlendMode &getBlendMode() const { return _blendMode; }
-
+		/**
+		 Get bounding box of this shape's geometry in its local coordinate space
+		 */
 		cpBB getLocalBB() const { return _localBB; }
 
 		/**
@@ -106,22 +155,18 @@ namespace core { namespace util { namespace svg {
 
 	private:
 
-		bool _origin, _filled, _stroked;
+		AppearanceRef _appearance;
+		bool _origin;
 		dmat4 _svgTransform;
-		ci::ColorA _fillColor, _strokeColor;
-		double _strokeWidth;
 		map< string, string > _attributes;
 		string _type, _id;
 		cpBB _localBB;
 
-		ci::Triangulator::Winding _fillRule;
 		ci::TriMeshRef _svgMesh, _worldMesh, _localMesh;
 		ci::gl::VboMeshRef _localVboMesh;
 
 		vector<stroke> _svgStrokes, _worldStrokes, _localStrokes;
 		ci::Rectd _worldBounds, _localBounds;
-
-		BlendMode _blendMode;
 
 	};
 
@@ -159,6 +204,13 @@ namespace core { namespace util { namespace svg {
 
 		const vector< ShapeRef > getShapes() const { return _shapes; }
 		const vector< GroupRef > getGroups() const { return _groups; }
+
+		/**
+		 Get this group's appearance. Generall the style attributes in the appearance of a Group will not be set. It's when
+		 the group has a chile <use .../> declaration which will specify fill, stroke etc that the Appearance will have
+		 meaningful values.
+		 */
+		AppearanceRef getAppearance() const { return _appearance; }
 
 		/**
 		 get this Group's parent. May be empty.
@@ -258,6 +310,7 @@ namespace core { namespace util { namespace svg {
 		void _draw( const render_state &state, double opacity, const ci::gl::GlslProgRef &shader );
 		void _parseGroupAttributes( const ci::XmlTree &groupNode );
 		void _loadGroupsAndShapes( const ci::XmlTree &fromNode );
+		void _loadAppearances( const ci::XmlTree &fromNode );
 		void _updateTransform();
 		cpBB _getBB(dmat4 toWorld);
 
@@ -278,6 +331,7 @@ namespace core { namespace util { namespace svg {
 
 		GroupWeakRef _parent;
 		ShapeRef _originShape;
+		AppearanceRef _appearance;
 
 		string _id;
 		double _opacity;
