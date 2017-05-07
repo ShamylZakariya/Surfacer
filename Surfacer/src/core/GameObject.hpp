@@ -21,12 +21,38 @@ namespace core {
 	SMART_PTR(Level);
 	SMART_PTR(SpaceAccess);
 
+#pragma mark - IOwnedByGameObject
+
+	/**
+	 IOwnedByGameObject
+	 Interface for things which are directly or indirectly owned by a GameObject. The idea is
+	 that we can cast the output of cp{Shape|Body|Constraint}GetUserData to this, and then
+	 get a GameObject out.
+	 */
+	class IOwnedByGameObject {
+	public:
+
+		virtual GameObjectRef getGameObject() const = 0;
+
+	};
+
+	// convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IOwnedByGameObject
+	GameObjectRef cpShapeGetGameObject(cpShape *shape);
+	GameObjectRef cpBodyGetGameObject(cpBody *body);
+	GameObjectRef cpConstraintGetGameObject(cpConstraint *constraint);
+
+
+#pragma mark - Component
+
 	SMART_PTR(Component);
-	class Component : public enable_shared_from_this<Component>, public signals::receiver {
+	class Component : public enable_shared_from_this<Component>, public signals::receiver, public IOwnedByGameObject {
 	public:
 
 		Component(){}
 		virtual ~Component(){}
+
+		// IOwnedByGameObject
+		GameObjectRef getGameObject() const override { return _gameObject.lock(); }
 
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this<FooComponent>();
 		template<typename T>
@@ -40,7 +66,6 @@ namespace core {
 			return dynamic_pointer_cast<T>(enable_shared_from_this<Component>::shared_from_this());
 		}
 
-		GameObjectRef getGameObject() const { return _gameObject.lock(); }
 		LevelRef getLevel() const;
 
 		template<typename T>
@@ -73,6 +98,8 @@ namespace core {
 
 	};
 
+#pragma mark - PhysicsComponent
+
 	SMART_PTR(PhysicsComponent);
 	class PhysicsComponent : public Component {
 	public:
@@ -91,6 +118,8 @@ namespace core {
 	};
 
 
+#pragma mark - DrawComponent
+
 	namespace VisibilityDetermination
 	{
 		enum style {
@@ -108,8 +137,6 @@ namespace core {
 		}
 	}
 
-
-	#pragma mark - BatchDrawDelegate
 
 	SMART_PTR(DrawComponent);
 	class DrawComponent : public Component {
@@ -161,6 +188,7 @@ namespace core {
 
 	};
 
+#pragma mark - InputComponent
 
 	SMART_PTR(InputComponent);
 	class InputComponent : public Component, public InputListener {
@@ -202,8 +230,9 @@ namespace core {
 
 	};
 
+#pragma mark - GameObject
 
-	class GameObject : public enable_shared_from_this<GameObject> {
+	class GameObject : public enable_shared_from_this<GameObject>, public IOwnedByGameObject {
 	public:
 
 		static GameObjectRef with(string name, const initializer_list<ComponentRef> &components) {
@@ -219,6 +248,9 @@ namespace core {
 
 		GameObject(string name);
 		virtual ~GameObject();
+
+		// IOwnedByGameObject
+		GameObjectRef getGameObject() const override { return const_cast<GameObject*>(this)->shared_from_this(); }
 
 		size_t getId() const { return _id; }
 		string getName() const { return _name; }

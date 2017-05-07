@@ -1,4 +1,4 @@
-//
+
 //  Player.cpp
 //  Surfacer
 //
@@ -22,143 +22,57 @@ namespace player {
 
 	namespace {
 
-		void BeamProjectile_SegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
+		void BeamComponent_SegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
 
-				// TODO: Figure out the game object associated with this shape. We need a convention?
-				// cpShapeGetUserData is NOT used consistently. Terrain assigns shape user data to Anchor/Shape
 
-				auto contacts = static_cast<vector<BeamProjectileComponent::contact>*>(data);
-				contacts->push_back(BeamProjectileComponent::contact(v2(point), v2(normal), nullptr));
-			}
-		}
+				// TODO: Fix the weirdness here.
+				auto go = nullptr; //cpShapeGetGameObject(shape);
 
-		void BeamProjectile_MidpointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
-			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
-				bool *hit = static_cast<bool*>(data);
-				*hit = true;
+				auto contacts = static_cast<vector<BeamComponent::contact>*>(data);
+				contacts->push_back(BeamComponent::contact(v2(point), v2(normal), go));
+
 			}
 		}
 
 	}
 
 
-#pragma mark - BeamProjectileComponent
+#pragma mark - BeamComponent
 
 	/*
 		config _config;
 		dvec2 _origin, _dir;
-		segment _segment, _cutToPerform;
-		double _penetrationRemaining;
-		bool _hasHit;
-		core::seconds_t _lastDeltaT;
+		segment _segment;
 		vector<contact> _contacts;
 	 */
 
-	BeamProjectileComponent::BeamProjectileComponent(config c):
+	BeamComponent::BeamComponent(config c):
 	_config(c),
 	_origin(0),
-	_dir(0),
-	_cutToPerform(dvec2(0), dvec2(0),0),
-	_penetrationRemaining(c.cutDepth),
-	_hasHit(false),
-	_lastDeltaT(0)
+	_dir(0)
 	{}
 
-	BeamProjectileComponent::BeamProjectileComponent(config c, dvec2 origin, dvec2 dir):
-	_config(c),
-	_origin(0),
-	_dir(0),
-	_cutToPerform(dvec2(0), dvec2(0),0),
-	_penetrationRemaining(c.cutDepth),
-	_hasHit(false),
-	_lastDeltaT(0)
-	{
-		fire(origin, dir);
-	}
+	BeamComponent::~BeamComponent(){}
 
-	BeamProjectileComponent::~BeamProjectileComponent(){}
-
-	void BeamProjectileComponent::fire(dvec2 origin, dvec2 dir) {
+	void BeamComponent::fire(dvec2 origin, dvec2 dir) {
 		_segment.len = 0;
 		_origin = _segment.head = _segment.tail = origin;
 		_dir = normalize(dir);
 	}
 
-	double BeamProjectileComponent::getWidth() const {
+	double BeamComponent::getWidth() const {
 		return _config.width;
 	}
 
-	void BeamProjectileComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void BeamComponent::onReady(GameObjectRef parent, LevelRef level) {
 		Component::onReady(parent, level);
 	}
 
-	void BeamProjectileComponent::onCleanup() {
-
-		//
-		//	If this projectile has a cut depth, and if a computed cut ray exists, do it
-		//
-
-		if (_config.cutDepth > 0 && _cutToPerform.len > 0) {
-			terrain::TerrainObjectRef terrain = dynamic_pointer_cast<GameLevel>(getLevel())->getTerrain();
-			if (terrain) {
-				terrain->getWorld()->cut(_cutToPerform.tail, _cutToPerform.head, _config.width/2, CollisionFilters::CUTTER);
-			}
-		}
-	}
-
-	void BeamProjectileComponent::update(const time_state &time) {
-		GameObjectRef go = getGameObject();
-		assert(go);
-
-		_lastDeltaT = time.deltaT;
-
-		//
-		//	Before beam hits, we move the head, compute the length, and track the tail.
-		//	after impact, tail still moves forward, and when length == 0 we're finished.
-		//
-
-		const double dist = _config.velocity * time.deltaT;
-		if (!_hasHit || _penetrationRemaining > 0) {
-			_segment.head = _segment.head + _dir * dist;
-			_segment.len = min(_config.length, distance(_segment.head, _origin));
-			_segment.tail = _segment.head - _dir * _segment.len;
-
-			//
-			// If this projectile can cut, do a point query - if it is in terrain, subtract dist from remainder
-			//
-
-			if (_config.cutDepth > 0) {
-
-				cpSpace *space = go->getLevel()->getSpace()->getSpace();
-				bool didHit = false;
-				cpSpacePointQuery(space, cpv(_segment.head), dist/2, CollisionFilters::CUTTER, BeamProjectile_MidpointQueryFunc, &didHit);
-
-				if (didHit) {
-					_penetrationRemaining -= dist;
-					_cutToPerform.tail = _origin;
-					_cutToPerform.head = _segment.head;
-					_cutToPerform.len = distance(_cutToPerform.tail, _cutToPerform.head);
-				}
-			}
-		} else {
-
-			_segment.len = max(_segment.len - dist, 0.0);
-			_segment.tail = _segment.head - _dir * _segment.len;
-
-			if (_segment.len < 1e-3) {
-				go->setFinished();
-			}
-		}
-
-		if (!go->isFinished()) {
-			updateContacts();
-			go->getDrawComponent()->notifyMoved();
-		}
-	}
+	void BeamComponent::update(const time_state &time) {}
 
 	// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
-	void BeamProjectileComponent::updateContacts() {
+	void BeamComponent::updateContacts() {
 		_contacts.clear();
 
 		//
@@ -178,8 +92,8 @@ namespace player {
 		double radius = _config.width / 2;
 
 		vector<contact> rawContacts;
-		cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
-		cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, BeamProjectile_SegmentQueryFunc, &rawContacts);
+		cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, BeamComponent_SegmentQueryFunc, &rawContacts);
+		cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, BeamComponent_SegmentQueryFunc, &rawContacts);
 
 		// filter to those inside the segment range
 		const auto seg = getSegment();
@@ -198,39 +112,181 @@ namespace player {
 		});
 
 		_contacts = filteredContacts;
-		if (!_contacts.empty()) {
-			_hasHit = true;
+	}
+
+#pragma mark - PulseBeamComponent
+
+	/*
+	config _config;
+	double _distanceTraveled;
+	bool _hasHit;
+	*/
+
+	PulseBeamComponent::PulseBeamComponent(config c):
+	player::BeamComponent(c),
+	_config(c)
+	{}
+
+	void PulseBeamComponent::update(const core::time_state &time) {
+
+		GameObjectRef go = getGameObject();
+		assert(go);
+
+		//
+		//	Before beam hits, we move the head, compute the length, and track the tail.
+		//	after impact, tail still moves forward, and when length == 0 we're finished.
+		//
+
+		const double dist = _config.velocity * time.deltaT;
+		_distanceTraveled += dist;
+
+		if (_distanceTraveled >= _config.range) {
+			go->setFinished();
+			return;
+		}
+
+		if (!_hasHit) {
+			_segment.head = _segment.head + _dir * dist;
+			_segment.len = min(_config.length, distance(_segment.head, _origin));
+			_segment.tail = _segment.head - _dir * _segment.len;
+		} else {
+
+			_segment.len = max(_segment.len - dist, 0.0);
+			_segment.tail = _segment.head - _dir * _segment.len;
+
+			if (_segment.len < 1e-3) {
+				go->setFinished();
+				return;
+			}
+		}
+
+		//
+		//	Compute contacts for the current segment
+		//
+
+		bool wasHit = false;
+		updateContacts();
+		_hasHit = !_contacts.empty();
+
+		//
+		//	Now if this is a non-penetrative beam, and we went from !hit to hit, backtrack.
+		//	This reduces (but not entirely fixes) accidental penetration of the beam at high velocity.
+		//
+
+		if (!wasHit && _hasHit) {
+			_segment.head = _contacts.back().position;
+			_segment.len = distance(_segment.tail, _segment.head);
+		}
+
+		//
+		//	Notify that bounds have changed
+		//
+
+		go->getDrawComponent()->notifyMoved();
+
+
+		BeamComponent::update(time);
+	}
+
+#pragma mark - BlastBeamComponent
+
+	namespace {
+		void BlastBeamComponent_PointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
+			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
+				bool *hit = static_cast<bool*>(data);
+				*hit = true;
+			}
+		}
+
+	}
+
+	/*
+	config _config;
+	core::seconds_t _startSeconds;
+	*/
+
+	BlastBeamComponent::BlastBeamComponent(config c):
+	player::BeamComponent(c),
+	_config(c)
+	{}
+
+	void BlastBeamComponent::fire(dvec2 origin, dvec2 dir) {
+		BeamComponent::fire(origin, dir);
+	}
+
+	void BlastBeamComponent::onReady(GameObjectRef parent, LevelRef level) {
+
+		_startSeconds = time_state::now();
+
+		computeCutSegment();
+
+		terrain::TerrainObjectRef terrain = dynamic_pointer_cast<GameLevel>(level)->getTerrain();
+		if (terrain) {
+			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2, CollisionFilters::CUTTER);
+		}
+
+		// tell draw component
+		parent->getDrawComponent()->notifyMoved();
+	}
+
+	void BlastBeamComponent::update(const core::time_state &time) {
+		if (time.time  - _startSeconds > _config.lifespan) {
+			getGameObject()->setFinished();
 		}
 	}
 
-#pragma mark - BeamProjectileDrawComponent
+	void BlastBeamComponent::computeCutSegment() {
+		// blast beam isn't animated - just a static segment
+		_segment.tail = _origin;
+		_segment.head = _origin + _dir * _config.range;
+		_segment.len = distance(_segment.tail, _segment.head);
 
-	BeamProjectileDrawComponent::BeamProjectileDrawComponent(){}
-	BeamProjectileDrawComponent::~BeamProjectileDrawComponent(){}
+		// now we want to shorten _segment to accommodate cut depth
+		cpSpace *space = getLevel()->getSpace()->getSpace();
+		double stepSize = 10;
+		double penetration = 0;
+		for (double dist = 0; dist < _config.range && penetration < _config.cutDepth; dist += stepSize) {
+			bool didHit = false;
+			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, CollisionFilters::CUTTER, BlastBeamComponent_PointQueryFunc, &didHit);
+			if (didHit) {
+				penetration += stepSize;
+			}
+		}
 
-	void BeamProjectileDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
-		DrawComponent::onReady(parent, level);
-		_projectile = getSibling<BeamProjectileComponent>();
+		// now resize _segment
+		_segment.len = _config.range - penetration;
+		_segment.head = _origin + _dir * _segment.len;
 	}
 
-	cpBB BeamProjectileDrawComponent::getBB() const {
-		if (BeamProjectileComponentRef projectile = _projectile.lock()) {
-			auto seg = projectile->getSegment();
+
+#pragma mark - BeamDrawComponent
+
+	BeamDrawComponent::BeamDrawComponent(){}
+	BeamDrawComponent::~BeamDrawComponent(){}
+
+	void BeamDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+		DrawComponent::onReady(parent, level);
+		_beam = getSibling<BeamComponent>();
+	}
+
+	cpBB BeamDrawComponent::getBB() const {
+		if (BeamComponentRef beam = _beam.lock()) {
+			auto seg = beam->getSegment();
 			return cpBBNewLineSegment(seg.head, seg.tail);
 		}
 		return cpBBInvalid;
 	}
 
-	void BeamProjectileDrawComponent::draw(const render_state &renderState) {
-		if (BeamProjectileComponentRef projectile = _projectile.lock()) {
-			auto seg = projectile->getSegment();
+	void BeamDrawComponent::draw(const render_state &renderState) {
+		if (BeamComponentRef beam = _beam.lock()) {
+			auto seg = beam->getSegment();
 
 			// scale width up to not be less than 1px
-			double radius = projectile->getWidth() / 2;
+			double radius = beam->getWidth() / 2;
 			radius = max(radius, 0.5 / renderState.viewport->getScale());
 
 			{
-				dvec2 dir = projectile->getDirection();
+				dvec2 dir = beam->getDirection();
 				dvec2 center = (seg.head + seg.tail) * 0.5;
 				double angle = atan2(dir.y, dir.x);
 
@@ -243,7 +299,7 @@ namespace player {
 			}
 
 			if (renderState.mode == RenderMode::DEVELOPMENT) {
-				const auto &contacts = projectile->getContacts();
+				const auto &contacts = beam->getContacts();
 				double r = radius * 8;
 				gl::color(1,0,1);
 				for (const auto &contact : contacts) {
@@ -253,18 +309,17 @@ namespace player {
 		}
 	}
 
-	VisibilityDetermination::style BeamProjectileDrawComponent::getVisibilityDetermination() const {
+	VisibilityDetermination::style BeamDrawComponent::getVisibilityDetermination() const {
 		return VisibilityDetermination::FRUSTUM_CULLING;
 	}
 
-	int BeamProjectileDrawComponent::getLayer() const {
+	int BeamDrawComponent::getLayer() const {
 		return DrawLayers::PLAYER;
 	}
 
-	int BeamProjectileDrawComponent::getDrawPasses() const {
+	int BeamDrawComponent::getDrawPasses() const {
 		return 1;
 	}
-
 
 
 #pragma mark - PlayerGunComponent
@@ -284,8 +339,7 @@ namespace player {
 	_beamOrigin(0),
 	_beamDir(0),
 	_blastCharge(0),
-	_pulseStartTime(-std::numeric_limits<seconds_t>::max()),
-	_blastStartTime(-std::numeric_limits<seconds_t>::max())
+	_pulseStartTime(-std::numeric_limits<seconds_t>::max())
 	{}
 
 	PlayerGunComponent::~PlayerGunComponent() {}
@@ -297,8 +351,10 @@ namespace player {
 		}
 
 		if (_isShooting && !shooting) {
-			if (_blastCharge >= 1) {
+			if (_blastCharge >= 1 - 1e-2 ) {
 				fireBlast();
+			} else {
+				firePulse();
 			}
 		}
 
@@ -306,39 +362,31 @@ namespace player {
 	}
 
 	void PlayerGunComponent::update(const time_state &time) {
-
 		if (_isShooting) {
 			_blastCharge = clamp((time.time - _pulseStartTime) * _config.blastChargePerSecond, 0.0, 1.0);
-		} else {
-
-			double t = clamp((time.time - _blastStartTime) * (_config.blastChargePerSecond * 0.5), 0.0, 1.0);
-			_blastCharge = 1.0 - t;
 		}
-
 	}
 
 	void PlayerGunComponent::firePulse() {
+
 		_blastCharge = 0;
 		_pulseStartTime = time_state::now();
 
-		auto pulse = GameObject::with("Pulse", {
-			make_shared<BeamProjectileComponent>(_config.pulse, getBeamOrigin(), getBeamDirection()),
-			make_shared<BeamProjectileDrawComponent>()
-		});
+		auto pbc = make_shared<PulseBeamComponent>(_config.pulse);
+		pbc->fire(getBeamOrigin(), getBeamDirection());
 
-		getLevel()->addGameObject(pulse);
+		getLevel()->addGameObject(GameObject::with("Pulse", { pbc, make_shared<BeamDrawComponent>() }));
 
 	}
 
 	void PlayerGunComponent::fireBlast() {
-		_blastStartTime = time_state::now();
 
-		auto blast = GameObject::with("Blast", {
-			make_shared<BeamProjectileComponent>(_config.blast, getBeamOrigin(), getBeamDirection()),
-			make_shared<BeamProjectileDrawComponent>()
-		});
+		_blastCharge = 0;
 
-		getLevel()->addGameObject(blast);
+		auto bbc = make_shared<BlastBeamComponent>(_config.blast);
+		bbc->fire(getBeamOrigin(), getBeamDirection());
+
+		getLevel()->addGameObject(GameObject::with("Blast", { bbc, make_shared<BeamDrawComponent>() }));
 	}
 
 #pragma mark - PlayerPhysicsComponent
@@ -643,7 +691,7 @@ namespace player {
 		bool flying = isFlying() && _jetpackFuelLevel > 0;
 
 		if (flying) {
-			dvec2 antiGravForceDir = normalize((0.5 * Dir * Right) + G.dir);
+			dvec2 antiGravForceDir = normalize((2 * Dir * Right) + G.dir);
 			dvec2 force = -config.jetpackAntigravity * _totalMass * G.force * antiGravForceDir;
 			cpBodyApplyForceAtWorldPoint(_body, cpv(force), cpBodyLocalToWorld(_wheelBody, cpvzero));
 			_jetpackFuelLevel -= config.jetpackFuelConsumptionPerSecond * timeState.deltaT;
@@ -980,14 +1028,12 @@ namespace player {
 		config.gun.pulse.width = util::xml::readNumericAttribute(pulseNode, "width", 2);
 		config.gun.pulse.length = util::xml::readNumericAttribute(pulseNode, "length", 100);
 		config.gun.pulse.velocity = util::xml::readNumericAttribute(pulseNode, "velocity", 100);
-		config.gun.pulse.cutDepth = util::xml::readNumericAttribute(pulseNode, "cutDepth", 0);;
 
 		XmlTree blastNode = gunNode.getChild("blast");
 		config.gun.blast.range = util::xml::readNumericAttribute(blastNode, "range", 1000);
 		config.gun.blast.width = util::xml::readNumericAttribute(blastNode, "width", 2);
-		config.gun.blast.length = util::xml::readNumericAttribute(blastNode, "length", 100);
-		config.gun.blast.velocity = util::xml::readNumericAttribute(blastNode, "velocity", 100);
-		config.gun.blast.cutDepth = util::xml::readNumericAttribute(blastNode, "cutDepth", 300);
+		config.gun.blast.lifespan = util::xml::readNumericAttribute(blastNode, "lifespan", 0.5);
+		config.gun.blast.cutDepth = util::xml::readNumericAttribute(blastNode, "cutDepth", config.gun.blast.range);
 
 		//
 		//	Physics

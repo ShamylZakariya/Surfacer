@@ -306,8 +306,9 @@ namespace terrain {
 	void World::build(const vector<ShapeRef> &shapes, const vector<AnchorRef> &anchors, const vector<ElementRef> &elements) {
 
 		// build the anchors, adding all that triangulated and made physics representations
+		const auto self = shared_from_this();
 		for (auto anchor : anchors) {
-			if (anchor->build(_space, _anchorMaterial)) {
+			if (anchor->build(self, _space, _anchorMaterial)) {
 				_anchors.push_back(anchor);
 				_drawDispatcher.add(anchor);
 			}
@@ -526,7 +527,7 @@ namespace terrain {
 		//
 
 		if (!_staticGroup) {
-			_staticGroup = make_shared<StaticGroup>(_space, _worldMaterial, _drawDispatcher);
+			_staticGroup = make_shared<StaticGroup>(shared_from_this(), _worldMaterial, _drawDispatcher);
 		}
 
 		//
@@ -575,7 +576,7 @@ namespace terrain {
 				//
 
 
-				DynamicGroupRef group = make_shared<DynamicGroup>(_space, _worldMaterial, _drawDispatcher);
+				DynamicGroupRef group = make_shared<DynamicGroup>(shared_from_this(), _worldMaterial, _drawDispatcher);
 				if (group->build(shapeGroup, parentGroup)) {
 					_dynamicGroups.insert(group);
 				}
@@ -651,17 +652,19 @@ namespace terrain {
 	/*
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
-		SpaceAccessRef _space;
+		WorldWeakRef _world;
+		core::SpaceAccessRef _space;
 		material _material;
 		string _name;
 		Color _color;
 		cpHashValue _hash;
 	 */
 
-	GroupBase::GroupBase(SpaceAccessRef space, material m, DrawDispatcher &dispatcher):
+	GroupBase::GroupBase(WorldRef world, material m, DrawDispatcher &dispatcher):
 	_drawDispatcher(dispatcher),
 	_drawingBatchId(World::nextId()),
-	_space(space),
+	_world(world),
+	_space(world->getSpace()),
 	_material(m)
 	{}
 
@@ -676,15 +679,16 @@ namespace terrain {
 		mutable cpBB _worldBB;
 	 */
 
-	StaticGroup::StaticGroup(SpaceAccessRef space, material m, DrawDispatcher &dispatcher):
-	terrain::GroupBase(space, m, dispatcher),
+	StaticGroup::StaticGroup(WorldRef world, material m, DrawDispatcher &dispatcher):
+	terrain::GroupBase(world, m, dispatcher),
 	_body(nullptr),
 	_worldBB(cpBBInvalid) {
 		_name = "StaticGroup";
 		_color = Color(0.15,0.15,0.15);
+
 		_body = cpBodyNewStatic();
 		cpBodySetUserData(_body, this);
-		space->addBody(_body);
+		_space->addBody(_body);
 	}
 	
 	StaticGroup::~StaticGroup() {
@@ -807,8 +811,8 @@ namespace terrain {
 		Color _color;
 	 */
 
-	DynamicGroup::DynamicGroup(SpaceAccessRef space, material m, DrawDispatcher &dispatcher):
-	GroupBase(space, m, dispatcher),
+	DynamicGroup::DynamicGroup(WorldRef world, material m, DrawDispatcher &dispatcher):
+	GroupBase(world, m, dispatcher),
 	_body(nullptr),
 	_position(cpv(0,0)),
 	_angle(0),
@@ -1177,9 +1181,14 @@ namespace terrain {
 		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
 
-	bool Anchor::build(SpaceAccessRef space, material m) {
+	GameObjectRef Anchor::getGameObject() const {
+		return _world.lock()->getGameObject();
+	}
+
+	bool Anchor::build(WorldRef world, SpaceAccessRef space, material m) {
 		assert(_shapes.empty());
 
+		_world = world;
 		_material = m;
 		_staticBody = cpBodyNewStatic();
 
@@ -1224,6 +1233,8 @@ namespace terrain {
 
 		return false;
 	}
+
+	
 
 #pragma mark - Shape
 
@@ -1367,6 +1378,11 @@ namespace terrain {
 		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this<Shape>() };
 		return result;
 	}
+
+	GameObjectRef Shape::getGameObject() const {
+		return getGroup()->getWorld()->getGameObject();
+	}
+
 
 	void Shape::updateWorldSpaceContourAndBB() {
 		if (_worldSpaceShapeContourEdgesDirty) {

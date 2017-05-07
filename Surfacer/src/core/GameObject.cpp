@@ -14,6 +14,23 @@
 
 namespace core {
 
+#pragma mark - IOwnedByGameObject
+
+	GameObjectRef cpShapeGetGameObject(cpShape *shape) {
+		IOwnedByGameObject *e = static_cast<IOwnedByGameObject*>(cpShapeGetUserData(shape));
+		return e ? e->getGameObject() : nullptr;
+	}
+
+	GameObjectRef cpBodyGetGameObject(cpBody *body) {
+		IOwnedByGameObject *e = static_cast<IOwnedByGameObject*>(cpBodyGetUserData(body));
+		return e ? e->getGameObject() : nullptr;
+	}
+
+	GameObjectRef cpConstraintGetGameObject(cpConstraint *constraint) {
+		IOwnedByGameObject *e = static_cast<IOwnedByGameObject*>(cpConstraintGetUserData(constraint));
+		return e ? e->getGameObject() : nullptr;
+	}
+
 #pragma mark - Component	
 
 	LevelRef Component::getLevel() const {

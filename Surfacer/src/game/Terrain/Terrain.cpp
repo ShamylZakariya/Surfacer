@@ -28,6 +28,7 @@ namespace terrain {
 
 	void TerrainObject::onReady(LevelRef level) {
 		GameObject::onReady(level);
+		_world->setGameObject(shared_from_this());
 	}
 
 	void TerrainObject::step(const time_state &timeState) {
@@ -56,10 +57,6 @@ namespace terrain {
 
 	void TerrainPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
-
-		// assign level ref to bodies
-		
-
 	}
 
 	vector<cpBody*> TerrainPhysicsComponent::getBodies() const {

@@ -2,8 +2,8 @@
 <player walkSpeed="200" runMultiplier="3">
 
 	<gun blastChargePerSecond="0.3">
-		<pulse width="8" length="2000" range="100000" velocity="5000" cutDepth="0"/>
-		<blast width="16" length="2000" range="100000" velocity="50000" cutDepth="500"/>
+		<pulse width="8" length="500" range="100000" velocity="10000"/>
+		<blast width="16" range="2000" cutDepth="1000" lifespan="0.25"/>
 	</gun>
 
 	<physics width="20" height="60" density="1" wheelFriction="1" bodyFriction="0.2">

@@ -4,7 +4,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##TODO
 
-- Using time of life for the beam doesn't work. Maybe we need to let bolts fly their max dist. But we still need a timeout before blast charge starts and that can be on the gun itself.
+- Gun cutting beam doesn't reliably work! I might not be computing the cut segment correctly. Seems to happen more when firing up than down (!?)
 - Projectile contact stuff is presently unable to associate a GameObject target. Probably want to make some kind of common base class which has a virtual method to get the GameObject.
  
 

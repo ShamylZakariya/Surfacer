@@ -196,7 +196,7 @@ namespace terrain {
 	 @class World
 	 World "owns" and manages Group instances, which in turn own and manage Shape instances.
 	 */
-	class World : public enable_shared_from_this<World> {
+	class World : public enable_shared_from_this<World>, public core::IOwnedByGameObject {
 	public:
 
 		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform,
@@ -215,6 +215,7 @@ namespace terrain {
 		}
 
 	public:
+
 		World(core::SpaceAccessRef space, material worldMaterial, material anchorMaterial);
 		~World();
 
@@ -241,9 +242,15 @@ namespace terrain {
 		const vector<AnchorRef> &getAnchors() const { return _anchors; }
 		const vector<ElementRef> &getElements() const { return _elements; }
 		ElementRef getElementById(string id) const;
+		core::SpaceAccessRef getSpace() const { return _space; }
 
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
+
+		void setGameObject(core::GameObjectRef gameObject) { _gameObject = gameObject; }
+
+		//IOwnedByGameObject
+		core::GameObjectRef getGameObject() const override { return _gameObject.lock(); }
 
 	protected:
 
@@ -265,6 +272,8 @@ namespace terrain {
 
 		DrawDispatcher _drawDispatcher;
 		ci::gl::GlslProgRef _shader;
+
+		core::GameObjectWeakRef _gameObject;
 	};
 
 
@@ -274,7 +283,7 @@ namespace terrain {
 	class GroupBase {
 	public:
 
-		GroupBase(core::SpaceAccessRef space, material m, DrawDispatcher &dispatcher);
+		GroupBase(WorldRef world, material m, DrawDispatcher &dispatcher);
 		virtual ~GroupBase();
 
 		DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
@@ -297,7 +306,6 @@ namespace terrain {
 		virtual void step(const core::time_state &timeState) = 0;
 		virtual void update(const core::time_state &timeState) = 0;
 
-
 		cpTransform getModelTransform() const {
 			dmat4 mm = getModelMatrix();
 			return cpTransform { mm[0].x, mm[0].y, mm[1].x, mm[1].y, mm[3].x, mm[3].y };
@@ -308,10 +316,13 @@ namespace terrain {
 			return cpTransform { mvi[0].x, mvi[0].y, mvi[1].x, mvi[1].y, mvi[3].x, mvi[3].y };
 		}
 
+		WorldRef getWorld() const { return _world.lock(); }
+
 	protected:
 
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
+		WorldWeakRef _world;
 		core::SpaceAccessRef _space;
 		material _material;
 		string _name;
@@ -324,7 +335,7 @@ namespace terrain {
 
 	class StaticGroup : public GroupBase, public enable_shared_from_this<StaticGroup> {
 	public:
-		StaticGroup(core::SpaceAccessRef space, material m, DrawDispatcher &dispatcher);
+		StaticGroup(WorldRef world, material m, DrawDispatcher &dispatcher);
 		virtual ~StaticGroup();
 
 		virtual cpBody* getBody() const override { return _body; }
@@ -359,7 +370,7 @@ namespace terrain {
 
 	class DynamicGroup : public GroupBase, public enable_shared_from_this<DynamicGroup>{
 	public:
-		DynamicGroup(core::SpaceAccessRef space, material m, DrawDispatcher &dispatcher);
+		DynamicGroup(WorldRef world, material m, DrawDispatcher &dispatcher);
 		virtual ~DynamicGroup();
 
 		virtual string getName() const override;
@@ -486,7 +497,7 @@ namespace terrain {
 	 A body is static if one of its shapes overlaps an anchor, and if the body's parentage has never been dynamic.
 	 This is to say, once a shape is severed from a static body and becomes dynamic, it can never be static again.
 	 */
-	class Anchor : public Drawable {
+	class Anchor : public Drawable, public core::IOwnedByGameObject {
 	public:
 
 		static const size_t DRAWING_BATCH_ID = 0;
@@ -514,6 +525,7 @@ namespace terrain {
 
 		const PolyLine2d &getContour() const { return _contour; }
 
+		// Drawable
 		cpBB getBB() const override { return _bb; }
 		size_t getDrawingBatchId() const override { return DRAWING_BATCH_ID; }
 		size_t getLayer() const override { return LAYER; }
@@ -525,10 +537,13 @@ namespace terrain {
 		Color getColor() const override { return Color(0,0,0); }
 		bool shouldDraw(const core::render_state &state) const override { return true; }
 
+		//IOwnedByGameObject
+		core::GameObjectRef getGameObject() const override;
+
 	protected:
 
 		friend class World;
-		bool build(core::SpaceAccessRef space, material m);
+		bool build(WorldRef world, core::SpaceAccessRef space, material m);
 
 	private:
 
@@ -542,11 +557,13 @@ namespace terrain {
 		TriMeshRef _trimesh;
 		ci::gl::VboMeshRef _vboMesh;
 
+		WorldWeakRef _world;
+
 	};
 
 #pragma mark - Shape
 
-	class Shape : public Drawable {
+	class Shape : public Drawable, public core::IOwnedByGameObject {
 	public:
 
 		static const size_t LAYER = 0;
@@ -625,6 +642,9 @@ namespace terrain {
 		cpBB getWorldSpaceContourEdgesBB();
 
 		vector<ShapeRef> subtract(const PolyLine2d &contourToSubtract) const;
+
+		//IOwnedByGameObject
+		core::GameObjectRef getGameObject() const override;
 
 
 	protected:

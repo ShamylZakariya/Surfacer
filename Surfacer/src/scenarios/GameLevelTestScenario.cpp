@@ -30,21 +30,21 @@ void GameLevelTestScenario::setup() {
 	auto terrain = level->getTerrain();
 	auto player = level->getPlayer();
 
-	auto dragger = GameObject::with("Dragger", {
-		make_shared<MousePickComponent>(CollisionFilters::PICK),
-		make_shared<MousePickDrawComponent>()
-	});
-
-	auto cutter = GameObject::with("Cutter", {
-		make_shared<MouseCutterComponent>(terrain, CollisionFilters::CUTTER, 4),
-		make_shared<MouseCutterDrawComponent>()
-	});
+//	auto dragger = GameObject::with("Dragger", {
+//		make_shared<MousePickComponent>(CollisionFilters::PICK),
+//		make_shared<MousePickDrawComponent>()
+//	});
+//	getLevel()->addGameObject(dragger);
+//
+//	auto cutter = GameObject::with("Cutter", {
+//		make_shared<MouseCutterComponent>(terrain, CollisionFilters::CUTTER, 4),
+//		make_shared<MouseCutterDrawComponent>()
+//	});
+//	getLevel()->addGameObject(cutter);
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
-
-	getLevel()->addGameObject(dragger);
-	getLevel()->addGameObject(cutter);
 	getLevel()->addGameObject(grid);
+
 }
 
 void GameLevelTestScenario::cleanup() {

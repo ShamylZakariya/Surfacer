@@ -22,12 +22,22 @@ namespace player {
 	SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
 	SMART_PTR(PlayerDrawComponent);
 	SMART_PTR(PlayerInputComponent);
-	SMART_PTR(BeamProjectileComponent);
+	SMART_PTR(BeamComponent);
 
 #pragma mark - BeamProjectileComponent
 
-	class BeamProjectileComponent : public core::Component {
+	class BeamComponent : public core::Component {
 	public:
+
+		struct config {
+			double width;
+			double range;
+
+			config():
+			width(0),
+			range(0)
+			{}
+		};
 
 		struct contact {
 			dvec2 position;
@@ -41,45 +51,25 @@ namespace player {
 			{}
 		};
 
-		struct config {
-			double range;
-			double width;
-			double length;
-			double velocity;
-			double cutDepth;
-
-			config():
-			range(0),
-			width(0),
-			length(0),
-			velocity(0),
-			cutDepth(0)
-			{}
-		};
-
 		struct segment {
 			dvec2 head, tail;
 			double len;
 
-			segment(){}
-
-			segment(dvec2 h, dvec2 t, double l):
-			head(h),
-			tail(t),
-			len(l)
+			segment():
+			head(0),
+			tail(0),
+			len(0)
 			{}
 		};
 
 	public:
 
-		BeamProjectileComponent(config c);
-		BeamProjectileComponent(config c, dvec2 origin, dvec2 dir);
-		virtual ~BeamProjectileComponent();
+		BeamComponent(config c);
+		virtual ~BeamComponent();
 
-		void fire(dvec2 origin, dvec2 dir);
+		virtual void fire(dvec2 origin, dvec2 dir);
 		dvec2 getOrigin() const { return _origin; }
 		dvec2 getDirection() const { return _dir; }
-		dvec2 getPosition() const { return _segment.head; }
 		double getWidth() const;
 		segment getSegment() const { return _segment; }
 
@@ -88,32 +78,93 @@ namespace player {
 
 		// Component
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
-		void onCleanup() override;
 		void update(const core::time_state &time) override;
 
-	private:
+	protected:
 
 		void updateContacts();
 
-	private:
+	protected:
 
 		config _config;
 		dvec2 _origin, _dir;
-		segment _segment, _cutToPerform;
-		double _penetrationRemaining;
-		bool _hasHit;
-		core::seconds_t _lastDeltaT;
+		segment _segment;
 		vector<contact> _contacts;
-		
+
 	};
 
-#pragma mark - BeamProjectileDrawComponent
-
-	class BeamProjectileDrawComponent : public core::DrawComponent {
+	class PulseBeamComponent : public BeamComponent {
 	public:
 
-		BeamProjectileDrawComponent();
-		virtual ~BeamProjectileDrawComponent();
+		struct config : public BeamComponent::config {
+			double length;
+			double velocity;
+
+			config():
+			length(0),
+			velocity(0)
+			{}
+		};
+
+	public:
+
+		PulseBeamComponent(config c);
+		virtual ~PulseBeamComponent(){}
+
+		// Component
+		void update(const core::time_state &time) override;
+
+	protected:
+
+		config _config;
+		double _distanceTraveled;
+		bool _hasHit;
+
+	};
+
+	class BlastBeamComponent : public BeamComponent {
+	public:
+
+		struct config : public BeamComponent::config {
+			core::seconds_t lifespan;
+			double cutDepth;
+
+			config():
+			lifespan(0),
+			cutDepth(0)
+			{}
+		};
+
+	public:
+
+		BlastBeamComponent(config c);
+		virtual ~BlastBeamComponent(){}
+
+		// BeamComponent
+		void fire(dvec2 origin, dvec2 dir) override;
+
+		// Component
+		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void update(const core::time_state &time) override;
+
+	protected:
+
+		void computeCutSegment();
+
+	protected:
+
+		config _config;
+		core::seconds_t _startSeconds;
+
+	};
+
+#pragma mark - BeamDrawComponent
+
+	class BeamDrawComponent : public core::DrawComponent {
+	public:
+
+		BeamDrawComponent();
+		virtual ~BeamDrawComponent();
 
 		// Component
 		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
@@ -128,7 +179,7 @@ namespace player {
 
 	private:
 
-		BeamProjectileComponentWeakRef _projectile;
+		BeamComponentWeakRef _beam;
 
 	};
 
@@ -139,8 +190,8 @@ namespace player {
 	public:
 
 		struct config {
-			BeamProjectileComponent::config pulse;
-			BeamProjectileComponent::config blast;
+			PulseBeamComponent::config pulse;
+			BlastBeamComponent::config blast;
 			double blastChargePerSecond;
 		};
 
@@ -177,7 +228,7 @@ namespace player {
 		bool _isShooting;
 		dvec2 _beamOrigin, _beamDir;
 		double _blastCharge;
-		core::seconds_t _pulseStartTime, _blastStartTime;
+		core::seconds_t _pulseStartTime;
 
 	};
 
