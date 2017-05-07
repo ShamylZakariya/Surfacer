@@ -14,20 +14,26 @@
 
 namespace core {
 
-#pragma mark - IOwnedByGameObject
+#pragma mark - IChipmunkUserData
+
+	IChipmunkUserData::IChipmunkUserData()
+	{}
+
+	IChipmunkUserData::~IChipmunkUserData()
+	{}
 
 	GameObjectRef cpShapeGetGameObject(cpShape *shape) {
-		IOwnedByGameObject *e = static_cast<IOwnedByGameObject*>(cpShapeGetUserData(shape));
+		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpShapeGetUserData(shape));
 		return e ? e->getGameObject() : nullptr;
 	}
 
 	GameObjectRef cpBodyGetGameObject(cpBody *body) {
-		IOwnedByGameObject *e = static_cast<IOwnedByGameObject*>(cpBodyGetUserData(body));
+		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpBodyGetUserData(body));
 		return e ? e->getGameObject() : nullptr;
 	}
 
 	GameObjectRef cpConstraintGetGameObject(cpConstraint *constraint) {
-		IOwnedByGameObject *e = static_cast<IOwnedByGameObject*>(cpConstraintGetUserData(constraint));
+		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpConstraintGetUserData(constraint));
 		return e ? e->getGameObject() : nullptr;
 	}
 
@@ -41,6 +47,11 @@ namespace core {
 
 	void DrawComponent::notifyMoved() {
 		getGameObject()->getLevel()->getDrawDispatcher()->moved(this);
+	}
+
+	void DrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+		Component::onReady(parent, level);
+		level->getDrawDispatcher()->moved(this);
 	}
 
 #pragma mark - InputComponent

@@ -43,12 +43,6 @@ namespace player {
 			dvec2 position;
 			dvec2 normal;
 			core::GameObjectRef target;
-
-			contact(const dvec2 &p, const dvec2 &n, const core::GameObjectRef &t):
-			position(p),
-			normal(n),
-			target(t)
-			{}
 		};
 
 		struct segment {
@@ -64,7 +58,7 @@ namespace player {
 
 	public:
 
-		BeamComponent(config c);
+		BeamComponent(config c, PlayerRef player);
 		virtual ~BeamComponent();
 
 		virtual void fire(dvec2 origin, dvec2 dir);
@@ -72,6 +66,7 @@ namespace player {
 		dvec2 getDirection() const { return _dir; }
 		double getWidth() const;
 		segment getSegment() const { return _segment; }
+		PlayerRef getPlayer() const { return _player.lock(); }
 
 		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
 		const vector<contact> &getContacts() const { return _contacts; }
@@ -87,6 +82,7 @@ namespace player {
 	protected:
 
 		config _config;
+		PlayerWeakRef _player;
 		dvec2 _origin, _dir;
 		segment _segment;
 		vector<contact> _contacts;
@@ -108,7 +104,7 @@ namespace player {
 
 	public:
 
-		PulseBeamComponent(config c);
+		PulseBeamComponent(config c, PlayerRef player);
 		virtual ~PulseBeamComponent(){}
 
 		// Component
@@ -137,7 +133,7 @@ namespace player {
 
 	public:
 
-		BlastBeamComponent(config c);
+		BlastBeamComponent(config c, PlayerRef player);
 		virtual ~BlastBeamComponent(){}
 
 		// BeamComponent
@@ -419,6 +415,8 @@ namespace player {
 	class Player : public core::GameObject, public TargetTrackingViewportControlComponent::TrackingTarget {
 	public:
 
+		core::signals::signal< void( const BeamComponentRef &, const BeamComponent::contact &contact ) > didShootSomething;
+
 		struct config {
 			PlayerPhysicsComponent::config physics;
 			PlayerGunComponent::config gun;
@@ -455,6 +453,9 @@ namespace player {
 		const PlayerGunComponentRef &getGun() const { return _gun; }
 
 	protected:
+
+		friend class BeamComponent;
+		virtual void onShotSomething(const BeamComponentRef &beam, const BeamComponent::contact &contact);
 
 		virtual void build(config c);
 

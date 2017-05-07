@@ -308,7 +308,8 @@ namespace terrain {
 		// build the anchors, adding all that triangulated and made physics representations
 		const auto self = shared_from_this();
 		for (auto anchor : anchors) {
-			if (anchor->build(self, _space, _anchorMaterial)) {
+			if (anchor->build(_space, _anchorMaterial)) {
+				anchor->setWorld(self);
 				_anchors.push_back(anchor);
 				_drawDispatcher.add(anchor);
 			}
@@ -520,14 +521,32 @@ namespace terrain {
 		return nullptr;
 	}
 
+	void World::setGameObject(core::GameObjectRef gameObject) {
+		_gameObject = gameObject;
+	}
+
+	core::GameObjectRef World::getGameObject() const {
+		return _gameObject.lock();
+	}
+
 	void World::build(const vector<ShapeRef> &affectedShapes, const map<ShapeRef,GroupBaseRef> &parentage) {
+
+		const auto self = shared_from_this();
 
 		//
 		//	Build the static group if we haven't already
 		//
 
 		if (!_staticGroup) {
-			_staticGroup = make_shared<StaticGroup>(shared_from_this(), _worldMaterial, _drawDispatcher);
+			_staticGroup = make_shared<StaticGroup>(self, _worldMaterial, _drawDispatcher);
+		}
+
+		//
+		//	Assign self for IChipmunkUserData lookup
+		//
+
+		for (const auto &shape : affectedShapes) {
+			shape->setWorld(self);
 		}
 
 		//
@@ -669,6 +688,10 @@ namespace terrain {
 	{}
 
 	GroupBase::~GroupBase(){}
+
+	WorldRef GroupBase::getWorld() const {
+		return _world.lock();
+	}
 
 
 #pragma mark - StaticGroup
@@ -1080,8 +1103,8 @@ namespace terrain {
 #pragma mark - Drawable
 
 	/*
-	 static size_t _count;
-	 size_t _id;
+		size_t _id;
+		WorldWeakRef _world;
 	 */
 
 	Drawable::Drawable():
@@ -1089,6 +1112,20 @@ namespace terrain {
 	{}
 
 	Drawable::~Drawable(){}
+
+	void Drawable::setWorld(WorldRef w) {
+		_world = w;
+	}
+
+	WorldRef Drawable::getWorld() const {
+		return _world.lock();
+	}
+
+	// IChipmunkUserData
+	core::GameObjectRef Drawable::getGameObject() const {
+		return _world.lock()->getGameObject();
+	}
+
 
 #pragma mark - Element
 
@@ -1181,14 +1218,9 @@ namespace terrain {
 		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
 
-	GameObjectRef Anchor::getGameObject() const {
-		return _world.lock()->getGameObject();
-	}
-
-	bool Anchor::build(WorldRef world, SpaceAccessRef space, material m) {
+	bool Anchor::build(SpaceAccessRef space, material m) {
 		assert(_shapes.empty());
 
-		_world = world;
 		_material = m;
 		_staticBody = cpBodyNewStatic();
 
@@ -1378,11 +1410,6 @@ namespace terrain {
 		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this<Shape>() };
 		return result;
 	}
-
-	GameObjectRef Shape::getGameObject() const {
-		return getGroup()->getWorld()->getGameObject();
-	}
-
 
 	void Shape::updateWorldSpaceContourAndBB() {
 		if (_worldSpaceShapeContourEdgesDirty) {

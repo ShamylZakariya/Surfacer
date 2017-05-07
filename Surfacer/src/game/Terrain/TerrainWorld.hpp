@@ -196,7 +196,7 @@ namespace terrain {
 	 @class World
 	 World "owns" and manages Group instances, which in turn own and manage Shape instances.
 	 */
-	class World : public enable_shared_from_this<World>, public core::IOwnedByGameObject {
+	class World : public enable_shared_from_this<World> {
 	public:
 
 		static void loadSvg(ci::DataSourceRef svgData, dmat4 transform,
@@ -217,7 +217,7 @@ namespace terrain {
 	public:
 
 		World(core::SpaceAccessRef space, material worldMaterial, material anchorMaterial);
-		~World();
+		virtual ~World();
 
 		/**
 		 Build a world of dynamic and static shapes. Any shape overlapping an Anchor will be static.
@@ -247,10 +247,8 @@ namespace terrain {
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
 
-		void setGameObject(core::GameObjectRef gameObject) { _gameObject = gameObject; }
-
-		//IOwnedByGameObject
-		core::GameObjectRef getGameObject() const override { return _gameObject.lock(); }
+		void setGameObject(core::GameObjectRef gameObject);
+		core::GameObjectRef getGameObject() const;
 
 	protected:
 
@@ -316,7 +314,7 @@ namespace terrain {
 			return cpTransform { mvi[0].x, mvi[0].y, mvi[1].x, mvi[1].y, mvi[3].x, mvi[3].y };
 		}
 
-		WorldRef getWorld() const { return _world.lock(); }
+		WorldRef getWorld() const;
 
 	protected:
 
@@ -407,7 +405,7 @@ namespace terrain {
 
 #pragma mark - Drawable
 
-	class Drawable : public enable_shared_from_this<Drawable> {
+	class Drawable : public core::IChipmunkUserData, public enable_shared_from_this<Drawable> {
 	public:
 		Drawable();
 		virtual ~Drawable();
@@ -437,8 +435,17 @@ namespace terrain {
 			return dynamic_pointer_cast<T>(enable_shared_from_this<Drawable>::shared_from_this());
 		}
 
+		void setWorld(WorldRef w);
+		WorldRef getWorld() const;
+
+		// IChipmunkUserData
+		core::GameObjectRef getGameObject() const override;
+
 	private:
+
 		size_t _id;
+		WorldWeakRef _world;
+
 	};
 
 #pragma mark - Element
@@ -462,7 +469,7 @@ namespace terrain {
 	public:
 
 		Element(string id, const PolyLine2d &contour);
-		~Element();
+		virtual ~Element();
 
 		// Element
 		string getId() const { return _id; }
@@ -497,7 +504,7 @@ namespace terrain {
 	 A body is static if one of its shapes overlaps an anchor, and if the body's parentage has never been dynamic.
 	 This is to say, once a shape is severed from a static body and becomes dynamic, it can never be static again.
 	 */
-	class Anchor : public Drawable, public core::IOwnedByGameObject {
+	class Anchor : public Drawable {
 	public:
 
 		static const size_t DRAWING_BATCH_ID = 0;
@@ -521,7 +528,7 @@ namespace terrain {
 	public:
 
 		Anchor(const PolyLine2d &contour);
-		~Anchor();
+		virtual ~Anchor();
 
 		const PolyLine2d &getContour() const { return _contour; }
 
@@ -537,13 +544,10 @@ namespace terrain {
 		Color getColor() const override { return Color(0,0,0); }
 		bool shouldDraw(const core::render_state &state) const override { return true; }
 
-		//IOwnedByGameObject
-		core::GameObjectRef getGameObject() const override;
-
 	protected:
 
 		friend class World;
-		bool build(WorldRef world, core::SpaceAccessRef space, material m);
+		bool build(core::SpaceAccessRef space, material m);
 
 	private:
 
@@ -557,13 +561,11 @@ namespace terrain {
 		TriMeshRef _trimesh;
 		ci::gl::VboMeshRef _vboMesh;
 
-		WorldWeakRef _world;
-
 	};
 
 #pragma mark - Shape
 
-	class Shape : public Drawable, public core::IOwnedByGameObject {
+	class Shape : public Drawable {
 	public:
 
 		static const size_t LAYER = 0;
@@ -587,7 +589,7 @@ namespace terrain {
 		Shape(const PolyLine2d &shapeContour);
 		Shape(const PolyLine2d &shapeContour, const std::vector<PolyLine2d> &holeContours);
 
-		~Shape();
+		virtual ~Shape();
 
 		const contour_pair &getOuterContour() const { return _outerContour; }
 		const vector<contour_pair> &getHoleContours() const { return _holeContours; }
@@ -642,10 +644,6 @@ namespace terrain {
 		cpBB getWorldSpaceContourEdgesBB();
 
 		vector<ShapeRef> subtract(const PolyLine2d &contourToSubtract) const;
-
-		//IOwnedByGameObject
-		core::GameObjectRef getGameObject() const override;
-
 
 	protected:
 

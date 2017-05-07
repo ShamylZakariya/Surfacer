@@ -21,22 +21,24 @@ namespace core {
 	SMART_PTR(Level);
 	SMART_PTR(SpaceAccess);
 
-#pragma mark - IOwnedByGameObject
+#pragma mark - IChipmunkUserData
 
 	/**
-	 IOwnedByGameObject
-	 Interface for things which are directly or indirectly owned by a GameObject. The idea is
-	 that we can cast the output of cp{Shape|Body|Constraint}GetUserData to this, and then
-	 get a GameObject out.
+	 IChipmunkUserData
+	 Interface for things which will want to set themselves as user data for a chipmunk shape/body/etc
 	 */
-	class IOwnedByGameObject {
+	class IChipmunkUserData {
 	public:
 
-		virtual GameObjectRef getGameObject() const = 0;
+		IChipmunkUserData();
+		virtual ~IChipmunkUserData();
+
+		// return the GameObject owning this thing, whatever this thing is
+		virtual GameObjectRef getGameObject() const { return nullptr; };
 
 	};
 
-	// convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IOwnedByGameObject
+	// convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IChipmunkUserData
 	GameObjectRef cpShapeGetGameObject(cpShape *shape);
 	GameObjectRef cpBodyGetGameObject(cpBody *body);
 	GameObjectRef cpConstraintGetGameObject(cpConstraint *constraint);
@@ -45,13 +47,13 @@ namespace core {
 #pragma mark - Component
 
 	SMART_PTR(Component);
-	class Component : public enable_shared_from_this<Component>, public signals::receiver, public IOwnedByGameObject {
+	class Component : public enable_shared_from_this<Component>, public signals::receiver, public IChipmunkUserData {
 	public:
 
 		Component(){}
 		virtual ~Component(){}
 
-		// IOwnedByGameObject
+		// IChipmunkUserData
 		GameObjectRef getGameObject() const override { return _gameObject.lock(); }
 
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this<FooComponent>();
@@ -186,6 +188,9 @@ namespace core {
 		// call this to notify the draw dispatch system that this DrawComponent has an updated BB
 		virtual void notifyMoved();
 
+		// Component
+		void onReady(GameObjectRef parent, LevelRef level) override;
+
 	};
 
 #pragma mark - InputComponent
@@ -232,7 +237,7 @@ namespace core {
 
 #pragma mark - GameObject
 
-	class GameObject : public enable_shared_from_this<GameObject>, public IOwnedByGameObject {
+	class GameObject : public IChipmunkUserData, public enable_shared_from_this<GameObject> {
 	public:
 
 		static GameObjectRef with(string name, const initializer_list<ComponentRef> &components) {
@@ -249,7 +254,7 @@ namespace core {
 		GameObject(string name);
 		virtual ~GameObject();
 
-		// IOwnedByGameObject
+		// IChipmunkUserData
 		GameObjectRef getGameObject() const override { return const_cast<GameObject*>(this)->shared_from_this(); }
 
 		size_t getId() const { return _id; }
