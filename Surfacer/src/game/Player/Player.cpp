@@ -158,15 +158,19 @@ namespace player {
 #pragma mark - PulseBeamComponent
 
 	/*
-	config _config;
-	double _distanceTraveled;
-	bool _hasHit;
+		config _config;
+		double _distanceTraveled;
+		bool _hasHit;
 	*/
 
 	PulseBeamComponent::PulseBeamComponent(config c, PlayerRef player):
 	player::BeamComponent(c, player),
-	_config(c)
+	_config(c),
+	_distanceTraveled(0),
+	_hasHit(false)
 	{}
+
+	PulseBeamComponent::~PulseBeamComponent(){}
 
 	void PulseBeamComponent::update(const core::time_state &time) {
 		BeamComponent::update(time);
@@ -369,7 +373,7 @@ namespace player {
 
 	/*
 		config _config;
-		bool _isShooting;
+		bool _shooting;
 		dvec2 _beamOrigin, _beamDir;
 		double _blastCharge;
 		seconds_t _pulseStartTime, _blastStartTime;
@@ -377,7 +381,7 @@ namespace player {
 
 	PlayerGunComponent::PlayerGunComponent(config c):
 	_config(c),
-	_isShooting(false),
+	_shooting(false),
 	_beamOrigin(0),
 	_beamDir(0),
 	_blastCharge(0),
@@ -387,12 +391,15 @@ namespace player {
 	PlayerGunComponent::~PlayerGunComponent() {}
 
 	void PlayerGunComponent::setShooting(bool shooting) {
+		if (shooting == _shooting) {
+			return;
+		}
 
-		if (shooting && !_isShooting) {
+		if (shooting && !_shooting) {
 			firePulse();
 		}
 
-		if (_isShooting && !shooting) {
+		if (_shooting && !shooting) {
 			if (_blastCharge >= 1 - 1e-2 ) {
 				fireBlast();
 			} else {
@@ -400,17 +407,16 @@ namespace player {
 			}
 		}
 
-		_isShooting = shooting;
+		_shooting = shooting;
 	}
 
 	void PlayerGunComponent::update(const time_state &time) {
-		if (_isShooting) {
+		if (_shooting) {
 			_blastCharge = clamp((time.time - _pulseStartTime) * _config.blastChargePerSecond, 0.0, 1.0);
 		}
 	}
 
 	void PlayerGunComponent::firePulse() {
-
 		_blastCharge = 0;
 		_pulseStartTime = time_state::now();
 
@@ -418,11 +424,9 @@ namespace player {
 		pbc->fire(getBeamOrigin(), getBeamDirection());
 
 		getLevel()->addGameObject(GameObject::with("Pulse", { pbc, make_shared<BeamDrawComponent>() }));
-
 	}
 
 	void PlayerGunComponent::fireBlast() {
-
 		_blastCharge = 0;
 
 		auto bbc = make_shared<BlastBeamComponent>(_config.blast, getGameObjectAs<Player>());

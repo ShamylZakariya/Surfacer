@@ -4,9 +4,6 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##TODO
 
-- Fix SVG 
-
-
 ## BUGS PRIORITY 0
 
 glm::inverseTranspose exists. I can use it instead of glm::inverse in a lot of places

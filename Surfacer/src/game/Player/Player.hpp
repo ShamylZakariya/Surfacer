@@ -105,7 +105,7 @@ namespace player {
 	public:
 
 		PulseBeamComponent(config c, PlayerRef player);
-		virtual ~PulseBeamComponent(){}
+		virtual ~PulseBeamComponent();
 
 		// Component
 		void update(const core::time_state &time) override;
@@ -197,7 +197,7 @@ namespace player {
 		virtual ~PlayerGunComponent();
 
 		void setShooting(bool shooting);
-		bool isShooting() const { return _isShooting; }
+		bool isShooting() const { return _shooting; }
 
 		// get the current charge level [0,1]
 		double getBlastChargeLevel() const { return _blastCharge; }
@@ -221,7 +221,7 @@ namespace player {
 	private:
 
 		config _config;
-		bool _isShooting;
+		bool _shooting;
 		dvec2 _beamOrigin, _beamDir;
 		double _blastCharge;
 		core::seconds_t _pulseStartTime;
