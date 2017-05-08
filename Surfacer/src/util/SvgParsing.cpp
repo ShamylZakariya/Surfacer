@@ -141,7 +141,7 @@ namespace core { namespace util { namespace svg {
 			vector<double> values;
 			getTransformValues( svgRotateTransform, values );
 
-			dmat4 rot = rotate(values[0], dvec3(0,0,1));
+			dmat4 rot = rotate(to_radians(values[0]), dvec3(0,0,1));
 
 			if ( values.size() == 1 )
 			{
