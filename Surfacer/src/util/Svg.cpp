@@ -856,7 +856,6 @@ namespace core { namespace util { namespace svg {
 			if ( tag == "g" ) {
 				GroupRef child = make_shared<Group>();
 
-				child->getAppearance()->setParentAppearance(_appearance);
 				child->parse( *childNode );
 				child->_parent = self;
 
