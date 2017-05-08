@@ -17,7 +17,7 @@ namespace core {
 
 	SMART_PTR(ViewportController);
 
-	class ViewportController : public core::signals::receiver {
+	class ViewportController : public signals::receiver {
 	public:
 
 		/**
@@ -49,12 +49,12 @@ namespace core {
 
 	public:
 
-		ViewportController( core::ViewportRef vp);
+		ViewportController( ViewportRef vp);
 		virtual ~ViewportController(){}
 
 		///////////////////////////////////////////////////////////////////////////
 
-		virtual void update( const core::time_state &time );
+		virtual void update( const time_state &time );
 
 		ViewportRef getViewport() const { return _viewport; }
 		void setViewport(ViewportRef vp);
@@ -73,8 +73,8 @@ namespace core {
 
 	protected:
 
-		void _viewportInitiatedChange( const core::Viewport &vp );
-		void _viewportBoundsChanged( const core::Viewport &vp );
+		void _viewportInitiatedChange( const Viewport &vp );
+		void _viewportBoundsChanged( const Viewport &vp );
 
 	private:
 

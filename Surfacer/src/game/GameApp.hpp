@@ -19,7 +19,7 @@
 #include "Scenario.hpp"
 
 
-namespace core {
+namespace core { namespace game {
 
 SMART_PTR(PhysicsLoop);
 
@@ -128,6 +128,6 @@ public:
 	virtual void step( void );
 };
 
-} // end namespace game
+}} // end namespace core::game
 
 #endif /* GameApp_hpp */

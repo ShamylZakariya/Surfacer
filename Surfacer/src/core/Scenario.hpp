@@ -73,16 +73,14 @@ namespace core {
 		void setLevel(LevelRef level);
 		LevelRef getLevel() const { return _level; }
 
-	protected:
+	public:
 
-		friend class GameApp;
-
-		virtual void _dispatchSetup();
-		virtual void _dispatchCleanup();
-		virtual void _dispatchResize( const ivec2 &size );
-		virtual void _dispatchStep();
-		virtual void _dispatchUpdate();
-		virtual void _dispatchDraw();
+		virtual void dispatchSetup();
+		virtual void dispatchCleanup();
+		virtual void dispatchResize( const ivec2 &size );
+		virtual void dispatchStep();
+		virtual void dispatchUpdate();
+		virtual void dispatchDraw();
 
 	protected:
 

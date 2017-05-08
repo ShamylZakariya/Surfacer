@@ -22,9 +22,7 @@
 #include "TerrainDetail.hpp"
 #include "SvgParsing.hpp"
 
-using namespace core;
-
-namespace terrain {
+namespace core { namespace game { namespace terrain {
 
 #pragma mark - DrawDispatcher
 
@@ -257,7 +255,7 @@ namespace terrain {
 
 	/*
 		material _worldMaterial, _anchorMaterial;
-		core::SpaceAccessRef _space;
+		SpaceAccessRef _space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
@@ -521,11 +519,11 @@ namespace terrain {
 		return nullptr;
 	}
 
-	void World::setGameObject(core::GameObjectRef gameObject) {
+	void World::setGameObject(GameObjectRef gameObject) {
 		_gameObject = gameObject;
 	}
 
-	core::GameObjectRef World::getGameObject() const {
+	GameObjectRef World::getGameObject() const {
 		return _gameObject.lock();
 	}
 
@@ -672,7 +670,7 @@ namespace terrain {
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
 		WorldWeakRef _world;
-		core::SpaceAccessRef _space;
+		SpaceAccessRef _space;
 		material _material;
 		string _name;
 		Color _color;
@@ -1122,7 +1120,7 @@ namespace terrain {
 	}
 
 	// IChipmunkUserData
-	core::GameObjectRef Drawable::getGameObject() const {
+	GameObjectRef Drawable::getGameObject() const {
 		return _world.lock()->getGameObject();
 	}
 
@@ -1160,7 +1158,7 @@ namespace terrain {
 		return dvec2((_bb.l + _bb.r) * 0.5, (_bb.b + _bb.t) * 0.5);
 	}
 
-	bool Element::shouldDraw(const core::render_state &state) const {
+	bool Element::shouldDraw(const render_state &state) const {
 		return state.mode == RenderMode::DEVELOPMENT;
 	}
 
@@ -1593,4 +1591,4 @@ namespace terrain {
 	}
 	
 
-} // end namespace island
+}}} // end namespace core::game::terrain

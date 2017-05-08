@@ -15,7 +15,7 @@
 
 #include "Core.hpp"
 
-namespace terrain {
+namespace core { namespace game { namespace terrain {
 
 	SMART_PTR(World);
 	SMART_PTR(GroupBase);
@@ -80,18 +80,17 @@ namespace terrain {
 		}
 	};
 
-}
-
+}}} // namespace core::game::terrain
 
 #pragma mark -
 
 namespace std {
 
 	template <>
-	struct hash<terrain::poly_edge> {
+	struct hash<core::game::terrain::poly_edge> {
 
 		// make island::poly_edge hashable
-		std::size_t operator()(const terrain::poly_edge& e) const {
+		std::size_t operator()(const core::game::terrain::poly_edge& e) const {
 			std::size_t seed = 0;
 			boost::hash_combine(seed, e.a.x);
 			boost::hash_combine(seed, e.a.y);
@@ -104,8 +103,7 @@ namespace std {
 }
 
 
-
-namespace terrain {
+namespace core { namespace game { namespace terrain {
 
 #pragma mark - Material
 
@@ -158,8 +156,8 @@ namespace terrain {
 		void moved( const DrawableRef & );
 		void moved( Drawable* );
 
-		void cull( const core::render_state & );
-		void draw( const core::render_state &, const ci::gl::GlslProgRef &shader);
+		void cull( const render_state & );
+		void draw( const render_state &, const ci::gl::GlslProgRef &shader);
 
 		void setDrawPasses(size_t passes) { _drawPasses = passes; }
 		size_t getPasses() const { return _drawPasses; }
@@ -174,7 +172,7 @@ namespace terrain {
 			render a run of shapes belonging to a common group
 			returns iterator to last shape drawn
 		 */
-		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const core::render_state &state, const ci::gl::GlslProgRef &shader );
+		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const render_state &state, const ci::gl::GlslProgRef &shader );
 
 	private:
 
@@ -214,7 +212,7 @@ namespace terrain {
 
 	public:
 
-		World(core::SpaceAccessRef space, material worldMaterial, material anchorMaterial);
+		World(SpaceAccessRef space, material worldMaterial, material anchorMaterial);
 		virtual ~World();
 
 		/**
@@ -231,22 +229,22 @@ namespace terrain {
 		 */
 		void cut(dvec2 a, dvec2 b, double radius, cpShapeFilter filter);
 
-		void draw(const core::render_state &renderState);
-		void step(const core::time_state &timeState);
-		void update(const core::time_state &timeState);
+		void draw(const render_state &renderState);
+		void step(const time_state &timeState);
+		void update(const time_state &timeState);
 
 		const set<DynamicGroupRef> &getDynamicGroups() const { return _dynamicGroups; }
 		StaticGroupRef getStaticGroup() const { return _staticGroup; }
 		const vector<AnchorRef> &getAnchors() const { return _anchors; }
 		const vector<ElementRef> &getElements() const { return _elements; }
 		ElementRef getElementById(string id) const;
-		core::SpaceAccessRef getSpace() const { return _space; }
+		SpaceAccessRef getSpace() const { return _space; }
 
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
 
-		void setGameObject(core::GameObjectRef gameObject);
-		core::GameObjectRef getGameObject() const;
+		void setGameObject(GameObjectRef gameObject);
+		GameObjectRef getGameObject() const;
 
 	protected:
 
@@ -259,7 +257,7 @@ namespace terrain {
 		static size_t _idCounter;
 
 		material _worldMaterial, _anchorMaterial;
-		core::SpaceAccessRef _space;
+		SpaceAccessRef _space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
@@ -269,7 +267,7 @@ namespace terrain {
 		DrawDispatcher _drawDispatcher;
 		ci::gl::GlslProgRef _shader;
 
-		core::GameObjectWeakRef _gameObject;
+		GameObjectWeakRef _gameObject;
 	};
 
 
@@ -283,7 +281,7 @@ namespace terrain {
 		virtual ~GroupBase();
 
 		DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
-		const core::SpaceAccessRef &getSpace() const { return _space; }
+		const SpaceAccessRef &getSpace() const { return _space; }
 		const material &getMaterial() const { return _material; }
 		virtual string getName() const { return _name; }
 		virtual Color getColor() const { return _color; }
@@ -298,9 +296,9 @@ namespace terrain {
 		virtual set<ShapeRef> getShapes() const = 0;
 		virtual void releaseShapes() = 0;
 		virtual size_t getDrawingBatchId() const { return _drawingBatchId;}
-		virtual void draw(const core::render_state &renderState) = 0;
-		virtual void step(const core::time_state &timeState) = 0;
-		virtual void update(const core::time_state &timeState) = 0;
+		virtual void draw(const render_state &renderState) = 0;
+		virtual void step(const time_state &timeState) = 0;
+		virtual void update(const time_state &timeState) = 0;
 
 		cpTransform getModelTransform() const {
 			dmat4 mm = getModelMatrix();
@@ -319,7 +317,7 @@ namespace terrain {
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
 		WorldWeakRef _world;
-		core::SpaceAccessRef _space;
+		SpaceAccessRef _space;
 		material _material;
 		string _name;
 		Color _color;
@@ -343,9 +341,9 @@ namespace terrain {
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
 		virtual void releaseShapes() override;
 
-		virtual void draw(const core::render_state &renderState) override {}
-		virtual void step(const core::time_state &timeState) override {}
-		virtual void update(const core::time_state &timeState) override {}
+		virtual void draw(const render_state &renderState) override {}
+		virtual void step(const time_state &timeState) override {}
+		virtual void update(const time_state &timeState) override {}
 
 		void addShape(ShapeRef shape);
 		void removeShape(ShapeRef shape);
@@ -379,9 +377,9 @@ namespace terrain {
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
 		virtual void releaseShapes() override;
 
-		virtual void draw(const core::render_state &renderState) override;
-		virtual void step(const core::time_state &timeState) override;
-		virtual void update(const core::time_state &timeState) override;
+		virtual void draw(const render_state &renderState) override;
+		virtual void step(const time_state &timeState) override;
+		virtual void update(const time_state &timeState) override;
 
 
 	protected:
@@ -403,7 +401,7 @@ namespace terrain {
 
 #pragma mark - Drawable
 
-	class Drawable : public core::IChipmunkUserData, public enable_shared_from_this<Drawable> {
+	class Drawable : public IChipmunkUserData, public enable_shared_from_this<Drawable> {
 	public:
 		Drawable();
 		virtual ~Drawable();
@@ -419,7 +417,7 @@ namespace terrain {
 		virtual const TriMeshRef &getTriMesh() const = 0;
 		virtual const gl::VboMeshRef &getVboMesh() const = 0;
 		virtual Color getColor() const = 0;
-		virtual bool shouldDraw(const core::render_state &state) const = 0;
+		virtual bool shouldDraw(const render_state &state) const = 0;
 
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
 		template<typename T>
@@ -437,7 +435,7 @@ namespace terrain {
 		WorldRef getWorld() const;
 
 		// IChipmunkUserData
-		core::GameObjectRef getGameObject() const override;
+		GameObjectRef getGameObject() const override;
 
 	private:
 
@@ -483,7 +481,7 @@ namespace terrain {
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 		Color getColor() const override { return Color(1,0,1); }
-		bool shouldDraw(const core::render_state &state) const override;
+		bool shouldDraw(const render_state &state) const override;
 
 	private:
 
@@ -540,12 +538,12 @@ namespace terrain {
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 		Color getColor() const override { return Color(0,0,0); }
-		bool shouldDraw(const core::render_state &state) const override { return true; }
+		bool shouldDraw(const render_state &state) const override { return true; }
 
 	protected:
 
 		friend class World;
-		bool build(core::SpaceAccessRef space, material m);
+		bool build(SpaceAccessRef space, material m);
 
 	private:
 
@@ -636,7 +634,7 @@ namespace terrain {
 
 		Color getColor() const override { return getGroup()->getColor(); }
 
-		bool shouldDraw(const core::render_state &state) const override { return true; }
+		bool shouldDraw(const render_state &state) const override { return true; }
 
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
@@ -681,6 +679,6 @@ namespace terrain {
 		ci::gl::VboMeshRef _vboMesh;
 	};
 	
-}
+}}} // namespace core::game::terrain
 
 #endif /* TerrainWorld_hpp */

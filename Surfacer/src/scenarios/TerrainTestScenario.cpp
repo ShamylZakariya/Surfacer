@@ -15,6 +15,10 @@
 #include "GameLevel.hpp"
 #include "DevComponents.hpp"
 
+
+using namespace core;
+using namespace core::game;
+
 namespace {
 	
 	PolyLine2d rect(float left, float bottom, float right, float top) {
@@ -46,7 +50,7 @@ namespace {
 		{}
 
 		cut(string desc) {
-			desc = core::strings::removeSet(desc, "\t[]toradius:,");
+			desc = strings::removeSet(desc, "\t[]toradius:,");
 
 			const char* it = desc.c_str();
 			char* end = nullptr;
@@ -70,7 +74,7 @@ namespace {
 		}
 
 		static vector<cut> parse(string cutsDesc) {
-			auto cutDescs = core::strings::split(cutsDesc, "\n");
+			auto cutDescs = strings::split(cutsDesc, "\n");
 			vector<cut> cuts;
 			for (auto cutDesc : cutDescs) {
 				cutDesc = strings::strip(cutDesc);
@@ -155,9 +159,9 @@ void TerrainTestScenario::clear( const render_state &state ) {
 
 void TerrainTestScenario::drawScreen( const render_state &state ) {
 	// draw fpf/sps
-	float fps = core::GameApp::get()->getAverageFps();
-	float sps = core::GameApp::get()->getAverageSps();
-	string info = core::strings::format("%.1f %.1f", fps, sps);
+	float fps = GameApp::get()->getAverageFps();
+	float sps = GameApp::get()->getAverageSps();
+	string info = strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 }
 
@@ -534,8 +538,8 @@ void TerrainTestScenario::timeSpatialIndex() {
 		return out;
 	};
 
-	auto timeUsingSpatialIndex = [](const vector<cpBB> bbs, core::SpatialIndex<int> &index) -> double {
-		core::StopWatch timer;
+	auto timeUsingSpatialIndex = [](const vector<cpBB> bbs, SpatialIndex<int> &index) -> double {
+		StopWatch timer;
 		index.clear();
 
 		int tick = 0;
@@ -554,7 +558,7 @@ void TerrainTestScenario::timeSpatialIndex() {
 	};
 
 	auto timeUsingBruteForce = [](const vector<cpBB> bbs) -> double {
-		core::StopWatch timer;
+		StopWatch timer;
 
 		int count = 0;
 		const auto last = bbs.end();
@@ -574,7 +578,7 @@ void TerrainTestScenario::timeSpatialIndex() {
 	auto performTimingRun = [&generator, &timeUsingSpatialIndex, &timeUsingBruteForce](int count) {
 		const cpBB bounds = cpBBNew(-1000, -1000, 1000, 10000);
 		vector<cpBB> bbs = generator(bounds, count);
-		core::SpatialIndex<int> index(50);
+		SpatialIndex<int> index(50);
 		const int runs = 10;
 
 		double sumSpatialIndex = 0;

@@ -12,11 +12,11 @@
 #include "Core.hpp"
 #include "TerrainWorld.hpp"
 
-namespace terrain {
+namespace core { namespace game { namespace terrain {
 
 	SMART_PTR(TerrainObject);
 
-	class TerrainObject : public core::GameObject {
+	class TerrainObject : public GameObject {
 	public:
 
 		static TerrainObjectRef create(string name, WorldRef world) {
@@ -28,9 +28,9 @@ namespace terrain {
 		TerrainObject(string name, WorldRef world);
 		virtual ~TerrainObject();
 
-		void onReady(core::LevelRef level) override;
-		void step(const core::time_state &timeState) override;
-		void update(const core::time_state &timeState) override;
+		void onReady(LevelRef level) override;
+		void step(const time_state &timeState) override;
+		void update(const time_state &timeState) override;
 
 		const WorldRef & getWorld() const { return _world; }
 
@@ -41,16 +41,16 @@ namespace terrain {
 	/**
 	 TerrainDrawComponent is a thin adapter to TerrainWorld's built-in draw dispatch system
 	 */
-	class TerrainDrawComponent : public core::DrawComponent {
+	class TerrainDrawComponent : public DrawComponent {
 	public:
 
 		TerrainDrawComponent(){}
 		virtual ~TerrainDrawComponent(){}
 
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
 		cpBB getBB() const override { return cpBBInfinity; }
-		void draw(const core::render_state &renderState) override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::ALWAYS_DRAW; }
+		void draw(const render_state &renderState) override;
+		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::ALWAYS_DRAW; }
 		int getLayer() const override;
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
@@ -64,12 +64,12 @@ namespace terrain {
 	/**
 	 TerrainPhysicsComponent is a thin adapter to TerrainWorld's physics system
 	 */
-	class TerrainPhysicsComponent : public core::PhysicsComponent {
+	class TerrainPhysicsComponent : public PhysicsComponent {
 	public:
 		TerrainPhysicsComponent(){}
 		virtual ~TerrainPhysicsComponent(){}
 
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
 		vector<cpBody*> getBodies() const override;
 
 	private:
@@ -78,6 +78,6 @@ namespace terrain {
 
 	};
 
-}
+}}} // namespace core::game::terrain
 
 #endif /* Terrain_hpp */

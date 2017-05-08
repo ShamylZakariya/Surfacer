@@ -15,89 +15,97 @@
 #include "Terrain.hpp"
 #include "Player.hpp"
 
-SMART_PTR(GameLevel);
 
+namespace core { namespace game {
 
-namespace CollisionType {
+	SMART_PTR(GameLevel);
 
-	/*
-		The high 16 bits are a mask, the low are a type_id, the actual type is the | of the two.
-	 */
+#pragma mark - Constants
 
-	namespace is {
-		enum bits {
-			SHOOTABLE   = 1 << 16,
-			TOWABLE		= 1 << 17
+	namespace CollisionType {
+
+		/*
+		 The high 16 bits are a mask, the low are a type_id, the actual type is the | of the two.
+		 */
+
+		namespace is {
+			enum bits {
+				SHOOTABLE   = 1 << 16,
+				TOWABLE		= 1 << 17
+			};
+		}
+
+		enum type_id {
+
+			TERRAIN				= 1 | is::SHOOTABLE | is::TOWABLE,
+			MONSTER				= 2 | is::SHOOTABLE,
+			PLAYER				= 3 | is::SHOOTABLE,
+			WEAPON				= 4,
+			FLUID				= 5,
+			DECORATION			= 6 | is::TOWABLE | is::SHOOTABLE,
+			STATIC_DECORATION	= 7 | is::SHOOTABLE,
+			SENSOR				= 10
+
 		};
 	}
 
-	enum type_id {
+	namespace CollisionFilters {
 
-		TERRAIN				= 1 | is::SHOOTABLE | is::TOWABLE,	// 196609
-		MONSTER				= 2 | is::SHOOTABLE,				// 65538
-		PLAYER				= 3 | is::SHOOTABLE,				// 65539
-		WEAPON				= 4,								// 4
-		FLUID				= 5,								// 5
-		DECORATION			= 6 | is::TOWABLE | is::SHOOTABLE,	// 196614
-		STATIC_DECORATION	= 7 | is::SHOOTABLE,				// 65543
-		SENSOR				= 10								// 10
+		enum Categories {
+			_TERRAIN = 1 << 30,
+			_CUTTER = 1 << 29,
+			_PICK = 1 << 28,
+			_ANCHOR = 1 << 27,
+			_PLAYER = 1 << 26
+		};
 
-	};	
-}
+		extern cpShapeFilter TERRAIN;
+		extern cpShapeFilter ANCHOR;
+		extern cpShapeFilter CUTTER;
+		extern cpShapeFilter PICK;
+		extern cpShapeFilter PLAYER;
+	}
 
-namespace CollisionFilters {
+	namespace DrawLayers {
+		enum layer {
+			BACKGROUND = 0,
+			TERRAIN = 1,
+			ENEMY = 2,
+			PLAYER = 3
+		};
+	}
 
-	enum Categories {
-		_TERRAIN = 1 << 30,
-		_CUTTER = 1 << 29,
-		_PICK = 1 << 28,
-		_ANCHOR = 1 << 27,
-		_PLAYER = 1 << 26
+#pragma mark - GameLevel
+
+	class GameLevel : public Level {
+	public:
+		GameLevel();
+		virtual ~GameLevel();
+
+		void load(ci::DataSourceRef levelXmlData);
+		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
+		player::PlayerRef getPlayer() const { return _player; }
+
+		//
+		//	Level
+		//
+
+		void addGameObject(GameObjectRef obj) override;
+
+	protected:
+
+		void applySpaceAttributes(XmlTree spaceNode);
+		void applyGravityAttributes(XmlTree gravityNode);
+		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
+		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
+
+	private:
+
+		terrain::TerrainObjectRef _terrain;
+		player::PlayerRef _player;
+		
 	};
-
-	extern cpShapeFilter TERRAIN;
-	extern cpShapeFilter ANCHOR;
-	extern cpShapeFilter CUTTER;
-	extern cpShapeFilter PICK;
-	extern cpShapeFilter PLAYER;
-}
-
-namespace DrawLayers {
-	enum layer {
-		BACKGROUND = 0,
-		TERRAIN = 1,
-		ENEMY = 2,
-		PLAYER = 3
-	};
-}
-
-class GameLevel : public core::Level {
-public:
-	GameLevel();
-	virtual ~GameLevel();
-
-	void load(ci::DataSourceRef levelXmlData);
-	terrain::TerrainObjectRef getTerrain() const { return _terrain; }
-	player::PlayerRef getPlayer() const { return _player; }
-
-	//
-	//	Level
-	//
-
-	void addGameObject(core::GameObjectRef obj) override;
-
-protected:
-
-	void applySpaceAttributes(XmlTree spaceNode);
-	void applyGravityAttributes(XmlTree gravityNode);
-	void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
-	void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
-
-private:
-
-	terrain::TerrainObjectRef _terrain;
-	player::PlayerRef _player;
-
-};
+	
+}} // namespace core::game
 
 #endif /* GameLevel_hpp */

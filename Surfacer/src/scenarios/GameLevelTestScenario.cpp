@@ -23,24 +23,33 @@ GameLevelTestScenario::~GameLevelTestScenario() {
 }
 
 void GameLevelTestScenario::setup() {
-	GameLevelRef level = make_shared<GameLevel>();
+	core::game::GameLevelRef level = make_shared<core::game::GameLevel>();
 	setLevel(level);
 
 	level->load(app::loadAsset("levels/test0.xml"));
 	auto terrain = level->getTerrain();
 	auto player = level->getPlayer();
 
-//	auto dragger = GameObject::with("Dragger", {
-//		make_shared<MousePickComponent>(CollisionFilters::PICK),
-//		make_shared<MousePickDrawComponent>()
-//	});
-//	getLevel()->addGameObject(dragger);
-//
-//	auto cutter = GameObject::with("Cutter", {
-//		make_shared<MouseCutterComponent>(terrain, CollisionFilters::CUTTER, 4),
-//		make_shared<MouseCutterDrawComponent>()
-//	});
-//	getLevel()->addGameObject(cutter);
+	if (!player) {
+		auto dragger = GameObject::with("Dragger", {
+			make_shared<MousePickComponent>(core::game::CollisionFilters::PICK),
+			make_shared<MousePickDrawComponent>()
+		});
+		getLevel()->addGameObject(dragger);
+
+		if (terrain) {
+			auto cutter = GameObject::with("Cutter", {
+				make_shared<MouseCutterComponent>(terrain, core::game::CollisionFilters::CUTTER, 4),
+				make_shared<MouseCutterDrawComponent>()
+			});
+			getLevel()->addGameObject(cutter);
+		}
+
+		auto cc = GameObject::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController())});
+		getLevel()->addGameObject(cc);
+
+	}
+
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
 	getLevel()->addGameObject(grid);
@@ -69,8 +78,8 @@ void GameLevelTestScenario::drawScreen( const render_state &state ) {
 	// NOTE: we're in screen space, with coordinate system origin at top left
 	//
 
-	float fps = core::GameApp::get()->getAverageFps();
-	float sps = core::GameApp::get()->getAverageSps();
+	float fps = core::game::GameApp::get()->getAverageFps();
+	float sps = core::game::GameApp::get()->getAverageSps();
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 

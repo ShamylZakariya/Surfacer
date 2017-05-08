@@ -13,7 +13,7 @@
 #include "SvgTestScenario.hpp"
 #include "GameLevelTestScenario.hpp"
 
-class DemoApp : public core::GameApp {
+class DemoApp : public core::game::GameApp {
 public:
 
 	static void prepareSettings(Settings *settings) {

@@ -10,7 +10,7 @@
 
 #define USE_PHYSICS_LOOP 0
 
-namespace core {
+namespace core { namespace game {
 
 
 	void GameApp::prepareSettings( Settings *settings ) {
@@ -49,15 +49,15 @@ namespace core {
 #endif
 
 		// update is always called after physics step()
-		_scenario->_dispatchUpdate();
+		_scenario->dispatchUpdate();
 	}
 
 	void GameApp::draw() {
-		_scenario->_dispatchDraw();
+		_scenario->dispatchDraw();
 	}
 
 	void GameApp::resize() {
-		_scenario->_dispatchResize(getWindowSize());
+		_scenario->dispatchResize(getWindowSize());
 	}
 
 	void GameApp::step() {
@@ -74,11 +74,11 @@ namespace core {
 			_stepCountTime = Now;
 		}
 
-		_scenario->_dispatchStep( _physicsLoop->interval() );
+		_scenario->dispatchStep( _physicsLoop->interval() );
 
 #else
 
-		_scenario->_dispatchStep();
+		_scenario->dispatchStep();
 		_averageStepsPerSecond = lrp<double>(0.1, _averageStepsPerSecond, 1.0/_scenario->getStepTime().deltaT );
 
 #endif
@@ -86,14 +86,14 @@ namespace core {
 
 	void GameApp::setScenario( ScenarioRef scenario ) {
 		if (_scenario) {
-			_scenario->_dispatchCleanup();
+			_scenario->dispatchCleanup();
 		}
 
 		_scenario = scenario;
 
 		if (_scenario) {
-			_scenario->_dispatchSetup();
-			_scenario->_dispatchResize(getWindowSize());
+			_scenario->dispatchSetup();
+			_scenario->dispatchResize(getWindowSize());
 		}
 	}
 
@@ -240,4 +240,4 @@ namespace core {
 		_lastTime = _currentTime;
 	}
 	
-} // end namespace game
+}} // end namespace core::game

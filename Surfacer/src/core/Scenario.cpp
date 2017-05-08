@@ -48,7 +48,7 @@ namespace core {
 	 */
 
 	Scenario::Scenario():
-	core::InputListener(numeric_limits<int>::max()), // scenario should always be last to receive input after in-game input components
+	InputListener(numeric_limits<int>::max()), // scenario should always be last to receive input after in-game input components
 	_viewport(make_shared<Viewport>()),
 	_screenViewport(make_shared<ScreenViewport>()),
 	_viewportController(make_shared<ViewportController>(_viewport)),
@@ -121,17 +121,17 @@ namespace core {
 		}
 	}
 
-	void Scenario::_dispatchSetup()
+	void Scenario::dispatchSetup()
 	{
 		setup();
 	}
 
-	void Scenario::_dispatchCleanup()
+	void Scenario::dispatchCleanup()
 	{
 		cleanup();
 	}
 
-	void Scenario::_dispatchResize( const ivec2 &size )
+	void Scenario::dispatchResize( const ivec2 &size )
 	{
 		_width = size.x;
 		_height = size.y;
@@ -147,7 +147,7 @@ namespace core {
 		resize(size);
 	}
 
-	void Scenario::_dispatchStep()
+	void Scenario::dispatchStep()
 	{
 		update_time( _stepTime );
 
@@ -161,7 +161,7 @@ namespace core {
 		}
 	}
 
-	void Scenario::_dispatchUpdate()
+	void Scenario::dispatchUpdate()
 	{
 		update_time( _time );
 
@@ -174,7 +174,7 @@ namespace core {
 		_viewportController->update(_time);
 	}
 
-	void Scenario::_dispatchDraw()
+	void Scenario::dispatchDraw()
 	{
 		_screenRenderState.frame = _renderState.frame = app::getElapsedFrames();
 		_screenRenderState.pass = _renderState.pass = 0;

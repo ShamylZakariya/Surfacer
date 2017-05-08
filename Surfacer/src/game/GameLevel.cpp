@@ -12,7 +12,7 @@
 #include "Xml.hpp"
 
 
-using namespace core;
+namespace core { namespace game {
 
 namespace CollisionFilters {
 	cpShapeFilter TERRAIN = cpShapeFilterNew(CP_NO_GROUP, _TERRAIN, _TERRAIN | _CUTTER | _PICK | _ANCHOR | _PLAYER);
@@ -42,17 +42,17 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 	//	Load some basic level properties
 	//
 
-	XmlTree spaceNode = core::util::xml::findElement(levelNode, "space").second;
+	XmlTree spaceNode = util::xml::findElement(levelNode, "space").second;
 	applySpaceAttributes(spaceNode);
 
-	XmlTree gravityNode = core::util::xml::findElement(levelNode, "gravity").second;
+	XmlTree gravityNode = util::xml::findElement(levelNode, "gravity").second;
 	applyGravityAttributes(gravityNode);
 
 	//
 	//	Load terrain
 	//
 
-	XmlTree terrainNode = core::util::xml::findElement(levelNode, "terrain").second;
+	XmlTree terrainNode = util::xml::findElement(levelNode, "terrain").second;
 	string terrainSvgPath = terrainNode.getAttribute("path").getValue();
 	loadTerrain(terrainNode, app::loadAsset(terrainSvgPath));
 
@@ -60,7 +60,7 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 	//	Load the player
 	//
 
-	auto maybePlayerNode = core::util::xml::findElement(levelNode, "player");
+	auto maybePlayerNode = util::xml::findElement(levelNode, "player");
 	if (maybePlayerNode.first) {
 		terrain::ElementRef playerElement = _terrain->getWorld()->getElementById("player");
 		ci::DataSourceRef playerXmlData = app::loadAsset(maybePlayerNode.second.getAttribute("path").getValue());
@@ -68,7 +68,7 @@ void GameLevel::load(ci::DataSourceRef levelXmlData) {
 	}
 }
 
-void GameLevel::addGameObject(core::GameObjectRef obj) {
+void GameLevel::addGameObject(GameObjectRef obj) {
 	Level::addGameObject(obj);
 }
 
@@ -93,7 +93,7 @@ void GameLevel::applyGravityAttributes(XmlTree gravityNode) {
 
 	} else if (type == "directional") {
 		string dirStr = gravityNode.getAttribute("dir").getValue();
-		vector<double> vals = core::util::xml::readNumericSequence(dirStr);
+		vector<double> vals = util::xml::readNumericSequence(dirStr);
 		dvec2 dir(vals[0], vals[1]);
 		setDirectionalGravityDirection(dir);
 		setGravityType(DIRECTIONAL);
@@ -165,3 +165,5 @@ void GameLevel::loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, 
 	}
 
 }
+
+}} // namespace core::game

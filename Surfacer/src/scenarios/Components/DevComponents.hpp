@@ -186,7 +186,7 @@ private:
 class MouseCutterComponent : public core::InputComponent {
 public:
 
-	MouseCutterComponent(terrain::TerrainObjectRef terrain, cpShapeFilter cutFilter, float radius, int dispatchReceiptIndex = 0);
+	MouseCutterComponent(core::game::terrain::TerrainObjectRef terrain, cpShapeFilter cutFilter, float radius, int dispatchReceiptIndex = 0);
 
 	bool mouseDown( const ci::app::MouseEvent &event ) override;
 	bool mouseUp( const ci::app::MouseEvent &event ) override;
@@ -204,7 +204,7 @@ private:
 	float _radius;
 	cpShapeFilter _cutFilter;
 	vec2 _mouseScreen, _mouseWorld, _cutStart, _cutEnd;
-	terrain::TerrainObjectRef _terrain;
+	core::game::terrain::TerrainObjectRef _terrain;
 
 };
 

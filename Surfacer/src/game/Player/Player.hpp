@@ -14,7 +14,7 @@
 #include "Core.hpp"
 #include "DevComponents.hpp"
 
-namespace player {
+namespace core { namespace game { namespace player {
 
 	SMART_PTR(Player);
 	SMART_PTR(PlayerGunComponent);
@@ -26,7 +26,7 @@ namespace player {
 
 #pragma mark - BeamProjectileComponent
 
-	class BeamComponent : public core::Component {
+	class BeamComponent : public Component {
 	public:
 
 		struct config {
@@ -42,7 +42,7 @@ namespace player {
 		struct contact {
 			dvec2 position;
 			dvec2 normal;
-			core::GameObjectRef target;
+			GameObjectRef target;
 		};
 
 		struct segment {
@@ -72,8 +72,8 @@ namespace player {
 		const vector<contact> &getContacts() const { return _contacts; }
 
 		// Component
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
-		void update(const core::time_state &time) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
+		void update(const time_state &time) override;
 
 	protected:
 
@@ -108,7 +108,7 @@ namespace player {
 		virtual ~PulseBeamComponent();
 
 		// Component
-		void update(const core::time_state &time) override;
+		void update(const time_state &time) override;
 
 	protected:
 
@@ -122,7 +122,7 @@ namespace player {
 	public:
 
 		struct config : public BeamComponent::config {
-			core::seconds_t lifespan;
+			seconds_t lifespan;
 			double cutDepth;
 
 			config():
@@ -140,8 +140,8 @@ namespace player {
 		void fire(dvec2 origin, dvec2 dir) override;
 
 		// Component
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
-		void update(const core::time_state &time) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
+		void update(const time_state &time) override;
 
 	protected:
 
@@ -150,25 +150,25 @@ namespace player {
 	protected:
 
 		config _config;
-		core::seconds_t _startSeconds;
+		seconds_t _startSeconds;
 
 	};
 
 #pragma mark - BeamDrawComponent
 
-	class BeamDrawComponent : public core::DrawComponent {
+	class BeamDrawComponent : public DrawComponent {
 	public:
 
 		BeamDrawComponent();
 		virtual ~BeamDrawComponent();
 
 		// Component
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
 
 		// DrawComponent
 		cpBB getBB() const override;
-		void draw(const core::render_state &renderState) override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override;
+		void draw(const render_state &renderState) override;
+		VisibilityDetermination::style getVisibilityDetermination() const override;
 		int getLayer() const override;
 		int getDrawPasses() const override;
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
@@ -182,7 +182,7 @@ namespace player {
 
 #pragma mark - PlayerGunComponent
 
-	class PlayerGunComponent : public core::Component {
+	class PlayerGunComponent : public Component {
 	public:
 
 		struct config {
@@ -211,7 +211,7 @@ namespace player {
 		dvec2 getBeamDirection() const { return _beamDir; }
 
 		// Component
-		void update(const core::time_state &time) override;
+		void update(const time_state &time) override;
 
 	private:
 
@@ -224,13 +224,13 @@ namespace player {
 		bool _shooting;
 		dvec2 _beamOrigin, _beamDir;
 		double _blastCharge;
-		core::seconds_t _pulseStartTime;
+		seconds_t _pulseStartTime;
 
 	};
 
 #pragma mark - PlayerPhysicsComponent
 
-	class PlayerPhysicsComponent : public core::PhysicsComponent {
+	class PlayerPhysicsComponent : public PhysicsComponent {
 	public:
 
 		struct config {
@@ -255,7 +255,7 @@ namespace player {
 		virtual ~PlayerPhysicsComponent();
 
 		// PhysicsComponent
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
 		vector<cpBody*> getBodies() const override { return _bodies; }
 
 
@@ -313,8 +313,8 @@ namespace player {
 		virtual ~JetpackUnicyclePlayerPhysicsComponent();
 
 		// PhysicsComponent
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
-		void step(const core::time_state &timeState) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
+		void step(const time_state &timeState) override;
 
 		// PlayerPhysicsComponent
 		cpBB getBB() const override;
@@ -357,7 +357,7 @@ namespace player {
 
 #pragma mark - PlayerInputComponent
 
-	class PlayerInputComponent : public core::InputComponent {
+	class PlayerInputComponent : public InputComponent {
 	public:
 
 		PlayerInputComponent();
@@ -381,27 +381,27 @@ namespace player {
 
 #pragma mark - PlayerDrawComponent
 
-	class PlayerDrawComponent : public core::DrawComponent {
+	class PlayerDrawComponent : public DrawComponent {
 	public:
 
 		PlayerDrawComponent();
 		virtual ~PlayerDrawComponent();
 
 		// DrawComponent
-		void onReady(core::GameObjectRef parent, core::LevelRef level) override;
+		void onReady(GameObjectRef parent, LevelRef level) override;
 
 		cpBB getBB() const override;
-		void draw(const core::render_state &renderState) override;
-		void drawScreen(const core::render_state &renderState) override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override;
+		void draw(const render_state &renderState) override;
+		void drawScreen(const render_state &renderState) override;
+		VisibilityDetermination::style getVisibilityDetermination() const override;
 		int getLayer() const override;
 		int getDrawPasses() const override;
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
 
 	protected:
 
-		void drawPlayer(const core::render_state &renderState);
-		void drawGunCharge(PlayerGunComponentRef gun, const core::render_state &renderState);
+		void drawPlayer(const render_state &renderState);
+		void drawGunCharge(PlayerGunComponentRef gun, const render_state &renderState);
 
 	private:
 		
@@ -412,10 +412,10 @@ namespace player {
 
 #pragma mark - Player
 
-	class Player : public core::GameObject, public TargetTrackingViewportControlComponent::TrackingTarget {
+	class Player : public GameObject, public TargetTrackingViewportControlComponent::TrackingTarget {
 	public:
 
-		core::signals::signal< void( const BeamComponentRef &, const BeamComponent::contact &contact ) > didShootSomething;
+		signals::signal< void( const BeamComponentRef &, const BeamComponent::contact &contact ) > didShootSomething;
 
 		struct config {
 			PlayerPhysicsComponent::config physics;
@@ -443,7 +443,7 @@ namespace player {
 		const config &getConfig() const { return _config; }
 
 		// GameObject
-		void update(const core::time_state &time) override;
+		void update(const time_state &time) override;
 
 		// TrackingTarget
 		TargetTrackingViewportControlComponent::tracking getViewportTracking() const override;
@@ -469,6 +469,6 @@ namespace player {
 
 	};
 
-}
+}}} // namespace core::game::player
 
 #endif /* Player_hpp */

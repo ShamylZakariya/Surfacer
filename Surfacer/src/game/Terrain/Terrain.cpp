@@ -10,8 +10,8 @@
 
 #include "GameLevel.hpp"
 
-using namespace core;
-namespace terrain {
+
+namespace core { namespace game { namespace terrain {
 
 #pragma mark - TerrainObject
 
@@ -68,4 +68,4 @@ namespace terrain {
 		return bodies;
 	}
 
-}
+}}} // namespace core::game::terrain

@@ -36,25 +36,25 @@ public:
 
 private:
 
-	terrain::WorldRef testDistantTerrain();
-	terrain::WorldRef testBasicTerrain();
-	terrain::WorldRef testComplexTerrain();
-	terrain::WorldRef testSimpleAnchors();
-	terrain::WorldRef testComplexAnchors();
+	game::terrain::WorldRef testDistantTerrain();
+	game::terrain::WorldRef testBasicTerrain();
+	game::terrain::WorldRef testComplexTerrain();
+	game::terrain::WorldRef testSimpleAnchors();
+	game::terrain::WorldRef testComplexAnchors();
 
-	terrain::WorldRef testSimplePartitionedTerrain();
-	terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
+	game::terrain::WorldRef testSimplePartitionedTerrain();
+	game::terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
 
-	terrain::WorldRef testSimpleSvgLoad();
-	terrain::WorldRef testComplexSvgLoad();
+	game::terrain::WorldRef testSimpleSvgLoad();
+	game::terrain::WorldRef testComplexSvgLoad();
 
-	terrain::WorldRef testFail();
+	game::terrain::WorldRef testFail();
 
 	void timeSpatialIndex();
 
 private:
 
-	terrain::TerrainObjectRef _terrain;
+	game::terrain::TerrainObjectRef _terrain;
 };
 
 #endif /* IslandTestScenario_hpp */

@@ -29,10 +29,7 @@
 #include "ContourSimplification.hpp"
 #include "SvgParsing.hpp"
 
-using namespace core;
-
-namespace terrain {
-	namespace detail {
+namespace core { namespace game { namespace terrain { namespace detail {
 
 		// TODO: Optimization is disabled since it seems to break edge stitching. The question is, how?
 		const double RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.125;
@@ -658,7 +655,7 @@ namespace terrain {
 			}
 		}
 
-	}
-}
+
+}}}} // namespace core::game::terrain::detail
 
 #endif /* TerrainDetail_h */

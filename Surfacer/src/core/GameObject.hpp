@@ -110,13 +110,13 @@ namespace core {
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
 
-		const core::SpaceAccessRef &getSpace() const { return _space; }
+		const SpaceAccessRef &getSpace() const { return _space; }
 
 		// return a vector of all bodies in use
 		virtual vector<cpBody*> getBodies() const = 0;
 
 	private:
-		core::SpaceAccessRef _space;
+		SpaceAccessRef _space;
 	};
 
 
@@ -178,8 +178,8 @@ namespace core {
 		virtual ~DrawComponent(){}
 
 		virtual cpBB getBB() const = 0;
-		virtual void draw(const core::render_state &renderState) = 0;
-		virtual void drawScreen( const core::render_state &state ) {};
+		virtual void draw(const render_state &renderState) = 0;
+		virtual void drawScreen( const render_state &state ) {};
 		virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
 		virtual int getLayer() const = 0;
 		virtual int getDrawPasses() const { return 1; }
@@ -321,8 +321,7 @@ namespace core {
 		return getGameObject()->getComponent<T>();
 	}
 
-
-}
+} // namespace core
 
 inline ostream &operator << ( ostream &os, core::VisibilityDetermination::style style )
 {

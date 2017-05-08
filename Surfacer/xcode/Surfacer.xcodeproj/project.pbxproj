@@ -17,6 +17,7 @@
 		00B9955A1B128DF400A5C623 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
 		00B9955B1B128DF400A5C623 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		6310A8DE1EC0B06F00F27569 /* Eggsac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */; };
 		632064211E9FB84F00C84686 /* GameLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6320641F1E9FB84F00C84686 /* GameLevel.cpp */; };
 		632064241EA05BB400C84686 /* GameLevelTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632064221EA05BB400C84686 /* GameLevelTestScenario.cpp */; };
 		6320642C1EA2874C00C84686 /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6320642A1EA2874C00C84686 /* DevComponents.cpp */; };
@@ -59,6 +60,8 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Eggsac.cpp; sourceTree = "<group>"; };
+		6310A8DD1EC0B06E00F27569 /* Eggsac.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Eggsac.hpp; sourceTree = "<group>"; };
 		6320641F1E9FB84F00C84686 /* GameLevel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameLevel.cpp; sourceTree = "<group>"; };
 		632064201E9FB84F00C84686 /* GameLevel.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameLevel.hpp; sourceTree = "<group>"; };
 		632064221EA05BB400C84686 /* GameLevelTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameLevelTestScenario.cpp; sourceTree = "<group>"; };
@@ -215,6 +218,15 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		6310A8DB1EC0B04600F27569 /* Enemies */ = {
+			isa = PBXGroup;
+			children = (
+				6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */,
+				6310A8DD1EC0B06E00F27569 /* Eggsac.hpp */,
+			);
+			path = Enemies;
+			sourceTree = "<group>";
+		};
 		632064291EA2874C00C84686 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -274,6 +286,7 @@
 		632623031E7D9A630051ABE2 /* game */ = {
 			isa = PBXGroup;
 			children = (
+				6310A8DB1EC0B04600F27569 /* Enemies */,
 				63B481681EAD44CD0080EC0D /* Player */,
 				63711E9C1E8DE4410086332B /* Terrain */,
 				632623041E7D9A630051ABE2 /* GameApp.cpp */,
@@ -414,6 +427,7 @@
 				63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */,
 				63711E9F1E8DE4410086332B /* TerrainWorld.cpp in Sources */,
 				639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */,
+				6310A8DE1EC0B06F00F27569 /* Eggsac.cpp in Sources */,
 				6326231D1E7D9A630051ABE2 /* main.cpp in Sources */,
 				632623201E7D9A630051ABE2 /* TerrainTestScenario.cpp in Sources */,
 				632064241EA05BB400C84686 /* GameLevelTestScenario.cpp in Sources */,

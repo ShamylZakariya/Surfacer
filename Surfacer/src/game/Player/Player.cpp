@@ -16,9 +16,8 @@
 #include "Terrain.hpp"
 #include "Xml.hpp"
 
-using namespace core;
 
-namespace player {
+namespace core { namespace game { namespace player {
 
 	namespace {
 
@@ -172,7 +171,7 @@ namespace player {
 
 	PulseBeamComponent::~PulseBeamComponent(){}
 
-	void PulseBeamComponent::update(const core::time_state &time) {
+	void PulseBeamComponent::update(const time_state &time) {
 		BeamComponent::update(time);
 
 		GameObjectRef go = getGameObject();
@@ -248,7 +247,7 @@ namespace player {
 
 	/*
 		config _config;
-		core::seconds_t _startSeconds;
+		seconds_t _startSeconds;
 	*/
 
 	BlastBeamComponent::BlastBeamComponent(config c, PlayerRef player):
@@ -275,7 +274,7 @@ namespace player {
 
 	}
 
-	void BlastBeamComponent::update(const core::time_state &time) {
+	void BlastBeamComponent::update(const time_state &time) {
 		BeamComponent::update(time);
 		if (time.time  - _startSeconds > _config.lifespan) {
 			getGameObject()->setFinished();
@@ -1191,4 +1190,4 @@ namespace player {
 		addComponent(_gun);
 	}
 
-}
+}}} // namespace core::game::player

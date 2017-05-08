@@ -88,8 +88,8 @@ void SvgTestScenario::drawScreen( const render_state &state ) {
 	// NOTE: we're in screen space, with coordinate system origin at top left
 	//
 
-	float fps = core::GameApp::get()->getAverageFps();
-	float sps = core::GameApp::get()->getAverageSps();
+	float fps = game::GameApp::get()->getAverageFps();
+	float sps = game::GameApp::get()->getAverageSps();
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 

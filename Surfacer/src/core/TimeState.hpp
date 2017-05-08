@@ -33,7 +33,7 @@ namespace core {
 		step(s)
 		{}
 
-		static inline core::seconds_t now() {
+		static inline seconds_t now() {
 			return cinder::app::getElapsedSeconds();
 		}
 
