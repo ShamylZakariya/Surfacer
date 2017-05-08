@@ -846,7 +846,11 @@ namespace player {
 	}
 
 	cpBB JetpackUnicyclePlayerPhysicsComponent::getBB() const {
-		return cpBBNewForCircle(cpv(getPosition()), getConfig().height);
+		if (_body) {
+			return cpBBNewForCircle(cpv(getPosition()), getConfig().height);
+		} else {
+			return cpBBZero;
+		}
 	}
 
 	dvec2 JetpackUnicyclePlayerPhysicsComponent::getPosition() const {
