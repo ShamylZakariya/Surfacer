@@ -247,13 +247,14 @@ namespace player {
 	}
 
 	/*
-	config _config;
-	core::seconds_t _startSeconds;
+		config _config;
+		core::seconds_t _startSeconds;
 	*/
 
 	BlastBeamComponent::BlastBeamComponent(config c, PlayerRef player):
 	player::BeamComponent(c, player),
-	_config(c)
+	_config(c),
+	_startSeconds(0)
 	{}
 
 	void BlastBeamComponent::fire(dvec2 origin, dvec2 dir) {
