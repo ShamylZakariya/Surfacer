@@ -29,6 +29,9 @@ namespace core { namespace util { namespace xml {
 	// read a sequence of numeric attributes from an xml node (where a sequence is a list of numbers separated by comma, space, or comma-space)
 	vector<double> readNumericSequenceAttribute(ci::XmlTree &node, string attributeName, vector<double> defaultValue);
 
+	dvec2 readPointAttribute(ci::XmlTree &node, string attributeName, dvec2 defaultValue);
+	dvec3 readPointAttribute(ci::XmlTree &node, string attributeName, dvec3 defaultValue);
+
 }}}
 
 #endif /* Xml_hpp */
