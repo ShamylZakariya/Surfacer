@@ -38,7 +38,7 @@ namespace core { namespace game {
 		enum type_id {
 
 			TERRAIN				= 1 | is::SHOOTABLE | is::TOWABLE,
-			MONSTER				= 2 | is::SHOOTABLE,
+			ENEMY				= 2 | is::SHOOTABLE,
 			PLAYER				= 3 | is::SHOOTABLE,
 			WEAPON				= 4,
 			FLUID				= 5,
@@ -53,17 +53,19 @@ namespace core { namespace game {
 
 		enum Categories {
 			_TERRAIN = 1 << 30,
-			_CUTTER = 1 << 29,
+			_TERRAIN_PROBE = 1 << 29,
 			_PICK = 1 << 28,
 			_ANCHOR = 1 << 27,
-			_PLAYER = 1 << 26
+			_PLAYER = 1 << 26,
+			_ENEMY = 1 << 25
 		};
 
 		extern cpShapeFilter TERRAIN;
 		extern cpShapeFilter ANCHOR;
-		extern cpShapeFilter CUTTER;
+		extern cpShapeFilter TERRAIN_PROBE;
 		extern cpShapeFilter PICK;
 		extern cpShapeFilter PLAYER;
+		extern cpShapeFilter ENEMY;
 	}
 
 	namespace DrawLayers {
@@ -98,6 +100,7 @@ namespace core { namespace game {
 		void applyGravityAttributes(XmlTree gravityNode);
 		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
 		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
+		void loadEnemies(XmlTree enemiesNode);
 
 	private:
 

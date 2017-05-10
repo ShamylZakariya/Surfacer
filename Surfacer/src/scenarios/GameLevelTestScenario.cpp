@@ -39,7 +39,7 @@ void GameLevelTestScenario::setup() {
 
 		if (terrain) {
 			auto cutter = GameObject::with("Cutter", {
-				make_shared<MouseCutterComponent>(terrain, core::game::CollisionFilters::CUTTER, 4),
+				make_shared<MouseCutterComponent>(terrain, core::game::CollisionFilters::TERRAIN_PROBE, 4),
 				make_shared<MouseCutterDrawComponent>()
 			});
 			getLevel()->addGameObject(cutter);

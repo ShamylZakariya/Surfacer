@@ -269,7 +269,7 @@ namespace core { namespace game { namespace player {
 
 		terrain::TerrainObjectRef terrain = dynamic_pointer_cast<GameLevel>(level)->getTerrain();
 		if (terrain) {
-			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2, CollisionFilters::CUTTER);
+			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2, CollisionFilters::TERRAIN_PROBE);
 		}
 
 	}
@@ -293,7 +293,7 @@ namespace core { namespace game { namespace player {
 		double penetration = 0;
 		for (double dist = 0; dist < _config.range && penetration < _config.cutDepth; dist += stepSize) {
 			bool didHit = false;
-			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, CollisionFilters::CUTTER, BlastBeamComponent_PointQueryFunc, &didHit);
+			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, CollisionFilters::TERRAIN_PROBE, BlastBeamComponent_PointQueryFunc, &didHit);
 			if (didHit) {
 				penetration += stepSize;
 			}

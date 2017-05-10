@@ -124,7 +124,7 @@ void TerrainTestScenario::setup() {
 	});
 
 	auto cutter = GameObject::with("Cutter", {
-		make_shared<MouseCutterComponent>(_terrain, CollisionFilters::CUTTER, 4),
+		make_shared<MouseCutterComponent>(_terrain, CollisionFilters::TERRAIN_PROBE, 4),
 		make_shared<MouseCutterDrawComponent>()
 	});
 
@@ -504,15 +504,15 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 
 	// we know the last cut causes weirdness so cut all but the last
 	for (int i = 0; i < cuts.size() - 1; i++) {
-		world->cut(cuts[i].a, cuts[i].b, cuts[i].radius, CollisionFilters::CUTTER);
+		world->cut(cuts[i].a, cuts[i].b, cuts[i].radius, CollisionFilters::TERRAIN_PROBE);
 	}
 
 	cut lastCut = cuts[cuts.size()-1];
-	world->cut(lastCut.a, lastCut.b, lastCut.radius, CollisionFilters::CUTTER);
+	world->cut(lastCut.a, lastCut.b, lastCut.radius, CollisionFilters::TERRAIN_PROBE);
 
 
 //	// this leaves shape 31 improperly cut - there's a tiny tab on lower left which should be excised but isn't
-//	world->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, CollisionFilters::CUTTER);
+//	world->cut(vec2(-339.440,  203.503), vec2(-448.034,  272.492), 0.852035, CollisionFilters::TERRAIN_PROBE);
 
 	return world;
 }
