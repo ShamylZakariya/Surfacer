@@ -790,7 +790,7 @@ namespace core { namespace game { namespace player {
 
 			if ( abs( baseImpulseToApply) > 1e-3 )
 			{
-				dvec2 impulse = Dir * baseImpulseToApply * _totalMass * Right;
+				dvec2 impulse = Dir * baseImpulseToApply * _totalMass * -Right;
 				cpBodyApplyImpulseAtWorldPoint( _body, cpv(impulse), cpBodyGetPosition(_body));
 			}
 		}
