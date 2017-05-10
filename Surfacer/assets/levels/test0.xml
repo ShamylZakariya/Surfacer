@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <level name="Hello">
-	<terrain path="svg_tests/complex_world_test.svg" friction="1" density="1" scale="2"/>
+	<terrain path="svg_tests/complex_world_test.svg" friction="0.3" density="1" scale="2"/>
 	<space damping="0.9"/>
 	<gravity type="radial" strength="200" falloff_power="0" />
 	<player path="player/player.xml">
 		<tracking areaRadius="300" deadZoneRadius="60" tightness="0.975"/>
 	</player>
+	<enemies>
+		
+		<eggsac id="eggsac_0" width="16" height="24"/>
+		
+	</enemies>
 </level>
