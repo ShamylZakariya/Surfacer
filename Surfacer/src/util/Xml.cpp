@@ -8,6 +8,8 @@
 
 #include "Xml.hpp"
 
+#include "Strings.hpp"
+
 namespace core { namespace util { namespace xml {
 
 	pair<bool, ci::XmlTree> findElement(const ci::XmlTree &node, string tag) {
@@ -74,5 +76,24 @@ namespace core { namespace util { namespace xml {
 		}
 		return defaultValue;
 	}
+
+	dvec2 readPointAttribute(ci::XmlTree &node, string attributeName, dvec2 defaultValue) {
+		if (node.hasAttribute(attributeName)) {
+			auto r = readNumericSequence(node.getAttribute(attributeName));
+			CI_ASSERT_MSG(r.size() == 2, ("dvec2 readPointAttribute expects 2 components in seequence, got: " + str(r.size())).c_str());
+			return dvec2(r[0], r[1]);
+		}
+		return defaultValue;
+	}
+
+	dvec3 readPointAttribute(ci::XmlTree &node, string attributeName, dvec3 defaultValue) {
+		if (node.hasAttribute(attributeName)) {
+			auto r = readNumericSequence(node.getAttribute(attributeName));
+			CI_ASSERT_MSG(r.size() == 3, ("dvec3 readPointAttribute expects 3 components in seequence, got: " + str(r.size())).c_str());
+			return dvec3(r[0], r[1], r[2]);
+		}
+		return defaultValue;
+	}
+
 
 }}}

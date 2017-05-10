@@ -70,6 +70,7 @@ namespace core { namespace game { namespace terrain {
 		virtual ~TerrainPhysicsComponent(){}
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
+		cpBB getBB() const override;
 		vector<cpBody*> getBodies() const override;
 
 	private:

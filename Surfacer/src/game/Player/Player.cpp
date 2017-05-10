@@ -573,6 +573,15 @@ namespace core { namespace game { namespace player {
 	{}
 
 	// PhysicsComponent
+
+	cpBB JetpackUnicyclePlayerPhysicsComponent::getBB() const {
+		if (_body) {
+			return cpBBNewForCircle(cpv(getPosition()), getConfig().height);
+		} else {
+			return cpBBZero;
+		}
+	}
+	
 	void JetpackUnicyclePlayerPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		PlayerPhysicsComponent::onReady(parent, level);
 
@@ -842,14 +851,6 @@ namespace core { namespace game { namespace player {
 		//
 
 		player->getDrawComponent()->notifyMoved();
-	}
-
-	cpBB JetpackUnicyclePlayerPhysicsComponent::getBB() const {
-		if (_body) {
-			return cpBBNewForCircle(cpv(getPosition()), getConfig().height);
-		} else {
-			return cpBBZero;
-		}
 	}
 
 	dvec2 JetpackUnicyclePlayerPhysicsComponent::getPosition() const {

@@ -78,6 +78,7 @@ namespace core {
 		template<typename T>
 		shared_ptr<T> getSibling() const;
 
+		// called when the owning GameObject has been added to a level
 		virtual void onReady(GameObjectRef parent, LevelRef level){}
 		virtual void onCleanup(){}
 		virtual void step(const time_state &timeState){}
@@ -86,6 +87,10 @@ namespace core {
 	protected:
 		friend class GameObject;
 
+		// called on Components immediately after being added to a GameObject
+		// a component at this point can access its GameObject owne, but does not
+		// necessarily have access to its neighbors, or to a Level. Wait for onReady
+		// for these types of actions.
 		virtual void attachedToGameObject(GameObjectRef gameObject) {
 			_gameObject = gameObject;
 		}
@@ -114,6 +119,9 @@ namespace core {
 
 		// return a vector of all bodies in use
 		virtual vector<cpBody*> getBodies() const = 0;
+
+		// get bounding box for all shapes in use
+		virtual cpBB getBB() const = 0;
 
 	private:
 		SpaceAccessRef _space;
@@ -177,7 +185,8 @@ namespace core {
 		DrawComponent(){}
 		virtual ~DrawComponent(){}
 
-		virtual cpBB getBB() const = 0;
+		// default implementation asks GameObject for the physicsComponent's BB
+		virtual cpBB getBB() const;
 		virtual void draw(const render_state &renderState) = 0;
 		virtual void drawScreen( const render_state &state ) {};
 		virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
@@ -281,6 +290,7 @@ namespace core {
 		}
 
 		DrawComponentRef getDrawComponent() const { return _drawComponent; }
+		PhysicsComponentRef getPhysicsComponent() const { return _physicsComponent; }
 
 		LevelRef getLevel() const { return _level.lock(); }
 
@@ -309,6 +319,7 @@ namespace core {
 		bool _ready;
 		set<ComponentRef> _components;
 		DrawComponentRef _drawComponent;
+		PhysicsComponentRef _physicsComponent;
 		LevelWeakRef _level;
 
 

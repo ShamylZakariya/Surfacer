@@ -262,7 +262,6 @@ namespace core { namespace game { namespace player {
 		// PlayerPhysicsComponent
 		const config& getConfig()const { return _config; }
 
-		virtual cpBB getBB() const = 0;
 		virtual dvec2 getPosition() const = 0;
 		virtual dvec2 getUp() const = 0;
 		virtual dvec2 getGroundNormal() const = 0;
@@ -313,11 +312,11 @@ namespace core { namespace game { namespace player {
 		virtual ~JetpackUnicyclePlayerPhysicsComponent();
 
 		// PhysicsComponent
+		cpBB getBB() const override;
 		void onReady(GameObjectRef parent, LevelRef level) override;
 		void step(const time_state &timeState) override;
 
 		// PlayerPhysicsComponent
-		cpBB getBB() const override;
 		dvec2 getPosition() const override;
 		dvec2 getUp() const override;
 		dvec2 getGroundNormal() const override;

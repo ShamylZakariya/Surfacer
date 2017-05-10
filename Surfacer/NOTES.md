@@ -6,6 +6,8 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## BUGS PRIORITY 0
 
+Consider rewriting DrawDispatcher using raw pointers and not shared_ptr<> ?
+
 glm::inverseTranspose exists. I can use it instead of glm::inverse in a lot of places
 
 SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?

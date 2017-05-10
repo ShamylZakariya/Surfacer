@@ -59,6 +59,10 @@ namespace core { namespace game { namespace terrain {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
 	}
 
+	cpBB TerrainPhysicsComponent::getBB() const {
+		return cpBBInfinity;
+	}
+
 	vector<cpBody*> TerrainPhysicsComponent::getBodies() const {
 		vector<cpBody*> bodies;
 		for (terrain::GroupBaseRef g : _world->getDynamicGroups()) {

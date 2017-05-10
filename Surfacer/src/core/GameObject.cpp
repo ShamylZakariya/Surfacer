@@ -45,6 +45,10 @@ namespace core {
 
 #pragma mark - DrawComponent
 
+	cpBB DrawComponent::getBB() const {
+		return getGameObject()->getPhysicsComponent()->getBB();
+	}
+
 	void DrawComponent::notifyMoved() {
 		getGameObject()->getLevel()->getDrawDispatcher()->moved(this);
 	}
@@ -184,12 +188,16 @@ namespace core {
 	}
 
 	void GameObject::onReady(LevelRef level){
-		const auto self = shared_from_this();
-		for (auto &component : _components) {
-			component->attachedToGameObject(self);
-			component->onReady(self, level);
+		if (!_ready) {
+			const auto self = shared_from_this();
+			for (auto &component : _components) {
+				component->attachedToGameObject(self);
+			}
+			for (auto &component : _components) {
+				component->onReady(self, level);
+			}
+			_ready = true;
 		}
-		_ready = true;
 	}
 
 	void GameObject::onCleanup() {
