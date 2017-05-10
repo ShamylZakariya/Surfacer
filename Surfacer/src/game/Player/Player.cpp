@@ -175,7 +175,7 @@ namespace core { namespace game { namespace player {
 		BeamComponent::update(time);
 
 		GameObjectRef go = getGameObject();
-		assert(go);
+		CI_ASSERT_MSG(go, "GameObject should be accessbile");
 
 		//
 		//	Before beam hits, we move the head, compute the length, and track the tail.
@@ -984,7 +984,7 @@ namespace core { namespace game { namespace player {
 
 	void PlayerDrawComponent::drawScreen(const render_state &renderState) {
 		PlayerGunComponentRef gun = _gun.lock();
-		assert(gun);
+		CI_ASSERT_MSG(gun, "PlayerGunComponent should be accessbile");
 		drawGunCharge(gun, renderState);
 	}
 
@@ -1002,7 +1002,7 @@ namespace core { namespace game { namespace player {
 
 	void PlayerDrawComponent::drawPlayer(const render_state &renderState) {
 		JetpackUnicyclePlayerPhysicsComponentRef physics = _physics.lock();
-		assert(physics);
+		CI_ASSERT_MSG(physics, "JetpackUnicyclePlayerPhysicsComponentRef should be accessbile");
 
 		const JetpackUnicyclePlayerPhysicsComponent::wheel FootWheel = physics->getFootWheel();
 		const JetpackUnicyclePlayerPhysicsComponent::capsule BodyCapsule = physics->getBodyCapsule();

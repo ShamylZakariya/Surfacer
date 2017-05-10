@@ -1217,7 +1217,7 @@ namespace core { namespace game { namespace terrain {
 	}
 
 	bool Anchor::build(SpaceAccessRef space, material m) {
-		assert(_shapes.empty());
+		CI_ASSERT_MSG(_shapes.empty(), "Can't call build on an Anchor more than once");
 
 		_material = m;
 		_staticBody = cpBodyNewStatic();
@@ -1412,7 +1412,7 @@ namespace core { namespace game { namespace terrain {
 	void Shape::updateWorldSpaceContourAndBB() {
 		if (_worldSpaceShapeContourEdgesDirty) {
 
-			assert(_outerContour.model.size() > 1);
+			CI_ASSERT_MSG(_outerContour.model.size() > 1, "Shape's contour must have more than 1 vertex");
 
 			const dmat4 modelMatrix = getModelMatrix();
 			dvec2 worldPoint = modelMatrix * _outerContour.model.getPoints().front();
@@ -1554,7 +1554,7 @@ namespace core { namespace game { namespace terrain {
 	}
 
 	const vector<cpShape*> &Shape::createCollisionShapes(cpBody *body, cpBB &modelBB) {
-		assert(_shapes.empty());
+		CI_ASSERT_MSG(_shapes.empty(), "Can't call createCollisionShapes on a Shape more than once. Always call destroyCollisionShapes first");
 
 		cpBB bb = cpBBInvalid;
 		cpVect triangle[3];

@@ -356,10 +356,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 		}
 
 		vector<ShapeRef> build_from_contour_tree(contour_tree_node_ref rootNode, int depth) {
-			if (depth % 2) {
-				CI_LOG_E("build_from_contour_tree MUST only be called on even depths");
-				assert(false);
-			}
+			CI_ASSERT_MSG((depth % 2) == 0, "build_from_contour_tree MUST only be called on even depths");
 
 			// simplest case, no child nodes
 			if (rootNode->children.empty()) {

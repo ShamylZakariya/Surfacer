@@ -166,7 +166,13 @@ namespace core {
 		_components.insert(component);
 
 		if (DrawComponentRef dc = dynamic_pointer_cast<DrawComponent>(component)) {
+			CI_ASSERT_MSG(!_drawComponent, "Can't assign more than one DrawComponent");
 			_drawComponent = dc;
+		}
+
+		if (PhysicsComponentRef pc = dynamic_pointer_cast<PhysicsComponent>(component)) {
+			CI_ASSERT_MSG(!_physicsComponent, "Can't assign more than one PhysicsComponent");
+			_physicsComponent = pc;
 		}
 
 		if (_ready) {
