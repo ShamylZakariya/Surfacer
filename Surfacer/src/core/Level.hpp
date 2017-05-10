@@ -120,8 +120,7 @@ namespace core {
 	private:
 
 		cpSpatialIndex *_index;
-		set< DrawComponentRef > _all;
-		set< DrawComponentRef > _alwaysVisible;
+		set<DrawComponentRef> _all, _alwaysVisible, _deferredSpatialIndexInsertion;
 		collector _collector;
 
 	};

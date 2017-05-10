@@ -110,8 +110,7 @@ namespace core {
 
 	/*
 		cpSpatialIndex *_index;
-		std::set< DrawComponentRef > _all;
-		std::set< DrawComponentRef > _alwaysVisible;
+		set<DrawComponentRef> _all, _alwaysVisible, _deferredSpatialIndexInsertion;
 		collector _collector;
 	 */
 
@@ -134,7 +133,9 @@ namespace core {
 					break;
 
 				case VisibilityDetermination::FRUSTUM_CULLING:
-					cpSpatialIndexInsert( _index, dc.get(), getCPHashValue(dc) );
+					// wait until ::cull to add to spatial index. This is to accommodate
+					// partially constructed GameObjects
+					_deferredSpatialIndexInsertion.insert(dc);
 					break;
 
 				case VisibilityDetermination::NEVER_DRAW:
@@ -156,7 +157,13 @@ namespace core {
 
 				case VisibilityDetermination::FRUSTUM_CULLING:
 				{
-					cpSpatialIndexRemove( _index, dc.get(), getCPHashValue(dc) );
+					_deferredSpatialIndexInsertion.erase(dc);
+
+					const auto dcp = dc.get();
+					const auto hv = getCPHashValue(dc);
+					if (cpSpatialIndexContains(_index, dcp, hv)){
+						cpSpatialIndexRemove( _index, dcp, hv);
+					}
 					break;
 				}
 
@@ -182,6 +189,15 @@ namespace core {
 
 	void DrawDispatcher::cull( const render_state &state )
 	{
+		// if we have any deferred insertions to spatial index, do it now
+		if (!_deferredSpatialIndexInsertion.empty()) {
+			for (const auto &dc : _deferredSpatialIndexInsertion) {
+				cpSpatialIndexInsert( _index, dc.get(), getCPHashValue(dc) );
+			}
+			_deferredSpatialIndexInsertion.clear();
+		}
+
+
 		//
 		//	clear storage - note: std::vector doesn't free, it keeps space reserved.
 		//
