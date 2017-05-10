@@ -43,7 +43,7 @@ namespace core { namespace game { namespace enemy {
 		gl::color(0.2,0.2,0.8);
 		gl::drawSolidRect(Rectf(-width/2, height, width/2, 0));
 		gl::color(0.5, 0.5, 0.9);
-		gl::drawSolidTriangle(dvec2(-width/2, height), dvec2(0,0), dvec2(width/2, height));
+		gl::drawSolidTriangle(dvec2(-width/2, 0), dvec2(0,height), dvec2(width/2, 0));
 	}
 
 	int EggsacDrawComponent::getLayer() const {
@@ -95,7 +95,7 @@ namespace core { namespace game { namespace enemy {
 		_attachmentPosition = v2(segQueryInfo.point);
 		_up = v2(segQueryInfo.normal);
 		_right = rotateCW(_up);
-		_angle = atan2(_up.y, _up.x);
+		_angle = atan2(_up.y, _up.x) - M_PI_2;
 
 		// now build our body, shape, etc
 		double mass = _config.width * _config.height * _config.density;
