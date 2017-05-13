@@ -32,7 +32,7 @@ namespace core {
 			_width = width;
 			_height = height;
 			_calcMatrices();
-			boundsChanged(*this);
+			onBoundsChanged(*this);
 		}
 	}
 
@@ -90,7 +90,7 @@ namespace core {
 		_viewProjectionMatrix = _projectionMatrix * _viewMatrix;
 		_inverseViewProjectionMatrix = glm::inverse(_viewProjectionMatrix);
 
-		motion(*this);
+		onMotion(*this);
 	}
 
 

@@ -49,15 +49,15 @@ namespace core {
 
 	void ViewportController::setViewport(ViewportRef vp) {
 		if (_viewport) {
-			_viewport->motion.disconnect(this);
-			_viewport->boundsChanged.disconnect(this);
+			_viewport->onMotion.disconnect(this);
+			_viewport->onBoundsChanged.disconnect(this);
 		}
 		_viewport = vp;
 		if (_viewport) {
 			_scale = _viewport->getScale();
 			_look = _viewport->getLook();
-			_viewport->motion.connect(this, &ViewportController::_viewportInitiatedChange );
-			_viewport->boundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
+			_viewport->onMotion.connect(this, &ViewportController::_viewportInitiatedChange );
+			_viewport->onBoundsChanged.connect(this, &ViewportController::_viewportBoundsChanged );
 		} else {
 			_scale = 1;
 			_look = { dvec2(0,0), dvec2(0,1) };

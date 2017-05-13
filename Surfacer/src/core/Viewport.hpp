@@ -88,8 +88,8 @@ namespace core {
 	class Viewport : public IViewport {
 	public:
 
-		signals::signal< void( const Viewport & ) > motion;
-		signals::signal< void( const Viewport & ) > boundsChanged;
+		signals::signal< void( const Viewport & ) > onMotion;
+		signals::signal< void( const Viewport & ) > onBoundsChanged;
 
 		struct look {
 			dvec2 world;

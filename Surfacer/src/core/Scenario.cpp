@@ -59,6 +59,8 @@ namespace core {
 	_width(app::getWindowWidth()),
 	_height(app::getWindowHeight())
 	{
+		_viewport->onMotion.connect(this, &Scenario::onViewportMoved);
+		_viewport->onBoundsChanged.connect(this, &Scenario::onViewportBoundsChanged);
 		setListening(true);
 	}
 
@@ -201,6 +203,21 @@ namespace core {
 			_level->drawScreen(_screenRenderState);
 		}
 	}
+
+	void Scenario::onViewportMoved(const Viewport &vp) {
+		// forward Viewport::onMotion to Level::signals.onViewportMotion
+		if (_level) {
+			_level->signals.onViewportMotion(vp);
+		}
+	}
+
+	void Scenario::onViewportBoundsChanged(const Viewport &vp) {
+		// forward Viewport::onBoundsChanged to Level::signals.onViewportBoundsChanged
+		if (_level) {
+			_level->signals.onViewportBoundsChanged(vp);
+		}
+	}
+
 
 
 }

@@ -106,7 +106,7 @@ _periodStep(periodStep)
 }
 
 void WorldCartesianGridDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
-	level->getViewport()->motion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
+	level->signals.onViewportMotion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
 	setupShaderUniforms();
 }
 

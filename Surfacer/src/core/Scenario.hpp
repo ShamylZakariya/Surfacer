@@ -84,6 +84,9 @@ namespace core {
 
 	protected:
 
+		void onViewportMoved(const Viewport &vp);
+		void onViewportBoundsChanged(const Viewport &vp);
+
 		class ScreenViewport : public IViewport {
 		public:
 			ScreenViewport(){}

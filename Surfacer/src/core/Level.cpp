@@ -353,9 +353,9 @@ namespace core {
 		if (paused != isPaused()) {
 			_paused = isPaused();
 			if (isPaused()) {
-				levelWasPaused(shared_from_this<Level>());
+				signals.onLevelPaused(shared_from_this<Level>());
 			} else {
-				levelWasUnpaused(shared_from_this<Level>());
+				signals.onLevelUnpaused(shared_from_this<Level>());
 			}
 		}
 	}

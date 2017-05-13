@@ -131,6 +131,29 @@ namespace core {
 	class Level : public enable_shared_from_this<Level>, public core::signals::receiver {
 	public:
 
+		/**
+			Define signals for elements in the Level to bind to.
+			Any object can define its own signals and be bound to directly, but for clarity, I'd like
+			important signals to be routed through Level::signals. Viewport gets a pass for declaring 
+			signals directly, because it's fairly low in the stack. Otherwise, signals should be defined
+			here and objects that want to fire a signal should do so through their Level.
+		 */
+		struct signals_ {
+			signals::signal< void( const Viewport & ) > onViewportMotion;
+			signals::signal< void( const Viewport & ) > onViewportBoundsChanged;
+
+			signals::signal< void(const LevelRef &) > onLevelPaused;
+			signals::signal< void(const LevelRef &) > onLevelUnpaused;
+
+			signals::signal< void(const PhysicsComponentRef &, cpBody*) > onBodyWillBeDestroyed;
+			signals::signal< void(const PhysicsComponentRef &, cpShape*) > onShapeWillBeDestroyed;
+			signals::signal< void(const PhysicsComponentRef &, cpConstraint*) > onConstraintWillBeDestroyed;
+		};
+
+		signals_ signals;
+
+	public:
+
 		static LevelRef getLevelFromSpace(cpSpace *space) {
 			return static_cast<Level*>(cpSpaceGetUserData(space))->shared_from_this<Level>();
 		}
@@ -139,8 +162,6 @@ namespace core {
 			return static_cast<Level*>(cpSpaceGetUserData(space));
 		}
 
-		signals::signal< void(const LevelRef &) > levelWasPaused;
-		signals::signal< void(const LevelRef &) > levelWasUnpaused;
 
 		enum GravityType {
 			DIRECTIONAL,
