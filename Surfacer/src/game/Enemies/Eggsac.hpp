@@ -71,28 +71,29 @@ namespace core { namespace game { namespace enemy {
 		virtual ~EggsacPhysicsComponent();
 
 		config getConfig() const { return _config; }
-		dvec2 getAttachmentPosition() { return _attachmentPosition; }
+		dvec2 getPosition() { return v2(cpBodyGetPosition(_sacBody)); }
 		dvec2 getUp() { return _up; }
 		dvec2 getRight() { return _right; }
 		double getAngle() { return _angle; }
 
+		cpBody*	getBody() const { return _sacBody; }
+		cpShape* getBodyShape() const { return _sacShape; }
+		cpConstraint* getAttachmentSpring() const { return _attachmentSpring; }
+
 		// PhysicsComponent
 		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onCleanup() override;
 		void step(const time_state &time) override;
-		vector<cpBody*> getBodies() const override { return _bodies; }
 		cpBB getBB() const override;
 
 	protected:
 
-
-	protected:
-
 		config _config;
-		dvec2 _attachmentPosition, _up, _right;
-		double _angle;
-		vector<cpBody*> _bodies;
-		vector<cpShape*> _shapes;
-		vector<cpConstraint*> _constraints;
+		cpBody *_sacBody;
+		cpShape *_sacShape;
+		cpConstraint *_attachmentSpring;
+		dvec2 _up, _right, _springAttachmentWorld, _currentSpringAttachmentWorld;
+		double _angle, _maxSpringStiffness, _currentSpringStiffness;
 
 	};
 
