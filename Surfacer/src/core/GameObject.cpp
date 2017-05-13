@@ -143,8 +143,27 @@ namespace core {
 	}
 
 	void PhysicsComponent::onCleanup() {
-		cpCleanupAndFree(_constraints);
+
+		if (LevelRef level = getLevel()) {
+			auto self = shared_from_this<PhysicsComponent>();
+			for( cpConstraint *c : getConstraints() )
+			{
+				level->signals.onConstraintWillBeDestroyed(self, c);
+			}
+
+			for( cpShape *s : getShapes() )
+			{
+				level->signals.onShapeWillBeDestroyed(self, s);
+			}
+
+			for( cpBody *b : getBodies() )
+			{
+				level->signals.onBodyWillBeDestroyed(self, b);
+			}
+		}
+
 		cpCleanupAndFree(_shapes);
+		cpCleanupAndFree(_constraints);
 		cpCleanupAndFree(_bodies);
 		_space.reset();
 	}
@@ -175,6 +194,25 @@ namespace core {
 			getSpace()->addConstraint(c);
 		}
 	}
+
+	void PhysicsComponent::onBodyWillBeDestroyed(cpBody* body) {
+		if (LevelRef l = getLevel()) {
+			l->signals.onBodyWillBeDestroyed(shared_from_this<PhysicsComponent>(), body);
+		}
+	}
+
+	void PhysicsComponent::onShapeWillBeDestroyed(cpShape* shape) {
+		if (LevelRef l = getLevel()) {
+			l->signals.onShapeWillBeDestroyed(shared_from_this<PhysicsComponent>(), shape);
+		}
+	}
+
+	void PhysicsComponent::onConstraintWillBeDestroyed(cpConstraint* constraint) {
+		if (LevelRef l = getLevel()) {
+			l->signals.onConstraintWillBeDestroyed(shared_from_this<PhysicsComponent>(), constraint);
+		}
+	}
+
 
 #pragma mark - GameObject
 

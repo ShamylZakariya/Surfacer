@@ -29,6 +29,7 @@ namespace core { namespace game { namespace terrain {
 		virtual ~TerrainObject();
 
 		void onReady(LevelRef level) override;
+		void onCleanup() override;
 		void step(const time_state &timeState) override;
 		void update(const time_state &timeState) override;
 

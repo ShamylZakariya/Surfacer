@@ -31,6 +31,10 @@ namespace core { namespace game { namespace terrain {
 		_world->setGameObject(shared_from_this());
 	}
 
+	void TerrainObject::onCleanup() {
+		_world.reset();
+	}
+
 	void TerrainObject::step(const time_state &timeState) {
 		_world->step(timeState);
 	}

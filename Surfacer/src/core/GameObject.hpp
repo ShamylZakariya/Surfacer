@@ -127,6 +127,10 @@ namespace core {
 
 	protected:
 
+		virtual void onBodyWillBeDestroyed(cpBody* body);
+		virtual void onShapeWillBeDestroyed(cpShape* shape);
+		virtual void onConstraintWillBeDestroyed(cpConstraint* constraint);
+
 		void build(cpShapeFilter filter, cpCollisionType collisionType);
 
 		cpBody *add(cpBody *body) { _bodies.push_back(body); return body; }

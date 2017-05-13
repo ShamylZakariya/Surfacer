@@ -409,7 +409,7 @@ namespace core { namespace game { namespace terrain {
 			//
 
 			map<ShapeRef,GroupBaseRef> parentage;
-			for (auto &shapeToCut : collector.shapes) {
+			for (const ShapeRef &shapeToCut : collector.shapes) {
 				GroupBaseRef parentGroup = shapeToCut->getGroup();
 
 				auto result = shapeToCut->subtract(contour);
@@ -519,12 +519,32 @@ namespace core { namespace game { namespace terrain {
 		return nullptr;
 	}
 
-	void World::setGameObject(GameObjectRef gameObject) {
-		_gameObject = gameObject;
-	}
-
 	GameObjectRef World::getGameObject() const {
 		return _gameObject.lock();
+	}
+
+	void World::notifyCollisionShapesWillBeDestoyed(vector<cpShape*> shapes) {
+		if (GameObjectRef gameObject = getGameObject()) {
+			if (LevelRef level = gameObject->getLevel()) {
+				PhysicsComponentRef physics = gameObject->getPhysicsComponent();
+				for (auto shape : shapes) {
+					level->signals.onShapeWillBeDestroyed(physics, shape);
+				}
+			}
+		}
+	}
+
+	void World::notifyBodyWillBeDestoyed(cpBody *body) {
+		if (GameObjectRef gameObject = getGameObject()) {
+			if (LevelRef level = gameObject->getLevel()) {
+				PhysicsComponentRef physics = gameObject->getPhysicsComponent();
+				level->signals.onBodyWillBeDestroyed(physics, body);
+			}
+		}
+	}
+
+	void World::setGameObject(GameObjectRef gameObject) {
+		_gameObject = gameObject;
 	}
 
 	void World::build(const vector<ShapeRef> &affectedShapes, const map<ShapeRef,GroupBaseRef> &parentage) {
@@ -848,6 +868,11 @@ namespace core { namespace game { namespace terrain {
 
 	DynamicGroup::~DynamicGroup() {
 		releaseShapes();
+
+		if (WorldRef world = getWorld()) {
+			world->notifyBodyWillBeDestoyed(_body);
+		}
+
 		cpCleanupAndFree(_body);
 	}
 
@@ -1547,9 +1572,19 @@ namespace core { namespace game { namespace terrain {
 	}
 
 	void Shape::destroyCollisionShapes() {
+
+		// notify that our shapes will be destroyed; this is so anything attached to
+		// one of our shapes can detach without chipmunk exploding
+
+		if (WorldRef world = getWorld()) {
+			world->notifyCollisionShapesWillBeDestoyed(_shapes);
+		}
+
+		// now do the cleanup
 		for (auto shape : _shapes) {
 			cpCleanupAndFree(shape);
 		}
+
 		_shapes.clear();
 	}
 

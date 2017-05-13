@@ -243,11 +243,21 @@ namespace core { namespace game { namespace terrain {
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
 
-		void setGameObject(GameObjectRef gameObject);
+		/**
+		 Get the GameObject which wraps this World for use in a Level
+		 */
 		GameObjectRef getGameObject() const;
 
 	protected:
 
+		friend class TerrainObject;
+		friend class Shape;
+		friend class DynamicGroup;
+
+		void notifyCollisionShapesWillBeDestoyed(vector<cpShape*> shapes);
+		void notifyBodyWillBeDestoyed(cpBody *body);
+
+		void setGameObject(GameObjectRef gameObject);
 		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		vector<set<ShapeRef>> findShapeGroups(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		bool isShapeGroupStatic(const set<ShapeRef> shapeGroup, const GroupBaseRef &parentGroup);
