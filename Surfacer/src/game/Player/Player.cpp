@@ -15,6 +15,7 @@
 #include "Strings.hpp"
 #include "Terrain.hpp"
 #include "Xml.hpp"
+#include "ChipmunkDebugDraw.hpp"
 
 
 namespace core { namespace game { namespace player {
@@ -483,11 +484,7 @@ namespace core { namespace game { namespace player {
 	_speed(0)
 	{}
 
-	PlayerPhysicsComponent::~PlayerPhysicsComponent() {
-		cpCleanupAndFree(_constraints);
-		cpCleanupAndFree(_shapes);
-		cpCleanupAndFree(_bodies);
-	}
+	PlayerPhysicsComponent::~PlayerPhysicsComponent() {}
 
 	void PlayerPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		PhysicsComponent::onReady(parent, level);
@@ -608,41 +605,41 @@ namespace core { namespace game { namespace player {
 			WheelPositionOffset = cpv(0,-HalfHeight);
 
 		_totalMass = Mass + WheelMass;
-		_body = _add(cpBodyNew( Mass, Moment ));
+		_body = add(cpBodyNew( Mass, Moment ));
 		cpBodySetPosition(_body, cpv(getConfig().position));
 
 		//
 		// lozenge shape for body and gear joint to orient it
 		//
 
-		_bodyShape = _add(cpSegmentShapeNew( _body, cpv(0,-(HalfHeight)), cpv(0,HalfHeight), Width/2 ));
+		_bodyShape = add(cpSegmentShapeNew( _body, cpv(0,-(HalfHeight)), cpv(0,HalfHeight), Width/2 ));
 		cpShapeSetFriction( _bodyShape, config.bodyFriction );
 
-		_orientationConstraint = _add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 1));
+		_orientationConstraint = add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 1));
 
 		//
 		// make wheel at bottom of body
 		//
 
 		_wheelRadius = WheelRadius;
-		_wheelBody = _add(cpBodyNew( WheelMass, cpMomentForCircle( WheelMass, 0, _wheelRadius, cpvzero )));
+		_wheelBody = add(cpBodyNew( WheelMass, cpMomentForCircle( WheelMass, 0, _wheelRadius, cpvzero )));
 		cpBodySetPosition( _wheelBody, cpvadd( cpBodyGetPosition( _body ), WheelPositionOffset ));
-		_wheelShape = _add(cpCircleShapeNew( _wheelBody, _wheelRadius, cpvzero ));
+		_wheelShape = add(cpCircleShapeNew( _wheelBody, _wheelRadius, cpvzero ));
 		cpShapeSetFriction(_wheelShape, config.footFriction);
-		_wheelMotor = _add(cpSimpleMotorNew( _body, _wheelBody, 0 ));
+		_wheelMotor = add(cpSimpleMotorNew( _body, _wheelBody, 0 ));
 
 		//
 		//	pin joint connecting wheel and body
 		//
 
-		_add(cpPivotJointNew(_body, _wheelBody, cpBodyLocalToWorld(_wheelBody, cpvzero)));
+		add(cpPivotJointNew(_body, _wheelBody, cpBodyLocalToWorld(_wheelBody, cpvzero)));
 
 
 		//
 		//	create sensor for recording ground contact
 		//
 
-		_groundContactSensorShape = _add(cpCircleShapeNew( _wheelBody, WheelSensorRadius, cpvzero ));
+		_groundContactSensorShape = add(cpCircleShapeNew( _wheelBody, WheelSensorRadius, cpvzero ));
 		cpShapeSetSensor( _groundContactSensorShape, true );
 
 		//
@@ -653,26 +650,7 @@ namespace core { namespace game { namespace player {
 		cpShapeFilter filter = CollisionFilters::PLAYER;
 		filter.group = reinterpret_cast<cpGroup>(player.get());
 
-		for( cpShape *s : getShapes() )
-		{
-			cpShapeSetUserData( s, player.get() );
-			cpShapeSetFilter(s, filter);
-			cpShapeSetCollisionType( s, CollisionType::PLAYER );
-			cpShapeSetElasticity( s, 0 );
-			getSpace()->addShape(s);
-		}
-
-		for( cpBody *b : getBodies() )
-		{
-			cpBodySetUserData( b, player.get() );
-			getSpace()->addBody(b);
-		}
-
-		for( cpConstraint *c : getConstraints() )
-		{
-			cpConstraintSetUserData( c, player.get() );
-			getSpace()->addConstraint(c);
-		}
+		build(filter, CollisionType::PLAYER);
 	}
 
 	void JetpackUnicyclePlayerPhysicsComponent::step(const time_state &timeState) {
@@ -877,6 +855,14 @@ namespace core { namespace game { namespace player {
 		return _wheelBody;
 	}
 
+	cpShape *JetpackUnicyclePlayerPhysicsComponent::getBodyShape() const {
+		return _bodyShape;
+	}
+
+	cpShape *JetpackUnicyclePlayerPhysicsComponent::getFootShape() const {
+		return _wheelShape;
+	}
+
 	double JetpackUnicyclePlayerPhysicsComponent::getJetpackFuelLevel() const {
 		return _jetpackFuelLevel;
 	}
@@ -1014,20 +1000,7 @@ namespace core { namespace game { namespace player {
 		gl::drawLine(FootWheel.position, FootWheel.position + FootWheel.radius * dvec2(cos(FootWheel.radians), sin(FootWheel.radians)));
 
 		// draw the capsule
-		{
-			double radius = BodyCapsule.radius;
-			dvec2 center = (BodyCapsule.a + BodyCapsule.b) * 0.5;
-			double len = distance(BodyCapsule.a, BodyCapsule.b);
-			dvec2 dir = (BodyCapsule.b - BodyCapsule.a) / len;
-			double angle = atan2(dir.y, dir.x);
-
-			gl::ScopedModelMatrix smm;
-			mat4 M = glm::translate(dvec3(center.x, center.y, 0)) * glm::rotate(angle, dvec3(0,0,1));
-			gl::multModelMatrix(M);
-
-			gl::color(Color(1,1,1));
-			gl::drawSolidRoundedRect(Rectf(-len/2, -radius, +len/2, +radius), radius, 8);
-		}
+		util::cdd::DrawCapsule(BodyCapsule.a, BodyCapsule.b, BodyCapsule.radius);
 
 		// draw the ground normal indicator
 		gl::color(1,0,0);

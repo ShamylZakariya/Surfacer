@@ -256,8 +256,6 @@ namespace core { namespace game { namespace player {
 
 		// PhysicsComponent
 		void onReady(GameObjectRef parent, LevelRef level) override;
-		vector<cpBody*> getBodies() const override { return _bodies; }
-
 
 		// PlayerPhysicsComponent
 		const config& getConfig()const { return _config; }
@@ -268,12 +266,11 @@ namespace core { namespace game { namespace player {
 		virtual bool isTouchingGround() const = 0;
 		virtual cpBody *getBody() const = 0;
 		virtual cpBody *getFootBody() const = 0;
+		virtual cpShape *getBodyShape() const = 0;
+		virtual cpShape *getFootShape() const = 0;
 		virtual double getJetpackFuelLevel() const = 0;
 		virtual double getJetpackFuelMax() const = 0;
 		virtual dvec2 getJetpackThrustDirection() const = 0;
-
-		vector<cpShape*> getShapes() const { return _shapes; }
-		vector<cpConstraint*> getConstraints() const { return _constraints; }
 
 		// Control inputs, called by Player in Player::update
 		virtual void setSpeed( double vel ) { _speed = vel; }
@@ -284,10 +281,6 @@ namespace core { namespace game { namespace player {
 
 	protected:
 
-		cpShape *_add( cpShape *shape ) { _shapes.push_back(shape); return shape; }
-		cpConstraint *_add( cpConstraint *constraint ) { _constraints.push_back(constraint); return constraint; }
-		cpBody *_add( cpBody *body ) { _bodies.push_back(body); return body; }
-
 		dvec2 _getGroundNormal() const;
 		bool _isTouchingGround( cpShape *shape ) const;
 
@@ -295,9 +288,6 @@ namespace core { namespace game { namespace player {
 	protected:
 
 		config _config;
-		vector<cpBody*> _bodies;
-		vector<cpShape*> _shapes;
-		vector<cpConstraint*> _constraints;
 		bool _flying;
 		double _speed;
 
@@ -323,6 +313,8 @@ namespace core { namespace game { namespace player {
 		bool isTouchingGround() const override;
 		cpBody *getBody() const override;
 		cpBody *getFootBody() const override;
+		cpShape *getBodyShape() const override;
+		cpShape *getFootShape() const override;
 		double getJetpackFuelLevel() const override;
 		double getJetpackFuelMax() const override;
 		dvec2 getJetpackThrustDirection() const override;

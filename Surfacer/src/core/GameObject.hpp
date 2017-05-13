@@ -111,20 +111,33 @@ namespace core {
 	class PhysicsComponent : public Component {
 	public:
 		PhysicsComponent():_space(nullptr){}
-		virtual ~PhysicsComponent(){}
+		virtual ~PhysicsComponent();
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onCleanup() override;
 
 		const SpaceAccessRef &getSpace() const { return _space; }
 
-		// return a vector of all bodies in use
-		virtual vector<cpBody*> getBodies() const = 0;
+		virtual vector<cpBody*> getBodies() const { return _bodies; }
+		virtual vector<cpShape*> getShapes() const { return _shapes; }
+		virtual vector<cpConstraint*> getConstraints() const { return _constraints; }
 
 		// get bounding box for all shapes in use
 		virtual cpBB getBB() const = 0;
 
+	protected:
+
+		void build(cpShapeFilter filter, cpCollisionType collisionType);
+
+		cpBody *add(cpBody *body) { _bodies.push_back(body); return body; }
+		cpShape *add(cpShape *shape) { _shapes.push_back(shape); return shape; }
+		cpConstraint *add(cpConstraint *c) { _constraints.push_back(c); return c; }
+
 	private:
 		SpaceAccessRef _space;
+		vector<cpBody*> _bodies;
+		vector<cpShape*> _shapes;
+		vector<cpConstraint*> _constraints;
 	};
 
 

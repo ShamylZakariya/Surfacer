@@ -134,8 +134,46 @@ namespace core {
 
 #pragma mark - PhysicsComponent
 
+	PhysicsComponent::~PhysicsComponent() {
+	}
+
 	void PhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+		Component::onReady(parent, level);
 		_space = level->getSpace();
+	}
+
+	void PhysicsComponent::onCleanup() {
+		cpCleanupAndFree(_constraints);
+		cpCleanupAndFree(_shapes);
+		cpCleanupAndFree(_bodies);
+		_space.reset();
+	}
+
+	void PhysicsComponent::build(cpShapeFilter filter, cpCollisionType collisionType) {
+		CI_ASSERT_MSG(_space, "Can't call ::build before SpaceAccess has been assigned.");
+
+		auto parent = getGameObject();
+		CI_ASSERT_MSG(parent, "Can't call ::build without a valid GameObject parent instance");
+
+		for( cpShape *s : getShapes() )
+		{
+			cpShapeSetUserData( s, parent.get() );
+			cpShapeSetFilter(s, filter);
+			cpShapeSetCollisionType( s, collisionType );
+			getSpace()->addShape(s);
+		}
+
+		for( cpBody *b : getBodies() )
+		{
+			cpBodySetUserData( b, parent.get() );
+			getSpace()->addBody(b);
+		}
+
+		for( cpConstraint *c : getConstraints() )
+		{
+			cpConstraintSetUserData( c, parent.get() );
+			getSpace()->addConstraint(c);
+		}
 	}
 
 #pragma mark - GameObject
