@@ -46,9 +46,7 @@ namespace core { namespace game { namespace enemy {
 			util::cdd::DrawCapsule(a, b, radius);
 		}
 
-		// draw attachment spring
-		{
-			cpConstraint *spring = physics->getAttachmentSpring();
+		if (cpConstraint *spring = physics->getAttachmentSpring()) {
 			auto a = v2(cpBodyLocalToWorld(cpConstraintGetBodyA(spring), cpDampedSpringGetAnchorA(spring)));
 			auto b = v2(cpBodyLocalToWorld(cpConstraintGetBodyB(spring), cpDampedSpringGetAnchorB(spring)));
 
@@ -61,7 +59,6 @@ namespace core { namespace game { namespace enemy {
 			gl::color(0,1,0);
 			gl::drawSolidCircle(b, 2, 12);
 		}
-
 	}
 
 	int EggsacDrawComponent::getLayer() const {
@@ -72,70 +69,50 @@ namespace core { namespace game { namespace enemy {
 
 	/*
 		config _config;
-		cpBody *_sacBody;
-		cpShape *_sacShape;
-		cpConstraint *_attachmentSpring;
-		dvec2 _up, _right, _springAttachmentWorld, _currentSpringAttachmentWorld;
-		double _angle, _maxSpringStiffness, _currentSpringStiffness;
+		cpBody *_sacBody, *_attachedToBody;
+		cpShape *_sacShape, *_attachedToShape;
+		cpConstraint *_attachmentSpring, *_orientationSpring;
+		dvec2 _up, _right;
+		double _angle, _mass;
 	 */
 
 	EggsacPhysicsComponent::EggsacPhysicsComponent(config c):
 	_config(c),
 	_sacBody(nullptr),
+	_attachedToBody(nullptr),
 	_sacShape(nullptr),
+	_attachedToShape(nullptr),
 	_attachmentSpring(nullptr),
-	_maxSpringStiffness(0),
-	_currentSpringStiffness(0)
+	_orientationSpring(nullptr),
+	_mass(0)
 	{}
 
 	EggsacPhysicsComponent::~EggsacPhysicsComponent() {}
 
+	bool EggsacPhysicsComponent::isAttached() const {
+		return _attachedToBody != nullptr;
+	}
+
 	void EggsacPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
 		PhysicsComponent::onReady(parent,level);
 
-		cpSpace *space = getSpace()->getSpace();
-		dvec2 suggestedPosition = _config.suggestedAttachmentPosition;
+		// register to be notified when bodies/shapes are destroyed. We need to know so we can detach our spring/gear
+		level->signals.onBodyWillBeDestroyed.connect(this, &EggsacPhysicsComponent::onBodyWillBeDestroyed);
+		level->signals.onShapeWillBeDestroyed.connect(this, &EggsacPhysicsComponent::onShapeWillBeDestroyed);
 
-		// use a point query to find closest terrain
-		cpPointQueryInfo pointQueryInfo;
-		cpShape *terrainShape = cpSpacePointQueryNearest(space, cpv(suggestedPosition), INFINITY, CollisionFilters::TERRAIN_PROBE, &pointQueryInfo);
-		CI_ASSERT_MSG(terrainShape, "Unable to find a nearby chunk of terrain for the Eggsac to attach to!");
+		dvec2 position = _config.suggestedAttachmentPosition;
 
-		// now raycast to that point to find attachment angle
-		dvec2 dir = v2(pointQueryInfo.point) - suggestedPosition;
-		double len = length(dir);
-		dir /= len;
-		const cpVect segA = cpv(suggestedPosition);
-		const cpVect segB = cpv(suggestedPosition + 2 * len * dir ); // extend segment to guaranteee intersect
-		cpSegmentQueryInfo segQueryInfo;
-		bool hit = cpShapeSegmentQuery(terrainShape, segA, segB, min(_config.width, _config.height) * 0.1, &segQueryInfo);
-		CI_ASSERT_MSG(hit, "shape->segment query should have hit!");
 
-		auto up = v2(segQueryInfo.normal);
-		auto angle = atan2(up.y, up.x) - M_PI_2;
-
-		// now build our body, shape, etc
-		double mass = _config.width * _config.height * _config.density;
-		dvec2 attachmentPosition = v2(segQueryInfo.point);
-		_sacBody = add(cpBodyNew(mass, cpMomentForBox(mass, _config.width, _config.height)));
-		cpBodySetPosition(_sacBody, cpv(attachmentPosition + _config.height/2 * up));
-		cpBodySetAngle(_sacBody, angle);
+		// build our body
+		_mass = _config.width * _config.height * _config.density;
+		_sacBody = add(cpBodyNew(_mass, cpMomentForBox(_mass, _config.width, _config.height)));
+		cpBodySetPosition(_sacBody, cpv(position));
 
 		// add a collision shape
 		double segLength = _config.height;
 		double segRadius = _config.width/2;
 		_sacShape = add(cpSegmentShapeNew(_sacBody, cpv(0, -segLength/2), cpv(0, segLength/2), segRadius));
 		cpShapeSetFriction(_sacShape, 4);
-
-		// attach a spring to bottom of body
-
-		_currentSpringStiffness = _maxSpringStiffness = 1 * mass * getSpace()->getGravity(suggestedPosition).force;
-		_currentSpringAttachmentWorld = _springAttachmentWorld = v2(segQueryInfo.point);
-		double springDamping = 1000;
-		_attachmentSpring = add(cpDampedSpringNew(cpSpaceGetStaticBody(space), _sacBody,
-												  segQueryInfo.point, cpv(0,-segLength/2 - segRadius/2),
-												  0, _currentSpringStiffness, springDamping));
-
 
 		//
 		//	Finalize
@@ -149,26 +126,63 @@ namespace core { namespace game { namespace enemy {
 
 	void EggsacPhysicsComponent::onCleanup() {
 		PhysicsComponent::onCleanup();
-		_sacBody = nullptr;
-		_sacShape = nullptr;
-		_attachmentSpring = nullptr;
+		detach();
 	}
 
 	void EggsacPhysicsComponent::step(const time_state &time) {
 		PhysicsComponent::step(time);
 
-		const double SpringReattachDist2 = 1 * 1;
+		if (isAttached()) {
 
-		//
-		//	As in onReady, run a point query to find closest terrain, and then a segment query to get the normal.
-		//	unlike above, this is failable. if we can't get a hit, we go floppy until we do by releasing the constraints.
-		//
+			double len = cpDampedSpringGetRestLength(_attachmentSpring);
+			if (len > 1e-3) {
+				len = lrp<double>(0.2, len, 0);
+				cpDampedSpringSetRestLength(_attachmentSpring, len);
+			}
+
+		} else {
+			// try to attach to something
+			attach();
+		}
+
+		double av = cpBodyGetAngularVelocity(_sacBody);
+		cpBodySetAngularVelocity(_sacBody, av * 0.9);
+
+		_angle = cpBodyGetAngle(_sacBody);
+		_up = dvec2(cos(_angle), sin(_angle));
+		_right = rotateCW(_up);
+
+		getGameObject()->getDrawComponent()->notifyMoved();
+	}
+
+	cpBB EggsacPhysicsComponent::getBB() const {
+		return cpShapeGetBB(_sacShape);
+	}
+
+	void EggsacPhysicsComponent::onBodyWillBeDestroyed(PhysicsComponentRef physics, cpBody *body) {
+		if (body == _attachedToBody) {
+			detach();
+		}
+	}
+
+	void EggsacPhysicsComponent::onShapeWillBeDestroyed(PhysicsComponentRef physics, cpShape *shape) {
+		if (shape == _attachedToShape) {
+			detach();
+		}
+	}
+
+	void EggsacPhysicsComponent::attach() {
+
+		CI_ASSERT_MSG(!isAttached(), "Can't attach when already attached!");
+
 		cpPointQueryInfo pointQueryInfo;
 		cpSpace *space = getSpace()->getSpace();
 		cpVect currentPosition = cpBodyGetPosition(_sacBody);
 		cpShape *terrainShape = cpSpacePointQueryNearest(space, currentPosition, INFINITY, CollisionFilters::TERRAIN_PROBE, &pointQueryInfo);
 		if (terrainShape) {
-			// now raycast to that point to find attachment angle
+
+			// now raycast to that point to find attachment position and angle
+
 			cpVect dir = cpvsub(pointQueryInfo.point, currentPosition);
 			double len = cpvlength(dir);
 			dir = cpvmult(dir, 1/len);
@@ -177,32 +191,43 @@ namespace core { namespace game { namespace enemy {
 			cpSegmentQueryInfo segQueryInfo;
 			bool hit = cpShapeSegmentQuery(terrainShape, segA, segB, min(_config.width, _config.height) * 0.1, &segQueryInfo);
 			if (hit) {
-				_currentSpringStiffness = lrp<double>(0.2, _currentSpringStiffness, _maxSpringStiffness);
 
-				dvec2 newAttachmentPoint = v2(segQueryInfo.point);
-				if (distanceSquared(newAttachmentPoint, _springAttachmentWorld) > SpringReattachDist2) {
-					_springAttachmentWorld = newAttachmentPoint;
-					CI_LOG_D("Would move attachment from " << _springAttachmentWorld << " -> " << newAttachmentPoint);
-				}
+				_attachedToShape = terrainShape;
+				_attachedToBody = cpShapeGetBody(terrainShape);
 
-			} else {
-				_currentSpringStiffness = lrp<double>(0.2, _currentSpringStiffness, 0);
+				double stiffness = _mass * getSpace()->getGravity(v2(currentPosition)).force;
+				double damping = 1;
+				double restLength = cpvdist(currentPosition, segQueryInfo.point);
+				double segLength = _config.height;
+				double segRadius = _config.width/2;
+
+
+				// create spring with length set to current distance to attachment point - we'll reel in in step()
+				_attachmentSpring = add(cpDampedSpringNew(_attachedToBody, _sacBody,
+														  cpBodyWorldToLocal(_attachedToBody, segQueryInfo.point), cpv(0,-segLength/2 - segRadius/2),
+														  restLength, stiffness, damping));
+
+				GameObjectRef parent = getGameObject();
+				cpConstraintSetUserData( _attachmentSpring, parent.get() );
+				getSpace()->addConstraint(_attachmentSpring);
+
+				_orientationSpring = add(cpDampedRotarySpringNew(_attachedToBody, _sacBody, 0, stiffness, damping * 4));
+				cpConstraintSetUserData(_orientationSpring, parent.get());
+				getSpace()->addConstraint(_orientationSpring);
+
 			}
 		}
-
-		_currentSpringAttachmentWorld = lrp<dvec2>(0.2, _currentSpringAttachmentWorld, _springAttachmentWorld);
-		cpDampedSpringSetAnchorA(_attachmentSpring, cpv(_currentSpringAttachmentWorld));
-		cpDampedSpringSetStiffness(_attachmentSpring, _currentSpringStiffness);
-
-		_angle = cpBodyGetAngle(_sacBody);
-		_up = dvec2(cos(_angle), sin(_angle));
-		_right = rotateCW(_up);
-		getGameObject()->getDrawComponent()->notifyMoved();
 	}
 
-	cpBB EggsacPhysicsComponent::getBB() const {
-		return cpShapeGetBB(_sacShape);
+	void EggsacPhysicsComponent::detach() {
+		if (isAttached()) {
+			cpCleanupAndFree(_attachmentSpring);
+			cpCleanupAndFree(_orientationSpring);
+			_attachedToBody = nullptr;
+			_attachedToShape = nullptr;
+		}
 	}
+
 
 #pragma mark - Eggsac
 

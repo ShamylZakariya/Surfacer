@@ -8,7 +8,8 @@
 	</player>
 	<enemies>
 		
-		<!-- <eggsac id="eggsac_0" width="16" height="24"/> -->
-		
+		<eggsac id="eggsac_0" width="16" height="24"/>
+		<eggsac id="eggsac_1" width="24" height="24"/>
+		<eggsac id="eggsac_2" width="32" height="32"/>
 	</enemies>
 </level>

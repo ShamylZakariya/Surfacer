@@ -78,7 +78,10 @@ namespace core { namespace game { namespace enemy {
 
 		cpBody*	getBody() const { return _sacBody; }
 		cpShape* getBodyShape() const { return _sacShape; }
-		cpConstraint* getAttachmentSpring() const { return _attachmentSpring; }
+		cpConstraint *getAttachmentSpring() const { return _attachmentSpring; }
+		cpConstraint *getOrientationSpring() const { return _orientationSpring; }
+
+		bool isAttached() const;
 
 		// PhysicsComponent
 		void onReady(GameObjectRef parent, LevelRef level) override;
@@ -88,12 +91,20 @@ namespace core { namespace game { namespace enemy {
 
 	protected:
 
+		void onBodyWillBeDestroyed(PhysicsComponentRef physics, cpBody *body);
+		void onShapeWillBeDestroyed(PhysicsComponentRef physics, cpShape *shape);
+		
+		void attach();
+		void detach();
+
+	protected:
+
 		config _config;
-		cpBody *_sacBody;
-		cpShape *_sacShape;
-		cpConstraint *_attachmentSpring;
-		dvec2 _up, _right, _springAttachmentWorld, _currentSpringAttachmentWorld;
-		double _angle, _maxSpringStiffness, _currentSpringStiffness;
+		cpBody *_sacBody, *_attachedToBody;
+		cpShape *_sacShape, *_attachedToShape;
+		cpConstraint *_attachmentSpring, *_orientationSpring;
+		dvec2 _up, _right;
+		double _angle, _mass;
 
 	};
 
