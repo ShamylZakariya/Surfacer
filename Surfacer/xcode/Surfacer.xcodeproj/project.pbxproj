@@ -19,6 +19,7 @@
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		6310A8DE1EC0B06F00F27569 /* Eggsac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */; };
 		6310A8E11EC5443800F27569 /* ChipmunkDebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8DF1EC5443800F27569 /* ChipmunkDebugDraw.cpp */; };
+		6310A8E41EC8FA9E00F27569 /* Boid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8E21EC8FA9E00F27569 /* Boid.cpp */; };
 		632064211E9FB84F00C84686 /* GameLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6320641F1E9FB84F00C84686 /* GameLevel.cpp */; };
 		632064241EA05BB400C84686 /* GameLevelTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632064221EA05BB400C84686 /* GameLevelTestScenario.cpp */; };
 		6320642C1EA2874C00C84686 /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6320642A1EA2874C00C84686 /* DevComponents.cpp */; };
@@ -65,6 +66,8 @@
 		6310A8DD1EC0B06E00F27569 /* Eggsac.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Eggsac.hpp; sourceTree = "<group>"; };
 		6310A8DF1EC5443800F27569 /* ChipmunkDebugDraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkDebugDraw.cpp; sourceTree = "<group>"; };
 		6310A8E01EC5443800F27569 /* ChipmunkDebugDraw.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ChipmunkDebugDraw.hpp; sourceTree = "<group>"; };
+		6310A8E21EC8FA9E00F27569 /* Boid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Boid.cpp; sourceTree = "<group>"; };
+		6310A8E31EC8FA9E00F27569 /* Boid.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Boid.hpp; sourceTree = "<group>"; };
 		6320641F1E9FB84F00C84686 /* GameLevel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameLevel.cpp; sourceTree = "<group>"; };
 		632064201E9FB84F00C84686 /* GameLevel.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GameLevel.hpp; sourceTree = "<group>"; };
 		632064221EA05BB400C84686 /* GameLevelTestScenario.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameLevelTestScenario.cpp; sourceTree = "<group>"; };
@@ -226,6 +229,8 @@
 			children = (
 				6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */,
 				6310A8DD1EC0B06E00F27569 /* Eggsac.hpp */,
+				6310A8E21EC8FA9E00F27569 /* Boid.cpp */,
+				6310A8E31EC8FA9E00F27569 /* Boid.hpp */,
 			);
 			path = Enemies;
 			sourceTree = "<group>";
@@ -430,6 +435,7 @@
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
 				6320642C1EA2874C00C84686 /* DevComponents.cpp in Sources */,
 				639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */,
+				6310A8E41EC8FA9E00F27569 /* Boid.cpp in Sources */,
 				63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */,
 				63711E9F1E8DE4410086332B /* TerrainWorld.cpp in Sources */,
 				639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */,

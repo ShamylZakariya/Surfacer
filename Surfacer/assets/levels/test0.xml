@@ -8,8 +8,12 @@
 	</player>
 	<enemies>
 		
-		<eggsac id="eggsac_0" width="16" height="24"/>
-		<eggsac id="eggsac_1" width="24" height="24"/>
-		<eggsac id="eggsac_2" width="32" height="32"/>
+		<eggsac id="eggsac_0" width="16" height="24">
+			<spawn count="2" size="1">
+				<boid radius="2" speed="5" density="0.5"/>
+			</spawn>
+		</eggsac>
+		<!-- <eggsac id="eggsac_1" width="24" height="24"/>
+		<eggsac id="eggsac_2" width="32" height="32"/> -->
 	</enemies>
 </level>

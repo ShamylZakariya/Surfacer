@@ -9,10 +9,10 @@
 #ifndef Eggsac_hpp
 #define Eggsac_hpp
 
-#include "Core.hpp"
-#include "Terrain.hpp"
-
 #include <cinder/Xml.h>
+
+#include "Core.hpp"
+#include "Boid.hpp"
 
 namespace core { namespace game { namespace enemy {
 
@@ -71,10 +71,12 @@ namespace core { namespace game { namespace enemy {
 		virtual ~EggsacPhysicsComponent();
 
 		config getConfig() const { return _config; }
-		dvec2 getPosition() { return v2(cpBodyGetPosition(_sacBody)); }
-		dvec2 getUp() { return _up; }
-		dvec2 getRight() { return _right; }
-		double getAngle() { return _angle; }
+		dvec2 getPosition() const { return v2(cpBodyGetPosition(_sacBody)); }
+		dvec2 getUp() const { return _up; }
+		dvec2 getRight() const { return _right; }
+		double getAngle() const { return _angle; }
+		double getHeight() const { return _config.height; }
+		double getWidth() const { return _config.width; }
 
 		cpBody*	getBody() const { return _sacBody; }
 		cpShape* getBodyShape() const { return _sacShape; }
@@ -108,6 +110,51 @@ namespace core { namespace game { namespace enemy {
 
 	};
 
+#pragma mark - EggsacSpawnComponent
+
+	class EggsacSpawnComponent : public Component {
+	public:
+
+		struct config {
+			// number of times we can spawn a flock
+			size_t spawnCount;
+
+			// number of elements in a flock
+			size_t spawnSize;
+
+			// config for the boids in our flock
+			Boid::config boid;
+
+		};
+
+	public:
+
+		EggsacSpawnComponent(config c);
+		virtual ~EggsacSpawnComponent();
+
+		// get number of flocks have been spawned
+		int getSpawnCount() const;
+
+		// returns true if we can spawn a new flock
+		bool canSpawn() const;
+
+		// spawn a new flock
+		void spawn();
+
+		void update(const time_state &time) override;
+
+	protected:
+
+		void onFlockDidFinish(const BoidFlockControllerRef &fc);
+
+	protected:
+
+		config _config;
+		int _spawnCount;
+		BoidFlockControllerRef _flock;
+
+	};
+
 
 #pragma mark - Eggsac
 
@@ -117,6 +164,7 @@ namespace core { namespace game { namespace enemy {
 		struct config {
 			EggsacPhysicsComponent::config physics;
 			EggsacDrawComponent::config draw;
+			EggsacSpawnComponent::config spawn;
 		};
 
 		static EggsacRef create(string name, dvec2 position, ci::XmlTree node);
