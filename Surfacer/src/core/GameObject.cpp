@@ -174,6 +174,9 @@ namespace core {
 		auto parent = getGameObject();
 		CI_ASSERT_MSG(parent, "Can't call ::build without a valid GameObject parent instance");
 
+		_shapeFilter = filter;
+		_collisionType = collisionType;
+
 		for( cpShape *s : getShapes() )
 		{
 			cpShapeSetUserData( s, parent.get() );
@@ -193,6 +196,14 @@ namespace core {
 			cpConstraintSetUserData( c, parent.get() );
 			getSpace()->addConstraint(c);
 		}
+	}
+
+	void PhysicsComponent::setShapeFilter(cpShapeFilter sf) {
+		_shapeFilter = sf;
+	}
+
+	void PhysicsComponent::setCollisionType(cpCollisionType ct) {
+		_collisionType = ct;
 	}
 
 	void PhysicsComponent::onBodyWillBeDestroyed(cpBody* body) {

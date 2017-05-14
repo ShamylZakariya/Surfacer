@@ -122,6 +122,9 @@ namespace core {
 		virtual vector<cpShape*> getShapes() const { return _shapes; }
 		virtual vector<cpConstraint*> getConstraints() const { return _constraints; }
 
+		cpShapeFilter getShapeFilter() const { return _shapeFilter; }
+		cpCollisionType getCollisionType() const { return _collisionType; }
+
 		// get bounding box for all shapes in use
 		virtual cpBB getBB() const = 0;
 
@@ -132,6 +135,8 @@ namespace core {
 		virtual void onConstraintWillBeDestroyed(cpConstraint* constraint);
 
 		void build(cpShapeFilter filter, cpCollisionType collisionType);
+		void setShapeFilter(cpShapeFilter sf);
+		void setCollisionType(cpCollisionType ct);
 
 		cpBody *add(cpBody *body) { _bodies.push_back(body); return body; }
 		cpShape *add(cpShape *shape) { _shapes.push_back(shape); return shape; }
@@ -142,6 +147,8 @@ namespace core {
 		vector<cpBody*> _bodies;
 		vector<cpShape*> _shapes;
 		vector<cpConstraint*> _constraints;
+		cpShapeFilter _shapeFilter;
+		cpCollisionType _collisionType;
 	};
 
 
