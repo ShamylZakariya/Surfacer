@@ -148,7 +148,7 @@ namespace core { namespace game { namespace player {
 		//
 
 		if(const auto player = getPlayer()) {
-			const auto self = shared_from_this<BeamComponent>();
+			const auto self = shared_from_this_as<BeamComponent>();
 			for (auto &c : _contacts) {
 				player->onShotSomething(self, c);
 			}
@@ -724,7 +724,7 @@ namespace core { namespace game { namespace player {
 		bool flying = isFlying() && _jetpackFuelLevel > 0;
 
 		if (flying) {
-			_jetpackForceDir = normalize((2 * Dir * Right) + G.dir);
+			_jetpackForceDir = normalize((-2 * Dir * Right) + G.dir);
 			dvec2 force = -config.jetpackAntigravity * _totalMass * G.force * _jetpackForceDir;
 			cpBodyApplyForceAtWorldPoint(_body, cpv(force), cpBodyLocalToWorld(_wheelBody, cpvzero));
 			_jetpackFuelLevel -= config.jetpackFuelConsumptionPerSecond * timeState.deltaT;
@@ -768,7 +768,7 @@ namespace core { namespace game { namespace player {
 
 			if ( abs( baseImpulseToApply) > 1e-3 )
 			{
-				dvec2 impulse = Dir * baseImpulseToApply * _totalMass * -Right;
+				dvec2 impulse = Dir * baseImpulseToApply * _totalMass * Right;
 				cpBodyApplyImpulseAtWorldPoint( _body, cpv(impulse), cpBodyGetPosition(_body));
 			}
 		}

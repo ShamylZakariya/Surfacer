@@ -43,7 +43,7 @@ namespace core { namespace game { namespace terrain {
 
 		cpCollisionID visibleObjectCollector(void *obj1, void *obj2, cpCollisionID id, void *data) {
 			//DrawDispatcher *dispatcher = static_cast<DrawDispatcher*>(obj1);
-			DrawableRef drawable = static_cast<Drawable*>(obj2)->shared_from_this<Drawable>();
+			DrawableRef drawable = static_cast<Drawable*>(obj2)->shared_from_this_as<Drawable>();
 			DrawDispatcher::collector *collector = static_cast<DrawDispatcher::collector*>(data);
 
 			//
@@ -380,7 +380,7 @@ namespace core { namespace game { namespace terrain {
 				cut_collector *collector = static_cast<cut_collector*>(data);
 				if (!cpShapeFilterReject(collector->filter, cpShapeGetFilter(collisionShape))) {
 					Shape *terrainShapePtr = static_cast<Shape*>(cpShapeGetUserData(collisionShape));
-					ShapeRef terrainShape = terrainShapePtr->shared_from_this<Shape>();
+					ShapeRef terrainShape = terrainShapePtr->shared_from_this_as<Shape>();
 					collector->shapes.insert(terrainShape);
 					collector->groups.insert(terrainShape->getGroup());
 				}
@@ -709,6 +709,10 @@ namespace core { namespace game { namespace terrain {
 
 	WorldRef GroupBase::getWorld() const {
 		return _world.lock();
+	}
+
+	GameObjectRef GroupBase::getGameObject() const {
+		return _world.lock()->getGameObject();
 	}
 
 
@@ -1409,7 +1413,7 @@ namespace core { namespace game { namespace terrain {
 			// convert self (outerContour & holeContours) to a boost poly in model space
 			//
 
-			detail::polygon thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this<Shape>() );
+			detail::polygon thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
 
 			//
 			// now subtract - results are in model space
@@ -1430,7 +1434,7 @@ namespace core { namespace game { namespace terrain {
 		}
 
 		// handle failure case
-		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this<Shape>() };
+		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this_as<Shape>() };
 		return result;
 	}
 

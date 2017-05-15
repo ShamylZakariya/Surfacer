@@ -59,6 +59,15 @@ namespace core { namespace game { namespace enemy {
 			gl::color(0,1,0);
 			gl::drawSolidCircle(b, 2, 12);
 		}
+
+		// draw up and right vectors
+		double len = 20 * renderState.viewport->getReciprocalScale();
+
+		gl::color(1,0,0);
+		gl::drawLine(physics->getPosition(), physics->getPosition() + len * physics->getUp());
+
+		gl::color(0,1,0);
+		gl::drawLine(physics->getPosition(), physics->getPosition() + len * physics->getRight());
 	}
 
 	int EggsacDrawComponent::getLayer() const {
@@ -73,7 +82,7 @@ namespace core { namespace game { namespace enemy {
 		cpShape *_sacShape, *_attachedToShape;
 		cpConstraint *_attachmentSpring, *_orientationSpring;
 		dvec2 _up, _right;
-		double _angle, _mass;
+		double _mass;
 	 */
 
 	EggsacPhysicsComponent::EggsacPhysicsComponent(config c):
@@ -148,8 +157,8 @@ namespace core { namespace game { namespace enemy {
 		double av = cpBodyGetAngularVelocity(_sacBody);
 		cpBodySetAngularVelocity(_sacBody, av * 0.9);
 
-		_angle = cpBodyGetAngle(_sacBody);
-		_up = dvec2(cos(_angle), sin(_angle));
+		double angle = cpBodyGetAngle(_sacBody) + M_PI_2;
+		_up = dvec2(cos(angle), sin(angle));
 		_right = rotateCW(_up);
 
 		getGameObject()->getDrawComponent()->notifyMoved();
@@ -181,41 +190,28 @@ namespace core { namespace game { namespace enemy {
 		cpShape *terrainShape = cpSpacePointQueryNearest(space, currentPosition, INFINITY, CollisionFilters::TERRAIN_PROBE, &pointQueryInfo);
 		if (terrainShape) {
 
-			// now raycast to that point to find attachment position and angle
+			_attachedToShape = terrainShape;
+			_attachedToBody = cpShapeGetBody(terrainShape);
 
-			cpVect dir = cpvsub(pointQueryInfo.point, currentPosition);
-			double len = cpvlength(dir);
-			dir = cpvmult(dir, 1/len);
-			const cpVect segA = currentPosition;
-			const cpVect segB = cpvadd(currentPosition, cpvmult(dir, 2*len));
-			cpSegmentQueryInfo segQueryInfo;
-			bool hit = cpShapeSegmentQuery(terrainShape, segA, segB, min(_config.width, _config.height) * 0.1, &segQueryInfo);
-			if (hit) {
-
-				_attachedToShape = terrainShape;
-				_attachedToBody = cpShapeGetBody(terrainShape);
-
-				double stiffness = _mass * getSpace()->getGravity(v2(currentPosition)).force;
-				double damping = 1;
-				double restLength = cpvdist(currentPosition, segQueryInfo.point);
-				double segLength = _config.height;
-				double segRadius = _config.width/2;
+			double stiffness = _mass * getSpace()->getGravity(v2(currentPosition)).force;
+			double damping = 1;
+			double restLength = cpvdist(currentPosition, pointQueryInfo.point);
+			double segLength = _config.height;
+			double segRadius = _config.width/2;
 
 
-				// create spring with length set to current distance to attachment point - we'll reel in in step()
-				_attachmentSpring = add(cpDampedSpringNew(_attachedToBody, _sacBody,
-														  cpBodyWorldToLocal(_attachedToBody, segQueryInfo.point), cpv(0,-segLength/2 - segRadius/2),
-														  restLength, stiffness, damping));
+			// create spring with length set to current distance to attachment point - we'll reel in in step()
+			_attachmentSpring = add(cpDampedSpringNew(_attachedToBody, _sacBody,
+													  cpBodyWorldToLocal(_attachedToBody, pointQueryInfo.point), cpv(0,-segLength/2 - segRadius/2),
+													  restLength, stiffness, damping));
 
-				GameObjectRef parent = getGameObject();
-				cpConstraintSetUserData( _attachmentSpring, parent.get() );
-				getSpace()->addConstraint(_attachmentSpring);
+			GameObjectRef parent = getGameObject();
+			cpConstraintSetUserData( _attachmentSpring, parent.get() );
+			getSpace()->addConstraint(_attachmentSpring);
 
-				_orientationSpring = add(cpDampedRotarySpringNew(_attachedToBody, _sacBody, 0, stiffness, damping * 4));
-				cpConstraintSetUserData(_orientationSpring, parent.get());
-				getSpace()->addConstraint(_orientationSpring);
-
-			}
+			_orientationSpring = add(cpDampedRotarySpringNew(_attachedToBody, _sacBody, 0, stiffness, damping * 4));
+			cpConstraintSetUserData(_orientationSpring, parent.get());
+			getSpace()->addConstraint(_orientationSpring);
 		}
 	}
 

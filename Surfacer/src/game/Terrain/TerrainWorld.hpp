@@ -284,7 +284,7 @@ namespace core { namespace game { namespace terrain {
 #pragma mark - GroupBase
 
 
-	class GroupBase {
+	class GroupBase : public IChipmunkUserData {
 	public:
 
 		GroupBase(WorldRef world, material m, DrawDispatcher &dispatcher);
@@ -321,6 +321,9 @@ namespace core { namespace game { namespace terrain {
 		}
 
 		WorldRef getWorld() const;
+
+		// IChipmunkUserData
+		GameObjectRef getGameObject() const override;
 
 	protected:
 
@@ -429,16 +432,16 @@ namespace core { namespace game { namespace terrain {
 		virtual Color getColor() const = 0;
 		virtual bool shouldDraw(const render_state &state) const = 0;
 
-		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
+		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this_as<Shape>();
 		template<typename T>
-		shared_ptr<T> shared_from_this() const {
-			return dynamic_pointer_cast<T>(enable_shared_from_this<Drawable>::shared_from_this());
+		shared_ptr<T> shared_from_this_as() const {
+			return dynamic_pointer_cast<T>(shared_from_this());
 		}
 
-		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this<Shape>();
+		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this_as<Shape>();
 		template<typename T>
-		shared_ptr<T> shared_from_this() {
-			return dynamic_pointer_cast<T>(enable_shared_from_this<Drawable>::shared_from_this());
+		shared_ptr<T> shared_from_this_as() {
+			return dynamic_pointer_cast<T>(shared_from_this());
 		}
 
 		void setWorld(WorldRef w);

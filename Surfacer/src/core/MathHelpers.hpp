@@ -278,7 +278,7 @@ T reflect( const T &I, const T &N )
 	rotate vector 90 degrees counter-clockwise, assuming a bottom-left coordinate system
  */
 template< class T, glm::precision P >
-inline glm::tvec2<T,P> rotateCW( const glm::tvec2<T,P> &v )
+inline glm::tvec2<T,P> rotateCCW( const glm::tvec2<T,P> &v )
 {
 	return glm::tvec2<T,P>( -v.y, v.x );
 }
@@ -287,7 +287,7 @@ inline glm::tvec2<T,P> rotateCW( const glm::tvec2<T,P> &v )
 	rotate vector 90 degrees clockwise, assuming a bottom-left coordinate system
  */
 template< class T, glm::precision P >
-inline glm::tvec2<T,P> rotateCCW( const glm::tvec2<T,P> &v )
+inline glm::tvec2<T,P> rotateCW( const glm::tvec2<T,P> &v )
 {
 	return glm::tvec2<T,P>( v.y, -v.x );
 }

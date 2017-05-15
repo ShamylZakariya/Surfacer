@@ -56,16 +56,16 @@ namespace core {
 		// IChipmunkUserData
 		GameObjectRef getGameObject() const override { return _gameObject.lock(); }
 
-		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this<FooComponent>();
+		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
 		template<typename T>
-		shared_ptr<T> shared_from_this() const {
-			return dynamic_pointer_cast<T>(enable_shared_from_this<Component>::shared_from_this());
+		shared_ptr<T> shared_from_this_as() const {
+			return dynamic_pointer_cast<T>(shared_from_this());
 		}
 
-		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this<FooComponent>();
+		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
 		template<typename T>
-		shared_ptr<T> shared_from_this() {
-			return dynamic_pointer_cast<T>(enable_shared_from_this<Component>::shared_from_this());
+		shared_ptr<T> shared_from_this_as() {
+			return dynamic_pointer_cast<T>(shared_from_this());
 		}
 
 		LevelRef getLevel() const;
@@ -124,6 +124,8 @@ namespace core {
 
 		cpShapeFilter getShapeFilter() const { return _shapeFilter; }
 		cpCollisionType getCollisionType() const { return _collisionType; }
+
+		virtual double getGravityModifier() const { return 1; }
 
 		// get bounding box for all shapes in use
 		virtual cpBB getBB() const = 0;

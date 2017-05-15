@@ -74,7 +74,6 @@ namespace core { namespace game { namespace enemy {
 		dvec2 getPosition() const { return v2(cpBodyGetPosition(_sacBody)); }
 		dvec2 getUp() const { return _up; }
 		dvec2 getRight() const { return _right; }
-		double getAngle() const { return _angle; }
 		double getHeight() const { return _config.height; }
 		double getWidth() const { return _config.width; }
 
@@ -106,7 +105,7 @@ namespace core { namespace game { namespace enemy {
 		cpShape *_sacShape, *_attachedToShape;
 		cpConstraint *_attachmentSpring, *_orientationSpring;
 		dvec2 _up, _right;
-		double _angle, _mass;
+		double _mass;
 
 	};
 

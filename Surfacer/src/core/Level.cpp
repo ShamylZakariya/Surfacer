@@ -61,7 +61,7 @@ namespace core {
 
 		cpCollisionID visibleObjectCollector(void *obj1, void *obj2, cpCollisionID id, void *data) {
 			//DrawDispatcher *dispatcher = static_cast<DrawDispatcher*>(obj1);
-			DrawComponentRef dc = static_cast<DrawComponent*>(obj2)->shared_from_this<DrawComponent>();
+			DrawComponentRef dc = static_cast<DrawComponent*>(obj2)->shared_from_this_as<DrawComponent>();
 			DrawDispatcher::collector *collector = static_cast<DrawDispatcher::collector*>(data);
 
 			//
@@ -298,7 +298,16 @@ namespace core {
 			cpSpace *space = cpBodyGetSpace(body);
 			Level *level = static_cast<Level*>(cpSpaceGetUserData(space));
 			auto g = level->getGravitation(v2(cpBodyGetPosition(body)));
-			cpBodyUpdateVelocity(body, cpv(g.dir * g.force), damping, dt);
+			auto force = g.force;
+
+			// objects can define a custom gravity modifier - 0 means no effect, -1 would be repulsive, etc
+			if (GameObjectRef gameObject = cpBodyGetGameObject(body)) {
+				if (PhysicsComponentRef physics = gameObject->getPhysicsComponent()) {
+					force *= physics->getGravityModifier();
+				}
+			}
+
+			cpBodyUpdateVelocity(body, cpv(g.dir * force), damping, dt);
 		}
 
 	}
@@ -353,9 +362,9 @@ namespace core {
 		if (paused != isPaused()) {
 			_paused = isPaused();
 			if (isPaused()) {
-				signals.onLevelPaused(shared_from_this<Level>());
+				signals.onLevelPaused(shared_from_this_as<Level>());
 			} else {
-				signals.onLevelUnpaused(shared_from_this<Level>());
+				signals.onLevelUnpaused(shared_from_this_as<Level>());
 			}
 		}
 	}
@@ -453,10 +462,10 @@ namespace core {
 			_drawDispatcher->add(dc);
 		}
 
-		obj->onAddedToLevel(shared_from_this<Level>());
+		obj->onAddedToLevel(shared_from_this_as<Level>());
 
 		if (_ready) {
-			obj->onReady(shared_from_this<Level>());
+			obj->onReady(shared_from_this_as<Level>());
 		}
 
 	}
@@ -565,7 +574,7 @@ namespace core {
 	void Level::onReady() {
 		CI_ASSERT_MSG(!_ready, "Can't call onReady() on Level that is already ready");
 
-		const auto self = shared_from_this<Level>();
+		const auto self = shared_from_this_as<Level>();
 		for (auto &obj : _objects) {
 			obj->onReady(self);
 		}

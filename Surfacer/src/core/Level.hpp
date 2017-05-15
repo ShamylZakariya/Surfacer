@@ -155,7 +155,7 @@ namespace core {
 	public:
 
 		static LevelRef getLevelFromSpace(cpSpace *space) {
-			return static_cast<Level*>(cpSpaceGetUserData(space))->shared_from_this<Level>();
+			return static_cast<Level*>(cpSpaceGetUserData(space))->shared_from_this_as<Level>();
 		}
 
 		inline static Level* getLevelPtrFromSpace(cpSpace *space) {
@@ -179,16 +179,16 @@ namespace core {
 		Level(string name);
 		virtual ~Level();
 
-		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this<Foo>();
+		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this_as<Foo>();
 		template<typename T>
-		shared_ptr<T> shared_from_this() const {
-			return dynamic_pointer_cast<T>(enable_shared_from_this<Level>::shared_from_this());
+		shared_ptr<T> shared_from_this_as() const {
+			return dynamic_pointer_cast<T>(shared_from_this());
 		}
 
-		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this<Foo>();
+		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this_as<Foo>();
 		template<typename T>
-		shared_ptr<T> shared_from_this() {
-			return dynamic_pointer_cast<T>(enable_shared_from_this<Level>::shared_from_this());
+		shared_ptr<T> shared_from_this_as() {
+			return dynamic_pointer_cast<T>(shared_from_this());
 		}
 
 		const string &getName() const { return _name; }

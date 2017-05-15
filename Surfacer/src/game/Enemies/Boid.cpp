@@ -6,6 +6,8 @@
 //
 //
 
+#include <cinder/Rand.h>
+
 #include "Boid.hpp"
 
 #include "Xml.hpp"
@@ -49,14 +51,24 @@ namespace core { namespace game { namespace enemy {
 		_mass = _config.radius * _config.radius * M_PI * _config.density;
 		_body = add(cpBodyNew(_mass, cpMomentForCircle(_mass, 0, _config.radius, cpvzero)));
 		cpBodySetPosition(_body, cpv(_config.position));
+		cpBodySetVelocity(_body, cpv(_config.dir * _config.speed));
+
+		// add a rotation constraint so our boids aren't spinning like crazy
+		//add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 0));
 
 		_shape = add(cpCircleShapeNew(_body, _config.radius, cpvzero));
+		cpShapeSetFriction(_shape, 0);
 
 		build(_config.filter, CollisionType::ENEMY);
 	}
 
+
 	void BoidPhysicsComponent::onCleanup() {
 		PhysicsComponent::onCleanup();
+	}
+
+	void BoidPhysicsComponent::step(const time_state &time) {
+		PhysicsComponent::step(time);		
 	}
 
 	cpBB BoidPhysicsComponent::getBB() const {
@@ -80,6 +92,11 @@ namespace core { namespace game { namespace enemy {
 	void BoidDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		DrawComponent::onReady(parent, level);
 		_physics = getSibling<BoidPhysicsComponent>();
+	}
+
+	void BoidDrawComponent::update(const time_state &time) {
+		// boids are always movin'
+		notifyMoved();
 	}
 
 	void BoidDrawComponent::draw(const render_state &renderState) {
@@ -154,11 +171,17 @@ namespace core { namespace game { namespace enemy {
 	{}
 
 	void BoidFlockController::spawn(size_t count, dvec2 origin, dvec2 initialDirection, Boid::config config) {
-		auto self = shared_from_this<BoidFlockController>();
+		auto self = shared_from_this_as<BoidFlockController>();
 		auto level = getLevel();
+		Rand rand;
 
 		for (size_t i = 0; i < count; i++) {
-			auto b = Boid::create(_name + "_Boid_" + str(i), self, config, origin, initialDirection);
+			dvec2 offset = dvec2(rand.nextVec2()) * 0.25;
+			dvec2 dir = normalize(initialDirection + offset);
+
+			CI_LOG_D(i << " offset: " << offset << " origin: " << (origin + offset) << " dir: " << dir);
+
+			auto b = Boid::create(_name + "_Boid_" + str(i), self, config, origin + offset, dir);
 			_flock.push_back(b);
 
 			level->addGameObject(b);

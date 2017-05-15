@@ -145,7 +145,7 @@ namespace core {
 	void PhysicsComponent::onCleanup() {
 
 		if (LevelRef level = getLevel()) {
-			auto self = shared_from_this<PhysicsComponent>();
+			auto self = shared_from_this_as<PhysicsComponent>();
 			for( cpConstraint *c : getConstraints() )
 			{
 				level->signals.onConstraintWillBeDestroyed(self, c);
@@ -208,19 +208,19 @@ namespace core {
 
 	void PhysicsComponent::onBodyWillBeDestroyed(cpBody* body) {
 		if (LevelRef l = getLevel()) {
-			l->signals.onBodyWillBeDestroyed(shared_from_this<PhysicsComponent>(), body);
+			l->signals.onBodyWillBeDestroyed(shared_from_this_as<PhysicsComponent>(), body);
 		}
 	}
 
 	void PhysicsComponent::onShapeWillBeDestroyed(cpShape* shape) {
 		if (LevelRef l = getLevel()) {
-			l->signals.onShapeWillBeDestroyed(shared_from_this<PhysicsComponent>(), shape);
+			l->signals.onShapeWillBeDestroyed(shared_from_this_as<PhysicsComponent>(), shape);
 		}
 	}
 
 	void PhysicsComponent::onConstraintWillBeDestroyed(cpConstraint* constraint) {
 		if (LevelRef l = getLevel()) {
-			l->signals.onConstraintWillBeDestroyed(shared_from_this<PhysicsComponent>(), constraint);
+			l->signals.onConstraintWillBeDestroyed(shared_from_this_as<PhysicsComponent>(), constraint);
 		}
 	}
 

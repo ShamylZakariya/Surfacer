@@ -44,7 +44,9 @@ namespace core { namespace game { namespace enemy {
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
 		void onCleanup() override;
-		virtual cpBB getBB() const override;
+		void step(const time_state &time) override;
+		cpBB getBB() const override;
+		double getGravityModifier() const override { return 0; }
 
 	protected:
 
@@ -70,6 +72,7 @@ namespace core { namespace game { namespace enemy {
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
 
+		void update(const time_state &time) override;
 		void draw(const render_state &renderState) override;
 		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::FRUSTUM_CULLING; }
 		int getLayer() const override { return DrawLayers::ENEMY; }
