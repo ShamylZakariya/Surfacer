@@ -29,9 +29,15 @@ namespace core { namespace game { namespace enemy {
 			dvec2 position;
 			dvec2 dir;
 			double radius;
+			double sensorRadius;
 			double speed;
 			double density;
 			cpShapeFilter filter;
+		};
+
+		struct sensor_data {
+			dvec2 position;
+			double distance;
 		};
 
 	public:
@@ -40,7 +46,17 @@ namespace core { namespace game { namespace enemy {
 		virtual ~BoidPhysicsComponent();
 
 		dvec2 getPosition() const;
+		dvec2 getVelocity() const;
 		double getRadius() const;
+		double getSensorRadius() const;
+
+		cpShape *getShape() const { return _shape; }
+		cpShape *getSensorShape() const { return _shape; }
+		const vector<sensor_data> &getSensorData() const { return _sensorData; }
+
+		void setTargetVelocity(dvec2 vel);
+		void addToTargetVelocity(dvec2 vel);
+		dvec2 getTargetVelocity() const { return _targetVelocity; }
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
 		void onCleanup() override;
@@ -52,7 +68,9 @@ namespace core { namespace game { namespace enemy {
 
 		config _config;
 		cpBody *_body;
-		cpShape *_shape;
+		cpShape *_shape, *_sensorShape;
+		vector<sensor_data> _sensorData;
+		dvec2 _targetVelocity;
 		double _mass;
 
 	};
@@ -103,6 +121,7 @@ namespace core { namespace game { namespace enemy {
 		Boid(string name, BoidFlockControllerRef flockController, config c);
 		virtual ~Boid();
 
+		BoidPhysicsComponentRef getBoidPhysicsComponent() const { return _boidPhysics; }
 		BoidFlockControllerRef getFlockController() const { return _flockController.lock(); }
 
 		void onReady(LevelRef level) override;
@@ -112,6 +131,7 @@ namespace core { namespace game { namespace enemy {
 
 		config _config;
 		BoidFlockControllerWeakRef _flockController;
+		BoidPhysicsComponentRef _boidPhysics;
 
 	};
 
@@ -120,7 +140,32 @@ namespace core { namespace game { namespace enemy {
 	class BoidFlockController : public Component {
 	public:
 
-		static Boid::config loadConfig(ci::XmlTree node);
+		struct rule_contributions {
+			double flockCentroid;
+			double flockVelocity;
+			double collisionAvoidance;
+			double targetSeeking;
+			double variance;
+
+			rule_contributions():
+			flockCentroid(0.1),
+			flockVelocity(0.1),
+			collisionAvoidance(0.1),
+			targetSeeking(0.1),
+			variance(0.05)
+			{}
+		};
+
+		struct config {
+			Boid::config boid;
+			rule_contributions ruleContributions;
+		};
+
+	public:
+
+		static BoidFlockControllerRef create(string name, ci::XmlTree flockNode);
+
+		static config loadConfig(ci::XmlTree flockNode);
 
 		// signal fired when all boids in the flock are gone
 		signals::signal< void(const BoidFlockControllerRef &) > onFlockDidFinish;
@@ -128,23 +173,42 @@ namespace core { namespace game { namespace enemy {
 		// signal fired when a boid in the flock is killed right before it's removed from the level
 		signals::signal< void(const BoidFlockControllerRef &, BoidRef &) > onBoidWillFinish;
 
+
 	public:
 
-		BoidFlockController(string name);
+		/**
+		 Create a BoidFlockController which will prefix Boids with a given name, and which will use a given configuration
+		 to apply rule_contributions while computing flock updates, and template params for each boid.
+		 */
+		BoidFlockController(string name, config c);
 		virtual ~BoidFlockController();
 
 		/**
 		Spawn `count boids from `origin in `initialDirection with a given `config
 		*/
-		void spawn(size_t count, dvec2 origin, dvec2 initialDirection, Boid::config config);
+		void spawn(size_t count, dvec2 origin, dvec2 initialDirection);
 
 		/**
 		Get the number of living boids in the flock
 		*/
 		size_t getFlockSize() const;
 
+		/**
+		 Get the name that will be prefixed to Boids
+		 */
 		string getName() const { return _name; }
 
+		/**
+		 Assign a new set of rule contributions overriding those assigned in the constructor
+		 */
+		void setRuleContributions(rule_contributions rc) { _config.ruleContributions = rc; }
+
+		/**
+		 Get the rule contributions which will be used to drive the flock
+		 */
+		rule_contributions getRuleContributions() const { return _config.ruleContributions; }
+
+		// Component
 		void update(const time_state &time) override;
 
 	protected:
@@ -158,6 +222,8 @@ namespace core { namespace game { namespace enemy {
 
 		string _name;
 		vector<BoidRef> _flock;
+		config _config;
+
 
 	};
 

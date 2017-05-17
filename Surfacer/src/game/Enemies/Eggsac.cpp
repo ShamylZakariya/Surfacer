@@ -246,30 +246,38 @@ namespace core { namespace game { namespace enemy {
 
 	bool EggsacSpawnComponent::canSpawn() const {
 		// we can spawn iff we haven't exhausted self, and if there's no current flock
-		return (_spawnCount < _config.spawnCount) && (!_flock || _flock->getFlockSize() == 0);
+		BoidFlockControllerRef flock = _flock.lock();
+		return (_spawnCount < _config.spawnCount) && (!flock || flock->getFlockSize() == 0);
 	}
 
 	void EggsacSpawnComponent::spawn() {
+		CI_ASSERT_MSG(canSpawn(), "Can't spawn when canSpawn() == false");
 		CI_LOG_D("Spawning a flock!");
+
 		_spawnCount++;
 
-		if (!_flock) {
+		EggsacPhysicsComponentRef physics = getSibling<EggsacPhysicsComponent>();
+		BoidFlockControllerRef flock = _flock.lock();
+
+		if (!flock) {
+
+			// build a config for our boids with our shape filter (so boids don't collide with eachother or the eggsac)
+			auto flockConfig = _config.flock;
+			flockConfig.boid.physics.filter = CP_SHAPE_FILTER_ALL;
+
+			_flock = flock = make_shared<BoidFlockController>(getGameObject()->getName(), flockConfig);
+			flock->onFlockDidFinish.connect(this, &EggsacSpawnComponent::onFlockDidFinish);
+
 			GameObjectRef parent = getGameObject();
 			string flockName = parent->getName() + "_BoidFlockController";
-			_flock = make_shared<BoidFlockController>(flockName);
-			_flock->onFlockDidFinish.connect(this, &EggsacSpawnComponent::onFlockDidFinish);
-			getGameObject()->addComponent(_flock);
+			auto flockObject = GameObject::with(flockName, {flock});
+			getLevel()->addGameObject(flockObject);
 		}
 
-		EggsacPhysicsComponentRef physics = getSibling<EggsacPhysicsComponent>();
 		dvec2 origin = physics->getPosition() + physics->getHeight() * 1.25 * physics->getUp();
 		dvec2 dir = physics->getUp();
 
-		// build a config for our boids with our shape filter (so boids don't collide with eachother or the eggsac)
-		Boid::config config = _config.boid;
-		config.physics.filter = physics->getShapeFilter();
-
-		_flock->spawn(_config.spawnCount, origin, dir, config);
+		flock->spawn(_config.spawnCount, origin, dir);
 	}
 
 	void EggsacSpawnComponent::update(const time_state &time) {
@@ -279,7 +287,6 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	void EggsacSpawnComponent::onFlockDidFinish(const BoidFlockControllerRef &fc) {
-		getGameObject()->removeComponent(_flock);
 		_flock.reset();
 	}
 
@@ -299,9 +306,9 @@ namespace core { namespace game { namespace enemy {
 			config.spawn.spawnCount = util::xml::readNumericAttribute(spawnNode, "count", 1);
 			config.spawn.spawnSize = util::xml::readNumericAttribute(spawnNode, "size", 1);
 
-			CI_ASSERT_MSG(spawnNode.hasChild("boid"), "If <eggsac> node specifies a child <spawn> node, that child must have a <boid> subnode to configure its flock");
-			auto boidNode = spawnNode.getChild("boid");
-			config.spawn.boid = BoidFlockController::loadConfig(boidNode);
+			CI_ASSERT_MSG(spawnNode.hasChild("flock"), "If <eggsac> node specifies a child <spawn> node, that child must have a <boid> subnode to configure its flock");
+			auto flockNode = spawnNode.getChild("flock");
+			config.spawn.flock = BoidFlockController::loadConfig(flockNode);
 		}
 
 
