@@ -6,7 +6,6 @@
 //
 //
 
-#include <cinder/Rand.h>
 
 #include "Boid.hpp"
 
@@ -84,7 +83,6 @@ namespace core { namespace game { namespace enemy {
 		_mass = _config.radius * _config.radius * M_PI * _config.density;
 		_body = add(cpBodyNew(_mass, cpMomentForCircle(_mass, 0, _config.radius, cpvzero)));
 		cpBodySetPosition(_body, cpv(_config.position));
-		cpBodySetVelocity(_body, cpv(_config.dir * _config.speed));
 
 		// TODO: Determine why gear joint is unstable
 		//add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 0));
@@ -117,6 +115,8 @@ namespace core { namespace game { namespace enemy {
 			// normalize
 			targetVelocityDir /= targetVelocity;
 
+			//			CI_LOG_D("tvd: " << targetVelocityDir << " vel: " << targetVelocity);
+
 			// get the current velocity
 			dvec2 vel = v2(cpBodyGetVelocity(_body));
 			double linearVelocity = length(vel);
@@ -134,14 +134,14 @@ namespace core { namespace game { namespace enemy {
 				factor = (1.0 - factor * factor);
 
 				if (factor > 0) {
-					double force = (targetVelocity * time.deltaT) * _mass * factor;
+					double force = targetVelocity * _mass * factor;
 					cpBodyApplyForceAtWorldPoint(_body, cpv(targetVelocityDir * force), cpBodyGetPosition(_body));
 				}
 			}
 		}
 
 		// apply damping
-		cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.95));
+		cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.99));
 
 		// TODO: Remove angular velocity damping when gear joint is fixed
 		cpBodySetAngularVelocity(_body, cpBodyGetAngularVelocity(_body) * 0.9);
@@ -200,21 +200,21 @@ namespace core { namespace game { namespace enemy {
 #pragma mark - Boid 
 
 	/*
-	config _config;
-	BoidFlockControllerWeakRef _flockController;
+		config _config;
+		BoidFlockControllerWeakRef _flockController;
+		BoidPhysicsComponentRef _boidPhysics;
+		double _ruleVariance;
 	*/
 
-	BoidRef Boid::create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialDirection) {
-		auto b = make_shared<Boid>(name, flockController, c);
+	BoidRef Boid::create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance) {
+		auto b = make_shared<Boid>(name, flockController, c, ruleVariance);
 
 		c.physics.position = initialPosition;
-		c.physics.dir = initialDirection;
-
 		auto physics = make_shared<BoidPhysicsComponent>(c.physics);
-		auto draw = make_shared<BoidDrawComponent>(c.draw);
+		physics->addToTargetVelocity(initialVelocity);
 
 		b->addComponent(physics);
-		b->addComponent(draw);
+		b->addComponent(make_shared<BoidDrawComponent>(c.draw));
 
 		// keep a typed BoidPhysicsComponent to get rid of some dynamic_pointer_casts
 		b->_boidPhysics = physics;
@@ -222,10 +222,11 @@ namespace core { namespace game { namespace enemy {
 		return b;
 	}
 
-	Boid::Boid(string name, BoidFlockControllerRef flockController, config c):
+	Boid::Boid(string name, BoidFlockControllerRef flockController, config c, double ruleVariance):
 	core::GameObject(name),
 	_config(c),
-	_flockController(flockController)
+	_flockController(flockController),
+	_ruleVariance(clamp<double>(ruleVariance, 0.0, 1.0))
 	{}
 
 	Boid::~Boid()
@@ -262,12 +263,13 @@ namespace core { namespace game { namespace enemy {
 		c.ruleContributions.flockVelocity = util::xml::readNumericAttribute(rulesNode, "flock_velocity", 0.1);
 		c.ruleContributions.flockCentroid = util::xml::readNumericAttribute(rulesNode, "flock_centroid", 0.1);
 		c.ruleContributions.targetSeeking = util::xml::readNumericAttribute(rulesNode, "target_seeking", 0.1);
+		c.ruleContributions.ruleVariance = util::xml::readNumericAttribute(rulesNode, "rule_variance", 0.25);
 
 		ci::XmlTree boidNode = flockNode.getChild("boid");
 		c.boid.physics.radius = util::xml::readNumericAttribute(boidNode, "radius", 1);
 		c.boid.physics.speed = util::xml::readNumericAttribute(boidNode, "speed", 2);
 		c.boid.physics.density = util::xml::readNumericAttribute(boidNode, "density", 0.5);
-		c.boid.physics.sensorRadius = util::xml::readNumericAttribute(boidNode, "sensorRadius", c.boid.physics.radius * 2);
+		c.boid.physics.sensorRadius = util::xml::readNumericAttribute(boidNode, "sensorRadius", c.boid.physics.radius * 8);
 
 		return c;
 	}
@@ -284,15 +286,13 @@ namespace core { namespace game { namespace enemy {
 	void BoidFlockController::spawn(size_t count, dvec2 origin, dvec2 initialDirection) {
 		auto self = shared_from_this_as<BoidFlockController>();
 		auto level = getLevel();
-		Rand rand;
 
 		for (size_t i = 0; i < count; i++) {
-			dvec2 position = origin + dvec2(rand.nextVec2()) * _config.boid.physics.radius;
-			dvec2 dir = normalize(initialDirection + dvec2(rand.nextVec2()) * 0.25);
+			dvec2 position = origin + dvec2(_rng.nextVec2()) * _config.boid.physics.radius;
+			dvec2 velocity = _config.boid.physics.speed * normalize(initialDirection + (dvec2(_rng.nextVec2()) * 0.25));
 
-			CI_LOG_D(i << " position: " << position << " dir: " << dir);
-
-			auto b = Boid::create(_name + "_Boid_" + str(i), self, _config.boid, position, dir);
+			double rv = _rng.nextFloat(1-_config.ruleContributions.ruleVariance, 1+_config.ruleContributions.ruleVariance);
+			auto b = Boid::create(_name + "_Boid_" + str(i), self, _config.boid, position, velocity, rv);
 			_flock.push_back(b);
 
 			level->addGameObject(b);
@@ -340,18 +340,21 @@ namespace core { namespace game { namespace enemy {
 		if (count >= 2) {
 			for (const auto &b : _flock) {
 				BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
+
+				double rv = b->getRuleVariance();
 				const dvec2 pos = boid->getPosition();
 				const dvec2 vel = boid->getVelocity();
+
 
 				// RULE1: compute centroid of flock without this boid
 				dvec2 nonInclusiveCentroid = ((count * centroid) - pos) / (count-1);
 				dvec2 toCentroidVelocity = nonInclusiveCentroid - pos;
-				boid->addToTargetVelocity(toCentroidVelocity * flockCentroid);
+				boid->addToTargetVelocity(toCentroidVelocity * (flockCentroid * _rng.nextFloat(1-rv, 1+rv)));
 
 				// RULE3: compute averageVelocity of flock without this boid
 				dvec2 nonInclusiveAverageVel = ((count * averageVelocity) - vel) / (count - 1);
 				dvec2 toAverageVelocity = nonInclusiveAverageVel - vel;
-				boid->addToTargetVelocity(toAverageVelocity * flockVelocity);
+				boid->addToTargetVelocity(toAverageVelocity * (flockVelocity * _rng.nextFloat(1-rv, 1+rv)));
 			}
 		}
 
@@ -359,6 +362,7 @@ namespace core { namespace game { namespace enemy {
 		for (const auto &b : _flock) {
 			BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
 			dvec2 boidPosition = boid->getPosition();
+			double rv = b->getRuleVariance();
 
 			// examine boids' potential collisions and compute corrective velocity
 			dvec2 collisionAvoidanceVel(0);
@@ -368,7 +372,7 @@ namespace core { namespace game { namespace enemy {
 				}
 			}
 
-			boid->addToTargetVelocity(collisionAvoidanceVel * collisionAvoidance);
+			boid->addToTargetVelocity(collisionAvoidanceVel * (collisionAvoidance * _rng.nextFloat(1-rv, 1+rv)));
 		}
 
 	}

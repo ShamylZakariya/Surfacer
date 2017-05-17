@@ -9,9 +9,11 @@
 #ifndef Boid_hpp
 #define Boid_hpp
 
+#include <cinder/Rand.h>
+#include <cinder/Xml.h>
+
 #include "Core.hpp"
 #include "GameLevel.hpp"
-#include <cinder/Xml.h>
 
 namespace core { namespace game { namespace enemy {
 
@@ -27,7 +29,6 @@ namespace core { namespace game { namespace enemy {
 
 		struct config {
 			dvec2 position;
-			dvec2 dir;
 			double radius;
 			double sensorRadius;
 			double speed;
@@ -114,12 +115,15 @@ namespace core { namespace game { namespace enemy {
 			BoidDrawComponent::config draw;
 		};
 
-		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialDirection);
+		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance);
 
 	public:
 
-		Boid(string name, BoidFlockControllerRef flockController, config c);
+		Boid(string name, BoidFlockControllerRef flockController, config c, double ruleVariance);
 		virtual ~Boid();
+
+		const config &getConfig() const { return _config; }
+		double getRuleVariance() const { return _ruleVariance; }
 
 		BoidPhysicsComponentRef getBoidPhysicsComponent() const { return _boidPhysics; }
 		BoidFlockControllerRef getFlockController() const { return _flockController.lock(); }
@@ -132,6 +136,7 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		BoidFlockControllerWeakRef _flockController;
 		BoidPhysicsComponentRef _boidPhysics;
+		double _ruleVariance;
 
 	};
 
@@ -145,14 +150,14 @@ namespace core { namespace game { namespace enemy {
 			double flockVelocity;
 			double collisionAvoidance;
 			double targetSeeking;
-			double variance;
+			double ruleVariance;
 
 			rule_contributions():
 			flockCentroid(0.1),
 			flockVelocity(0.1),
 			collisionAvoidance(0.1),
 			targetSeeking(0.1),
-			variance(0.05)
+			ruleVariance(0.25)
 			{}
 		};
 
@@ -223,6 +228,7 @@ namespace core { namespace game { namespace enemy {
 		string _name;
 		vector<BoidRef> _flock;
 		config _config;
+		ci::Rand _rng;
 
 
 	};
