@@ -195,7 +195,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 	shapes = terrain::World::partition(shapes, vec2(0,0), 30);
 
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
@@ -220,7 +220,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
@@ -251,7 +251,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 	};
 
 	terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes);
@@ -275,7 +275,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 
 	world->build(shapes, anchors);
@@ -316,7 +316,7 @@ terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors);
@@ -353,7 +353,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 	auto partitionedShapes = terrain::World::partition(shapes, vec2(0,0), 130);
 
 	const auto terrainMaterial = terrain::material(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes);
@@ -393,7 +393,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
 
@@ -413,7 +413,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
 
 	// construct
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors, elements);
 
@@ -433,7 +433,7 @@ terrain::WorldRef TerrainTestScenario::testComplexSvgLoad() {
 
 	// construct
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors, elements);
 
@@ -472,7 +472,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 	};
 
 	const terrain::material terrainMaterial(1, 0.5, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+	const terrain::material anchorMaterial(1, 1, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);

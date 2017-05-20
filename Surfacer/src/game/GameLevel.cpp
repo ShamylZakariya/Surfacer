@@ -123,7 +123,7 @@ namespace core { namespace game {
 		density = max(density, minDensity);
 
 		const terrain::material terrainMaterial(density, friction, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-		const terrain::material anchorMaterial(1, friction, CollisionFilters::ANCHOR, CollisionType::TERRAIN);
+		const terrain::material anchorMaterial(1, friction, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
 
 		//
 		//	Load terrain
@@ -159,7 +159,8 @@ namespace core { namespace game {
 	}
 
 	void GameLevel::loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement) {
-		_player = player::Player::create("Player", playerXmlData, playerElement->getPosition());
+		string name = playerNode.getAttributeValue<string>("id");
+		_player = player::Player::create(name, playerXmlData, playerElement->getPosition());
 		addGameObject(_player);
 
 		if (playerNode.hasChild("tracking")) {
