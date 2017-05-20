@@ -181,8 +181,7 @@ namespace core { namespace signals {
 
 			if( std::is_convertible<T*,receiver*>::value )
 			{
-				_safeMethods.erase(
-								   std::remove_if( _safeMethods.begin(), _safeMethods.end(), same_receiver(objId)),
+				_safeMethods.erase(std::remove_if( _safeMethods.begin(), _safeMethods.end(), same_receiver(objId)),
 								   _safeMethods.end() );
 
 				receiver *rec = static_cast<receiver*>(obj);
@@ -191,8 +190,7 @@ namespace core { namespace signals {
 			}
 			else
 			{
-				_methods.erase(
-							   std::remove_if( _methods.begin(), _methods.end(), same_receiver(objId)),
+				_methods.erase(std::remove_if( _methods.begin(), _methods.end(), same_receiver(objId)),
 							   _methods.end() );
 			}
 		}
