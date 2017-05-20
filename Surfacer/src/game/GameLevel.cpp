@@ -159,7 +159,7 @@ namespace core { namespace game {
 	}
 
 	void GameLevel::loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement) {
-		string name = playerNode.getAttributeValue<string>("id");
+		string name = playerNode.getAttributeValue<string>("name");
 		_player = player::Player::create(name, playerXmlData, playerElement->getPosition());
 		addGameObject(_player);
 
@@ -182,10 +182,10 @@ namespace core { namespace game {
 
 			// load position from our terrain's elements, or from the node itself ("x", "y" attributes)
 			dvec2 position;
-			if (enemyNode.hasAttribute("id") && _terrain) {
-				string id = enemyNode.getAttributeValue<string>("id");
-				terrain::ElementRef enemyElement = _terrain->getWorld()->getElementById(id);
-				CI_ASSERT_MSG(enemyElement, ("Unable to find element with id: " + id).c_str());
+			if (enemyNode.hasAttribute("name") && _terrain) {
+				string name = enemyNode.getAttributeValue<string>("name");
+				terrain::ElementRef enemyElement = _terrain->getWorld()->getElementById(name);
+				CI_ASSERT_MSG(enemyElement, ("Unable to find element with id: " + name).c_str());
 				position = enemyElement->getPosition();
 			} else {
 				string positionValue = enemyNode.getAttributeValue<string>("position");
@@ -194,7 +194,7 @@ namespace core { namespace game {
 
 			// now figure out which enemy this is
 			string tag = enemyNode.getTag();
-			string name = enemyNode.getAttributeValue<string>("id", tag);
+			string name = enemyNode.getAttributeValue<string>("name", tag);
 			GameObjectRef enemy;
 
 			if (tag == "eggsac") {

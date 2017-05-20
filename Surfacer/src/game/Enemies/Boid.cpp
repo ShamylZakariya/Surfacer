@@ -288,7 +288,7 @@ namespace core { namespace game { namespace enemy {
 
 		if (flockNode.hasChild("target")) {
 			ci::XmlTree targetNode = flockNode.getChild("target");
-			string targets = targetNode.getAttributeValue<string>("ids", "");
+			string targets = targetNode.getAttributeValue<string>("names", "");
 			for (auto target : strings::split(targets, ",")) {
 				target = strings::strip(target);
 				c.target_ids.push_back(target);
