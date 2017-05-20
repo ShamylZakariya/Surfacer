@@ -270,7 +270,7 @@ namespace core { namespace game { namespace player {
 
 		terrain::TerrainObjectRef terrain = dynamic_pointer_cast<GameLevel>(level)->getTerrain();
 		if (terrain) {
-			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2, CollisionFilters::TERRAIN_PROBE);
+			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2);
 		}
 
 	}

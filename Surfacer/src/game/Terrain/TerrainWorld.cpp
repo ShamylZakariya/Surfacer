@@ -325,7 +325,7 @@ namespace core { namespace game { namespace terrain {
 		build(shapes, map<ShapeRef,GroupBaseRef>());
 	}
 
-	void World::cut(dvec2 a, dvec2 b, double radius, cpShapeFilter filter) {
+	void World::cut(dvec2 a, dvec2 b, double radius) {
 		const double MinLength = 1e-2;
 		const double MinRadius = 1e-2;
 
@@ -354,10 +354,11 @@ namespace core { namespace game { namespace terrain {
 
 			struct cut_collector {
 				cpShapeFilter filter;
+				cpCollisionType collisionType;
 				set<ShapeRef> shapes;
 				set<GroupBaseRef> groups;
 
-				cut_collector(cpShapeFilter f):filter(f){}
+				cut_collector(cpShapeFilter f, cpCollisionType t):filter(f), collisionType(t){}
 
 				void clear() {
 					shapes.clear();
@@ -365,7 +366,7 @@ namespace core { namespace game { namespace terrain {
 				}
 			};
 
-			cut_collector collector(filter);
+			cut_collector collector(_worldMaterial.filter, _worldMaterial.collisionType);
 
 			//
 			// while intuition would have us use a segment query, the cpSegmentQuery call seemed to miss
@@ -378,7 +379,7 @@ namespace core { namespace game { namespace terrain {
 			cpShape *cuttingShape = cpPolyShapeNew(cpSpaceGetStaticBody(_space->getSpace()), 4, verts, cpTransformIdentity, radius * 2);
 			cpSpaceShapeQuery(_space->getSpace(), cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
 				cut_collector *collector = static_cast<cut_collector*>(data);
-				if (!cpShapeFilterReject(collector->filter, cpShapeGetFilter(collisionShape))) {
+				if (cpShapeGetCollisionType(collisionShape) == collector->collisionType) {
 					Shape *terrainShapePtr = static_cast<Shape*>(cpShapeGetUserData(collisionShape));
 					ShapeRef terrainShape = terrainShapePtr->shared_from_this_as<Shape>();
 					collector->shapes.insert(terrainShape);

@@ -227,7 +227,7 @@ namespace core { namespace game { namespace terrain {
 		/**
 		 Perform a cut in world space from a to b, with half-thickness of radius
 		 */
-		void cut(dvec2 a, dvec2 b, double radius, cpShapeFilter filter);
+		void cut(dvec2 a, dvec2 b, double radius);
 
 		void draw(const render_state &renderState);
 		void step(const time_state &timeState);

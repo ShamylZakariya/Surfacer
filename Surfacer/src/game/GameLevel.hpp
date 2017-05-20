@@ -38,13 +38,14 @@ namespace core { namespace game {
 		enum type_id {
 
 			TERRAIN				= 1 | is::SHOOTABLE | is::TOWABLE,
-			ENEMY				= 2 | is::SHOOTABLE,
-			PLAYER				= 3 | is::SHOOTABLE,
-			WEAPON				= 4,
-			FLUID				= 5,
-			DECORATION			= 6 | is::TOWABLE | is::SHOOTABLE,
-			STATIC_DECORATION	= 7 | is::SHOOTABLE,
-			SENSOR				= 10
+			ANCHOR				= 2,
+			ENEMY				= 3 | is::SHOOTABLE,
+			PLAYER				= 4 | is::SHOOTABLE,
+			WEAPON				= 5,
+			FLUID				= 6,
+			DECORATION			= 7 | is::TOWABLE | is::SHOOTABLE,
+			STATIC_DECORATION	= 8 | is::SHOOTABLE,
+			SENSOR				= 9
 
 		};
 	}
@@ -52,12 +53,12 @@ namespace core { namespace game {
 	namespace CollisionFilters {
 
 		enum Categories {
-			_TERRAIN = 1 << 30,
-			_TERRAIN_PROBE = 1 << 29,
-			_PICK = 1 << 28,
-			_ANCHOR = 1 << 27,
-			_PLAYER = 1 << 26,
-			_ENEMY = 1 << 25
+			_TERRAIN = 1 << 0,			// 1
+			_TERRAIN_PROBE = 1 << 1,	// 2
+			_PICK = 1 << 2,				// 4
+			_ANCHOR = 1 << 3,			// 8
+			_PLAYER = 1 << 4,			// 16
+			_ENEMY = 1 << 5				// 32
 		};
 
 		extern cpShapeFilter TERRAIN;

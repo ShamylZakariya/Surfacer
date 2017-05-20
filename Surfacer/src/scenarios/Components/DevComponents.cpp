@@ -491,11 +491,10 @@ void MousePickDrawComponent::draw(const render_state &renderState) {
 
 #pragma mark - MouseCutterComponent
 
-MouseCutterComponent::MouseCutterComponent(terrain::TerrainObjectRef terrain, cpShapeFilter cutFilter, float radius, int dispatchReceiptIndex):
+MouseCutterComponent::MouseCutterComponent(terrain::TerrainObjectRef terrain, float radius, int dispatchReceiptIndex):
 InputComponent(dispatchReceiptIndex),
 _cutting(false),
 _radius(radius),
-_cutFilter(cutFilter),
 _terrain(terrain)
 {}
 
@@ -517,7 +516,7 @@ bool MouseCutterComponent::mouseUp( const ci::app::MouseEvent &event ){
 	if (_cutting) {
 		if (_terrain) {
 			const float radius = _radius / getLevel()->getViewport()->getScale();
-			_terrain->getWorld()->cut(_cutStart, _cutEnd, radius, _cutFilter);
+			_terrain->getWorld()->cut(_cutStart, _cutEnd, radius);
 		}
 
 		_cutting = false;
