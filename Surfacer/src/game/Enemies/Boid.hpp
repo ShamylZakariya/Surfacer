@@ -164,6 +164,7 @@ namespace core { namespace game { namespace enemy {
 		struct config {
 			Boid::config boid;
 			rule_contributions ruleContributions;
+			vector<string> target_ids;
 		};
 
 	public:
@@ -214,19 +215,22 @@ namespace core { namespace game { namespace enemy {
 		rule_contributions getRuleContributions() const { return _config.ruleContributions; }
 
 		// Component
+		void onReady(GameObjectRef parent, LevelRef level) override;
 		void update(const time_state &time) override;
 
 	protected:
 
 		friend class Boid;
 
-		void updateFlock(const time_state &time);
+		void updateFlock_fast(const time_state &time);
+		void updateFlock_canonical(const time_state &time);
 		void onBoidFinished(const BoidRef &boid);
 
 	protected:
 
 		string _name;
 		vector<BoidRef> _flock;
+		vector<GameObjectWeakRef> _targets;
 		config _config;
 		ci::Rand _rng;
 

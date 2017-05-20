@@ -108,34 +108,54 @@ namespace core { namespace game { namespace enemy {
 		//	Update velocity
 		//
 
-		dvec2 targetVelocityDir = _targetVelocity;
-		double targetVelocity = length(targetVelocityDir);
+		dvec2 targetDir = _targetVelocity;
+		double targetVelocity = length(targetDir);
 
 		if (targetVelocity > 0) {
 			// normalize
-			targetVelocityDir /= targetVelocity;
+			targetDir /= targetVelocity;
 
-			//			CI_LOG_D("tvd: " << targetVelocityDir << " vel: " << targetVelocity);
+			//CI_LOG_D("tvd: " << targetVelocityDir << " vel: " << targetVelocity);
 
+			//
 			// get the current velocity
-			dvec2 vel = v2(cpBodyGetVelocity(_body));
-			double linearVelocity = length(vel);
-			if (linearVelocity > 0) {
-				vel /= linearVelocity;
+			//
+
+			dvec2 currentDir = v2(cpBodyGetVelocity(_body));
+			double currentVelocity = length(currentDir);
+			if (currentVelocity > 0) {
+				currentDir /= currentVelocity;
 			}
 
+			//
 			// if we're not at max vel we can apply force
-			if (linearVelocity < _config.speed) {
+			//
 
-				// TODO: Force calculation is fake here
+			if (currentVelocity < _config.speed) {
 
-				// scale down the force applied as it gets close to max speed
-				double factor = clamp(linearVelocity/_config.speed, 0.0, 1.0);
-				factor = (1.0 - factor * factor);
+				// TODO: This is a crude way to limit velocity in a force application scenario, but who wants to write a PID
 
+				//
+				// scale down the force to zero applied as it gets close to max speed.
+				//
+
+				double easeOffFactor = clamp(currentVelocity/_config.speed, 0.0, 1.0);
+				easeOffFactor = (1.0 - easeOffFactor * easeOffFactor);
+
+				//
+				//	Scale back up as target velocity dir diverges from current vel - this is to allow
+				//	application of force in opposite direction of current velocity. This matters because
+				//	if a boid is traveling at maxvel and needs to turn or reverse direction, no force can
+				//	be applied since we scale down right above!
+				//	As targetDir diverges from currentDir correctiveFactor goes from 0 to 1
+				//
+
+				double correctiveFactor = 0.5 - 0.5 * dot(currentDir, targetDir);
+
+				double factor = easeOffFactor + correctiveFactor;
 				if (factor > 0) {
 					double force = targetVelocity * _mass * factor;
-					cpBodyApplyForceAtWorldPoint(_body, cpv(targetVelocityDir * force), cpBodyGetPosition(_body));
+					cpBodyApplyForceAtWorldPoint(_body, cpv(targetDir * force), cpBodyGetPosition(_body));
 				}
 			}
 		}
@@ -249,6 +269,14 @@ namespace core { namespace game { namespace enemy {
 
 #pragma mark - BoidFlockController
 
+	/*
+	string _name;
+	vector<BoidRef> _flock;
+	vector<GameObjectWeakRef> _targets;
+	config _config;
+	ci::Rand _rng;
+	*/
+
 	BoidFlockControllerRef BoidFlockController::create(string name, ci::XmlTree flockNode) {
 		config c = loadConfig(flockNode);
 		return make_shared<BoidFlockController>(name, c);
@@ -257,6 +285,15 @@ namespace core { namespace game { namespace enemy {
 
 	BoidFlockController::config BoidFlockController::loadConfig(ci::XmlTree flockNode) {
 		config c;
+
+		if (flockNode.hasChild("target")) {
+			ci::XmlTree targetNode = flockNode.getChild("target");
+			string targets = targetNode.getAttributeValue<string>("ids", "");
+			for (auto target : strings::split(targets, ",")) {
+				target = strings::strip(target);
+				c.target_ids.push_back(target);
+			}
+		}
 
 		ci::XmlTree rulesNode = flockNode.getChild("rule_contributions");
 		c.ruleContributions.collisionAvoidance = util::xml::readNumericAttribute(rulesNode, "collision_avoidance", 0.1);
@@ -303,24 +340,59 @@ namespace core { namespace game { namespace enemy {
 		return _flock.size();
 	}
 
-	void BoidFlockController::update(const time_state &time) {
-		updateFlock(time);
+	void BoidFlockController::onReady(GameObjectRef parent, LevelRef level) {
+		Component::onReady(parent, level);
+
+		for (auto targetId : _config.target_ids) {
+			auto objs = level->getGameObjectsByName(targetId);
+			for (auto obj : objs) {
+				_targets.push_back(obj);
+			}
+		}
+
 	}
 
-	void BoidFlockController::updateFlock(const time_state &time) {
+	void BoidFlockController::update(const time_state &time) {
+		updateFlock_fast(time);
+	}
+
+	void BoidFlockController::updateFlock_fast(const time_state &time) {
 
 		// early exit
 		if (_flock.empty()) {
 			return;
 		}
 
+		// find the first available target
+		bool hasTarget = false;
+		dvec2 targetPosition;
+		for (auto possibleTarget : _targets) {
+			if ( auto target = possibleTarget.lock()) {
+				hasTarget = true;
+				targetPosition = v2(cpBBCenter(target->getPhysicsComponent()->getBB()));
+				break;
+			}
+		}
+
+
+		// TODO: if we couldn't find a target in the _targets list, flock around Eggsac or some other GameObject fallback?!
+
+
 		// this is a ROUGH implementation of http://www.vergenet.net/~conrad/boids/pseudocode.html
+		// RULE 1: Centroid
+		// RULE 2: Average Velocity
+		// RULE 3: Collision Avoidance
+		// RULE 4: Target Seeking
 
 		const double flockCentroid = _config.ruleContributions.flockCentroid;
 		const double flockVelocity = _config.ruleContributions.flockVelocity;
 		const double collisionAvoidance = _config.ruleContributions.collisionAvoidance;
+		const double targetSeeking = _config.ruleContributions.targetSeeking;
 
-		// compute flock centroid
+		//
+		// compute flock centroid and average velocity
+		//
+
 		const double count = _flock.size();
 		dvec2 centroid(0,0);
 		dvec2 averageVelocity(0,0);
@@ -330,13 +402,14 @@ namespace core { namespace game { namespace enemy {
 			centroid += boid->getPosition();
 			averageVelocity += boid->getVelocity();
 
-			// zero the boid's current force
+			// zero the boid's current force - rule applications below will add to it
 			boid->setTargetVelocity(dvec2(0));
 		}
 
 		centroid /= count;
+		averageVelocity /= count;
 
-		// RULES 1 & 3 require dealing with average centroid/velocity which is meaningless if there's only one boid
+		// RULES 1 & 2 require dealing with average centroid/velocity which is meaningless if there's only one boid
 		if (count >= 2) {
 			for (const auto &b : _flock) {
 				BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
@@ -349,31 +422,42 @@ namespace core { namespace game { namespace enemy {
 				// RULE1: compute centroid of flock without this boid
 				dvec2 nonInclusiveCentroid = ((count * centroid) - pos) / (count-1);
 				dvec2 toCentroidVelocity = nonInclusiveCentroid - pos;
-				boid->addToTargetVelocity(toCentroidVelocity * (flockCentroid * _rng.nextFloat(1-rv, 1+rv)));
+				boid->addToTargetVelocity(toCentroidVelocity * (flockCentroid * rv));
 
-				// RULE3: compute averageVelocity of flock without this boid
+				// RULE2: compute averageVelocity of flock without this boid
 				dvec2 nonInclusiveAverageVel = ((count * averageVelocity) - vel) / (count - 1);
 				dvec2 toAverageVelocity = nonInclusiveAverageVel - vel;
-				boid->addToTargetVelocity(toAverageVelocity * (flockVelocity * _rng.nextFloat(1-rv, 1+rv)));
+				boid->addToTargetVelocity(toAverageVelocity * (flockVelocity * rv));
 			}
 		}
 
-		// RULE 2: Collision Avoidance
+		// RULE 3 & 4: Collision Avoidance and target seeking
 		for (const auto &b : _flock) {
 			BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
 			dvec2 boidPosition = boid->getPosition();
 			double rv = b->getRuleVariance();
 
-			// examine boids' potential collisions and compute corrective velocity
+			//
+			// examine boids' sensor data for collision penetration and compute corrective velocity
+			//
+
 			dvec2 collisionAvoidanceVel(0);
 			for (const auto &sensorData : boid->getSensorData()) {
 				if (sensorData.distance < 0) { // we have a collision!
 					collisionAvoidanceVel += normalize(boidPosition - sensorData.position) * -sensorData.distance;
 				}
 			}
+			boid->addToTargetVelocity(collisionAvoidanceVel * (collisionAvoidance * rv));
 
-			boid->addToTargetVelocity(collisionAvoidanceVel * (collisionAvoidance * _rng.nextFloat(1-rv, 1+rv)));
+			// target seeking
+			if (hasTarget) {
+				dvec2 toTarget = targetPosition - boidPosition;
+				boid->addToTargetVelocity(toTarget * (targetSeeking * rv));
+			}
 		}
+	}
+
+	void BoidFlockController::updateFlock_canonical(const time_state &time) {
 
 	}
 
