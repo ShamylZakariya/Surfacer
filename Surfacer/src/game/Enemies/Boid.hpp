@@ -146,10 +146,21 @@ namespace core { namespace game { namespace enemy {
 	public:
 
 		struct rule_contributions {
+			// scale of rule causing flock to converge about centroid
 			double flockCentroid;
+
+			// scale of rule causing flock to attempt to maintain a shared velocity
 			double flockVelocity;
+
+			// scale of rule causing flock to avoid collisions with eachother, environment
 			double collisionAvoidance;
+
+			// scale of rule causing flock to seek target
 			double targetSeeking;
+
+			// each boid gets a random variance of its rule scaling. ruleVairance of zero means each boid
+			// follows the rules precisely the same. a variance of 0.5 means each boid gets a scaling of  (1 + rand(-0.5,0.5))
+			// meaning some boids will follow the rules 50% less, and some by 50% more.
 			double ruleVariance;
 
 			rule_contributions():

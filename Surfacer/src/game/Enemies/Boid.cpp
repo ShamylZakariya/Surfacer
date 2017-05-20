@@ -246,7 +246,7 @@ namespace core { namespace game { namespace enemy {
 	core::GameObject(name),
 	_config(c),
 	_flockController(flockController),
-	_ruleVariance(clamp<double>(ruleVariance, 0.0, 1.0))
+	_ruleVariance(ruleVariance)
 	{}
 
 	Boid::~Boid()
@@ -300,7 +300,7 @@ namespace core { namespace game { namespace enemy {
 		c.ruleContributions.flockVelocity = util::xml::readNumericAttribute(rulesNode, "flock_velocity", 0.1);
 		c.ruleContributions.flockCentroid = util::xml::readNumericAttribute(rulesNode, "flock_centroid", 0.1);
 		c.ruleContributions.targetSeeking = util::xml::readNumericAttribute(rulesNode, "target_seeking", 0.1);
-		c.ruleContributions.ruleVariance = util::xml::readNumericAttribute(rulesNode, "rule_variance", 0.25);
+		c.ruleContributions.ruleVariance = saturate(util::xml::readNumericAttribute(rulesNode, "rule_variance", 0.25));
 
 		ci::XmlTree boidNode = flockNode.getChild("boid");
 		c.boid.physics.radius = util::xml::readNumericAttribute(boidNode, "radius", 1);
@@ -374,9 +374,7 @@ namespace core { namespace game { namespace enemy {
 			}
 		}
 
-
 		// TODO: if we couldn't find a target in the _targets list, flock around Eggsac or some other GameObject fallback?!
-
 
 		// this is a ROUGH implementation of http://www.vergenet.net/~conrad/boids/pseudocode.html
 		// RULE 1: Centroid
