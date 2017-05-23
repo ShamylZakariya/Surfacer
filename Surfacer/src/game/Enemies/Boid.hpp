@@ -20,7 +20,9 @@ namespace core { namespace game { namespace enemy {
 	SMART_PTR(BoidPhysicsComponent);
 	SMART_PTR(BoidDrawComponent);
 	SMART_PTR(Boid);
+	SMART_PTR(BoidFlockDrawComponent);
 	SMART_PTR(BoidFlockController);
+	SMART_PTR(BoidFlock);
 
 #pragma mark - BoidPhysicsComponent
 
@@ -36,15 +38,12 @@ namespace core { namespace game { namespace enemy {
 			cpShapeFilter filter;
 		};
 
-		struct sensor_data {
-			dvec2 position;
-			double distance;
-		};
-
 	public:
 
 		BoidPhysicsComponent(config c);
 		virtual ~BoidPhysicsComponent();
+
+		const config &getConfig() const { return _config; }
 
 		dvec2 getPosition() const;
 		dvec2 getVelocity() const;
@@ -52,8 +51,6 @@ namespace core { namespace game { namespace enemy {
 		double getSensorRadius() const;
 
 		cpShape *getShape() const { return _shape; }
-		cpShape *getSensorShape() const { return _shape; }
-		const vector<sensor_data> &getSensorData() const { return _sensorData; }
 
 		void setTargetVelocity(dvec2 vel);
 		void addToTargetVelocity(dvec2 vel);
@@ -69,39 +66,9 @@ namespace core { namespace game { namespace enemy {
 
 		config _config;
 		cpBody *_body;
-		cpShape *_shape, *_sensorShape;
-		vector<sensor_data> _sensorData;
+		cpShape *_shape;
 		dvec2 _targetVelocity;
 		double _mass;
-
-	};
-
-#pragma mark - BoidDrawComponent
-
-	class BoidDrawComponent : public DrawComponent {
-	public:
-		struct config {
-
-		};
-
-	public:
-
-		BoidDrawComponent(config c);
-		virtual ~BoidDrawComponent();
-
-		void onReady(GameObjectRef parent, LevelRef level) override;
-
-		void update(const time_state &time) override;
-		void draw(const render_state &renderState) override;
-		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::FRUSTUM_CULLING; }
-		int getLayer() const override { return DrawLayers::ENEMY; }
-		int getDrawPasses() const override { return 1; }
-		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
-
-	protected:
-
-		config _config;
-		BoidPhysicsComponentWeakRef _physics;
 
 	};
 
@@ -112,7 +79,6 @@ namespace core { namespace game { namespace enemy {
 
 		struct config {
 			BoidPhysicsComponent::config physics;
-			BoidDrawComponent::config draw;
 		};
 
 		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance);
@@ -139,6 +105,36 @@ namespace core { namespace game { namespace enemy {
 		double _ruleVariance;
 
 	};
+
+#pragma mark - BoidDrawComponent
+
+	class BoidFlockDrawComponent : public DrawComponent {
+	public:
+		struct config {
+		};
+
+	public:
+
+		BoidFlockDrawComponent(config c);
+		virtual ~BoidFlockDrawComponent();
+
+		void onReady(GameObjectRef parent, LevelRef level) override;
+
+		void update(const time_state &time) override;
+		void draw(const render_state &renderState) override;
+		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::FRUSTUM_CULLING; }
+		int getLayer() const override { return DrawLayers::ENEMY; }
+		int getDrawPasses() const override { return 1; }
+		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
+		cpBB getBB() const override;
+
+	protected:
+
+		config _config;
+		BoidFlockControllerWeakRef _flockController;
+		
+	};
+
 
 #pragma mark - BoidFlockController
 
@@ -180,16 +176,11 @@ namespace core { namespace game { namespace enemy {
 
 	public:
 
-		static BoidFlockControllerRef create(string name, ci::XmlTree flockNode);
-
-		static config loadConfig(ci::XmlTree flockNode);
-
 		// signal fired when all boids in the flock are gone
-		signals::signal< void(const BoidFlockControllerRef &) > onFlockDidFinish;
+		signals::signal< void(BoidFlockControllerRef) > onFlockDidFinish;
 
 		// signal fired when a boid in the flock is killed right before it's removed from the level
-		signals::signal< void(const BoidFlockControllerRef &, BoidRef &) > onBoidWillFinish;
-
+		signals::signal< void(BoidFlockControllerRef, BoidRef) > onBoidFinished;
 
 	public:
 
@@ -204,6 +195,8 @@ namespace core { namespace game { namespace enemy {
 		Spawn `count boids from `origin in `initialDirection with a given `config
 		*/
 		void spawn(size_t count, dvec2 origin, dvec2 initialDirection);
+
+		const vector<BoidRef> &getFlock() const { return _flock; }
 
 		/**
 		Get the number of living boids in the flock
@@ -225,6 +218,32 @@ namespace core { namespace game { namespace enemy {
 		 */
 		rule_contributions getRuleContributions() const { return _config.ruleContributions; }
 
+		/**
+		 Set the targets this Boid flock will pursue.
+		 Internally, the targets are held as weak_ptr<> and the flock will pursue the first which is
+		 live, is in the level, and has a PhysicsRepresentation to query for position.
+		 */
+		void setTargets(vector<GameObjectRef> targets);
+
+		/**
+		 Add a target for the flock to pursue
+		 */
+		void addTarget(GameObjectRef target);
+
+		/**
+		 Clear the targets this flock will pursue. Flock will continue to follow flcoking rules, but without target seeking
+		 */
+		void clearTargets();
+
+		const vector<GameObjectWeakRef> getTargets() const { return _targets; }
+
+		/**
+		 Get the target the flock is current pursuing. Return pair of GameObjectRef, and its position
+		 */
+		const pair<GameObjectRef, dvec2> getCurrentTarget() const;
+
+		cpBB getFlockBB() const { return _flockBB; }
+
 		// Component
 		void onReady(GameObjectRef parent, LevelRef level) override;
 		void update(const time_state &time) override;
@@ -233,20 +252,53 @@ namespace core { namespace game { namespace enemy {
 
 		friend class Boid;
 
-		void updateFlock_fast(const time_state &time);
-		void updateFlock_canonical(const time_state &time);
-		void onBoidFinished(const BoidRef &boid);
+		void _updateFlock_canonical(const time_state &time);
+		void _onBoidFinished(const BoidRef &boid);
 
 	protected:
 
 		string _name;
 		vector<BoidRef> _flock;
 		vector<GameObjectWeakRef> _targets;
+		dvec2 _lastSpawnOrigin;
 		config _config;
 		ci::Rand _rng;
+		cpBB _flockBB;
 
+		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
+		vector<BoidPhysicsComponent*> _flockPhysicsComponents;
 
 	};
+
+#pragma mark - BoidFlock
+
+	class BoidFlock : public GameObject {
+	public:
+
+		struct config {
+			BoidFlockController::config controller;
+			BoidFlockDrawComponent::config draw;
+		};
+
+		static config loadConfig(ci::XmlTree flockNode);
+
+		static BoidFlockRef create(string name, config c);
+
+	public:
+
+		BoidFlock(string name, BoidFlockControllerRef controller, BoidFlockDrawComponentRef drawer);
+		virtual ~BoidFlock();
+
+		BoidFlockControllerRef getBoidFlockController() const { return _flockController; }
+		BoidFlockDrawComponentRef getBoidDrawComponent() const { return _drawer; }
+
+	private:
+
+		BoidFlockControllerRef _flockController;
+		BoidFlockDrawComponentRef _drawer;
+
+	};
+
 
 }}}
 

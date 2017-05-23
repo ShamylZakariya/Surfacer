@@ -122,7 +122,7 @@ namespace core { namespace game { namespace enemy {
 			size_t spawnSize;
 
 			// config for BoidFlockController which builds and spawns the boid flock
-			BoidFlockController::config flock;
+			BoidFlock::config flock;
 		};
 
 	public:
@@ -149,7 +149,7 @@ namespace core { namespace game { namespace enemy {
 
 		config _config;
 		int _spawnCount;
-		BoidFlockControllerWeakRef _flock;
+		BoidFlockWeakRef _flock;
 
 	};
 
