@@ -181,8 +181,8 @@ namespace core {
 
 		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this_as<Foo>();
 		template<typename T>
-		shared_ptr<T> shared_from_this_as() const {
-			return dynamic_pointer_cast<T>(shared_from_this());
+		shared_ptr<T const> shared_from_this_as() const {
+			return dynamic_pointer_cast<T const>(shared_from_this());
 		}
 
 		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this_as<Foo>();
