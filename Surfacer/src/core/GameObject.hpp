@@ -58,8 +58,8 @@ namespace core {
 
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
 		template<typename T>
-		shared_ptr<T> shared_from_this_as() const {
-			return dynamic_pointer_cast<T>(shared_from_this());
+		shared_ptr<T const> shared_from_this_as() const {
+			return dynamic_pointer_cast<T const>(shared_from_this());
 		}
 
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
@@ -275,6 +275,10 @@ namespace core {
 	class GameObject : public IChipmunkUserData, public enable_shared_from_this<GameObject> {
 	public:
 
+		/**
+		 Create a non-specialized vanilla GameObject with some components. This is handy for if you
+		 have a simple component which needs to be added to a Level.
+		 */
 		static GameObjectRef with(string name, const initializer_list<ComponentRef> &components) {
 			auto obj = make_shared<GameObject>(name);
 			for (auto &component : components) {
@@ -289,8 +293,22 @@ namespace core {
 		GameObject(string name);
 		virtual ~GameObject();
 
+		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
+		template<typename T>
+		shared_ptr<T const> shared_from_this_as() const {
+			return dynamic_pointer_cast<T const>(shared_from_this());
+		}
+
+		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
+		template<typename T>
+		shared_ptr<T> shared_from_this_as() {
+			return dynamic_pointer_cast<T>(shared_from_this());
+		}
+
 		// IChipmunkUserData
 		GameObjectRef getGameObject() const override { return const_cast<GameObject*>(this)->shared_from_this(); }
+
+		// GameObject
 
 		size_t getId() const { return _id; }
 		string getName() const { return _name; }
