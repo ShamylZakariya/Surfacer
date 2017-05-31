@@ -1094,6 +1094,12 @@ namespace core { namespace game { namespace player {
 		config.physics.jetpackFuelRegenerationPerSecond = util::xml::readNumericAttribute(jetpackNode, "regeneration", 0.3);
 
 		//
+		//	Health
+		//
+
+		config.health = HealthComponent::loadConfig(playerNode.getChild("health"));
+
+		//
 		//	Construct
 		//
 
@@ -1104,13 +1110,21 @@ namespace core { namespace game { namespace player {
 	}
 
 	Player::Player(string name):
-	GameObject(name)
+	Entity(name)
 	{}
 
 	Player::~Player(){}
 
+	void Player::onHealthChanged(double oldHealth, double newHealth) {
+		Entity::onHealthChanged(oldHealth, newHealth);
+	}
+
+	void Player::onDeath() {
+		Entity::onDeath();
+	}
+
 	void Player::update(const time_state &time) {
-		GameObject::update(time);
+		Entity::update(time);
 
 		//
 		//	Synchronize
@@ -1157,11 +1171,13 @@ namespace core { namespace game { namespace player {
 		_drawing = make_shared<PlayerDrawComponent>();
 		_physics = make_shared<JetpackUnicyclePlayerPhysicsComponent>(c.physics);
 		_gun = make_shared<PlayerGunComponent>(c.gun);
+		auto health = make_shared<HealthComponent>(c.health);
 
 		addComponent(_input);
 		addComponent(_drawing);
 		addComponent(_physics);
 		addComponent(_gun);
+		addComponent(health);
 	}
 
 }}} // namespace core::game::player

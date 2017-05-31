@@ -12,6 +12,7 @@
 #include <cinder/Xml.h>
 
 #include "Core.hpp"
+#include "Entity.hpp"
 #include "DevComponents.hpp"
 
 namespace core { namespace game { namespace player {
@@ -403,7 +404,7 @@ namespace core { namespace game { namespace player {
 
 #pragma mark - Player
 
-	class Player : public GameObject, public TargetTrackingViewportControlComponent::TrackingTarget {
+	class Player : public Entity, public TargetTrackingViewportControlComponent::TrackingTarget {
 	public:
 
 		signals::signal< void( const BeamComponentRef &, const BeamComponent::contact &contact ) > didShootSomething;
@@ -411,6 +412,8 @@ namespace core { namespace game { namespace player {
 		struct config {
 			PlayerPhysicsComponent::config physics;
 			PlayerGunComponent::config gun;
+			HealthComponent::config health;
+
 			// TODO: Add a PlayerDrawComponent::config for appearance control
 
 			double walkSpeed;
@@ -432,6 +435,11 @@ namespace core { namespace game { namespace player {
 		virtual ~Player();
 
 		const config &getConfig() const { return _config; }
+
+		// Entity
+		void onHealthChanged(double oldHealth, double newHealth);
+		void onDeath();
+
 
 		// GameObject
 		void update(const time_state &time) override;

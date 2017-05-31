@@ -272,7 +272,7 @@ namespace core {
 
 #pragma mark - GameObject
 
-	class GameObject : public IChipmunkUserData, public enable_shared_from_this<GameObject> {
+	class GameObject : public IChipmunkUserData, public enable_shared_from_this<GameObject>, public signals::receiver {
 	public:
 
 		/**

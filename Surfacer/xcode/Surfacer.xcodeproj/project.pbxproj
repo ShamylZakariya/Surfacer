@@ -17,6 +17,7 @@
 		00B9955A1B128DF400A5C623 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
 		00B9955B1B128DF400A5C623 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		630EEC771ED866EB000D59AB /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630EEC751ED866EB000D59AB /* Entity.cpp */; };
 		6310A8DE1EC0B06F00F27569 /* Eggsac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */; };
 		6310A8E11EC5443800F27569 /* ChipmunkDebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8DF1EC5443800F27569 /* ChipmunkDebugDraw.cpp */; };
 		6310A8E41EC8FA9E00F27569 /* Boid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6310A8E21EC8FA9E00F27569 /* Boid.cpp */; };
@@ -62,6 +63,8 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		630EEC751ED866EB000D59AB /* Entity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Entity.cpp; sourceTree = "<group>"; };
+		630EEC761ED866EB000D59AB /* Entity.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Entity.hpp; sourceTree = "<group>"; };
 		6310A8DC1EC0B06E00F27569 /* Eggsac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Eggsac.cpp; sourceTree = "<group>"; };
 		6310A8DD1EC0B06E00F27569 /* Eggsac.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Eggsac.hpp; sourceTree = "<group>"; };
 		6310A8DF1EC5443800F27569 /* ChipmunkDebugDraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkDebugDraw.cpp; sourceTree = "<group>"; };
@@ -301,6 +304,8 @@
 				632623051E7D9A630051ABE2 /* GameApp.hpp */,
 				6320641F1E9FB84F00C84686 /* GameLevel.cpp */,
 				632064201E9FB84F00C84686 /* GameLevel.hpp */,
+				630EEC751ED866EB000D59AB /* Entity.cpp */,
+				630EEC761ED866EB000D59AB /* Entity.hpp */,
 			);
 			path = game;
 			sourceTree = "<group>";
@@ -438,6 +443,7 @@
 				6310A8E41EC8FA9E00F27569 /* Boid.cpp in Sources */,
 				63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */,
 				63711E9F1E8DE4410086332B /* TerrainWorld.cpp in Sources */,
+				630EEC771ED866EB000D59AB /* Entity.cpp in Sources */,
 				639168B11E96832A007FD4FA /* SvgTestScenario.cpp in Sources */,
 				6310A8DE1EC0B06F00F27569 /* Eggsac.cpp in Sources */,
 				6326231D1E7D9A630051ABE2 /* main.cpp in Sources */,

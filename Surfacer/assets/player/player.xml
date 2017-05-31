@@ -5,6 +5,8 @@
 		<pulse width="8" length="500" range="100000" velocity="10000"/>
 		<blast width="16" range="2000" cutDepth="1000" lifespan="0.25"/>
 	</gun>
+	
+	<health max_health="100" regeneration_rate="0"/>
 
 	<physics width="20" height="60" density="1" wheelFriction="1" bodyFriction="0.2">
 		<jetpack antigravity="2" fuelMax="1" consumption="0.3" regeneration="0.3"/>

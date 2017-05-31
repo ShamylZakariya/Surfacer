@@ -4,6 +4,9 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##TODO
 
+Boids:
+Main performance hit repeated inner-loop calls to cpBodyGetPosition/cpBodyGetVelocity which are returning cpVect which is turned to dvec2 - have the Boid step/update cache those values 
+
 ## BUGS PRIORITY 0
 
 Consider rewriting DrawDispatcher using raw pointers and not shared_ptr<> ?
