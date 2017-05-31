@@ -176,11 +176,14 @@ namespace core { namespace game { namespace enemy {
 		// keep a typed BoidPhysicsComponent to get rid of some dynamic_pointer_casts
 		b->_boidPhysics = physics;
 
+		// create health component
+		b->addComponent(make_shared<HealthComponent>(c.health));
+
 		return b;
 	}
 
 	Boid::Boid(string name, BoidFlockControllerRef flockController, config c, double ruleVariance):
-	core::GameObject(name),
+	Entity(name),
 	_config(c),
 	_flockController(flockController),
 	_ruleVariance(ruleVariance)
@@ -188,6 +191,14 @@ namespace core { namespace game { namespace enemy {
 
 	Boid::~Boid()
 	{}
+
+	void Boid::onHealthChanged(double oldHealth, double newHealth) {
+		Entity::onHealthChanged(oldHealth, newHealth);
+	}
+
+	void Boid::onDeath() {
+		Entity::onDeath();
+	}
 
 	void Boid::onReady(LevelRef level) {
 		GameObject::onReady(level);
@@ -461,6 +472,7 @@ namespace core { namespace game { namespace enemy {
 		c.controller.boid.physics.speed = util::xml::readNumericAttribute(boidNode, "speed", 2);
 		c.controller.boid.physics.density = util::xml::readNumericAttribute(boidNode, "density", 0.5);
 		c.controller.boid.physics.sensorRadius = util::xml::readNumericAttribute(boidNode, "sensorRadius", c.controller.boid.physics.radius * 8);
+		c.controller.boid.health = HealthComponent::loadConfig(boidNode.getChild("health"));
 
 		return c;
 

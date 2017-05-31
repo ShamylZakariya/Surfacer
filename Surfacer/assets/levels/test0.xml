@@ -9,11 +9,14 @@
 	<enemies>
 		
 		<eggsac name="eggsac_0" width="16" height="24">
+			<health max_health="50" regeneration_rate="0.5"/>
 			<spawn count="100" size="1">
 				<flock>
 					<target names="player"/>
 					<rule_contributions flock_centroid="1" flock_velocity="1" collision_avoidance="5" target_seeking="1" rule_variance="0.75"/>
-					<boid radius="2" speed="300" density="0.5"/>
+					<boid radius="2" speed="300" density="0.5">
+						<health max_health="5" regeneration_rate="0"/>
+					</boid>
 				</flock>
 			</spawn>
 		</eggsac>

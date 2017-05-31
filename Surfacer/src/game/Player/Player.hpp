@@ -437,9 +437,8 @@ namespace core { namespace game { namespace player {
 		const config &getConfig() const { return _config; }
 
 		// Entity
-		void onHealthChanged(double oldHealth, double newHealth);
-		void onDeath();
-
+		void onHealthChanged(double oldHealth, double newHealth) override;
+		void onDeath() override;
 
 		// GameObject
 		void update(const time_state &time) override;

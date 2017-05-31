@@ -12,6 +12,7 @@
 #include <cinder/Xml.h>
 
 #include "Core.hpp"
+#include "Entity.hpp"
 #include "Boid.hpp"
 
 namespace core { namespace game { namespace enemy {
@@ -156,13 +157,14 @@ namespace core { namespace game { namespace enemy {
 
 #pragma mark - Eggsac
 
-	class Eggsac : public GameObject {
+	class Eggsac : public Entity {
 	public:
 
 		struct config {
 			EggsacPhysicsComponent::config physics;
 			EggsacDrawComponent::config draw;
 			EggsacSpawnComponent::config spawn;
+			HealthComponent::config health;
 		};
 
 		static EggsacRef create(string name, dvec2 position, ci::XmlTree node);
@@ -171,6 +173,10 @@ namespace core { namespace game { namespace enemy {
 
 		Eggsac(string name);
 		virtual ~Eggsac();
+
+		// Entity
+		void onHealthChanged(double oldHealth, double newHealth) override;
+		void onDeath() override;
 
 		// GameObject
 		void update(const time_state &time) override;

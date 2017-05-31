@@ -13,6 +13,7 @@
 #include <cinder/Xml.h>
 
 #include "Core.hpp"
+#include "Entity.hpp"
 #include "GameLevel.hpp"
 
 namespace core { namespace game { namespace enemy {
@@ -74,11 +75,12 @@ namespace core { namespace game { namespace enemy {
 
 #pragma mark - Boid
 
-	class Boid : public GameObject {
+	class Boid : public Entity {
 	public:
 
 		struct config {
 			BoidPhysicsComponent::config physics;
+			HealthComponent::config health;
 		};
 
 		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance);
@@ -94,6 +96,11 @@ namespace core { namespace game { namespace enemy {
 		BoidPhysicsComponentRef getBoidPhysicsComponent() const { return _boidPhysics; }
 		BoidFlockControllerRef getFlockController() const { return _flockController.lock(); }
 
+		// Entity
+		void onHealthChanged(double oldHealth, double newHealth) override;
+		void onDeath() override;
+
+		// GameObject
 		void onReady(LevelRef level) override;
 		void onCleanup() override;
 
@@ -272,6 +279,9 @@ namespace core { namespace game { namespace enemy {
 
 #pragma mark - BoidFlock
 
+	/**
+	 BoidFlock is a GameObject which acts as a controller for a flock of boids. It is not an Entity - it can't be shot or injured.
+	 */
 	class BoidFlock : public GameObject {
 	public:
 

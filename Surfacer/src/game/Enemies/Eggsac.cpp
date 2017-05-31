@@ -318,21 +318,30 @@ namespace core { namespace game { namespace enemy {
 			config.spawn.flock = BoidFlock::loadConfig(flockNode);
 		}
 
+		config.health = HealthComponent::loadConfig(node.getChild("health"));
 
 		EggsacRef eggsac = make_shared<Eggsac>(name);
 		eggsac->addComponent(make_shared<EggsacPhysicsComponent>(config.physics));
 		eggsac->addComponent(make_shared<EggsacDrawComponent>(config.draw));
 		eggsac->addComponent(make_shared<EggsacSpawnComponent>(config.spawn));
+		eggsac->addComponent(make_shared<HealthComponent>(config.health));
 
 		return eggsac;
 	}
 
 	Eggsac::Eggsac(string name):
-	core::GameObject(name){}
+	Entity(name){}
 
 	Eggsac::~Eggsac(){}
 
-	// GameObject
+	void Eggsac::onHealthChanged(double oldHealth, double newHealth) {
+		Entity::onHealthChanged(oldHealth, newHealth);
+	}
+
+	void Eggsac::onDeath() {
+		Entity::onDeath();
+	}
+
 	void Eggsac::update(const time_state &time) {
 		GameObject::update(time);
 	}
