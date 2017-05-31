@@ -435,13 +435,13 @@ namespace core { namespace game { namespace terrain {
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this_as<Shape>();
 		template<typename T>
 		shared_ptr<T const> shared_from_this_as() const {
-			return dynamic_pointer_cast<T const>(shared_from_this());
+			return static_pointer_cast<T const>(shared_from_this());
 		}
 
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this_as<Shape>();
 		template<typename T>
 		shared_ptr<T> shared_from_this_as() {
-			return dynamic_pointer_cast<T>(shared_from_this());
+			return static_pointer_cast<T>(shared_from_this());
 		}
 
 		void setWorld(WorldRef w);

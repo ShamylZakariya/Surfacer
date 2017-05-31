@@ -198,7 +198,7 @@ namespace core { namespace game { namespace enemy {
 		// notify that we're done. Our owner might have been killed! So check the ptr.
 		BoidFlockControllerRef flockController = _flockController.lock();
 		if (flockController) {
-			flockController->_onBoidFinished(dynamic_pointer_cast<Boid>(shared_from_this()));
+			flockController->_onBoidFinished(shared_from_this_as<Boid>());
 		}
 
 		GameObject::onCleanup();

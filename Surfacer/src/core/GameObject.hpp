@@ -59,20 +59,20 @@ namespace core {
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
 		template<typename T>
 		shared_ptr<T const> shared_from_this_as() const {
-			return dynamic_pointer_cast<T const>(shared_from_this());
+			return static_pointer_cast<T const>(shared_from_this());
 		}
 
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
 		template<typename T>
 		shared_ptr<T> shared_from_this_as() {
-			return dynamic_pointer_cast<T>(shared_from_this());
+			return static_pointer_cast<T>(shared_from_this());
 		}
 
 		LevelRef getLevel() const;
 
 		template<typename T>
 		shared_ptr<T> getGameObjectAs() {
-			return dynamic_pointer_cast<T>(_gameObject.lock());
+			return static_pointer_cast<T>(_gameObject.lock());
 		}
 
 		template<typename T>
@@ -296,13 +296,13 @@ namespace core {
 		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
 		template<typename T>
 		shared_ptr<T const> shared_from_this_as() const {
-			return dynamic_pointer_cast<T const>(shared_from_this());
+			return static_pointer_cast<T const>(shared_from_this());
 		}
 
 		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
 		template<typename T>
 		shared_ptr<T> shared_from_this_as() {
-			return dynamic_pointer_cast<T>(shared_from_this());
+			return static_pointer_cast<T>(shared_from_this());
 		}
 
 		// IChipmunkUserData

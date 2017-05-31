@@ -268,7 +268,7 @@ namespace core { namespace game { namespace player {
 		updateContacts();
 		computeCutSegment();
 
-		terrain::TerrainObjectRef terrain = dynamic_pointer_cast<GameLevel>(level)->getTerrain();
+		terrain::TerrainObjectRef terrain = static_pointer_cast<GameLevel>(level)->getTerrain();
 		if (terrain) {
 			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2);
 		}
@@ -584,7 +584,7 @@ namespace core { namespace game { namespace player {
 
 		_input = getSibling<PlayerInputComponent>();
 
-		const PlayerRef player = dynamic_pointer_cast<Player>(parent);
+		const PlayerRef player = static_pointer_cast<Player>(parent);
 		const PlayerPhysicsComponent::config &config = getConfig();
 
 		_jetpackFuelLevel = _jetpackFuelMax = config.jetpackFuelMax;
