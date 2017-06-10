@@ -23,19 +23,27 @@ namespace core { namespace util { namespace xml {
 
 	XmlMultiTree::XmlMultiTree(ci::XmlTree tree):
 	_trees({tree})
-	{}
+	{
+		_sanityCheck();
+	}
 
 	XmlMultiTree::XmlMultiTree(ci::XmlTree firstTree, ci::XmlTree secondTree):
 	_trees({firstTree, secondTree})
-	{}
+	{
+		_sanityCheck();
+	}
 
 	XmlMultiTree::XmlMultiTree(const initializer_list<ci::XmlTree> &trees):
 	_trees(trees)
-	{}
+	{
+		_sanityCheck();
+	}
 
 	XmlMultiTree::XmlMultiTree(const vector<ci::XmlTree> &trees):
 	_trees(trees)
-	{}
+	{
+		_sanityCheck();
+	}
 
 	bool XmlMultiTree::isElement() const {
 		if (!_trees.empty()) {
@@ -51,12 +59,7 @@ namespace core { namespace util { namespace xml {
 
 	string XmlMultiTree::getTag() const {
 		if (!_trees.empty()) {
-			string tag = _trees.front().getTag();
-			for (auto it(_trees.begin()+1), end(_trees.end()); it != end; ++it) {
-				string tag2 = it->getTag();
-				CI_ASSERT_MSG(tag2 == tag, "All mirrored nodes in XmlMultiTree must agree on tag" );
-			}
-			return tag;
+			return _trees.front().getTag();
 		}
 		return "";
 	}
@@ -123,6 +126,18 @@ namespace core { namespace util { namespace xml {
 			return *v;
 		}
 		return fallback;
+	}
+
+	void XmlMultiTree::_sanityCheck() {
+		string tag = _trees.front().getTag();
+		for (auto it(_trees.begin()+1), end(_trees.end()); it != end; ++it) {
+			string tag2 = it->getTag();
+			if (tag2 != tag) {
+				stringstream msg;
+				msg << "All XmlTree nodes in XmlMultiTree must have same tag. tag[0]: \"" << tag << "\" tag[" << (it - _trees.begin()) << "]: \"" << tag2 << "\"";
+				CI_ASSERT_MSG(tag2 == tag, msg.str().c_str());
+			}
+		}
 	}
 
 

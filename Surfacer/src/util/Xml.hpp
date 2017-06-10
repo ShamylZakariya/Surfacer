@@ -53,6 +53,8 @@ namespace core { namespace util { namespace xml {
 
 	private:
 
+		void _sanityCheck();
+
 		vector<ci::XmlTree> _trees;
 
 	};
