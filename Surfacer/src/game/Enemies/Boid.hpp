@@ -47,10 +47,10 @@ namespace core { namespace game { namespace enemy {
 
 		const config &getConfig() const { return _config; }
 
-		dvec2 getPosition() const;
-		dvec2 getVelocity() const;
-		double getRadius() const;
-		double getSensorRadius() const;
+		dvec2 getPosition() const { return _position; }
+		dvec2 getVelocity() const { return _velocity; }
+		double getRadius() const { return _config.radius; }
+		double getSensorRadius() const { return _config.sensorRadius; }
 
 		cpShape *getShape() const { return _shape; }
 
@@ -68,8 +68,9 @@ namespace core { namespace game { namespace enemy {
 
 		config _config;
 		cpBody *_body;
+		cpConstraint *_gear;
 		cpShape *_shape;
-		dvec2 _targetVelocity;
+		dvec2 _targetVelocity, _position, _velocity;
 		double _mass;
 
 	};
@@ -140,6 +141,7 @@ namespace core { namespace game { namespace enemy {
 
 		config _config;
 		BoidFlockControllerWeakRef _flockController;
+		gl::VboMeshRef _unitCircleMesh;
 		
 	};
 

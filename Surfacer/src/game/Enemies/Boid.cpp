@@ -18,16 +18,20 @@ namespace core { namespace game { namespace enemy {
 	/*
 		config _config;
 		cpBody *_body;
+		cpConstraint *_gear;
 		cpShape *_shape;
-		dvec2 _targetVelocity;
-		double _mass, _thrustForce;
+		dvec2 _targetVelocity, _position, _velocity;
+		double _mass;
 	*/
 
 	BoidPhysicsComponent::BoidPhysicsComponent(config c):
 	_config(c),
 	_body(nullptr),
+	_gear(nullptr),
 	_shape(nullptr),
 	_targetVelocity(0),
+	_position(c.position),
+	_velocity(0),
 	_mass(0)
 	{
 		_config.filter.group = reinterpret_cast<cpGroup>(this);
@@ -35,22 +39,6 @@ namespace core { namespace game { namespace enemy {
 
 	BoidPhysicsComponent::~BoidPhysicsComponent()
 	{}
-
-	dvec2 BoidPhysicsComponent::getPosition() const {
-		return v2(cpBodyGetPosition(_body));
-	}
-
-	dvec2 BoidPhysicsComponent::getVelocity() const {
-		return v2(cpBodyGetVelocity(_body));
-	}
-
-	double BoidPhysicsComponent::getRadius() const {
-		return _config.radius;
-	}
-
-	double BoidPhysicsComponent::getSensorRadius() const {
-		return _config.sensorRadius;
-	}
 
 	void BoidPhysicsComponent::setTargetVelocity(dvec2 tv) {
 		_targetVelocity = tv;
@@ -72,7 +60,7 @@ namespace core { namespace game { namespace enemy {
 		cpBodySetPosition(_body, cpv(_config.position));
 
 		// TODO: Determine why gear joint is unstable
-		//add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 0));
+		//_gear = add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 0));
 
 		_shape = add(cpCircleShapeNew(_body, _config.radius, cpvzero));
 		cpShapeSetFriction(_shape, 0);
@@ -106,7 +94,7 @@ namespace core { namespace game { namespace enemy {
 			//
 
 			dvec2 currentDir = v2(cpBodyGetVelocity(_body));
-			double currentVelocity = length(currentDir);
+			const double currentVelocity = length(currentDir);
 			if (currentVelocity > 0) {
 				currentDir /= currentVelocity;
 			}
@@ -142,6 +130,9 @@ namespace core { namespace game { namespace enemy {
 					cpBodyApplyForceAtWorldPoint(_body, cpv(targetDir * force), cpBodyGetPosition(_body));
 				}
 			}
+
+			_position = v2(cpBodyGetPosition(_body));
+			_velocity = currentDir * currentVelocity;
 		}
 
 		// apply damping
@@ -219,6 +210,7 @@ namespace core { namespace game { namespace enemy {
 	/*
 	config _config;
 	BoidFlockControllerWeakRef _flockController;
+	gl::VboMeshRef _unitCircleMesh;
 	*/
 
 	BoidFlockDrawComponent::BoidFlockDrawComponent(config c):
@@ -231,6 +223,9 @@ namespace core { namespace game { namespace enemy {
 	void BoidFlockDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		DrawComponent::onReady(parent, level);
 		_flockController = getSibling<BoidFlockController>();
+
+		auto circle = geom::Circle().center(vec2(0)).radius(1).subdivisions(8);
+		_unitCircleMesh = gl::VboMesh::create(circle);
 	}
 
 	void BoidFlockDrawComponent::update(const time_state &time) {
@@ -242,7 +237,14 @@ namespace core { namespace game { namespace enemy {
 			gl::color(0,1,1);
 			for (BoidRef b : flock->getFlock()) {
 				BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
-				gl::drawSolidCircle(boid->getPosition(), boid->getRadius(), 8);
+
+				const dvec3 position(boid->getPosition(), 0);
+				const dvec3 scale = dvec3(boid->getRadius(), boid->getRadius(), 1);
+
+				gl::ScopedModelMatrix smm;
+				gl::pushModelMatrix();
+				gl::multModelMatrix(glm::translate(position) * glm::scale(scale));
+				gl::draw(_unitCircleMesh);
 			}
 		}
 	}
