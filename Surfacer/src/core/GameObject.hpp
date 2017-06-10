@@ -312,6 +312,7 @@ namespace core {
 
 		size_t getId() const { return _id; }
 		string getName() const { return _name; }
+		string getDescription() const;
 
 		virtual void addComponent(ComponentRef component);
 		virtual void removeComponent(ComponentRef component);
@@ -321,6 +322,8 @@ namespace core {
 		}
 
 		virtual bool isFinished() const { return _finished; }
+
+		bool isReady() const { return _ready; }
 
 		template<typename T>
 		shared_ptr<T> getComponent() const {

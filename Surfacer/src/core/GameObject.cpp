@@ -247,6 +247,12 @@ namespace core {
 
 	GameObject::~GameObject(){}
 
+	string GameObject::getDescription() const {
+		stringstream buf;
+		buf << "[id: " << getId() << " name: " << getName() << " isReady: " << isReady() << " isFinished: " << isFinished() << "]";
+		return buf.str();
+	}
+
 	void GameObject::addComponent(ComponentRef component) {
 		CI_ASSERT_MSG(component->getGameObject() == nullptr, "Cannot add a component that already has been added to another GameObject");
 
