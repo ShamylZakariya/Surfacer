@@ -300,7 +300,7 @@ namespace core { namespace game { namespace enemy {
 
 #pragma mark - Eggsac
 
-	EggsacRef Eggsac::create(string name, dvec2 position, ci::XmlTree node) {
+	EggsacRef Eggsac::create(string name, dvec2 position, util::xml::XmlMultiTree node) {
 		Eggsac::config config;
 
 		config.physics.width = util::xml::readNumericAttribute(node, "width", 8);

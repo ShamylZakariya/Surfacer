@@ -15,7 +15,7 @@ namespace core { namespace game {
 	 config _config;
 	 */
 
-	HealthComponent::config HealthComponent::loadConfig(ci::XmlTree node) {
+	HealthComponent::config HealthComponent::loadConfig(util::xml::XmlMultiTree node) {
 		config c;
 		c.maxHealth = util::xml::readNumericAttribute(node, "max_health", 100);
 		c.health = util::xml::readNumericAttribute(node, "health", c.maxHealth);

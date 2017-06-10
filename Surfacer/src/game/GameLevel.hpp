@@ -101,7 +101,7 @@ namespace core { namespace game {
 		void applyGravityAttributes(XmlTree gravityNode);
 		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
 		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
-		void loadEnemies(XmlTree enemiesNode);
+		void loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode);
 
 	private:
 

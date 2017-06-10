@@ -37,45 +37,50 @@ namespace core { namespace game {
 	{}
 
 	void GameLevel::load(ci::DataSourceRef levelXmlData) {
-		XmlTree levelNode = XmlTree(levelXmlData).getChild("level");
+
+		auto root = XmlTree(levelXmlData);
+		auto prefabsNode = root.getChild("prefabs");
+		auto levelNode = root.getChild("level");
+
 		setName(levelNode.getAttribute("name").getValue());
 
 		//
 		//	Load some basic level properties
 		//
 
-		XmlTree spaceNode = util::xml::findElement(levelNode, "space").second;
-		applySpaceAttributes(spaceNode);
+		auto spaceNode = util::xml::findElement(levelNode, "space");
+		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <level> definition");
+		applySpaceAttributes(*spaceNode);
 
-		XmlTree gravityNode = util::xml::findElement(levelNode, "gravity").second;
-		applyGravityAttributes(gravityNode);
+		auto gravityNode = util::xml::findElement(levelNode, "gravity");
+		CI_ASSERT_MSG(spaceNode, "Expect a <gravity> node in <level> definition");
+		applyGravityAttributes(*gravityNode);
 
 		//
 		//	Load terrain
 		//
 
-		XmlTree terrainNode = util::xml::findElement(levelNode, "terrain").second;
-		string terrainSvgPath = terrainNode.getAttribute("path").getValue();
-		loadTerrain(terrainNode, app::loadAsset(terrainSvgPath));
+		auto terrainNode = util::xml::findElement(levelNode, "terrain");
+		CI_ASSERT_MSG(terrainNode, "Expect a <terrain> node in <level> definition");
+		string terrainSvgPath = terrainNode->getAttribute("path").getValue();
+		loadTerrain(*terrainNode, app::loadAsset(terrainSvgPath));
 
 		//
 		//	Load the player
 		//
 
-		auto maybePlayerNode = util::xml::findElement(levelNode, "player");
-		if (maybePlayerNode.first) {
+		if (auto playerNode = util::xml::findElement(levelNode, "player")) {
 			terrain::ElementRef playerElement = _terrain->getWorld()->getElementById("player");
-			ci::DataSourceRef playerXmlData = app::loadAsset(maybePlayerNode.second.getAttribute("path").getValue());
-			loadPlayer(maybePlayerNode.second, playerXmlData, playerElement);
+			ci::DataSourceRef playerXmlData = app::loadAsset(playerNode->getAttribute("path").getValue());
+			loadPlayer(*playerNode, playerXmlData, playerElement);
 		}
 
 		//
 		//	Load enemies
 		//
 
-		auto maybeEnemiesNode = util::xml::findElement(levelNode, "enemies");
-		if (maybeEnemiesNode.first) {
-			loadEnemies(maybeEnemiesNode.second);
+		if (auto enemiesNode = util::xml::findElement(levelNode, "enemies")) {
+			loadEnemies(*enemiesNode, prefabsNode);
 		}
 	}
 
@@ -103,9 +108,7 @@ namespace core { namespace game {
 			CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.falloffPower);
 
 		} else if (type == "directional") {
-			string dirStr = gravityNode.getAttribute("dir").getValue();
-			vector<double> vals = util::xml::readNumericSequence(dirStr);
-			dvec2 dir(vals[0], vals[1]);
+			dvec2 dir = util::xml::readPointAttribute(gravityNode, "dir", dvec2(0,0));
 			setDirectionalGravityDirection(dir);
 			setGravityType(DIRECTIONAL);
 
@@ -177,7 +180,7 @@ namespace core { namespace game {
 		}
 	}
 	
-	void GameLevel::loadEnemies(XmlTree enemiesNode) {
+	void GameLevel::loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode) {
 		for (auto enemyNode : enemiesNode) {
 
 			// load position from our terrain's elements, or from the node itself ("x", "y" attributes)
@@ -192,13 +195,28 @@ namespace core { namespace game {
 				position = util::xml::readPointAttribute(enemyNode, "position", dvec2(0,0));
 			}
 
+			vector<XmlTree> enemyNodes = { enemyNode };
+
+			// find the corresponding prefab node, if any
+			if (enemyNode.hasAttribute("prefab_id")) {
+				string prefabId = enemyNode.getAttributeValue<string>("prefab_id");
+				auto prefabNode = util::xml::findNode(prefabsNode, "prefab", "id", prefabId);
+				if (prefabNode) {
+					XmlTree enemyPrefabNode = prefabNode->getChild(enemyNode.getTag());
+					enemyNodes.push_back(enemyPrefabNode);
+				}
+			}
+
+			// build a node which can read the prefab values if available
+			util::xml::XmlMultiTree prefabEnemyNode(enemyNodes);
+
 			// now figure out which enemy this is
 			string tag = enemyNode.getTag();
 			string name = enemyNode.getAttributeValue<string>("name", tag);
 			GameObjectRef enemy;
 
 			if (tag == "eggsac") {
-				enemy = enemy::Eggsac::create(name, position, enemyNode);
+				enemy = enemy::Eggsac::create(name, position, prefabEnemyNode);
 			}
 
 			if (enemy) {

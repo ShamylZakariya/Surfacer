@@ -448,26 +448,26 @@ namespace core { namespace game { namespace enemy {
 		BoidFlockDrawComponentRef _drawer;
 	*/
 
-	BoidFlock::config BoidFlock::loadConfig(ci::XmlTree flockNode) {
+	BoidFlock::config BoidFlock::loadConfig(util::xml::XmlMultiTree flockNode) {
 		config c;
 
 		if (flockNode.hasChild("target")) {
-			ci::XmlTree targetNode = flockNode.getChild("target");
-			string targets = targetNode.getAttributeValue<string>("names", "");
+			auto targetNode = flockNode.getChild("target");
+			string targets = targetNode.getAttribute("names", "");
 			for (auto target : strings::split(targets, ",")) {
 				target = strings::strip(target);
 				c.controller.target_ids.push_back(target);
 			}
 		}
 
-		ci::XmlTree rulesNode = flockNode.getChild("rule_contributions");
+		auto rulesNode = flockNode.getChild("rule_contributions");
 		c.controller.ruleContributions.collisionAvoidance = util::xml::readNumericAttribute(rulesNode, "collision_avoidance", 0.1);
 		c.controller.ruleContributions.flockVelocity = util::xml::readNumericAttribute(rulesNode, "flock_velocity", 0.1);
 		c.controller.ruleContributions.flockCentroid = util::xml::readNumericAttribute(rulesNode, "flock_centroid", 0.1);
 		c.controller.ruleContributions.targetSeeking = util::xml::readNumericAttribute(rulesNode, "target_seeking", 0.1);
 		c.controller.ruleContributions.ruleVariance = saturate(util::xml::readNumericAttribute(rulesNode, "rule_variance", 0.25));
 
-		ci::XmlTree boidNode = flockNode.getChild("boid");
+		auto boidNode = flockNode.getChild("boid");
 		c.controller.boid.physics.radius = util::xml::readNumericAttribute(boidNode, "radius", 1);
 		c.controller.boid.physics.speed = util::xml::readNumericAttribute(boidNode, "speed", 2);
 		c.controller.boid.physics.density = util::xml::readNumericAttribute(boidNode, "density", 0.5);

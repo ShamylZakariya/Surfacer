@@ -1371,7 +1371,7 @@ namespace core { namespace game { namespace terrain {
 	_groupHash(0),
 	_worldSpaceContourEdgesBB(cpBBInvalid) {
 
-		for (const auto hc : hcs) {
+		for (const auto &hc : hcs) {
 			_holeContours.emplace_back(hc);
 		}
 

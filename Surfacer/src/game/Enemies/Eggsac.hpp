@@ -15,6 +15,8 @@
 #include "Entity.hpp"
 #include "Boid.hpp"
 
+#include "Xml.hpp"
+
 namespace core { namespace game { namespace enemy {
 
 	SMART_PTR(Eggsac);
@@ -167,7 +169,7 @@ namespace core { namespace game { namespace enemy {
 			HealthComponent::config health;
 		};
 
-		static EggsacRef create(string name, dvec2 position, ci::XmlTree node);
+		static EggsacRef create(string name, dvec2 position, util::xml::XmlMultiTree node);
 
 	public:
 

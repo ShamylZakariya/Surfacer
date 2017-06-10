@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<level name="Hello">
-	<terrain path="svg_tests/complex_world_test.svg" friction="0.3" density="1" scale="2"/>
-	<space damping="0.9"/>
-	<gravity type="radial" strength="200" falloff_power="0" />
-	<player name="player" path="player/player.xml">
-		<tracking areaRadius="300" deadZoneRadius="60" tightness="0.975"/>
-	</player>
-	<enemies>
-		
-		<eggsac name="eggsac_0" width="16" height="24">
+
+<prefabs>
+	<prefab id="eggsac">
+		<eggsac width="16" height="24">
 			<health max_health="50" regeneration_rate="0.5"/>
 			<spawn count="100" size="1">
 				<flock>
@@ -20,6 +14,21 @@
 				</flock>
 			</spawn>
 		</eggsac>
+	</prefab>
+</prefabs>
+
+<level name="Hello">
+	<terrain path="svg_tests/complex_world_test.svg" friction="0.3" density="1" scale="2"/>
+	<space damping="0.9"/>
+	<gravity type="radial" strength="200" falloff_power="0" />
+	<player name="player" path="player/player.xml">
+		<tracking areaRadius="300" deadZoneRadius="60" tightness="0.975"/>
+	</player>
+	<enemies>
+		
+		<!-- <eggsac name="eggsac_0" prefab_id="eggsac"/> -->
+		
+		<eggsac name="eggsac_0" prefab_id="eggsac" width="16" height="24" />
 		<!-- <eggsac name="eggsac_1" width="24" height="24"/>
 		<eggsac name="eggsac_2" width="32" height="32"/> -->
 	</enemies>

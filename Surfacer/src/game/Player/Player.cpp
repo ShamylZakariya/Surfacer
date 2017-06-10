@@ -104,7 +104,7 @@ namespace core { namespace game { namespace player {
 		const auto seg = getSegment();
 		vector<contact> filteredContacts;
 		filteredContacts.reserve(rawContacts.size());
-		for (const auto contact : rawContacts) {
+		for (const auto &contact : rawContacts) {
 			if (dot(contact.position - seg.tail, _dir) >= 0 && dot(contact.position - seg.head, -_dir) >= 0) {
 				filteredContacts.push_back(contact);
 			}
@@ -200,7 +200,7 @@ namespace core { namespace game { namespace player {
 			_segment.len = max(_segment.len - dist, 0.0);
 			_segment.tail = _segment.head - _dir * _segment.len;
 
-			if (_segment.len < 1e-3) {
+			if (_segment.len < 1e-4) {
 				go->setFinished();
 				return;
 			}

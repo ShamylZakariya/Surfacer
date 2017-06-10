@@ -44,6 +44,17 @@ namespace core { namespace game { namespace player {
 			dvec2 position;
 			dvec2 normal;
 			GameObjectRef target;
+
+			contact():
+			position(0),
+			normal(0)
+			{}
+
+			contact(const contact &c):
+			position(c.position),
+			normal(c.normal),
+			target(c.target)
+			{}
 		};
 
 		struct segment {

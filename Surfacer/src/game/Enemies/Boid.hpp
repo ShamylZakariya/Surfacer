@@ -15,6 +15,7 @@
 #include "Core.hpp"
 #include "Entity.hpp"
 #include "GameLevel.hpp"
+#include "Xml.hpp"
 
 namespace core { namespace game { namespace enemy {
 
@@ -280,7 +281,10 @@ namespace core { namespace game { namespace enemy {
 #pragma mark - BoidFlock
 
 	/**
-	 BoidFlock is a GameObject which acts as a controller for a flock of boids. It is not an Entity - it can't be shot or injured.
+	 BoidFlock is a GameObject which acts as a controller for a flock of boids.
+	 Generally speaking, since BoidFlock is just a GameObject and not an Entity, it's not
+	 a thing which can be drawn or have health or be shot. Rather, an "owner" Entity, say
+	 the Eggsac, creates a BoidFlock and adds it to the Level.
 	 */
 	class BoidFlock : public GameObject {
 	public:
@@ -290,7 +294,7 @@ namespace core { namespace game { namespace enemy {
 			BoidFlockDrawComponent::config draw;
 		};
 
-		static config loadConfig(ci::XmlTree flockNode);
+		static config loadConfig(util::xml::XmlMultiTree flockNode);
 
 		static BoidFlockRef create(string name, config c);
 

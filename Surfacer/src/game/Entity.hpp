@@ -10,7 +10,9 @@
 #define Entity_hpp
 
 #include <cinder/Xml.h>
+
 #include "Core.hpp"
+#include "Xml.hpp"
 
 namespace core { namespace game {
 
@@ -26,7 +28,7 @@ namespace core { namespace game {
 			double regenerationRate;
 		};
 
-		static config loadConfig(ci::XmlTree node);
+		static config loadConfig(util::xml::XmlMultiTree node);
 
 		signals::signal<void()> onDeath;
 		signals::signal<void(double, double)> onHealthChanged; // passes previous health, new health
