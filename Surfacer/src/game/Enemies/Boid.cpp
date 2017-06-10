@@ -32,6 +32,7 @@ namespace core { namespace game { namespace enemy {
 	_targetVelocity(0),
 	_position(c.position),
 	_velocity(0),
+	_rotation(0,0),
 	_mass(0)
 	{
 		_config.filter.group = reinterpret_cast<cpGroup>(this);
@@ -63,7 +64,7 @@ namespace core { namespace game { namespace enemy {
 		//_gear = add(cpGearJointNew(cpSpaceGetStaticBody(getSpace()->getSpace()), _body, 0, 0));
 
 		_shape = add(cpCircleShapeNew(_body, _config.radius, cpvzero));
-		cpShapeSetFriction(_shape, 0);
+		cpShapeSetFriction(_shape, 0.1);
 
 		build(_config.filter, CollisionType::ENEMY);
 	}
@@ -133,13 +134,14 @@ namespace core { namespace game { namespace enemy {
 
 			_position = v2(cpBodyGetPosition(_body));
 			_velocity = currentDir * currentVelocity;
+			_rotation = v2(cpBodyGetRotation(_body));
 		}
 
 		// apply damping
 		cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.99));
 
 		// TODO: Remove angular velocity damping when gear joint is fixed
-		cpBodySetAngularVelocity(_body, cpBodyGetAngularVelocity(_body) * 0.9);
+		//cpBodySetAngularVelocity(_body, cpBodyGetAngularVelocity(_body) * 0.9);
 	}
 
 	cpBB BoidPhysicsComponent::getBB() const {
@@ -224,7 +226,7 @@ namespace core { namespace game { namespace enemy {
 		DrawComponent::onReady(parent, level);
 		_flockController = getSibling<BoidFlockController>();
 
-		auto circle = geom::Circle().center(vec2(0)).radius(1).subdivisions(8);
+		auto circle = geom::Circle().center(vec2(0)).radius(1).subdivisions(3);
 		_unitCircleMesh = gl::VboMesh::create(circle);
 	}
 
@@ -235,15 +237,20 @@ namespace core { namespace game { namespace enemy {
 	void BoidFlockDrawComponent::draw(const render_state &renderState) {
 		if (BoidFlockControllerRef flock = _flockController.lock()) {
 			gl::color(0,1,1);
+			dmat4 M(1);
 			for (BoidRef b : flock->getFlock()) {
-				BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
 
-				const dvec3 position(boid->getPosition(), 0);
-				const dvec3 scale = dvec3(boid->getRadius(), boid->getRadius(), 1);
+				const BoidPhysicsComponentRef boid = b->getBoidPhysicsComponent();
+				const dvec2 position = boid->getPosition();
+				const double scale = boid->getRadius();
+				const dvec2 rotation = boid->getRotation();
+
+				M[0] = dvec4(scale * rotation.x, scale * rotation.y, 0, 0);
+				M[1] = dvec4(scale * -rotation.y, scale * rotation.x, 0, 0);
+				M[3] = dvec4(position.x, position.y, 0, 1);
 
 				gl::ScopedModelMatrix smm;
-				gl::pushModelMatrix();
-				gl::multModelMatrix(glm::translate(position) * glm::scale(scale));
+				gl::multModelMatrix(M);
 				gl::draw(_unitCircleMesh);
 			}
 		}

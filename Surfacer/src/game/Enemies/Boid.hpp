@@ -49,6 +49,7 @@ namespace core { namespace game { namespace enemy {
 
 		dvec2 getPosition() const { return _position; }
 		dvec2 getVelocity() const { return _velocity; }
+		dvec2 getRotation() const { return _rotation; }
 		double getRadius() const { return _config.radius; }
 		double getSensorRadius() const { return _config.sensorRadius; }
 
@@ -70,7 +71,7 @@ namespace core { namespace game { namespace enemy {
 		cpBody *_body;
 		cpConstraint *_gear;
 		cpShape *_shape;
-		dvec2 _targetVelocity, _position, _velocity;
+		dvec2 _targetVelocity, _position, _velocity, _rotation;
 		double _mass;
 
 	};
