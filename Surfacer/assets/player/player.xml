@@ -8,7 +8,7 @@
 	
 	<health max_health="100" regeneration_rate="0"/>
 
-	<physics width="20" height="60" density="1" wheelFriction="1" bodyFriction="0.2">
+	<physics width="20" height="60" density="1" wheelFriction="100" bodyFriction="0.2">
 		<jetpack antigravity="2" fuelMax="1" consumption="0.3" regeneration="0.3"/>
 	</physics>
 

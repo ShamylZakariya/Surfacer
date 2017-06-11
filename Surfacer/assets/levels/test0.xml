@@ -7,8 +7,13 @@
 			<spawn count="100" size="1">
 				<flock>
 					<target names="player"/>
-					<rule_contributions flock_centroid="1" flock_velocity="1" collision_avoidance="5" target_seeking="1" rule_variance="0.75"/>
-					<boid radius="2" speed="300" density="0.5">
+					<!--
+						flock_centroid: increase makes flock act like a wiggly ball, decrease makes flock more spread out
+						flock_velocity: increase makes flock act like a viscous liquid, decrease makes flock more 
+						collision_avoidance: increase makes the flock act like angry gnats
+						-->
+					<rule_contributions flock_centroid="2" flock_velocity="1" collision_avoidance="0.5wd" target_seeking="0.5" rule_variance="0.5"/>
+					<boid radius="3" speed="600" density="0.5">
 						<health max_health="5" regeneration_rate="0"/>
 					</boid>
 				</flock>
@@ -18,18 +23,15 @@
 </prefabs>
 
 <level name="Hello">
-	<terrain path="svg_tests/complex_world_test.svg" friction="0.3" density="1" scale="2"/>
+	<terrain path="svg_tests/complex_world_test.svg" friction="1" density="1" scale="2"/>
 	<space damping="0.9"/>
 	<gravity type="radial" strength="200" falloff_power="0" />
 	<player name="player" path="player/player.xml">
 		<tracking areaRadius="300" deadZoneRadius="60" tightness="0.975"/>
 	</player>
 	<enemies>
-		
-		<!-- <eggsac name="eggsac_0" prefab_id="eggsac"/> -->
-		
-		<eggsac name="eggsac_0" prefab_id="eggsac" width="16" height="24" />
-		<!-- <eggsac name="eggsac_1" width="24" height="24"/>
-		<eggsac name="eggsac_2" width="32" height="32"/> -->
+		<!-- <eggsac name="eggsac_0" prefab_id="eggsac" width="16" height="24" />
+		<eggsac name="eggsac_1" prefab_id="eggsac" width="24" height="24"/>
+		<eggsac name="eggsac_2" prefab_id="eggsac" width="32" height="32"/> -->
 	</enemies>
 </level>

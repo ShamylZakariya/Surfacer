@@ -691,7 +691,7 @@ namespace core { namespace game { namespace player {
 
 			// add lean
 			_lean = lrp<double>(0.2, _lean, Dir);
-			newPhase -= _lean * M_PI * 0.125;
+			newPhase -= _lean * M_PI * 0.05;
 
 			cpGearJointSetPhase(_orientationConstraint, newPhase);
 		}
@@ -775,26 +775,12 @@ namespace core { namespace game { namespace player {
 
 
 		//
-		//	Update wheel friction - when crouching, increase friction. When not walking & crouching, increase further.
-		//	Note, when kicking off ground we reduce friction. This is to prevent the super-hill-jump effect where running
-		//	up a steep slope and jumping causes superman-like flight. Because obviously we're trying to be realistic.
+		//	If restrained, we lose friction
 		//
 
-		if ( !Restrained )
 		{
-			const double
-				FootFriction = getConfig().footFriction,
-				LockdownFriction = 1000 * FootFriction,
-				Stillness = (1-abs( sign( Vel ))),
-				WheelFriction = lrp<double>( Stillness, FootFriction, LockdownFriction );
-
-				_wheelFriction = lrp<double>( 0.35, _wheelFriction, WheelFriction );
-
+			_wheelFriction = lrp<double>(0.2, _wheelFriction, Restrained ? 0 : config.footFriction);
 			cpShapeSetFriction( _wheelShape, _wheelFriction );
-		}
-		else
-		{
-			cpShapeSetFriction( _wheelShape, 0 );
 		}
 
 		//
