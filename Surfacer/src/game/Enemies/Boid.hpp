@@ -42,7 +42,7 @@ namespace core { namespace game { namespace enemy {
 
 	public:
 
-		BoidPhysicsComponent(config c);
+		BoidPhysicsComponent(config c, double ruleVariance);
 		virtual ~BoidPhysicsComponent();
 
 		const config &getConfig() const { return _config; }
@@ -52,12 +52,16 @@ namespace core { namespace game { namespace enemy {
 		dvec2 getRotation() const { return _rotation; }
 		double getRadius() const { return _config.radius; }
 		double getSensorRadius() const { return _config.sensorRadius; }
+		double getRuleVariance() const { return _ruleVariance; }
 
 		cpShape *getShape() const { return _shape; }
 
 		void setTargetVelocity(dvec2 vel);
 		void addToTargetVelocity(dvec2 vel);
 		dvec2 getTargetVelocity() const { return _targetVelocity; }
+
+		void setFacingDirection(dvec2 dir);
+		dvec2 getFacingDirection() const { return _facingDirection; }
 
 		void onReady(GameObjectRef parent, LevelRef level) override;
 		void onCleanup() override;
@@ -71,8 +75,8 @@ namespace core { namespace game { namespace enemy {
 		cpBody *_body;
 		cpConstraint *_gear;
 		cpShape *_shape;
-		dvec2 _targetVelocity, _position, _velocity, _rotation;
-		double _mass;
+		dvec2 _targetVelocity, _position, _velocity, _rotation, _facingDirection;
+		double _mass, _ruleVariance;
 
 	};
 
@@ -90,11 +94,11 @@ namespace core { namespace game { namespace enemy {
 
 	public:
 
-		Boid(string name, BoidFlockControllerRef flockController, config c, double ruleVariance);
+		Boid(string name, BoidFlockControllerRef flockController, config c);
 		virtual ~Boid();
 
 		const config &getConfig() const { return _config; }
-		double getRuleVariance() const { return _ruleVariance; }
+		double getRuleVariance() const { return _boidPhysics->getRuleVariance(); }
 
 		BoidPhysicsComponentRef getBoidPhysicsComponent() const { return _boidPhysics; }
 		BoidFlockControllerRef getFlockController() const { return _flockController.lock(); }
@@ -112,7 +116,6 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		BoidFlockControllerWeakRef _flockController;
 		BoidPhysicsComponentRef _boidPhysics;
-		double _ruleVariance;
 
 	};
 
@@ -165,8 +168,8 @@ namespace core { namespace game { namespace enemy {
 			// scale of rule causing flock to seek target
 			double targetSeeking;
 
-			// each boid gets a random variance of its rule scaling. ruleVairance of zero means each boid
-			// follows the rules precisely the same. a variance of 0.5 means each boid gets a scaling of  (1 + rand(-0.5,0.5))
+			// each boid gets a random variance of its rule scaling. ruleVariance of zero means each boid
+			// follows the rules precisely the same. a variance of 0.5 means each boid gets a scaling of (1 + rand(-0.5,0.5))
 			// meaning some boids will follow the rules 50% less, and some by 50% more.
 			double ruleVariance;
 

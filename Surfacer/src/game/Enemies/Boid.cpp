@@ -20,11 +20,11 @@ namespace core { namespace game { namespace enemy {
 		cpBody *_body;
 		cpConstraint *_gear;
 		cpShape *_shape;
-		dvec2 _targetVelocity, _position, _velocity;
-		double _mass;
+		dvec2 _targetVelocity, _position, _velocity, _facingDirection;
+		double _mass, _ruleVariance;
 	*/
 
-	BoidPhysicsComponent::BoidPhysicsComponent(config c):
+	BoidPhysicsComponent::BoidPhysicsComponent(config c, double ruleVariance):
 	_config(c),
 	_body(nullptr),
 	_gear(nullptr),
@@ -33,7 +33,9 @@ namespace core { namespace game { namespace enemy {
 	_position(c.position),
 	_velocity(0),
 	_rotation(0,0),
-	_mass(0)
+	_facingDirection(1,0),
+	_mass(0),
+	_ruleVariance(ruleVariance)
 	{
 		_config.filter.group = reinterpret_cast<cpGroup>(this);
 	}
@@ -47,6 +49,10 @@ namespace core { namespace game { namespace enemy {
 
 	void BoidPhysicsComponent::addToTargetVelocity(dvec2 vel) {
 		_targetVelocity += vel;
+	}
+
+	void BoidPhysicsComponent::setFacingDirection(dvec2 dir) {
+		_facingDirection = dir;
 	}
 
 	void BoidPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
@@ -134,14 +140,14 @@ namespace core { namespace game { namespace enemy {
 
 			_position = v2(cpBodyGetPosition(_body));
 			_velocity = currentDir * currentVelocity;
-			_rotation = v2(cpBodyGetRotation(_body));
+
+			// we face in the direction of motion, ramping down to the assigned facingDirection as we slow down
+			_rotation = normalize(_facingDirection + _velocity);
 		}
 
-		// apply damping
-		cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.99));
-
-		// TODO: Remove angular velocity damping when gear joint is fixed
-		//cpBodySetAngularVelocity(_body, cpBodyGetAngularVelocity(_body) * 0.9);
+		// apply damping and prevent rotation
+		//cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.97));
+		cpBodySetAngularVelocity(_body, 0);
 	}
 
 	cpBB BoidPhysicsComponent::getBB() const {
@@ -158,10 +164,10 @@ namespace core { namespace game { namespace enemy {
 	*/
 
 	BoidRef Boid::create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance) {
-		auto b = make_shared<Boid>(name, flockController, c, ruleVariance);
+		auto b = make_shared<Boid>(name, flockController, c);
 
 		c.physics.position = initialPosition;
-		auto physics = make_shared<BoidPhysicsComponent>(c.physics);
+		auto physics = make_shared<BoidPhysicsComponent>(c.physics, ruleVariance);
 		physics->addToTargetVelocity(initialVelocity);
 
 		b->addComponent(physics);
@@ -175,11 +181,10 @@ namespace core { namespace game { namespace enemy {
 		return b;
 	}
 
-	Boid::Boid(string name, BoidFlockControllerRef flockController, config c, double ruleVariance):
+	Boid::Boid(string name, BoidFlockControllerRef flockController, config c):
 	Entity(name),
 	_config(c),
-	_flockController(flockController),
-	_ruleVariance(ruleVariance)
+	_flockController(flockController)
 	{}
 
 	Boid::~Boid()
@@ -294,10 +299,10 @@ namespace core { namespace game { namespace enemy {
 		auto level = getLevel();
 
 		for (size_t i = 0; i < count; i++) {
-			dvec2 position = origin + dvec2(_rng.nextVec2()) * _config.boid.physics.radius;
-			dvec2 velocity = _config.boid.physics.speed * normalize(initialDirection + (dvec2(_rng.nextVec2()) * 0.25));
+			const auto position = origin + dvec2(_rng.nextVec2()) * _config.boid.physics.radius;
+			const auto velocity = _config.boid.physics.speed * normalize(initialDirection + (dvec2(_rng.nextVec2()) * 0.25));
+			const auto rv = 1.0 + _rng.nextFloat(-_config.ruleContributions.ruleVariance, _config.ruleContributions.ruleVariance);
 
-			double rv = _rng.nextFloat(1-_config.ruleContributions.ruleVariance, 1+_config.ruleContributions.ruleVariance);
 			auto b = Boid::create(_name + "_Boid_" + str(i), self, _config.boid, position, velocity, rv);
 			_flock.push_back(b);
 			_flockPhysicsComponents.push_back(b->getBoidPhysicsComponent().get());
@@ -378,11 +383,13 @@ namespace core { namespace game { namespace enemy {
 		const double collisionAvoidanceWeight = _config.ruleContributions.collisionAvoidance;
 		const double targetSeekingWeight = _config.ruleContributions.targetSeeking;
 
-		bool runRules123 = _flock.size() > 1;
+		const size_t flockSize = _flock.size();
+		bool runRules123 = flockSize > 1;
+		//const double flockAvgMultiplier = runRules123 ? 1.0 / (flockSize - 1) : 0;
 
 		for (auto boid : _flockPhysicsComponents) {
 			dvec2 boidPosition = boid->getPosition();
-			double rv = 1;//boidGameObject->getRuleVariance();
+			double rv = boid->getRuleVariance();
 			const double sensorRadius = boid->getConfig().sensorRadius;
 
 			// zero current velocity - we'll add to it in the loop below
@@ -391,40 +398,50 @@ namespace core { namespace game { namespace enemy {
 			// rules 1 & 2 & 3
 			if (runRules123) {
 
-				// compute centroid and avg velocity
-				dvec2 flockCentroid(0,0);
-				dvec2 flockVelocity(0,0);
+				// compute centroid and avg velocity weighted by proximity to self
+				dvec2 flockAvgCentroid(0,0);
+				dvec2 flockAvgVelocity(0,0);
 				dvec2 collisionAvoidance(0,0);
 				double weight = 0;
+
 				for (auto otherBoid : _flockPhysicsComponents) {
 					if (otherBoid != boid) {
 						dvec2 otherBoidPosition = otherBoid->getPosition();
 
-						auto toBoid = otherBoidPosition - boidPosition;
-						auto dist = length(toBoid);
-						auto scale = 1 / dist;
+						auto toOtherBoid = otherBoidPosition - boidPosition;
+						auto distanceToOtherBoid = length(toOtherBoid);
+
+						auto scale = 1 / distanceToOtherBoid;
+						scale *= scale;
 						weight += scale;
 
-						flockCentroid += scale * otherBoidPosition;
-						flockVelocity += scale * otherBoid->getVelocity();
+						flockAvgCentroid += scale * otherBoidPosition;
+						flockAvgVelocity += scale * otherBoid->getVelocity();
 
-						if (dist < sensorRadius) {
-							auto penetration = sensorRadius - dist;
-							collisionAvoidance += penetration * penetration * (toBoid * scale);
+						if (distanceToOtherBoid < sensorRadius) {
+							auto penetration = sensorRadius - distanceToOtherBoid;
+							collisionAvoidance += penetration * -toOtherBoid;
 						}
 					}
 				}
 
-				flockCentroid /= weight;
-				flockVelocity /= weight;
+				flockAvgCentroid /= weight;
+				flockAvgVelocity /= weight;
 
-				boid->addToTargetVelocity((flockCentroid - boidPosition) * flockCentroidWeight * rv);
-				boid->addToTargetVelocity((flockVelocity - boid->getVelocity()) * flockVelocityWeight * rv);
+				boid->addToTargetVelocity((flockAvgCentroid - boidPosition) * flockCentroidWeight * rv);
+				boid->addToTargetVelocity((flockAvgVelocity - boid->getVelocity()) * flockVelocityWeight * rv);
 				boid->addToTargetVelocity(collisionAvoidance * collisionAvoidanceWeight * rv);
 			}
 
 			// target seeking
-			boid->addToTargetVelocity((targetPosition - boidPosition) * targetSeekingWeight * rv);
+			dvec2 toTarget = targetPosition - boidPosition;
+			double distanceToTarget = length(toTarget) + 1e-3;
+			toTarget /= distanceToTarget;
+
+			boid->addToTargetVelocity(toTarget * distanceToTarget * targetSeekingWeight * rv);
+
+			// tell boids that in general they ought to face the target (Boids will override this by facing in direction of motion)
+			boid->setFacingDirection(toTarget);
 
 			// update BB
 			cpBBExpand(flockBB, boid->getBB());
