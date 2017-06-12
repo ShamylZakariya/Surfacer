@@ -39,9 +39,9 @@ namespace core {
 	};
 
 	// convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IChipmunkUserData
-	GameObjectRef cpShapeGetGameObject(cpShape *shape);
-	GameObjectRef cpBodyGetGameObject(cpBody *body);
-	GameObjectRef cpConstraintGetGameObject(cpConstraint *constraint);
+	GameObjectRef cpShapeGetGameObject(const cpShape *shape);
+	GameObjectRef cpBodyGetGameObject(const cpBody *body);
+	GameObjectRef cpConstraintGetGameObject(const cpConstraint *constraint);
 
 
 #pragma mark - Component

@@ -24,7 +24,7 @@ namespace core { namespace game { namespace enemy {
 		double _mass, _ruleVariance;
 	*/
 
-	BoidPhysicsComponent::BoidPhysicsComponent(config c, double ruleVariance):
+	BoidPhysicsComponent::BoidPhysicsComponent(config c, double ruleVariance, cpGroup group):
 	_config(c),
 	_body(nullptr),
 	_gear(nullptr),
@@ -37,7 +37,7 @@ namespace core { namespace game { namespace enemy {
 	_mass(0),
 	_ruleVariance(ruleVariance)
 	{
-		_config.filter.group = reinterpret_cast<cpGroup>(this);
+		_config.filter.group = group;
 	}
 
 	BoidPhysicsComponent::~BoidPhysicsComponent()
@@ -163,11 +163,11 @@ namespace core { namespace game { namespace enemy {
 		double _ruleVariance;
 	*/
 
-	BoidRef Boid::create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance) {
+	BoidRef Boid::create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance, cpGroup group) {
 		auto b = make_shared<Boid>(name, flockController, c);
 
 		c.physics.position = initialPosition;
-		auto physics = make_shared<BoidPhysicsComponent>(c.physics, ruleVariance);
+		auto physics = make_shared<BoidPhysicsComponent>(c.physics, ruleVariance, group);
 		physics->addToTargetVelocity(initialVelocity);
 
 		b->addComponent(physics);
@@ -258,7 +258,16 @@ namespace core { namespace game { namespace enemy {
 				gl::multModelMatrix(M);
 				gl::draw(_unitCircleMesh);
 			}
+
+			if (/* DISABLES CODE */ (true) || (renderState.mode == RenderMode::DEVELOPMENT)) {
+				// draw the target we're tracking
+				dvec2 targetPos = flock->_getCurrentTarget();
+				gl::drawStrokedCircle(targetPos, 20 * renderState.viewport->getReciprocalScale(), 20);
+				gl::drawLine(flock->_getCurrentEyePosition(), targetPos);
+			}
 		}
+
+
 	}
 
 	cpBB BoidFlockDrawComponent::getBB() const {
@@ -273,6 +282,8 @@ namespace core { namespace game { namespace enemy {
 #pragma mark - BoidFlockController
 
 	/*
+		cpGroup _group;
+		size_t _tick;
 		string _name;
 		vector<BoidRef> _flock;
 		vector<GameObjectWeakRef> _targets;
@@ -280,14 +291,21 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		ci::Rand _rng;
 		cpBB _flockBB;
+		cpSpace *_space;
 
+		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
 		vector<BoidPhysicsComponent*> _flockPhysicsComponents;
 	*/
 
 	BoidFlockController::BoidFlockController(string name, config c):
+	_tick(0),
 	_name(name),
-	_config(c)
-	{}
+	_config(c),
+	_flockBB(cpBBInvalid),
+	_space(nullptr)
+	{
+		_group = reinterpret_cast<cpGroup>(this);
+	}
 
 	BoidFlockController::~BoidFlockController()
 	{}
@@ -303,7 +321,7 @@ namespace core { namespace game { namespace enemy {
 			const auto velocity = _config.boid.physics.speed * normalize(initialDirection + (dvec2(_rng.nextVec2()) * 0.25));
 			const auto rv = 1.0 + _rng.nextFloat(-_config.ruleContributions.ruleVariance, _config.ruleContributions.ruleVariance);
 
-			auto b = Boid::create(_name + "_Boid_" + str(i), self, _config.boid, position, velocity, rv);
+			auto b = Boid::create(_name + "_Boid_" + str(i), self, _config.boid, position, velocity, rv, _group);
 			_flock.push_back(b);
 			_flockPhysicsComponents.push_back(b->getBoidPhysicsComponent().get());
 
@@ -333,10 +351,19 @@ namespace core { namespace game { namespace enemy {
 	const pair<GameObjectRef, dvec2> BoidFlockController::getCurrentTarget() const {
 		for (auto possibleTarget : _targets) {
 			if (auto target = possibleTarget.lock()) {
+				bool hasPosition = false;
+				dvec2 position;
 				if (PhysicsComponentRef pc = target->getPhysicsComponent()) {
-					return make_pair(target, v2(cpBBCenter(pc->getBB())));
+					hasPosition = true;
+					position = v2(cpBBCenter(pc->getBB()));
 				} else if (DrawComponentRef dc = target->getDrawComponent()) {
-					return make_pair(target, v2(cpBBCenter(dc->getBB())));
+					hasPosition = true;
+					position = v2(cpBBCenter(dc->getBB()));
+				}
+
+				// once we've confirmed we have a position, verify that we have line of sight
+				if (hasPosition && _checkLineOfSight(_getCurrentEyePosition(), position, target)) {
+					return make_pair(target, position);
 				}
 			}
 		}
@@ -345,6 +372,7 @@ namespace core { namespace game { namespace enemy {
 
 
 	void BoidFlockController::onReady(GameObjectRef parent, LevelRef level) {
+		_space = level->getSpace()->getSpace();
 		Component::onReady(parent, level);
 
 		for (auto targetId : _config.target_ids) {
@@ -356,7 +384,35 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	void BoidFlockController::update(const time_state &time) {
+		_tick = time.step / 10;
 		_updateFlock_canonical(time);
+	}
+
+	dvec2 BoidFlockController::_getCurrentEyePosition() const {
+		BoidPhysicsComponent *boid = _flockPhysicsComponents[_tick % _flockPhysicsComponents.size()];
+		return boid->getPosition();
+	}
+
+	bool BoidFlockController::_checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const {
+		// set up a filter that catches everything BUT our Boids
+		cpShapeFilter filter = CP_SHAPE_FILTER_ALL;
+		filter.group = _group;
+
+		// perform segment query
+		cpSegmentQueryInfo info;
+		cpSpaceSegmentQueryFirst(_space, cpv(start), cpv(end), 1, filter, &info);
+
+		// test passes if we hit the target and nothing in between
+		return info.shape && cpShapeGetGameObject(info.shape) == target;
+	}
+
+	dvec2 BoidFlockController::_getCurrentTarget() {
+		auto tp = getCurrentTarget();
+		if (tp.first) {
+			return tp.second;
+		}
+
+		return _lastSpawnOrigin;
 	}
 
 	void BoidFlockController::_updateFlock_canonical(const time_state &time) {
@@ -367,10 +423,7 @@ namespace core { namespace game { namespace enemy {
 		}
 
 		cpBB flockBB = cpBBInvalid;
-
-		// find the first available target
-		auto tp = getCurrentTarget();
-		dvec2 targetPosition = tp.first ? tp.second : _lastSpawnOrigin;
+		const dvec2 targetPosition = _getCurrentTarget();
 
 		// this is a ROUGH implementation of http://www.vergenet.net/~conrad/boids/pseudocode.html
 		// RULE 1: Centroid

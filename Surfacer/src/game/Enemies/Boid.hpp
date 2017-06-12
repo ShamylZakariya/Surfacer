@@ -42,7 +42,7 @@ namespace core { namespace game { namespace enemy {
 
 	public:
 
-		BoidPhysicsComponent(config c, double ruleVariance);
+		BoidPhysicsComponent(config c, double ruleVariance, cpGroup group);
 		virtual ~BoidPhysicsComponent();
 
 		const config &getConfig() const { return _config; }
@@ -90,7 +90,7 @@ namespace core { namespace game { namespace enemy {
 			HealthComponent::config health;
 		};
 
-		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance);
+		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance, cpGroup group);
 
 	public:
 
@@ -265,12 +265,18 @@ namespace core { namespace game { namespace enemy {
 	protected:
 
 		friend class Boid;
+		friend class BoidFlockDrawComponent;
 
+		dvec2 _getCurrentEyePosition() const;
+		bool _checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const;
+		dvec2 _getCurrentTarget();
 		void _updateFlock_canonical(const time_state &time);
 		void _onBoidFinished(const BoidRef &boid);
 
 	protected:
 
+		cpGroup _group;
+		size_t _tick;
 		string _name;
 		vector<BoidRef> _flock;
 		vector<GameObjectWeakRef> _targets;
@@ -278,6 +284,7 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		ci::Rand _rng;
 		cpBB _flockBB;
+		cpSpace *_space;
 
 		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
 		vector<BoidPhysicsComponent*> _flockPhysicsComponents;

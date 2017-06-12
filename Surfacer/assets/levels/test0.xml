@@ -30,8 +30,8 @@
 		<tracking areaRadius="300" deadZoneRadius="60" tightness="0.975"/>
 	</player>
 	<enemies>
-		<!-- <eggsac name="eggsac_0" prefab_id="eggsac" width="16" height="24" />
-		<eggsac name="eggsac_1" prefab_id="eggsac" width="24" height="24"/>
+		<eggsac name="eggsac_0" prefab_id="eggsac" width="16" height="24" />
+		<!-- <eggsac name="eggsac_1" prefab_id="eggsac" width="24" height="24"/>
 		<eggsac name="eggsac_2" prefab_id="eggsac" width="32" height="32"/> -->
 	</enemies>
 </level>

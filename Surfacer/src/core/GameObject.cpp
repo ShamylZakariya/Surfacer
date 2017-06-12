@@ -22,17 +22,17 @@ namespace core {
 	IChipmunkUserData::~IChipmunkUserData()
 	{}
 
-	GameObjectRef cpShapeGetGameObject(cpShape *shape) {
+	GameObjectRef cpShapeGetGameObject(const cpShape *shape) {
 		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpShapeGetUserData(shape));
 		return e ? e->getGameObject() : nullptr;
 	}
 
-	GameObjectRef cpBodyGetGameObject(cpBody *body) {
+	GameObjectRef cpBodyGetGameObject(const cpBody *body) {
 		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpBodyGetUserData(body));
 		return e ? e->getGameObject() : nullptr;
 	}
 
-	GameObjectRef cpConstraintGetGameObject(cpConstraint *constraint) {
+	GameObjectRef cpConstraintGetGameObject(const cpConstraint *constraint) {
 		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpConstraintGetUserData(constraint));
 		return e ? e->getGameObject() : nullptr;
 	}
