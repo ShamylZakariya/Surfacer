@@ -89,6 +89,7 @@ namespace core { namespace game { namespace enemy {
 
 		dvec2 targetDir = _targetVelocity;
 		double targetVelocity = length(targetDir);
+		targetVelocity = min(targetVelocity, _config.speed);
 
 		if (targetVelocity > 0) {
 			// normalize
@@ -260,10 +261,14 @@ namespace core { namespace game { namespace enemy {
 			}
 
 			if (/* DISABLES CODE */ (true) || (renderState.mode == RenderMode::DEVELOPMENT)) {
-				// draw the target we're tracking
-				dvec2 targetPos = flock->_getCurrentTarget();
-				gl::drawStrokedCircle(targetPos, 20 * renderState.viewport->getReciprocalScale(), 20);
-				gl::drawLine(flock->_getCurrentEyePosition(), targetPos);
+				auto trackingState = flock->getTrackingState();
+				if (trackingState.targetVisible) {
+					gl::color(0,1,0,1);
+					gl::drawLine(trackingState.eyeBoidPosition, trackingState.targetPosition);
+				} else {
+					gl::color(1,0,0,1);
+				}
+				gl::drawStrokedCircle(trackingState.targetPosition, 20 * renderState.viewport->getReciprocalScale(), 20);
 			}
 		}
 
@@ -283,7 +288,6 @@ namespace core { namespace game { namespace enemy {
 
 	/*
 		cpGroup _group;
-		size_t _tick;
 		string _name;
 		vector<BoidRef> _flock;
 		vector<GameObjectWeakRef> _targets;
@@ -298,7 +302,6 @@ namespace core { namespace game { namespace enemy {
 	*/
 
 	BoidFlockController::BoidFlockController(string name, config c):
-	_tick(0),
 	_name(name),
 	_config(c),
 	_flockBB(cpBBInvalid),
@@ -348,29 +351,6 @@ namespace core { namespace game { namespace enemy {
 		_targets.clear();
 	}
 
-	const pair<GameObjectRef, dvec2> BoidFlockController::getCurrentTarget() const {
-		for (auto possibleTarget : _targets) {
-			if (auto target = possibleTarget.lock()) {
-				bool hasPosition = false;
-				dvec2 position;
-				if (PhysicsComponentRef pc = target->getPhysicsComponent()) {
-					hasPosition = true;
-					position = v2(cpBBCenter(pc->getBB()));
-				} else if (DrawComponentRef dc = target->getDrawComponent()) {
-					hasPosition = true;
-					position = v2(cpBBCenter(dc->getBB()));
-				}
-
-				// once we've confirmed we have a position, verify that we have line of sight
-				if (hasPosition && _checkLineOfSight(_getCurrentEyePosition(), position, target)) {
-					return make_pair(target, position);
-				}
-			}
-		}
-		return make_pair(GameObjectRef(), dvec2(0));
-	}
-
-
 	void BoidFlockController::onReady(GameObjectRef parent, LevelRef level) {
 		_space = level->getSpace()->getSpace();
 		Component::onReady(parent, level);
@@ -384,13 +364,75 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	void BoidFlockController::update(const time_state &time) {
-		_tick = time.step / 10;
+		_updateTrackingState(time);
 		_updateFlock_canonical(time);
 	}
 
-	dvec2 BoidFlockController::_getCurrentEyePosition() const {
-		BoidPhysicsComponent *boid = _flockPhysicsComponents[_tick % _flockPhysicsComponents.size()];
-		return boid->getPosition();
+	void BoidFlockController::_updateTrackingState(const time_state &time) {
+
+		// TODO: If flock loses sight of you, and it can see another target, it will never look for you again!
+
+		if (_trackingState.targetVisible && (time.time - _trackingState.lastTargetVisibleTime < _config.trackingMemorySeconds)) {
+
+			//
+			// we're not performing line of sight, etc, but we still need to update eye and target positions
+			// NOTE: since we were able to lock on previously, we know we can dereference the optional<dvec2>
+			//
+
+			_trackingState.eyeBoidPosition = _trackingState.eyeBoid->getBoidPhysicsComponent()->getPosition();
+			_trackingState.targetPosition = *_getGameObjectPosition(_trackingState.target);
+		}
+
+		else {
+
+			//
+			// we need to update the current seeing-eye Boid and look for a target
+			//
+
+			if (!_trackingState.targetVisible) {
+				// if we couldn't find a target, try next boid
+				_trackingState.eyeBoid = _flock[time.step % _flock.size()];
+			}
+
+			_trackingState.eyeBoidPosition = _trackingState.eyeBoid->getBoidPhysicsComponent()->getPosition();
+
+			_trackingState.targetVisible = false;
+			for (auto possibleTarget : _targets) {
+				if (auto target = possibleTarget.lock()) {
+					if (auto position = _getGameObjectPosition(target)) {
+						if (_checkLineOfSight(_trackingState.eyeBoidPosition, *position, target)) {
+							_trackingState.target = target;
+							_trackingState.targetPosition = *position;
+							_trackingState.lastTargetVisibleTime = time.time;
+							_trackingState.targetVisible = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if (!_trackingState.targetVisible) {
+				_trackingState.eyeBoid.reset();
+				_trackingState.target.reset();
+				_trackingState.lastTargetVisibleTime = 0;
+				_trackingState.targetPosition = _flock[0]->getBoidPhysicsComponent()->getPosition();
+			}
+
+		}
+	}
+
+	boost::optional<dvec2> BoidFlockController::_getGameObjectPosition(const GameObjectRef &obj) const {
+		bool hasPosition = false;
+		dvec2 position;
+		if (PhysicsComponentRef pc = obj->getPhysicsComponent()) {
+			hasPosition = true;
+			position = v2(cpBBCenter(pc->getBB()));
+		} else if (DrawComponentRef dc = obj->getDrawComponent()) {
+			hasPosition = true;
+			position = v2(cpBBCenter(dc->getBB()));
+		}
+
+		return hasPosition ? boost::optional<dvec2>(position) : boost::none;
 	}
 
 	bool BoidFlockController::_checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const {
@@ -406,15 +448,6 @@ namespace core { namespace game { namespace enemy {
 		return info.shape && cpShapeGetGameObject(info.shape) == target;
 	}
 
-	dvec2 BoidFlockController::_getCurrentTarget() {
-		auto tp = getCurrentTarget();
-		if (tp.first) {
-			return tp.second;
-		}
-
-		return _lastSpawnOrigin;
-	}
-
 	void BoidFlockController::_updateFlock_canonical(const time_state &time) {
 
 		// early exit
@@ -423,13 +456,15 @@ namespace core { namespace game { namespace enemy {
 		}
 
 		cpBB flockBB = cpBBInvalid;
-		const dvec2 targetPosition = _getCurrentTarget();
+		const dvec2 targetPosition = _trackingState.targetPosition;
 
 		// this is a ROUGH implementation of http://www.vergenet.net/~conrad/boids/pseudocode.html
 		// RULE 1: Centroid
 		// RULE 2: Average Velocity
 		// RULE 3: Collision Avoidance
 		// RULE 4: Target Seeking
+		// NOTE: The average centroid of the flock is weighed by proximity to the perceiving Boid - e.g., a Boid cares more
+		// about the centroid of its close neighbors than the whole flock. This is to encourage partitioning behaviors.
 
 		const double flockCentroidWeight = _config.ruleContributions.flockCentroid;
 		const double flockVelocityWeight = _config.ruleContributions.flockVelocity;
@@ -438,7 +473,6 @@ namespace core { namespace game { namespace enemy {
 
 		const size_t flockSize = _flock.size();
 		bool runRules123 = flockSize > 1;
-		//const double flockAvgMultiplier = runRules123 ? 1.0 / (flockSize - 1) : 0;
 
 		for (auto boid : _flockPhysicsComponents) {
 			dvec2 boidPosition = boid->getPosition();
@@ -501,7 +535,6 @@ namespace core { namespace game { namespace enemy {
 		}
 
 		_flockBB = flockBB;
-
 	}
 
 	void BoidFlockController::_onBoidFinished(const BoidRef &boid) {
@@ -537,6 +570,10 @@ namespace core { namespace game { namespace enemy {
 				target = strings::strip(target);
 				c.controller.target_ids.push_back(target);
 			}
+
+			c.controller.trackingMemorySeconds = util::xml::readNumericAttribute(targetNode, "memory_seconds", 5);
+		} else {
+			c.controller.trackingMemorySeconds = 5;
 		}
 
 		auto rulesNode = flockNode.getChild("rule_contributions");

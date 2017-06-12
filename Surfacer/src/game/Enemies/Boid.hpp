@@ -185,7 +185,33 @@ namespace core { namespace game { namespace enemy {
 		struct config {
 			Boid::config boid;
 			rule_contributions ruleContributions;
+			seconds_t trackingMemorySeconds;
 			vector<string> target_ids;
+		};
+
+		struct tracking_state {
+			// the Boid who saw the target
+			BoidRef eyeBoid;
+
+			// the current location of the boid who saw the target
+			dvec2 eyeBoidPosition;
+
+			// the target
+			GameObjectRef target;
+
+			// the current location of the target
+			dvec2 targetPosition;
+
+			// true if the target was visible
+			bool targetVisible;
+			seconds_t lastTargetVisibleTime;
+
+			tracking_state():
+			eyeBoidPosition(0),
+			targetPosition(0),
+			targetVisible(false),
+			lastTargetVisibleTime(0)
+			{}
 		};
 
 	public:
@@ -252,10 +278,13 @@ namespace core { namespace game { namespace enemy {
 		const vector<GameObjectWeakRef> getTargets() const { return _targets; }
 
 		/**
-		 Get the target the flock is current pursuing. Return pair of GameObjectRef, and its position
+		 Get the current tracking state used to direct the flock
 		 */
-		const pair<GameObjectRef, dvec2> getCurrentTarget() const;
+		const tracking_state &getTrackingState() const { return _trackingState; }
 
+		/**
+		 Get the bounds of the flock
+		 */
 		cpBB getFlockBB() const { return _flockBB; }
 
 		// Component
@@ -267,16 +296,17 @@ namespace core { namespace game { namespace enemy {
 		friend class Boid;
 		friend class BoidFlockDrawComponent;
 
-		dvec2 _getCurrentEyePosition() const;
+		void _updateTrackingState(const time_state &time);
+		boost::optional<dvec2> _getGameObjectPosition(const GameObjectRef &obj) const;
 		bool _checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const;
-		dvec2 _getCurrentTarget();
+
 		void _updateFlock_canonical(const time_state &time);
+
 		void _onBoidFinished(const BoidRef &boid);
 
 	protected:
 
 		cpGroup _group;
-		size_t _tick;
 		string _name;
 		vector<BoidRef> _flock;
 		vector<GameObjectWeakRef> _targets;
@@ -285,6 +315,7 @@ namespace core { namespace game { namespace enemy {
 		ci::Rand _rng;
 		cpBB _flockBB;
 		cpSpace *_space;
+		tracking_state _trackingState;
 
 		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
 		vector<BoidPhysicsComponent*> _flockPhysicsComponents;
