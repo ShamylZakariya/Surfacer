@@ -287,6 +287,7 @@ namespace core { namespace game { namespace enemy {
 #pragma mark - BoidFlockController
 
 	/*
+		cpSpace *_space;
 		cpGroup _group;
 		string _name;
 		vector<BoidRef> _flock;
@@ -295,17 +296,21 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		ci::Rand _rng;
 		cpBB _flockBB;
-		cpSpace *_space;
+		tracking_state _trackingState;
+		dvec2 _swarmTargetOffset;
+		seconds_t _nextSwarmTargetOffsetUpdate;
 
 		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
 		vector<BoidPhysicsComponent*> _flockPhysicsComponents;
 	*/
 
 	BoidFlockController::BoidFlockController(string name, config c):
+	_space(nullptr),
 	_name(name),
 	_config(c),
 	_flockBB(cpBBInvalid),
-	_space(nullptr)
+	_swarmTargetOffset(0),
+	_nextSwarmTargetOffsetUpdate(0)
 	{
 		_group = reinterpret_cast<cpGroup>(this);
 	}
@@ -370,7 +375,18 @@ namespace core { namespace game { namespace enemy {
 
 	void BoidFlockController::_updateTrackingState(const time_state &time) {
 
-		// TODO: If flock loses sight of you, and it can see another target, it will never look for you again!
+		//
+		//	Update the swarm offset vector
+		//
+
+		if (time.time > _nextSwarmTargetOffsetUpdate) {
+			_swarmTargetOffset = _rng.nextVec2();
+			_nextSwarmTargetOffsetUpdate = time.time + _rng.randFloat(2, 3);
+		}
+
+		//
+		//	If we had recent line-of-sight visibility of the player just keep tracking
+		//
 
 		if (_trackingState.targetVisible && (time.time - _trackingState.lastTargetVisibleTime < _config.trackingMemorySeconds)) {
 
@@ -380,7 +396,13 @@ namespace core { namespace game { namespace enemy {
 			//
 
 			_trackingState.eyeBoidPosition = _trackingState.eyeBoid->getBoidPhysicsComponent()->getPosition();
-			_trackingState.targetPosition = *_getGameObjectPosition(_trackingState.target);
+
+			// scale the swarm offset vector and apply
+			const auto position = _getGameObjectPosition(_trackingState.target);
+			const double size = (cpBBWidth(position->first) + cpBBHeight(position->first)) * 0.5;
+			const dvec2 swarmOffset = _swarmTargetOffset * size;
+
+			_trackingState.targetPosition = position->second + swarmOffset;
 		}
 
 		else {
@@ -400,11 +422,16 @@ namespace core { namespace game { namespace enemy {
 			for (auto possibleTarget : _targets) {
 				if (auto target = possibleTarget.lock()) {
 					if (auto position = _getGameObjectPosition(target)) {
-						if (_checkLineOfSight(_trackingState.eyeBoidPosition, *position, target)) {
+						if (_checkLineOfSight(_trackingState.eyeBoidPosition, position->second, target)) {
 							_trackingState.target = target;
-							_trackingState.targetPosition = *position;
 							_trackingState.lastTargetVisibleTime = time.time;
 							_trackingState.targetVisible = true;
+
+							// scale the swarm offset vector and apply
+							const double size = (cpBBWidth(position->first) + cpBBHeight(position->first)) * 0.5;
+							const dvec2 swarmOffset = _swarmTargetOffset * size;
+
+							_trackingState.targetPosition = position->second + swarmOffset;
 							break;
 						}
 					}
@@ -421,18 +448,21 @@ namespace core { namespace game { namespace enemy {
 		}
 	}
 
-	boost::optional<dvec2> BoidFlockController::_getGameObjectPosition(const GameObjectRef &obj) const {
-		bool hasPosition = false;
-		dvec2 position;
+	boost::optional<pair<cpBB,dvec2>> BoidFlockController::_getGameObjectPosition(const GameObjectRef &obj) const {
+		bool hasBounds = false;
+		cpBB bounds;
 		if (PhysicsComponentRef pc = obj->getPhysicsComponent()) {
-			hasPosition = true;
-			position = v2(cpBBCenter(pc->getBB()));
+			hasBounds = true;
+			bounds = pc->getBB();
 		} else if (DrawComponentRef dc = obj->getDrawComponent()) {
-			hasPosition = true;
-			position = v2(cpBBCenter(dc->getBB()));
+			hasBounds = true;
+			bounds = dc->getBB();
 		}
 
-		return hasPosition ? boost::optional<dvec2>(position) : boost::none;
+		if (hasBounds) {
+			return make_pair(bounds, v2(cpBBCenter(bounds)));
+		}
+		return boost::none;
 	}
 
 	bool BoidFlockController::_checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const {

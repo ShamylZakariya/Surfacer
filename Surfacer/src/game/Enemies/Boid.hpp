@@ -297,7 +297,7 @@ namespace core { namespace game { namespace enemy {
 		friend class BoidFlockDrawComponent;
 
 		void _updateTrackingState(const time_state &time);
-		boost::optional<dvec2> _getGameObjectPosition(const GameObjectRef &obj) const;
+		boost::optional<pair<cpBB,dvec2>> _getGameObjectPosition(const GameObjectRef &obj) const;
 		bool _checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const;
 
 		void _updateFlock_canonical(const time_state &time);
@@ -306,6 +306,7 @@ namespace core { namespace game { namespace enemy {
 
 	protected:
 
+		cpSpace *_space;
 		cpGroup _group;
 		string _name;
 		vector<BoidRef> _flock;
@@ -314,8 +315,9 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		ci::Rand _rng;
 		cpBB _flockBB;
-		cpSpace *_space;
 		tracking_state _trackingState;
+		dvec2 _swarmTargetOffset;
+		seconds_t _nextSwarmTargetOffsetUpdate;
 
 		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
 		vector<BoidPhysicsComponent*> _flockPhysicsComponents;
