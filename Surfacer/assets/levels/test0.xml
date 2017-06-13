@@ -6,14 +6,14 @@
 			<health max_health="50" regeneration_rate="0.5"/>
 			<spawn count="100" size="1">
 				<flock>
-					<target names="player"/>
+					<target names="player" memory_seconds="3"/>
 					<!--
 						flock_centroid: increase makes flock act like a wiggly ball, decrease makes flock more spread out
 						flock_velocity: increase makes flock act like a viscous liquid, decrease makes flock more 
 						collision_avoidance: increase makes the flock act like angry gnats
 						-->
 					<rule_contributions flock_centroid="2" flock_velocity="1" collision_avoidance="0.5wd" target_seeking="0.5" rule_variance="0.5"/>
-					<boid radius="3" speed="600" density="0.5">
+					<boid radius="3" speed="300" density="0.5">
 						<health max_health="5" regeneration_rate="0"/>
 					</boid>
 				</flock>
