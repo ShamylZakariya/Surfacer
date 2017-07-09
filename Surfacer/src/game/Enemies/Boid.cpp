@@ -95,8 +95,6 @@ namespace core { namespace game { namespace enemy {
 			// normalize
 			targetDir /= targetVelocity;
 
-			//CI_LOG_D("tvd: " << targetVelocityDir << " vel: " << targetVelocity);
-
 			//
 			// get the current velocity
 			//
@@ -137,6 +135,9 @@ namespace core { namespace game { namespace enemy {
 					double force = targetVelocity * _mass * factor;
 					cpBodyApplyForceAtWorldPoint(_body, cpv(targetDir * force), cpBodyGetPosition(_body));
 				}
+			} else {
+				// dampen motion to slow down - note this is not rigorous math, just tapping the brakes a little
+				cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.98));
 			}
 
 			_position = v2(cpBodyGetPosition(_body));
@@ -146,8 +147,7 @@ namespace core { namespace game { namespace enemy {
 			_rotation = normalize(_facingDirection + _velocity);
 		}
 
-		// apply damping and prevent rotation
-		//cpBodySetVelocity(_body, cpvmult(cpBodyGetVelocity(_body), 0.97));
+		// prevent rotation
 		cpBodySetAngularVelocity(_body, 0);
 	}
 
@@ -525,13 +525,19 @@ namespace core { namespace game { namespace enemy {
 					if (otherBoid != boid) {
 						dvec2 otherBoidPosition = otherBoid->getPosition();
 
-						auto toOtherBoid = otherBoidPosition - boidPosition;
-						auto distanceToOtherBoid = length(toOtherBoid);
+						const auto toOtherBoid = otherBoidPosition - boidPosition;
+						const auto distanceToOtherBoid = length(toOtherBoid);
 
-						auto scale = 1 / distanceToOtherBoid;
-						scale *= scale;
+						// I tried doing clever stuff here - making falloffScale 1/distanceToOtherBoid allowed boid flocks to
+						// "split up" such that boids would preferentially flock with neighbors, not the whole group, but this tended
+						// to cause strange effects where stragglers would be left alone and lost. I've disabled all that for a
+						// more traditional boids algo. Setting scale=1 gives us a non-weighted generic flock centroid/velocity average.
+
+						const auto falloffScale = 1.0;
+						const auto stragglerScaleFix = 0.0;
+						const auto scale = falloffScale + stragglerScaleFix;
+
 						weight += scale;
-
 						flockAvgCentroid += scale * otherBoidPosition;
 						flockAvgVelocity += scale * otherBoid->getVelocity();
 
