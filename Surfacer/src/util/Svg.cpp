@@ -785,7 +785,7 @@ namespace core { namespace util { namespace svg {
 
 	dvec2 Group::globalToLocal( const dvec2 &p ) {
 		const dmat4 worldTransform = _worldTransform( dmat4(1) );
-		const dmat4 inverseWorldTransform = inverse(worldTransform);
+		const dmat4 inverseWorldTransform = glm::inverse(worldTransform);
 		return inverseWorldTransform * p;
 	}
 

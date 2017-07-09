@@ -984,7 +984,7 @@ namespace core { namespace game { namespace terrain {
 		}
 
 		_modelMatrix = _modelMatrix * translate(dvec3(averageModelSpaceCentroid.x, averageModelSpaceCentroid.y, 0));
-		_inverseModelMatrix = inverse(_modelMatrix);
+		_inverseModelMatrix = glm::inverse(_modelMatrix);
 
 		//
 		//	Triangulate - any which fail should be collected to garbage
@@ -1110,7 +1110,7 @@ namespace core { namespace game { namespace terrain {
 			vec4(0,0,1,0),
 			vec4(position.x, position.y, 0, 1));
 
-		_inverseModelMatrix = inverse(_modelMatrix);
+		_inverseModelMatrix = glm::inverse(_modelMatrix);
 
 		// update our world BB
 		_worldBB = cpTransformbBB(getModelTransform(), _modelBB);
