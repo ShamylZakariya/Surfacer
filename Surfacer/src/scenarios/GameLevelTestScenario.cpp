@@ -32,7 +32,7 @@ void GameLevelTestScenario::setup() {
 
 	if (!player) {
 		auto dragger = GameObject::with("Dragger", {
-			make_shared<MousePickComponent>(core::game::CollisionFilters::PICK),
+			make_shared<MousePickComponent>(core::game::CollisionFilters::GRABBABLE),
 			make_shared<MousePickDrawComponent>()
 		});
 		getLevel()->addGameObject(dragger);
@@ -47,9 +47,7 @@ void GameLevelTestScenario::setup() {
 
 		auto cc = GameObject::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController())});
 		getLevel()->addGameObject(cc);
-
 	}
-
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
 	getLevel()->addGameObject(grid);
