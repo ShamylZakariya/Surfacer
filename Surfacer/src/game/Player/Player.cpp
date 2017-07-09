@@ -210,18 +210,19 @@ namespace core { namespace game { namespace player {
 		//	Compute contacts for the current segment
 		//
 
-		bool wasHit = false;
-		updateContacts();
-		_hasHit = !_contacts.empty();
+		if (!_hasHit) {
+			updateContacts();
+			_hasHit = !_contacts.empty();
 
-		//
-		//	Now if this is a non-penetrative beam, and we went from !hit to hit, backtrack.
-		//	This reduces (but not entirely fixes) accidental penetration of the beam at high velocity.
-		//
+			//
+			//	We hit something, so, backtrack.
+			//	This reduces (but not entirely fixes) accidental penetration of the beam at high velocity.
+			//
 
-		if (!wasHit && _hasHit) {
-			_segment.head = _contacts.front().position;
-			_segment.len = distance(_segment.tail, _segment.head);
+			if (_hasHit) {
+				_segment.head = _contacts.front().position;
+				_segment.len = distance(_segment.tail, _segment.head);
+			}
 		}
 
 		//
