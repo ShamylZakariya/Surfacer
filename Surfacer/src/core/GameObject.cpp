@@ -321,5 +321,19 @@ namespace core {
 		}
 	}
 
+	bool GameObject::hasBB() const {
+		return _drawComponent != nullptr || _physicsComponent != nullptr;
+	}
+
+	// if this GameObject has a DrawComponent or a PhysicsComponent get the reported BB, else return cpBBInvalid
+	cpBB GameObject::getBB() const {
+		if (_drawComponent) {
+			return _drawComponent->getBB();
+		} else if (_physicsComponent) {
+			return _physicsComponent->getBB();
+		}
+		return cpBBInvalid;
+	}
+
 
 }

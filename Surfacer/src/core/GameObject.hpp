@@ -349,6 +349,12 @@ namespace core {
 		virtual void step(const time_state &timeState);
 		virtual void update(const time_state &timeState);
 
+		// if this GameObject has a DrawComponent or a PhysicsComponent it will have a BB
+		virtual bool hasBB() const;
+
+		// if this GameObject has a DrawComponent or a PhysicsComponent get the reported BB, else return cpBBInvalid
+		virtual cpBB getBB() const;
+
 	protected:
 
 		friend class Level;
