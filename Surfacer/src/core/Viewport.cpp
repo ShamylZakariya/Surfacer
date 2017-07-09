@@ -66,10 +66,10 @@ namespace core {
 
 		const double width = getWidth(), height = getHeight();
 		cpBB bb = cpBBInvalid;
-		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( 0,0 ));
-		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( width,0 ));
-		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( width,height ));
-		cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( 0,height ));
+		bb = cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( 0,0 ));
+		bb = cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( width,0 ));
+		bb = cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( width,height ));
+		bb = cpBBExpand(bb, _inverseViewProjectionMatrix * dvec2( 0,height ));
 
 		return bb;
 	}

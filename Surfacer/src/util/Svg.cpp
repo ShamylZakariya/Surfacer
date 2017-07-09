@@ -40,7 +40,7 @@ namespace core { namespace util { namespace svg {
 			destVertices.reserve(numVertices);
 			for( int i = 0; i < numVertices; i++ ) {
 				const vec2 v = transformer(vertices[i]);
-				cpBBExpand(bounds, v);
+				bounds = cpBBExpand(bounds, v);
 				destVertices.push_back(v);
 			}
 
@@ -995,11 +995,11 @@ namespace core { namespace util { namespace svg {
 
 		for (auto shape : getShapes()) {
 			cpBB shapeLocalBB = shape->getLocalBB();
-			cpBBExpand(bb, cpBBTransform(shapeLocalBB, toWorld));
+			bb = cpBBExpand(bb, cpBBTransform(shapeLocalBB, toWorld));
 		}
 
 		for (auto childGroup : getGroups()) {
-			cpBBExpand(bb, childGroup->_getBB(toWorld));
+			bb = cpBBExpand(bb, childGroup->_getBB(toWorld));
 		}
 
 		return bb;

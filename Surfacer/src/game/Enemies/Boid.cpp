@@ -561,7 +561,7 @@ namespace core { namespace game { namespace enemy {
 			boid->setFacingDirection(toTarget);
 
 			// update BB
-			cpBBExpand(flockBB, boid->getBB());
+			flockBB = cpBBExpand(flockBB, boid->getBB());
 		}
 
 		_flockBB = flockBB;

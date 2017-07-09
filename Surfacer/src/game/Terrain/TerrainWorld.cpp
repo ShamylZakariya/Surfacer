@@ -203,7 +203,7 @@ namespace core { namespace game { namespace terrain {
 		// first compute the march area
 		cpBB bounds = cpBBInvalid;
 		for (auto shape : shapes) {
-			cpBBExpand(bounds, shape->getWorldSpaceContourEdgesBB());
+			bounds = cpBBExpand(bounds, shape->getWorldSpaceContourEdgesBB());
 		}
 
 		const int marchLeft = static_cast<int>(floor((bounds.l - partitionOrigin.x) / partitionSize));
@@ -744,10 +744,11 @@ namespace core { namespace game { namespace terrain {
 
 	cpBB StaticGroup::getBB() const {
 		if (!cpBBIsValid(_worldBB)) {
-			_worldBB = cpBBInvalid;
+			cpBB worldBB = cpBBInvalid;
 			for (auto shape : _shapes) {
-				cpBBExpand(_worldBB, shape->getWorldSpaceContourEdgesBB());
+				worldBB = cpBBExpand(worldBB, shape->getWorldSpaceContourEdgesBB());
 			}
+			_worldBB = worldBB;
 		}
 
 		return _worldBB;
@@ -803,7 +804,7 @@ namespace core { namespace game { namespace terrain {
 
 
 				if (!collisionShapes.empty() && cpBBIsValid(modelBB)) {
-					cpBBExpand(_worldBB, modelBB);
+					_worldBB = cpBBExpand(_worldBB, modelBB);
 
 					if (didCreateNewShapes) {
 						for (cpShape *collisionShape : collisionShapes) {
@@ -1032,7 +1033,7 @@ namespace core { namespace game { namespace terrain {
 				vector<cpShape*> collisionShapes = shape->createCollisionShapes(_body, modelBB);
 
 				if (!collisionShapes.empty() && cpBBIsValid(modelBB)) {
-					cpBBExpand(_modelBB, modelBB);
+					_modelBB = cpBBExpand(_modelBB, modelBB);
 
 					for (cpShape *collisionShape : collisionShapes) {
 						cpShapeSetFilter(collisionShape, _material.filter);
@@ -1167,9 +1168,11 @@ namespace core { namespace game { namespace terrain {
 	_bb(cpBBInvalid),
 	_id(id) {
 
+		cpBB bb = cpBBInvalid;
 		for (auto v : contour) {
-			cpBBExpand(_bb, v);
+			bb = cpBBExpand(bb, v);
 		}
+		_bb = bb;
 
 		Triangulator triangulator;
 		triangulator.addPolyLine(detail::polyline2d_to_2f(contour));
@@ -1222,9 +1225,11 @@ namespace core { namespace game { namespace terrain {
 	_bb(cpBBInvalid),
 	_contour(contour) {
 
+		cpBB bb = cpBBInvalid;
 		for (auto &p : _contour.getPoints()) {
-			cpBBExpand(_bb, p);
+			bb = cpBBExpand(bb, p);
 		}
+		_bb = bb;
 
 		Triangulator triangulator;
 		triangulator.addPolyLine(detail::polyline2d_to_2f(_contour));
@@ -1458,7 +1463,7 @@ namespace core { namespace game { namespace terrain {
 				const dvec2 worldNext = modelMatrix * (*next);
 				_worldSpaceContourEdges.insert(poly_edge(worldPoint, worldNext));
 				worldPoint = worldNext;
-				cpBBExpand(bb, worldPoint);
+				bb = cpBBExpand(bb, worldPoint);
 			}
 
 			_worldSpaceContourEdgesBB = bb;
@@ -1620,9 +1625,9 @@ namespace core { namespace game { namespace terrain {
 				_shapes.push_back(polyShape);
 
 				// a,b, & c are in model space
-				cpBBExpand(bb, a);
-				cpBBExpand(bb, b);
-				cpBBExpand(bb, c);
+				bb = cpBBExpand(bb, a);
+				bb = cpBBExpand(bb, b);
+				bb = cpBBExpand(bb, c);
 			}
 		}
 

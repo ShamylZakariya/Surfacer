@@ -26,17 +26,7 @@ inline dvec2 v2(const cpVect &v) {
 #pragma mark -
 #pragma mark Chipmunk Helper Functions
 
-/**
-	create an invalid aabb, ready to be extended via cpBBExpand
- */
-inline void cpBBInvalidate( cpBB &bb )
-{
-	bb.l = +std::numeric_limits<cpFloat>::max();
-	bb.b = +std::numeric_limits<cpFloat>::max();
-	bb.r = -std::numeric_limits<cpFloat>::max();
-	bb.t = -std::numeric_limits<cpFloat>::max();
-}
-
+// a default invalid cpBB ready to be passed to cpBBExpand() calls
 static const cpBB cpBBInvalid = {
 	+std::numeric_limits<cpFloat>::max(),
 	+std::numeric_limits<cpFloat>::max(),
@@ -109,70 +99,31 @@ inline bool cpBBIsValid( cpBB bb ) {
 }
 
 template< class T, glm::precision P >
-void cpBBExpand( cpBB &bb, const glm::tvec2<T,P> &v )
-{
-	bb.l = cpfmin( bb.l, v.x );
-	bb.b = cpfmin( bb.b, v.y );
-	bb.r = cpfmax( bb.r, v.x );
-	bb.t = cpfmax( bb.t, v.y );
-}
-
-template< class T, glm::precision P >
 cpBB cpBBExpand( const cpBB &bb, const glm::tvec2<T,P> &v ) {
-	cpBB bb2 = bb;
-	cpBBExpand(bb2 ,v);
-	return bb2;
+	return cpBBNew(cpfmin( bb.l, v.x ),
+				   cpfmin( bb.b, v.y ),
+				   cpfmax( bb.r, v.x ),
+				   cpfmax( bb.t, v.y ));
 }
 
-
-/**
-	Expand @a bb to contain a circle of @a radius at @a p
- */
-template < class V >
-void cpBBExpand( cpBB &bb, const V &p, cpFloat radius )
-{
-	bb.l = cpfmin( bb.l, p.x - radius );
-	bb.b = cpfmin( bb.b, p.y - radius );
-	bb.r = cpfmax( bb.r, p.x + radius );
-	bb.t = cpfmax( bb.t, p.y + radius );
-}
 
 template < class V >
 cpBB cpBBExpand( const cpBB &bb, const V &p, cpFloat radius ) {
-	cpBB bb2 = bb;
-	cpBBExpand(bb2, p, radius);
-	return bb2;
-}
-
-inline void cpBBExpand( cpBB &bb, const cpBB &bb2 )
-{
-	bb.l = cpfmin( bb.l, bb2.l );
-	bb.b = cpfmin( bb.b, bb2.b );
-	bb.r = cpfmax( bb.r, bb2.r );
-	bb.t = cpfmax( bb.t, bb2.t );
+	return cpBBNew(cpfmin( bb.l, p.x - radius ),
+				   cpfmin( bb.b, p.y - radius ),
+				   cpfmax( bb.r, p.x + radius ),
+				   cpfmax( bb.t, p.y + radius ));
 }
 
 inline cpBB cpBBExpand( const cpBB &bb, const cpBB &bb2 ) {
-	cpBB bbr = bb;
-	cpBBExpand(bbr, bb2);
-	return bbr;
-}
-
-
-inline void cpBBExpand( cpBB &bb, cpFloat amt ) {
-	bb.l -= amt;
-	bb.b -= amt;
-	bb.r += amt;
-	bb.t += amt;
+	return cpBBNew(cpfmin( bb.l, bb2.l ),
+				   cpfmin( bb.b, bb2.b ),
+				   cpfmax( bb.r, bb2.r ),
+				   cpfmax( bb.t, bb2.t ));
 }
 
 inline cpBB cpBBExpand( const cpBB &bb, cpFloat amt ) {
-	cpBB bb2 = bb;
-	bb2.l -= amt;
-	bb2.b -= amt;
-	bb2.r += amt;
-	bb2.t += amt;
-	return bb2;
+	return cpBBNew(bb.l - amt, bb.b - amt, bb.r + amt, bb.t + amt);
 }
 
 /**
