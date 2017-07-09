@@ -26,6 +26,7 @@
 #include <boost/geometry/geometries/polygon.hpp>
 #include <boost/geometry/multi/multi.hpp>
 
+#include "MathHelpers.hpp"
 #include "ContourSimplification.hpp"
 #include "SvgParsing.hpp"
 
@@ -36,7 +37,11 @@ namespace core { namespace game { namespace terrain { namespace detail {
 
 		const double MIN_SHAPE_AREA = 1.0;
 		const double MIN_TRIANGLE_AREA = 1.0;
-		const double COLLISION_SHAPE_RADIUS = 0.05;
+		const double COLLISION_SHAPE_RADIUS = 2;
+
+		// if > 0 we add a water-tight perimeter geometry around shapes
+		// unfortunately, mitering is HARD and so right now this is disabled.
+		const double PERIMETER_SEGMENT_RADIUS = 0;
 
 #pragma mark - Helpers
 
@@ -651,6 +656,45 @@ namespace core { namespace game { namespace terrain { namespace detail {
 				outElements.push_back(Element::fromContour(e.first, e.second));
 			}
 		}
+
+#pragma mark - Mitering
+
+	/**
+	 Assuming a clockwise winding of a->b->c (where b is the corner to miter) get the inner miter vertex at a given depth.
+	 In this case inner means "inside the polygon".
+	 This is a helper function for computing cpSegmentShapes to perimeter a non-convex polygon to prevent small/fast objects
+	 from penetrating the cracks between adjacent convex triangles assembled to a non-convex aggregate shape.
+	 */
+	dvec2 get_inner_miter_for_corner(dvec2 a, dvec2 b, dvec2 c, double depth) {
+		auto a2b = normalize(b-a);
+		auto b2c = normalize(c-b);
+		auto a2b_right = rotateCW(a2b);
+		auto b2c_right = rotateCW(b2c);
+		auto miter = b + (depth * normalize(a2b_right + b2c_right));
+		return miter;
+	}
+
+	PolyLine2d inset_contour(const PolyLine2d &contour, double depth) {
+		// TODO: This doesn't actually work, mitering is a much more subtle thing than this
+
+		const auto contourPoints = contour.getPoints();
+		const auto N = contourPoints.size();
+		vector<dvec2> insetPoints;
+		insetPoints.reserve(N);
+
+		for (size_t i = 0; i < N; i++) {
+			dvec2 a = contourPoints[(i+N-1) % N];
+			dvec2 b = contourPoints[i];
+			dvec2 c = contourPoints[(i+1) % N];
+			insetPoints.push_back(get_inner_miter_for_corner(a,b,c,depth));
+		}
+
+		return PolyLine2d(insetPoints);
+	}
+
+//	PolyLine2d outset_contour(const PolyLine2d &contour, double outsetDepth) {
+//	This is not the same as inset_contour with negative depth, or is it?
+//	}
 
 
 }}}} // namespace core::game::terrain::detail

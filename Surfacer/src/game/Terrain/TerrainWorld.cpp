@@ -1626,6 +1626,30 @@ namespace core { namespace game { namespace terrain {
 			}
 		}
 
+		if (detail::PERIMETER_SEGMENT_RADIUS > 0) {
+
+			// TODO: Implement robust mitering - this isn't it. We have oddities at some corners.
+			// TODO: inset vertex positions by half-radius
+
+			const auto insetContour = detail::inset_contour(_outerContour.model, detail::PERIMETER_SEGMENT_RADIUS);
+			const auto insetContourPoints = insetContour.getPoints();
+
+			for (size_t i = 0, N = insetContourPoints.size(); i < N; i++) {
+
+				// the segment we're creating is b->c, but we need a->b and c->d for neighbor connectivity for "water tight" behavior
+				dvec2 a = insetContourPoints[(i+N-1) % N];
+				dvec2 b = insetContourPoints[i];
+				dvec2 c = insetContourPoints[(i+1) % N];
+				dvec2 d = insetContourPoints[(i+2) % N];
+
+				cpShape *segment = cpSegmentShapeNew(body, cpv(b), cpv(c), detail::PERIMETER_SEGMENT_RADIUS);
+				cpSegmentShapeSetNeighbors(segment, cpv(a), cpv(d));
+				cpShapeSetUserData(segment, this);
+				_shapes.push_back(segment);
+			}
+
+		}
+
 		modelBB = _shapesModelBB = bb;
 		return _shapes;
 	}
