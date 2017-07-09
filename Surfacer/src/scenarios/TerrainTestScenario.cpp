@@ -119,7 +119,7 @@ void TerrainTestScenario::setup() {
 	getLevel()->addGameObject(_terrain);
 
 	auto dragger = GameObject::with("Dragger", {
-		make_shared<MousePickComponent>(CollisionFilters::PICK),
+		make_shared<MousePickComponent>(CollisionFilters::GRABBABLE),
 		make_shared<MousePickDrawComponent>()
 	});
 

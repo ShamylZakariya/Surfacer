@@ -54,8 +54,8 @@ namespace core { namespace game {
 
 		enum Categories {
 			_TERRAIN = 1 << 0,			// 1
-			_TERRAIN_PROBE = 1 << 1,	// 2
-			_PICK = 1 << 2,				// 4
+			_TERRAIN_PROBE = 1 << 1,		// 2
+			_GRABBABLE = 1 << 2,			// 4
 			_ANCHOR = 1 << 3,			// 8
 			_PLAYER = 1 << 4,			// 16
 			_ENEMY = 1 << 5				// 32
@@ -64,7 +64,7 @@ namespace core { namespace game {
 		extern cpShapeFilter TERRAIN;
 		extern cpShapeFilter ANCHOR;
 		extern cpShapeFilter TERRAIN_PROBE;
-		extern cpShapeFilter PICK;
+		extern cpShapeFilter GRABBABLE;
 		extern cpShapeFilter PLAYER;
 		extern cpShapeFilter ENEMY;
 	}
