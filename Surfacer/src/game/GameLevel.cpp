@@ -213,13 +213,14 @@ namespace core { namespace game {
 			// now figure out which enemy this is
 			string tag = enemyNode.getTag();
 			string name = enemyNode.getAttributeValue<string>("name", tag);
-			GameObjectRef enemy;
+			EntityRef enemy;
 
 			if (tag == "eggsac") {
 				enemy = enemy::Eggsac::create(name, position, prefabEnemyNode);
 			}
 
 			if (enemy) {
+				_enemies.push_back(enemy);
 				addGameObject(enemy);
 			}
 		}

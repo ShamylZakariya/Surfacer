@@ -88,6 +88,7 @@ namespace core { namespace game {
 		void load(ci::DataSourceRef levelXmlData);
 		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
 		player::PlayerRef getPlayer() const { return _player; }
+		const vector<EntityRef> &getEnemies() const { return _enemies; }
 
 		//
 		//	Level
@@ -107,6 +108,7 @@ namespace core { namespace game {
 
 		terrain::TerrainObjectRef _terrain;
 		player::PlayerRef _player;
+		vector<EntityRef> _enemies;
 		
 	};
 	
