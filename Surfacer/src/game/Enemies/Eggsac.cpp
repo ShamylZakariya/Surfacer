@@ -80,7 +80,7 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		cpBody *_sacBody, *_attachedToBody;
 		cpShape *_sacShape, *_attachedToShape;
-		cpConstraint *_attachmentSpring, *_orientationSpring;
+		cpConstraint *_attachmentSpring;
 		dvec2 _up, _right;
 		double _mass;
 	 */
@@ -92,7 +92,6 @@ namespace core { namespace game { namespace enemy {
 	_sacShape(nullptr),
 	_attachedToShape(nullptr),
 	_attachmentSpring(nullptr),
-	_orientationSpring(nullptr),
 	_mass(0)
 	{}
 
@@ -143,9 +142,10 @@ namespace core { namespace game { namespace enemy {
 
 		if (isAttached()) {
 
+			// reel in the spring to attach tightly
 			double len = cpDampedSpringGetRestLength(_attachmentSpring);
 			if (len > 1e-3) {
-				len = lrp<double>(0.2, len, 0);
+				len *= 0.9;
 				cpDampedSpringSetRestLength(_attachmentSpring, len);
 			}
 
@@ -155,7 +155,7 @@ namespace core { namespace game { namespace enemy {
 		}
 
 		double av = cpBodyGetAngularVelocity(_sacBody);
-		cpBodySetAngularVelocity(_sacBody, av * 0.9);
+		cpBodySetAngularVelocity(_sacBody, av * 0.5);
 
 		double angle = cpBodyGetAngle(_sacBody) + M_PI_2;
 		_up = dvec2(cos(angle), sin(angle));
@@ -193,7 +193,7 @@ namespace core { namespace game { namespace enemy {
 			_attachedToShape = terrainShape;
 			_attachedToBody = cpShapeGetBody(terrainShape);
 
-			double stiffness = _mass * getSpace()->getGravity(v2(currentPosition)).force;
+			double stiffness = 5 * _mass * getSpace()->getGravity(v2(currentPosition)).force;
 			double damping = 1;
 			double restLength = cpvdist(currentPosition, pointQueryInfo.point);
 			double segLength = _config.height;
@@ -202,23 +202,18 @@ namespace core { namespace game { namespace enemy {
 
 			// create spring with length set to current distance to attachment point - we'll reel in in step()
 			_attachmentSpring = add(cpDampedSpringNew(_attachedToBody, _sacBody,
-													  cpBodyWorldToLocal(_attachedToBody, pointQueryInfo.point), cpv(0,-segLength/2 - segRadius/2),
+													  cpBodyWorldToLocal(_attachedToBody, pointQueryInfo.point), cpv(0,-segLength/2 - segRadius),
 													  restLength, stiffness, damping));
 
 			GameObjectRef parent = getGameObject();
 			cpConstraintSetUserData( _attachmentSpring, parent.get() );
 			getSpace()->addConstraint(_attachmentSpring);
-
-			_orientationSpring = add(cpDampedRotarySpringNew(_attachedToBody, _sacBody, 0, stiffness, damping * 4));
-			cpConstraintSetUserData(_orientationSpring, parent.get());
-			getSpace()->addConstraint(_orientationSpring);
 		}
 	}
 
 	void EggsacPhysicsComponent::detach() {
 		if (isAttached()) {
 			cpCleanupAndFree(_attachmentSpring);
-			cpCleanupAndFree(_orientationSpring);
 			_attachedToBody = nullptr;
 			_attachedToShape = nullptr;
 		}

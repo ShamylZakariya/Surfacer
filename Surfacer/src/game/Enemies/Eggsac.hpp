@@ -83,7 +83,6 @@ namespace core { namespace game { namespace enemy {
 		cpBody*	getBody() const { return _sacBody; }
 		cpShape* getBodyShape() const { return _sacShape; }
 		cpConstraint *getAttachmentSpring() const { return _attachmentSpring; }
-		cpConstraint *getOrientationSpring() const { return _orientationSpring; }
 
 		bool isAttached() const;
 
@@ -106,7 +105,7 @@ namespace core { namespace game { namespace enemy {
 		config _config;
 		cpBody *_sacBody, *_attachedToBody;
 		cpShape *_sacShape, *_attachedToShape;
-		cpConstraint *_attachmentSpring, *_orientationSpring;
+		cpConstraint *_attachmentSpring;
 		dvec2 _up, _right;
 		double _mass;
 
