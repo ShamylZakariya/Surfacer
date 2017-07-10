@@ -62,8 +62,8 @@ namespace core { namespace game {
 		};
 
 		extern cpShapeFilter TERRAIN;
+		extern cpShapeFilter TERRAIN_PROBE; // special filter for making queries against terrain
 		extern cpShapeFilter ANCHOR;
-		extern cpShapeFilter TERRAIN_PROBE;
 		extern cpShapeFilter GRABBABLE;
 		extern cpShapeFilter PLAYER;
 		extern cpShapeFilter ENEMY;
