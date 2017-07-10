@@ -4,17 +4,14 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ##TODO
 
-Boids:
-Main performance hit repeated inner-loop calls to cpBodyGetPosition/cpBodyGetVelocity which are returning cpVect which is turned to dvec2 - have the Boid step/update cache those values 
+- Make Terrain more robust
+	- make a sequence of line segments around the perimeter with a->b->c->d->a connectivity. This should reduce "slipping through the cracks" errors.
+		- mitering the perimeter is HARD. Getting this done right is crazy hard and less important now that boid velocity is better managed
+	- ALTERNATELY: Add a triangle "plug" at each vertex. If you have two polys ABC and DEF which share BC and DF as an edge, I should create a triangle at B|D which would be like a shrunken A(B|D)E. This is worth examining on paper. Would require less geometry addition than the line segments approach above, but on the other hand, you'd still get the "bumps" at flush corners unless you push those triangle vertices "down"
 
 ## BUGS PRIORITY 0
 
 Consider rewriting DrawDispatcher using raw pointers and not shared_ptr<> ?
-
-glm::inverseTranspose exists. I can use it instead of glm::inverse in a lot of places
-
-SVG can specify a fill on a parent group, and then child SVG shapes will inherit the fill. Who knew?
-- in fact, there's a lot of valid SVG being exported from Sketch which I don't support :(
 
 ## BUGS PRIORITY 1
 
@@ -22,7 +19,6 @@ CameraControllerComponent is acting oddly - it no longer allows camera re-center
 	- this is not a bug but the architecture acting as designed. The input is gobbled.
 	- is this an ordering issue? who's gobbling the input?
 	- is there a robust way to respond to this from a design standpoint?
-
 
 When a dynamic shape has stopped moving, if I zoom in really close, it disappears, as if the spatial index culling alg stops working. If I move it a smidge, culling starts working again.
 - REPRO: Cut a shape, move it, let it stop moving on its own. Zoom in real close. Pop, it's gone. Zoom back out, give it a wee toss, culling works again.
