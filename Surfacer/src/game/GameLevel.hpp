@@ -88,13 +88,15 @@ namespace core { namespace game {
 		void load(ci::DataSourceRef levelXmlData);
 		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
 		player::PlayerRef getPlayer() const { return _player; }
-		const vector<EntityRef> &getEnemies() const { return _enemies; }
+		const set<EntityRef> &getEnemies() const { return _enemies; }
 
 		//
 		//	Level
 		//
 
 		void addGameObject(GameObjectRef obj) override;
+		void removeGameObject(GameObjectRef obj) override;
+
 
 	protected:
 
@@ -108,7 +110,7 @@ namespace core { namespace game {
 
 		terrain::TerrainObjectRef _terrain;
 		player::PlayerRef _player;
-		vector<EntityRef> _enemies;
+		set<EntityRef> _enemies;
 		
 	};
 	

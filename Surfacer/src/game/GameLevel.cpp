@@ -26,8 +26,9 @@ namespace core { namespace game {
 
 
 	/*
-	 terrain::TerrainObjectRef _terrain;
-	 map<string, svg_element> _svgElements;
+		terrain::TerrainObjectRef _terrain;
+		player::PlayerRef _player;
+		set<EntityRef> _enemies;
 	 */
 
 	GameLevel::GameLevel():
@@ -87,6 +88,21 @@ namespace core { namespace game {
 	void GameLevel::addGameObject(GameObjectRef obj) {
 		Level::addGameObject(obj);
 	}
+
+	void GameLevel::removeGameObject(GameObjectRef obj) {
+		Level::removeGameObject(obj);
+
+		// if this obj was an Enemy, remove it from our store
+		if (EntityRef entity = dynamic_pointer_cast<Entity>(obj)) {
+			_enemies.erase(entity);
+		}
+
+		// if this obj was the player, remove it from our store
+		if (_player == obj) {
+			_player.reset();
+		}
+	}
+
 
 	void GameLevel::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
@@ -220,7 +236,7 @@ namespace core { namespace game {
 			}
 
 			if (enemy) {
-				_enemies.push_back(enemy);
+				_enemies.insert(enemy);
 				addGameObject(enemy);
 			}
 		}
