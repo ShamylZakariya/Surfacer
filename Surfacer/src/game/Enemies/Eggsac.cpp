@@ -120,7 +120,7 @@ namespace core { namespace game { namespace enemy {
 		double segLength = _config.height;
 		double segRadius = _config.width/2;
 		_sacShape = add(cpSegmentShapeNew(_sacBody, cpv(0, -segLength/2), cpv(0, segLength/2), segRadius));
-		cpShapeSetFriction(_sacShape, 4);
+		cpShapeSetFriction(_sacShape, 0);
 
 		//
 		//	Finalize
@@ -145,7 +145,7 @@ namespace core { namespace game { namespace enemy {
 			// reel in the spring to attach tightly
 			double len = cpDampedSpringGetRestLength(_attachmentSpring);
 			if (len > 1e-3) {
-				len *= 0.9;
+				len *= 0.99;
 				cpDampedSpringSetRestLength(_attachmentSpring, len);
 			}
 
@@ -154,8 +154,8 @@ namespace core { namespace game { namespace enemy {
 			attach();
 		}
 
-		double av = cpBodyGetAngularVelocity(_sacBody);
-		cpBodySetAngularVelocity(_sacBody, av * 0.5);
+		cpBodySetAngularVelocity(_sacBody, cpBodyGetAngularVelocity(_sacBody) * 0.5);
+		cpBodySetVelocity(_sacBody, cpvmult(cpBodyGetVelocity(_sacBody), 0.9));
 
 		double angle = cpBodyGetAngle(_sacBody) + M_PI_2;
 		_up = dvec2(cos(angle), sin(angle));
