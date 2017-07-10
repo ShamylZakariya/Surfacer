@@ -37,7 +37,6 @@ namespace core { namespace game { namespace enemy {
 			double sensorRadius;
 			double speed;
 			double density;
-			cpShapeFilter filter;
 		};
 
 	public:
@@ -72,6 +71,7 @@ namespace core { namespace game { namespace enemy {
 	protected:
 
 		config _config;
+		cpGroup _group;
 		cpBody *_body;
 		cpConstraint *_gear;
 		cpShape *_shape;

@@ -256,13 +256,9 @@ namespace core { namespace game { namespace enemy {
 
 		if (!flock) {
 
-			// build a config for our boids with our shape filter (so boids don't collide with eachother or the eggsac)
-			auto flockConfig = _config.flock;
-			flockConfig.controller.boid.physics.filter = CP_SHAPE_FILTER_ALL;
-
 			GameObjectRef parent = getGameObject();
 			string flockName = parent->getName() + "_BoidFlock";
-			flock = BoidFlock::create(flockName, flockConfig);
+			flock = BoidFlock::create(flockName, _config.flock);
 
 			getLevel()->addGameObject(flock);
 

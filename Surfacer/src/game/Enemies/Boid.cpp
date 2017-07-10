@@ -17,15 +17,17 @@ namespace core { namespace game { namespace enemy {
 
 	/*
 		config _config;
+		cpGroup _group;
 		cpBody *_body;
 		cpConstraint *_gear;
 		cpShape *_shape;
-		dvec2 _targetVelocity, _position, _velocity, _facingDirection;
+		dvec2 _targetVelocity, _position, _velocity, _rotation, _facingDirection;
 		double _mass, _ruleVariance;
 	*/
 
 	BoidPhysicsComponent::BoidPhysicsComponent(config c, double ruleVariance, cpGroup group):
 	_config(c),
+	_group(group),
 	_body(nullptr),
 	_gear(nullptr),
 	_shape(nullptr),
@@ -36,9 +38,7 @@ namespace core { namespace game { namespace enemy {
 	_facingDirection(1,0),
 	_mass(0),
 	_ruleVariance(ruleVariance)
-	{
-		_config.filter.group = group;
-	}
+	{}
 
 	BoidPhysicsComponent::~BoidPhysicsComponent()
 	{}
@@ -72,7 +72,10 @@ namespace core { namespace game { namespace enemy {
 		_shape = add(cpCircleShapeNew(_body, _config.radius, cpvzero));
 		cpShapeSetFriction(_shape, 0.1);
 
-		build(_config.filter, CollisionType::ENEMY);
+		cpShapeFilter filter = CollisionFilters::ENEMY;
+		filter.group = _group;
+
+		build(filter, CollisionType::ENEMY);
 	}
 
 
