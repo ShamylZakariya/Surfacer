@@ -127,7 +127,7 @@ namespace core { namespace game { namespace enemy {
 		//
 
 		// group just has to be a unique integer so the player parts don't collide with eachother
-		cpShapeFilter filter = CollisionFilters::ENEMY;
+		cpShapeFilter filter = ShapeFilters::ENEMY;
 		filter.group = reinterpret_cast<cpGroup>(parent.get());
 		build(filter, CollisionType::ENEMY);
 	}
@@ -187,7 +187,7 @@ namespace core { namespace game { namespace enemy {
 		cpPointQueryInfo pointQueryInfo;
 		cpSpace *space = getSpace()->getSpace();
 		cpVect currentPosition = cpBodyGetPosition(_sacBody);
-		cpShape *terrainShape = cpSpacePointQueryNearest(space, currentPosition, INFINITY, CollisionFilters::TERRAIN_PROBE, &pointQueryInfo);
+		cpShape *terrainShape = cpSpacePointQueryNearest(space, currentPosition, INFINITY, ShapeFilters::TERRAIN_PROBE, &pointQueryInfo);
 		if (terrainShape) {
 
 			_attachedToShape = terrainShape;

@@ -295,7 +295,7 @@ namespace core { namespace game { namespace player {
 		double penetration = 0;
 		for (double dist = 0; dist < _config.range && penetration < _config.cutDepth; dist += stepSize) {
 			bool didHit = false;
-			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, CollisionFilters::TERRAIN_PROBE, BlastBeamComponent_PointQueryFunc, &didHit);
+			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, ShapeFilters::TERRAIN_PROBE, BlastBeamComponent_PointQueryFunc, &didHit);
 			if (didHit) {
 				penetration += stepSize;
 			}
@@ -648,7 +648,7 @@ namespace core { namespace game { namespace player {
 		//
 
 		// group just has to be a unique integer so the player parts don't collide with eachother
-		cpShapeFilter filter = CollisionFilters::PLAYER;
+		cpShapeFilter filter = ShapeFilters::PLAYER;
 		filter.group = reinterpret_cast<cpGroup>(player.get());
 
 		build(filter, CollisionType::PLAYER);

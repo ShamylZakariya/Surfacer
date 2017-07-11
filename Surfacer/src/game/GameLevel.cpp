@@ -15,7 +15,7 @@
 
 namespace core { namespace game {
 
-	namespace CollisionFilters {
+	namespace ShapeFilters {
 		cpShapeFilter TERRAIN			= cpShapeFilterNew(CP_NO_GROUP, _TERRAIN,			_TERRAIN | _TERRAIN_PROBE | _GRABBABLE | _ANCHOR | _PLAYER | _ENEMY);
 		cpShapeFilter TERRAIN_PROBE		= cpShapeFilterNew(CP_NO_GROUP, _TERRAIN_PROBE,		_TERRAIN);
 		cpShapeFilter ANCHOR				= cpShapeFilterNew(CP_NO_GROUP, _ANCHOR,			_TERRAIN | _PLAYER | _ENEMY);
@@ -141,8 +141,8 @@ namespace core { namespace game {
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
 
-		const terrain::material terrainMaterial(density, friction, CollisionFilters::TERRAIN, CollisionType::TERRAIN);
-		const terrain::material anchorMaterial(1, friction, CollisionFilters::ANCHOR, CollisionType::ANCHOR);
+		const terrain::material terrainMaterial(density, friction, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
+		const terrain::material anchorMaterial(1, friction, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
 
 		//
 		//	Load terrain

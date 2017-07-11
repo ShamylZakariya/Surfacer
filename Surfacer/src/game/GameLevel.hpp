@@ -50,7 +50,7 @@ namespace core { namespace game {
 		};
 	}
 
-	namespace CollisionFilters {
+	namespace ShapeFilters {
 
 		enum Categories {
 			_TERRAIN = 1 << 0,			// 1

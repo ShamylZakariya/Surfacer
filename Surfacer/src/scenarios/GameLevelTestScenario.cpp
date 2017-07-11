@@ -38,7 +38,7 @@ void GameLevelTestScenario::setup() {
 		getLevel()->addGameObject(cc);
 
 		auto dragger = GameObject::with("Dragger", {
-			make_shared<MousePickComponent>(core::game::CollisionFilters::GRABBABLE, 1),
+			make_shared<MousePickComponent>(core::game::ShapeFilters::GRABBABLE, 1),
 			make_shared<MousePickDrawComponent>()
 		});
 		getLevel()->addGameObject(dragger);

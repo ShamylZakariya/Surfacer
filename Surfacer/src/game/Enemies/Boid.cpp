@@ -72,7 +72,7 @@ namespace core { namespace game { namespace enemy {
 		_shape = add(cpCircleShapeNew(_body, _config.radius, cpvzero));
 		cpShapeSetFriction(_shape, 0.1);
 
-		cpShapeFilter filter = CollisionFilters::ENEMY;
+		cpShapeFilter filter = ShapeFilters::ENEMY;
 		filter.group = _group;
 
 		build(filter, CollisionType::ENEMY);
