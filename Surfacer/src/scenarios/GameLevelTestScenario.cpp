@@ -31,22 +31,26 @@ void GameLevelTestScenario::setup() {
 	auto player = level->getPlayer();
 
 	if (!player) {
+
+		// build camera controller, dragger, and cutter, with input dispatch indices 0,1,2 meaning CC gets input first
+
+		auto cc = GameObject::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController(), 0)});
+		getLevel()->addGameObject(cc);
+
 		auto dragger = GameObject::with("Dragger", {
-			make_shared<MousePickComponent>(core::game::CollisionFilters::GRABBABLE),
+			make_shared<MousePickComponent>(core::game::CollisionFilters::GRABBABLE, 1),
 			make_shared<MousePickDrawComponent>()
 		});
 		getLevel()->addGameObject(dragger);
 
 		if (terrain) {
 			auto cutter = GameObject::with("Cutter", {
-				make_shared<MouseCutterComponent>(terrain, 4),
+				make_shared<MouseCutterComponent>(terrain, 4, 2),
 				make_shared<MouseCutterDrawComponent>()
 			});
 			getLevel()->addGameObject(cutter);
 		}
 
-		auto cc = GameObject::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController())});
-		getLevel()->addGameObject(cc);
 	}
 
 	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });

@@ -231,7 +231,7 @@ bool ManualViewportControlComponent::mouseDown( const ci::app::MouseEvent &event
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 
-	CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld);
+	CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld << " SPACE: " << isKeyDown(app::KeyEvent::KEY_SPACE) << " ALT: " << event.isAltDown());
 
 	// capture alt key for re-centering
 	if ( event.isAltDown() )
@@ -501,10 +501,6 @@ _terrain(terrain)
 bool MouseCutterComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
-
-	if ( isKeyDown( app::KeyEvent::KEY_SPACE )) {
-		return false;
-	}
 
 	_cutting = true;
 	_cutStart = _cutEnd = _mouseWorld;
