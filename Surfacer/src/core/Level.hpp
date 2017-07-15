@@ -128,6 +128,14 @@ namespace core {
 
 #pragma mark - Level
 
+	namespace detail {
+		extern cpBool Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern cpBool Level_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern void Level_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern void Level_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+	}
+
+
 	class Level : public enable_shared_from_this<Level>, public core::signals::receiver {
 	public:
 
@@ -231,6 +239,51 @@ namespace core {
 
 	protected:
 
+		struct collision_type_pair {
+			cpCollisionType a;
+			cpCollisionType b;
+			collision_type_pair(cpCollisionType cta, cpCollisionType ctb):
+			a(cta),
+			b(ctb)
+			{}
+
+			friend bool operator == (const collision_type_pair &ctp0, const collision_type_pair &ctp1) {
+				return ctp0.a == ctp1.a && ctp0.b == ctp1.b;
+			}
+
+			friend bool operator < (const collision_type_pair &ctp0, const collision_type_pair &ctp1) {
+				if (ctp0.a != ctp1.a) {
+					return ctp0.a < ctp1.a;
+				}
+				return ctp0.b < ctp1.b;
+			}
+		};
+
+		typedef std::function<bool(const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> EarlyCollisionCallback;
+		typedef std::function<void(const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> LateCollisionCallback;
+
+		/**
+		 Listen for collisions between the two collision types. Override onCollision* methods to handle the collisions.
+		 */
+		virtual void addCollisionMonitor(cpCollisionType a, cpCollisionType b);
+
+		virtual void addCollisionBeginHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback);
+		virtual void addCollisionPreSolveHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback);
+		virtual void addCollisionPostSolveHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback);
+		virtual void addCollisionSeparateHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback);
+
+		// friend functions for chipmunk collision dispatch - these will call onCollision* methods below
+		friend cpBool detail::Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend cpBool detail::Level_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend void detail::Level_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend void detail::Level_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+
+		// collision dispatchers, called after CollisionCallbacks
+		virtual bool onCollisionBegin(cpArbiter *arb) { return true; }
+		virtual bool onCollisionPreSolve(cpArbiter *arb) { return true; }
+		virtual void onCollisionPostSolve(cpArbiter *arb) {}
+		virtual void onCollisionSeparate(cpArbiter *arb) {}
+
 		void setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f);
 		cpBodyVelocityFunc getCpBodyVelocityUpdateFunc() const { return _bodyVelocityFunc; }
 		void setName(string name) { _name = name; }
@@ -243,7 +296,6 @@ namespace core {
 		virtual void onBodyAddedToSpace(cpBody *body);
 		virtual void onShapeAddedToSpace(cpShape *shape);
 		virtual void onConstraintAddedToSpace(cpConstraint *constraint);
-
 
 	private:
 
@@ -261,6 +313,10 @@ namespace core {
 		GravityType _gravityType;
 		dvec2 _directionalGravityDir;
 		radial_gravity_info _radialGravityInfo;
+
+		set<collision_type_pair> _monitoredCollisions;
+		map<collision_type_pair, vector<EarlyCollisionCallback>> _collisionBeginHandlers, _collisionPreSolveHandlers;
+		map<collision_type_pair, vector<LateCollisionCallback>> _collisionPostSolveHandlers, _collisionSeparateHandlers;
 
 	};
 

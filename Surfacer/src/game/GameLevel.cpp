@@ -26,9 +26,9 @@ namespace core { namespace game {
 
 
 	/*
-		terrain::TerrainObjectRef _terrain;
-		player::PlayerRef _player;
-		set<EntityRef> _enemies;
+	 terrain::TerrainObjectRef _terrain;
+	 player::PlayerRef _player;
+	 set<EntityRef> _enemies;
 	 */
 
 	GameLevel::GameLevel():
@@ -241,5 +241,29 @@ namespace core { namespace game {
 			}
 		}
 	}
+
+	void GameLevel::onReady() {
+		Level::onReady();
+		addCollisionBeginHandler(CollisionType::ENEMY, CollisionType::PLAYER,
+							[](const GameObjectRef &enemy, const GameObjectRef &player, cpArbiter *arb)->bool{
+								CI_LOG_D("Enemy: " << enemy->getName() << " contact player: " << player->getName());
+								return true;
+							});
+	}
+
+	bool GameLevel::onCollisionBegin(cpArbiter *arb) {
+		return true;
+	}
+
+	bool GameLevel::onCollisionPreSolve(cpArbiter *arb) {
+		return true;
+	}
+
+	void GameLevel::onCollisionPostSolve(cpArbiter *arb) {
+	}
+
+	void GameLevel::onCollisionSeparate(cpArbiter *arb) {
+	}
+
 	
 }} // namespace core::game

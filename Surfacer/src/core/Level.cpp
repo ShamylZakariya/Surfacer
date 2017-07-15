@@ -502,17 +502,6 @@ namespace core {
 		return result;
 	}
 
-	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
-		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
-
-		// update every body in sim
-		cpSpaceEachBody(_space, [](cpBody *body, void *data){
-			auto l = static_cast<Level*>(data);
-			cpBodySetVelocityUpdateFunc(body, l->_bodyVelocityFunc);
-		}, this);
-
-	}
-
 	ViewportRef Level::getViewport() const {
 		return getScenario()->getViewport();
 	}
@@ -563,6 +552,148 @@ namespace core {
 		}
 	}
 
+
+	namespace detail {
+
+		cpBool Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Level *level = static_cast<Level*>(data);
+
+			cpShape *a = nullptr, *b = nullptr;
+			cpArbiterGetShapes(arb, &a, &b);
+
+			// if any handlers are defined for this pairing, dispatch
+			cpBool accept = cpTrue;
+			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = level->_collisionBeginHandlers.find(ctp);
+			if (pos != level->_collisionBeginHandlers.end()) {
+				GameObjectRef ga = cpShapeGetGameObject(a);
+				GameObjectRef gb = cpShapeGetGameObject(b);
+				for (const auto &cb : pos->second) {
+					if (!cb(ga, gb, arb)) {
+						accept = cpFalse;
+					}
+				}
+			}
+
+			if (!level->onCollisionBegin(arb)) {
+				accept = cpFalse;
+			}
+
+			return accept;
+		}
+
+		cpBool Level_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Level *level = static_cast<Level*>(data);
+
+			cpShape *a = nullptr, *b = nullptr;
+			cpArbiterGetShapes(arb, &a, &b);
+
+			// if any handlers are defined for this pairing, dispatch
+			cpBool accept = cpTrue;
+			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = level->_collisionPreSolveHandlers.find(ctp);
+			if (pos != level->_collisionPreSolveHandlers.end()) {
+				GameObjectRef ga = cpShapeGetGameObject(a);
+				GameObjectRef gb = cpShapeGetGameObject(b);
+				for (const auto &cb : pos->second) {
+					if (!cb(ga, gb, arb)) {
+						accept = cpFalse;
+					}
+				}
+			}
+
+			if (!level->onCollisionPreSolve(arb)) {
+				accept = cpFalse;
+			}
+
+			return accept;
+		}
+
+		void Level_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Level *level = static_cast<Level*>(data);
+
+			cpShape *a = nullptr, *b = nullptr;
+			cpArbiterGetShapes(arb, &a, &b);
+
+			// if any handlers are defined for this pairing, dispatch
+			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = level->_collisionPostSolveHandlers.find(ctp);
+			if (pos != level->_collisionPostSolveHandlers.end()) {
+				GameObjectRef ga = cpShapeGetGameObject(a);
+				GameObjectRef gb = cpShapeGetGameObject(b);
+				for (const auto &cb : pos->second) {
+					cb(ga, gb, arb);
+				}
+			}
+
+			level->onCollisionPostSolve(arb);
+		}
+
+		void Level_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Level *level = static_cast<Level*>(data);
+
+			cpShape *a = nullptr, *b = nullptr;
+			cpArbiterGetShapes(arb, &a, &b);
+
+			// if any handlers are defined for this pairing, dispatch
+			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = level->_collisionSeparateHandlers.find(ctp);
+			if (pos != level->_collisionSeparateHandlers.end()) {
+				GameObjectRef ga = cpShapeGetGameObject(a);
+				GameObjectRef gb = cpShapeGetGameObject(b);
+				for (const auto &cb : pos->second) {
+					cb(ga, gb, arb);
+				}
+			}
+
+			level->onCollisionSeparate(arb);
+		}
+
+	}
+
+	void Level::addCollisionMonitor(cpCollisionType a, cpCollisionType b) {
+		collision_type_pair ctp(a,b);
+		if (_monitoredCollisions.insert(ctp).second) {
+			cpSpace * space = getSpace()->getSpace();
+			cpCollisionHandler *handler = cpSpaceAddCollisionHandler(space, a, b);
+			handler->userData = this;
+			handler->beginFunc = detail::Level_collisionBeginHandler;
+			handler->preSolveFunc = detail::Level_collisionPreSolveHandler;
+			handler->postSolveFunc = detail::Level_collisionPostSolveHandler;
+			handler->separateFunc = detail::Level_collisionSeparateHandler;
+		}
+	}
+
+	void Level::addCollisionBeginHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
+		addCollisionMonitor(a,b);
+		_collisionBeginHandlers[collision_type_pair(a,b)].push_back(cb);
+	}
+
+	void Level::addCollisionPreSolveHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
+		addCollisionMonitor(a,b);
+		_collisionPreSolveHandlers[collision_type_pair(a,b)].push_back(cb);
+	}
+
+	void Level::addCollisionPostSolveHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
+		addCollisionMonitor(a,b);
+		_collisionPostSolveHandlers[collision_type_pair(a,b)].push_back(cb);
+	}
+
+	void Level::addCollisionSeparateHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
+		addCollisionMonitor(a,b);
+		_collisionSeparateHandlers[collision_type_pair(a,b)].push_back(cb);
+	}
+
+	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
+		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
+
+		// update every body in sim
+		cpSpaceEachBody(_space, [](cpBody *body, void *data){
+			auto l = static_cast<Level*>(data);
+			cpBodySetVelocityUpdateFunc(body, l->_bodyVelocityFunc);
+		}, this);
+	}
+
 	void Level::addedToScenario(ScenarioRef scenario) {
 		_scenario = scenario;
 	}
@@ -594,6 +725,4 @@ namespace core {
 		//CI_LOG_D("onConstraintAddedToSpace constraint: " << constraint);
 	}
 	
-
-
 }

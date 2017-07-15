@@ -25,7 +25,7 @@ namespace core { namespace game {
 	namespace CollisionType {
 
 		/*
-		 The high 16 bits are a mask, the low are a type_id, the actual type is the | of the two.
+		 The high 16 bits are a mask, the low are a type_id, the actual type is the logical OR of the two.
 		 */
 
 		namespace is {
@@ -38,7 +38,7 @@ namespace core { namespace game {
 		enum type_id {
 
 			TERRAIN				= 1 | is::SHOOTABLE | is::TOWABLE,
-			ANCHOR				= 2,
+			ANCHOR				= 2 | is::SHOOTABLE,
 			ENEMY				= 3 | is::SHOOTABLE,
 			PLAYER				= 4 | is::SHOOTABLE,
 			WEAPON				= 5,
@@ -97,7 +97,6 @@ namespace core { namespace game {
 		void addGameObject(GameObjectRef obj) override;
 		void removeGameObject(GameObjectRef obj) override;
 
-
 	protected:
 
 		void applySpaceAttributes(XmlTree spaceNode);
@@ -105,6 +104,13 @@ namespace core { namespace game {
 		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
 		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
 		void loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode);
+
+		// Level
+		void onReady() override;
+		bool onCollisionBegin(cpArbiter *arb) override;
+		bool onCollisionPreSolve(cpArbiter *arb) override;
+		void onCollisionPostSolve(cpArbiter *arb) override;
+		void onCollisionSeparate(cpArbiter *arb) override;
 
 	private:
 
