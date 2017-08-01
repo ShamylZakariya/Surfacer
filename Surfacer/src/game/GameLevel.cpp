@@ -245,10 +245,18 @@ namespace core { namespace game {
 	void GameLevel::onReady() {
 		Level::onReady();
 		addCollisionBeginHandler(CollisionType::ENEMY, CollisionType::PLAYER,
-							[](const GameObjectRef &enemy, const GameObjectRef &player, cpArbiter *arb)->bool{
-								CI_LOG_D("Enemy: " << enemy->getName() << " contact player: " << player->getName());
-								return true;
-							});
+		                         [](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player, cpArbiter *arb)->bool{
+									 CI_LOG_D("COLLISION_BEGIN - Enemy: " << enemy->getName() << " contact player: " << player->getName());
+									 return true;
+		                         });
+
+		addContactHandler(CollisionType::ENEMY, CollisionType::PLAYER, [](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player){
+			CI_LOG_D("CONTACT - Enemy: " << enemy->getName() << " contact player: " << player->getName());
+		});
+
+		addContactHandler(CollisionType::WEAPON, CollisionType::ENEMY, [](const Level::collision_type_pair &ctp, const GameObjectRef &weapon, const GameObjectRef &enemy){
+			CI_LOG_D("CONTACT - WEAPON: " << weapon->getName() << " contact enemy: " << enemy->getName());
+		});
 	}
 
 	bool GameLevel::onCollisionBegin(cpArbiter *arb) {

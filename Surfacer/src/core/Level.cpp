@@ -378,7 +378,11 @@ namespace core {
 		}
 
 		if (!_paused) {
+			// step the chipmunk space
 			cpSpaceStep(_space, time.deltaT);
+
+			// dispatch any synthetic contacts which were generated
+			dispatchSyntheticContacts();
 		}
 
 		if (!_paused) {
@@ -569,7 +573,7 @@ namespace core {
 				GameObjectRef ga = cpShapeGetGameObject(a);
 				GameObjectRef gb = cpShapeGetGameObject(b);
 				for (const auto &cb : pos->second) {
-					if (!cb(ga, gb, arb)) {
+					if (!cb(ctp, ga, gb, arb)) {
 						accept = cpFalse;
 					}
 				}
@@ -596,7 +600,7 @@ namespace core {
 				GameObjectRef ga = cpShapeGetGameObject(a);
 				GameObjectRef gb = cpShapeGetGameObject(b);
 				for (const auto &cb : pos->second) {
-					if (!cb(ga, gb, arb)) {
+					if (!cb(ctp, ga, gb, arb)) {
 						accept = cpFalse;
 					}
 				}
@@ -617,12 +621,26 @@ namespace core {
 
 			// if any handlers are defined for this pairing, dispatch
 			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
-			auto pos = level->_collisionPostSolveHandlers.find(ctp);
-			if (pos != level->_collisionPostSolveHandlers.end()) {
-				GameObjectRef ga = cpShapeGetGameObject(a);
-				GameObjectRef gb = cpShapeGetGameObject(b);
-				for (const auto &cb : pos->second) {
-					cb(ga, gb, arb);
+			GameObjectRef ga = cpShapeGetGameObject(a);
+			GameObjectRef gb = cpShapeGetGameObject(b);
+
+			// dispatch to post solve handlers
+			{
+				auto pos = level->_collisionPostSolveHandlers.find(ctp);
+				if (pos != level->_collisionPostSolveHandlers.end()) {
+					for (const auto &cb : pos->second) {
+						cb(ctp, ga, gb, arb);
+					}
+				}
+			}
+
+			// dispatch to generic contact handlers
+			{
+				auto pos = level->_contactHandlers.find(ctp);
+				if (pos != level->_contactHandlers.end()) {
+					for (const auto &cb : pos->second) {
+						cb(ctp, ga, gb);
+					}
 				}
 			}
 
@@ -642,7 +660,7 @@ namespace core {
 				GameObjectRef ga = cpShapeGetGameObject(a);
 				GameObjectRef gb = cpShapeGetGameObject(b);
 				for (const auto &cb : pos->second) {
-					cb(ga, gb, arb);
+					cb(ctp, ga, gb, arb);
 				}
 			}
 
@@ -651,7 +669,7 @@ namespace core {
 
 	}
 
-	void Level::addCollisionMonitor(cpCollisionType a, cpCollisionType b) {
+	Level::collision_type_pair Level::addCollisionMonitor(cpCollisionType a, cpCollisionType b) {
 		collision_type_pair ctp(a,b);
 		if (_monitoredCollisions.insert(ctp).second) {
 			cpSpace * space = getSpace()->getSpace();
@@ -662,26 +680,32 @@ namespace core {
 			handler->postSolveFunc = detail::Level_collisionPostSolveHandler;
 			handler->separateFunc = detail::Level_collisionSeparateHandler;
 		}
+		return ctp;
 	}
 
 	void Level::addCollisionBeginHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
-		addCollisionMonitor(a,b);
-		_collisionBeginHandlers[collision_type_pair(a,b)].push_back(cb);
+		const auto ctp = addCollisionMonitor(a,b);
+		_collisionBeginHandlers[ctp].push_back(cb);
 	}
 
 	void Level::addCollisionPreSolveHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
-		addCollisionMonitor(a,b);
-		_collisionPreSolveHandlers[collision_type_pair(a,b)].push_back(cb);
+		const auto ctp = addCollisionMonitor(a,b);
+		_collisionPreSolveHandlers[ctp].push_back(cb);
 	}
 
 	void Level::addCollisionPostSolveHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
-		addCollisionMonitor(a,b);
-		_collisionPostSolveHandlers[collision_type_pair(a,b)].push_back(cb);
+		const auto ctp = addCollisionMonitor(a,b);
+		_collisionPostSolveHandlers[ctp].push_back(cb);
 	}
 
 	void Level::addCollisionSeparateHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
-		addCollisionMonitor(a,b);
-		_collisionSeparateHandlers[collision_type_pair(a,b)].push_back(cb);
+		const auto ctp = addCollisionMonitor(a,b);
+		_collisionSeparateHandlers[ctp].push_back(cb);
+	}
+
+	void Level::addContactHandler(cpCollisionType a, cpCollisionType b, ContactCallback cb) {
+		const auto ctp = addCollisionMonitor(a,b);
+		_contactHandlers[ctp].push_back(cb);
 	}
 
 	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
@@ -723,6 +747,26 @@ namespace core {
 
 	void Level::onConstraintAddedToSpace(cpConstraint *constraint) {
 		//CI_LOG_D("onConstraintAddedToSpace constraint: " << constraint);
+	}
+
+	void Level::dispatchSyntheticContacts() {
+		for (auto &group : _syntheticContacts) {
+			const auto ctp = group.first;
+			const auto pos = _contactHandlers.find(ctp);
+			if (pos != _contactHandlers.end()) {
+				for (const auto &handler : pos->second) {
+					for (auto &gameObjectPair : group.second) {
+						handler(ctp, gameObjectPair.first, gameObjectPair.second);
+					}
+				}
+			}
+		}
+		_syntheticContacts.clear();
+	}
+
+	void Level::registerContactBetweenObjects(cpCollisionType a, const GameObjectRef &ga, cpCollisionType b, const GameObjectRef &gb) {
+		collision_type_pair ctp(a, b);
+		_syntheticContacts[ctp].push_back(std::make_pair(ga, gb));
 	}
 	
 }

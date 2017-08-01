@@ -28,7 +28,8 @@ namespace core { namespace game { namespace player {
 				BeamComponent::contact c;
 				c.position = v2(point);
 				c.normal = v2(normal);
-				c.target = nullptr; // cpShapeGetGameObject(shape)
+				c.shape = shape;
+				c.object = cpShapeGetGameObject(shape);
 
 				auto contacts = static_cast<vector<BeamComponent::contact>*>(data);
 				contacts->push_back(c);
@@ -144,6 +145,15 @@ namespace core { namespace game { namespace player {
 		}
 
 		//
+		//	Notify level of contacts
+		//
+
+		const LevelRef &level = getLevel();
+		for (const auto &contact : _contacts) {
+			level->registerContactBetweenObjects(CollisionType::WEAPON, getGameObject(), cpShapeGetCollisionType(contact.shape), contact.object);
+		}
+
+		//
 		//	Now notify Player of contacts
 		//
 
@@ -230,7 +240,6 @@ namespace core { namespace game { namespace player {
 		//
 
 		go->getDrawComponent()->notifyMoved();
-
 
 		BeamComponent::update(time);
 	}

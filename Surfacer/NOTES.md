@@ -4,6 +4,8 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## PRESENTLY
 
+Implementing shooting/collisions of things
+
 
 ## BUGS PRIORITY 0
 

@@ -43,17 +43,20 @@ namespace core { namespace game { namespace player {
 		struct contact {
 			dvec2 position;
 			dvec2 normal;
-			GameObjectRef target;
+			cpShape *shape;
+			GameObjectRef object;
 
 			contact():
 			position(0),
-			normal(0)
+			normal(0),
+			shape(nullptr)
 			{}
 
 			contact(const contact &c):
 			position(c.position),
 			normal(c.normal),
-			target(c.target)
+			shape(c.shape),
+			object(c.object)
 			{}
 		};
 

@@ -182,6 +182,41 @@ namespace core {
 			double falloffPower;
 		};
 
+		struct collision_type_pair {
+			cpCollisionType a;
+			cpCollisionType b;
+			collision_type_pair(cpCollisionType cta, cpCollisionType ctb):
+			a(cta),
+			b(ctb)
+			{}
+
+			friend bool operator == (const collision_type_pair &ctp0, const collision_type_pair &ctp1) {
+				return ctp0.a == ctp1.a && ctp0.b == ctp1.b;
+			}
+
+			friend bool operator < (const collision_type_pair &ctp0, const collision_type_pair &ctp1) {
+				if (ctp0.a != ctp1.a) {
+					return ctp0.a < ctp1.a;
+				}
+				return ctp0.b < ctp1.b;
+			}
+		};
+
+		/**
+		 Callback functor for early phases in collision dispatch. Returning false here will prevent the collision from happening.
+		 */
+		typedef std::function<bool(const collision_type_pair &ctp, const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> EarlyCollisionCallback;
+
+		/**
+		 Callback functor for late phases in collision dispatch.
+		 */
+		typedef std::function<void(const collision_type_pair &ctp, const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> LateCollisionCallback;
+
+		/**
+		 Callback for simplified contact handling
+		 */
+		typedef std::function<void(const collision_type_pair &ctp, const GameObjectRef &a, const GameObjectRef &b)> ContactCallback;
+
 	public:
 
 		Level(string name);
@@ -237,40 +272,28 @@ namespace core {
 		 */
 		SpaceAccess::gravitation getGravitation(dvec2 world) const;
 
-	protected:
-
-		struct collision_type_pair {
-			cpCollisionType a;
-			cpCollisionType b;
-			collision_type_pair(cpCollisionType cta, cpCollisionType ctb):
-			a(cta),
-			b(ctb)
-			{}
-
-			friend bool operator == (const collision_type_pair &ctp0, const collision_type_pair &ctp1) {
-				return ctp0.a == ctp1.a && ctp0.b == ctp1.b;
-			}
-
-			friend bool operator < (const collision_type_pair &ctp0, const collision_type_pair &ctp1) {
-				if (ctp0.a != ctp1.a) {
-					return ctp0.a < ctp1.a;
-				}
-				return ctp0.b < ctp1.b;
-			}
-		};
-
-		typedef std::function<bool(const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> EarlyCollisionCallback;
-		typedef std::function<void(const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> LateCollisionCallback;
-
 		/**
 		 Listen for collisions between the two collision types. Override onCollision* methods to handle the collisions.
 		 */
-		virtual void addCollisionMonitor(cpCollisionType a, cpCollisionType b);
+		virtual collision_type_pair addCollisionMonitor(cpCollisionType a, cpCollisionType b);
 
 		virtual void addCollisionBeginHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback);
 		virtual void addCollisionPreSolveHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback);
 		virtual void addCollisionPostSolveHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback);
 		virtual void addCollisionSeparateHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback);
+
+		/**
+		 Add a more generic contact handler. This maps to PostSolveHandler, but also receives synthetic contact events like WEAPON->ENEMY
+		 */
+		virtual void addContactHandler(cpCollisionType a, cpCollisionType b, ContactCallback);
+
+		/**
+		 Some contacts can't be dispatched via chipmunk's collision system (e.g., synthetic contacts like WEAPON -> ENEMY.
+		 It becomes the responsibility of such mechanisms to dispatch their contacts to Level directly, here.
+		 */
+		virtual void registerContactBetweenObjects(cpCollisionType a, const GameObjectRef &ga, cpCollisionType b, const GameObjectRef &gb);
+
+	protected:
 
 		// friend functions for chipmunk collision dispatch - these will call onCollision* methods below
 		friend cpBool detail::Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
@@ -297,6 +320,8 @@ namespace core {
 		virtual void onShapeAddedToSpace(cpShape *shape);
 		virtual void onConstraintAddedToSpace(cpConstraint *constraint);
 
+		virtual void dispatchSyntheticContacts();
+
 	private:
 
 		cpSpace *_space;
@@ -317,6 +342,8 @@ namespace core {
 		set<collision_type_pair> _monitoredCollisions;
 		map<collision_type_pair, vector<EarlyCollisionCallback>> _collisionBeginHandlers, _collisionPreSolveHandlers;
 		map<collision_type_pair, vector<LateCollisionCallback>> _collisionPostSolveHandlers, _collisionSeparateHandlers;
+		map<collision_type_pair, vector<ContactCallback>> _contactHandlers;
+		map<collision_type_pair, vector<pair<GameObjectRef, GameObjectRef>>> _syntheticContacts;
 
 	};
 
