@@ -105,6 +105,8 @@ namespace core { namespace game {
 		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
 		void loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode);
 
+		virtual EntityRef classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree node);
+
 		// Level
 		void onReady() override;
 		bool onCollisionBegin(cpArbiter *arb) override;

@@ -229,11 +229,7 @@ namespace core { namespace game {
 			// now figure out which enemy this is
 			string tag = enemyNode.getTag();
 			string name = enemyNode.getAttributeValue<string>("name", tag);
-			EntityRef enemy;
-
-			if (tag == "eggsac") {
-				enemy = enemy::Eggsac::create(name, position, prefabEnemyNode);
-			}
+			EntityRef enemy = classload(tag, name, position, prefabEnemyNode);
 
 			if (enemy) {
 				_enemies.insert(enemy);
@@ -242,16 +238,25 @@ namespace core { namespace game {
 		}
 	}
 
+	EntityRef GameLevel::classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree prefabNode) {
+		// I'm not going to build a classloader any more
+		if (tag == "eggsac") {
+			return enemy::Eggsac::create(name, position, prefabNode);
+		}
+
+		return nullptr;
+	}
+
 	void GameLevel::onReady() {
 		Level::onReady();
 		addCollisionBeginHandler(CollisionType::ENEMY, CollisionType::PLAYER,
 		                         [](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player, cpArbiter *arb)->bool{
-									 CI_LOG_D("COLLISION_BEGIN - Enemy: " << enemy->getName() << " contact player: " << player->getName());
+									 //CI_LOG_D("COLLISION_BEGIN - Enemy: " << enemy->getName() << " contact player: " << player->getName());
 									 return true;
 		                         });
 
 		addContactHandler(CollisionType::ENEMY, CollisionType::PLAYER, [](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player){
-			CI_LOG_D("CONTACT - Enemy: " << enemy->getName() << " contact player: " << player->getName());
+			//CI_LOG_D("CONTACT - Enemy: " << enemy->getName() << " contact player: " << player->getName());
 		});
 
 		addContactHandler(CollisionType::WEAPON, CollisionType::ENEMY, [](const Level::collision_type_pair &ctp, const GameObjectRef &weapon, const GameObjectRef &enemy){
