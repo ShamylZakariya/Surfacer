@@ -2,8 +2,8 @@
 <player walkSpeed="200" runMultiplier="3">
 
 	<gun blastChargePerSecond="0.3">
-		<pulse width="8" length="500" range="100000" velocity="10000"/>
-		<blast width="16" range="2000" cutDepth="1000" lifespan="0.25"/>
+		<pulse width="8" length="500" range="100000" velocity="10000" damage="10"/>
+		<cutter width="16" range="2000" cutDepth="1000" lifespan="0.25" damage="0"/>
 	</gun>
 	
 	<health max_health="100" regeneration_rate="0"/>

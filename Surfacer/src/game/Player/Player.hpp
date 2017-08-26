@@ -25,7 +25,7 @@ namespace core { namespace game { namespace player {
 	SMART_PTR(PlayerInputComponent);
 	SMART_PTR(BeamComponent);
 
-#pragma mark - BeamProjectileComponent
+#pragma mark - BeamComponent
 
 	class BeamComponent : public Component {
 	public:
@@ -33,10 +33,12 @@ namespace core { namespace game { namespace player {
 		struct config {
 			double width;
 			double range;
+			double damage;
 
 			config():
 			width(0),
-			range(0)
+			range(0),
+			damage(0)
 			{}
 		};
 
@@ -133,7 +135,7 @@ namespace core { namespace game { namespace player {
 
 	};
 
-	class BlastBeamComponent : public BeamComponent {
+	class CutterBeamComponent : public BeamComponent {
 	public:
 
 		struct config : public BeamComponent::config {
@@ -148,8 +150,8 @@ namespace core { namespace game { namespace player {
 
 	public:
 
-		BlastBeamComponent(config c, PlayerRef player);
-		virtual ~BlastBeamComponent(){}
+		CutterBeamComponent(config c, PlayerRef player);
+		virtual ~CutterBeamComponent(){}
 
 		// BeamComponent
 		void fire(dvec2 origin, dvec2 dir) override;
@@ -202,8 +204,8 @@ namespace core { namespace game { namespace player {
 
 		struct config {
 			PulseBeamComponent::config pulse;
-			BlastBeamComponent::config blast;
-			double blastChargePerSecond;
+			CutterBeamComponent::config cutter;
+			double cutterChargePerSecond;
 		};
 
 	public:
@@ -215,7 +217,7 @@ namespace core { namespace game { namespace player {
 		bool isShooting() const { return _shooting; }
 
 		// get the current charge level [0,1]
-		double getBlastChargeLevel() const { return _blastCharge; }
+		double getCutterChargeLevel() const { return _blastCharge; }
 
 		// origin of gun beam in world space
 		void setBeamOrigin(dvec2 origin) { _beamOrigin = origin; }

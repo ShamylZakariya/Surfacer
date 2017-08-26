@@ -244,10 +244,10 @@ namespace core { namespace game { namespace player {
 		BeamComponent::update(time);
 	}
 
-#pragma mark - BlastBeamComponent
+#pragma mark - CutterBeamComponent
 
 	namespace {
-		void BlastBeamComponent_PointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
+		void CutterBeamComponent_PointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
 				bool *hit = static_cast<bool*>(data);
 				*hit = true;
@@ -261,17 +261,17 @@ namespace core { namespace game { namespace player {
 		seconds_t _startSeconds;
 	*/
 
-	BlastBeamComponent::BlastBeamComponent(config c, PlayerRef player):
+	CutterBeamComponent::CutterBeamComponent(config c, PlayerRef player):
 	player::BeamComponent(c, player),
 	_config(c),
 	_startSeconds(0)
 	{}
 
-	void BlastBeamComponent::fire(dvec2 origin, dvec2 dir) {
+	void CutterBeamComponent::fire(dvec2 origin, dvec2 dir) {
 		BeamComponent::fire(origin, dir);
 	}
 
-	void BlastBeamComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void CutterBeamComponent::onReady(GameObjectRef parent, LevelRef level) {
 
 		_startSeconds = time_state::now();
 
@@ -285,14 +285,14 @@ namespace core { namespace game { namespace player {
 
 	}
 
-	void BlastBeamComponent::update(const time_state &time) {
+	void CutterBeamComponent::update(const time_state &time) {
 		BeamComponent::update(time);
 		if (time.time  - _startSeconds > _config.lifespan) {
 			getGameObject()->setFinished();
 		}
 	}
 
-	void BlastBeamComponent::computeCutSegment() {
+	void CutterBeamComponent::computeCutSegment() {
 		// blast beam isn't animated - just a static segment
 		_segment.tail = _origin;
 		_segment.head = _origin + _dir * _config.range;
@@ -304,7 +304,7 @@ namespace core { namespace game { namespace player {
 		double penetration = 0;
 		for (double dist = 0; dist < _config.range && penetration < _config.cutDepth; dist += stepSize) {
 			bool didHit = false;
-			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, ShapeFilters::TERRAIN_PROBE, BlastBeamComponent_PointQueryFunc, &didHit);
+			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, ShapeFilters::TERRAIN_PROBE, CutterBeamComponent_PointQueryFunc, &didHit);
 			if (didHit) {
 				penetration += stepSize;
 			}
@@ -423,7 +423,7 @@ namespace core { namespace game { namespace player {
 
 	void PlayerGunComponent::update(const time_state &time) {
 		if (_shooting) {
-			_blastCharge = clamp((time.time - _pulseStartTime) * _config.blastChargePerSecond, 0.0, 1.0);
+			_blastCharge = clamp((time.time - _pulseStartTime) * _config.cutterChargePerSecond, 0.0, 1.0);
 		}
 	}
 
@@ -440,7 +440,7 @@ namespace core { namespace game { namespace player {
 	void PlayerGunComponent::fireBlast() {
 		_blastCharge = 0;
 
-		auto bbc = make_shared<BlastBeamComponent>(_config.blast, getGameObjectAs<Player>());
+		auto bbc = make_shared<CutterBeamComponent>(_config.cutter, getGameObjectAs<Player>());
 		bbc->fire(getBeamOrigin(), getBeamDirection());
 
 		getLevel()->addGameObject(GameObject::with("Blast", { bbc, make_shared<BeamDrawComponent>() }));
@@ -1029,7 +1029,7 @@ namespace core { namespace game { namespace player {
 		gl::color(0,1,1,1);
 		gl::drawStrokedRect(chargeRectFrame);
 
-		double charge = sqrt(gun->getBlastChargeLevel());
+		double charge = sqrt(gun->getCutterChargeLevel());
 		int fillHeight = static_cast<int>(ceil(charge * h));
 		Rectf chargeRectFill(bounds.getWidth() - p, p + h-fillHeight, bounds.getWidth() - p - w, p + h);
 		gl::drawSolidRect(chargeRectFill);
@@ -1056,19 +1056,21 @@ namespace core { namespace game { namespace player {
 		//
 
 		XmlTree gunNode = playerNode.getChild("gun");
-		config.gun.blastChargePerSecond = util::xml::readNumericAttribute(gunNode, "blastChargePerSecond", 0.3);
+		config.gun.cutterChargePerSecond = util::xml::readNumericAttribute(gunNode, "blastChargePerSecond", 0.3);
 
 		XmlTree pulseNode = gunNode.getChild("pulse");
 		config.gun.pulse.range = util::xml::readNumericAttribute(pulseNode, "range", 1000);
 		config.gun.pulse.width = util::xml::readNumericAttribute(pulseNode, "width", 2);
+		config.gun.pulse.damage = util::xml::readNumericAttribute(pulseNode, "damage", 0);
 		config.gun.pulse.length = util::xml::readNumericAttribute(pulseNode, "length", 100);
 		config.gun.pulse.velocity = util::xml::readNumericAttribute(pulseNode, "velocity", 100);
 
-		XmlTree blastNode = gunNode.getChild("blast");
-		config.gun.blast.range = util::xml::readNumericAttribute(blastNode, "range", 1000);
-		config.gun.blast.width = util::xml::readNumericAttribute(blastNode, "width", 2);
-		config.gun.blast.lifespan = util::xml::readNumericAttribute(blastNode, "lifespan", 0.5);
-		config.gun.blast.cutDepth = util::xml::readNumericAttribute(blastNode, "cutDepth", config.gun.blast.range);
+		XmlTree cutterNode = gunNode.getChild("cutter");
+		config.gun.cutter.range = util::xml::readNumericAttribute(cutterNode, "range", 1000);
+		config.gun.cutter.width = util::xml::readNumericAttribute(cutterNode, "width", 2);
+		config.gun.cutter.damage = util::xml::readNumericAttribute(cutterNode, "damage", 0);
+		config.gun.cutter.lifespan = util::xml::readNumericAttribute(cutterNode, "lifespan", 0.5);
+		config.gun.cutter.cutDepth = util::xml::readNumericAttribute(cutterNode, "cutDepth", config.gun.cutter.range);
 
 		//
 		//	Physics
