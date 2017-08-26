@@ -80,6 +80,7 @@ namespace core { namespace game {
 
 	void Entity::onDeath() {
 		CI_LOG_D(getName() << " -- DEATH!");
+		setFinished();
 	}
 
 	void Entity::addComponent(ComponentRef component) {

@@ -99,8 +99,6 @@ namespace core { namespace game { namespace player {
 	}
 
 	void BeamProjectile::updateContacts() {
-		_contacts.clear();
-
 		//
 		//	Collect all contacts
 		//	Note: This is pretty baroque. Firstly, SegmentQuery only collects collisions where segment facing shape intersects,

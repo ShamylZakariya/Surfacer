@@ -133,8 +133,8 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	void EggsacPhysicsComponent::onCleanup() {
-		PhysicsComponent::onCleanup();
 		detach();
+		PhysicsComponent::onCleanup();
 	}
 
 	void EggsacPhysicsComponent::step(const time_state &time) {
@@ -213,6 +213,7 @@ namespace core { namespace game { namespace enemy {
 
 	void EggsacPhysicsComponent::detach() {
 		if (isAttached()) {
+			remove(_attachmentSpring);
 			cpCleanupAndFree(_attachmentSpring);
 			_attachedToBody = nullptr;
 			_attachedToShape = nullptr;

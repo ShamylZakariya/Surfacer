@@ -224,6 +224,19 @@ namespace core {
 		}
 	}
 
+	void PhysicsComponent::remove(cpBody *b) {
+		_bodies.erase(std::remove(_bodies.begin(), _bodies.end(), b), _bodies.end());
+	}
+
+	void PhysicsComponent::remove(cpShape *s) {
+		_shapes.erase(std::remove(_shapes.begin(), _shapes.end(), s), _shapes.end());
+	}
+
+	void PhysicsComponent::remove(cpConstraint *c) {
+		_constraints.erase(std::remove(_constraints.begin(), _constraints.end(), c), _constraints.end());
+	}
+
+
 
 #pragma mark - GameObject
 

@@ -77,7 +77,13 @@ namespace core { namespace game { namespace player {
 
 	protected:
 
+		// call this to compute contacts between projectile and scene and notify level
+		// note this is only critical for projectiles with synthetic collisions (e.g., lasers)
+		// not for a rock or some other thing which can be added to the game space
 		void processContacts();
+
+		// custom implementations should compute their contacts here stuffing them into _contacts
+		// which is empty when this function is called. the results will be handled by processContacts
 		virtual void updateContacts() = 0;
 
 	protected:

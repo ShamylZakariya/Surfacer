@@ -148,6 +148,10 @@ namespace core {
 		cpShape *add(cpShape *shape) { _shapes.push_back(shape); return shape; }
 		cpConstraint *add(cpConstraint *c) { _constraints.push_back(c); return c; }
 
+		void remove(cpBody *);
+		void remove(cpShape *);
+		void remove(cpConstraint *);
+
 	private:
 		SpaceAccessRef _space;
 		vector<cpBody*> _bodies;
