@@ -78,17 +78,13 @@ namespace core { namespace game {
 		};
 	}
 
+
 #pragma mark - GameLevel
 
 	class GameLevel : public Level {
 	public:
 		GameLevel();
 		virtual ~GameLevel();
-
-		void load(ci::DataSourceRef levelXmlData);
-		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
-		player::PlayerRef getPlayer() const { return _player; }
-		const set<EntityRef> &getEnemies() const { return _enemies; }
 
 		//
 		//	Level
@@ -97,8 +93,26 @@ namespace core { namespace game {
 		void addGameObject(GameObjectRef obj) override;
 		void removeGameObject(GameObjectRef obj) override;
 
+		//
+		//	GameLevel
+		//
+
+		void load(ci::DataSourceRef levelXmlData);
+		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
+		player::PlayerRef getPlayer() const { return _player; }
+		const set<EntityRef> &getEnemies() const { return _enemies; }
+
+
 	protected:
 
+		// Level
+		void onReady() override;
+		bool onCollisionBegin(cpArbiter *arb) override;
+		bool onCollisionPreSolve(cpArbiter *arb) override;
+		void onCollisionPostSolve(cpArbiter *arb) override;
+		void onCollisionSeparate(cpArbiter *arb) override;
+
+		// GameLevel
 		void applySpaceAttributes(XmlTree spaceNode);
 		void applyGravityAttributes(XmlTree gravityNode);
 		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
@@ -107,12 +121,8 @@ namespace core { namespace game {
 
 		virtual EntityRef classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree node);
 
-		// Level
-		void onReady() override;
-		bool onCollisionBegin(cpArbiter *arb) override;
-		bool onCollisionPreSolve(cpArbiter *arb) override;
-		void onCollisionPostSolve(cpArbiter *arb) override;
-		void onCollisionSeparate(cpArbiter *arb) override;
+		virtual void onPlayerEnemyContact(const EntityRef &enemy);
+		virtual void onPlayerShotEnemy(const GameObjectRef &weapon, const EntityRef &enemy);
 
 	private:
 

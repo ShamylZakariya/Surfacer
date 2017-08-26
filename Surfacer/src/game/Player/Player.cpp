@@ -22,16 +22,16 @@ namespace core { namespace game { namespace player {
 
 	namespace {
 
-		void BeamComponent_SegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
+		void Projectile_SegmentQueryFunc(cpShape *shape, cpVect point, cpVect normal, cpFloat alpha, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
 
-				BeamComponent::contact c;
+				Projectile::contact c;
 				c.position = v2(point);
 				c.normal = v2(normal);
 				c.shape = shape;
 				c.object = cpShapeGetGameObject(shape);
 
-				auto contacts = static_cast<vector<BeamComponent::contact>*>(data);
+				auto contacts = static_cast<vector<Projectile::contact>*>(data);
 				contacts->push_back(c);
 			}
 		}
@@ -39,43 +39,66 @@ namespace core { namespace game { namespace player {
 	}
 
 
-#pragma mark - BeamComponent
+#pragma mark - Projectile
 
 	/*
-		config _config;
-		PlayerWeakRef _player;
-		dvec2 _origin, _dir;
-		segment _segment;
-		vector<contact> _contacts;
+	 config _config;
+	 PlayerWeakRef _player;
+	 dvec2 _origin, _dir;
+	 vector<contact> _contacts;
 	 */
 
-	BeamComponent::BeamComponent(config c, PlayerRef player):
+	Projectile::Projectile(config c, PlayerRef player):
 	_config(c),
 	_player(player),
 	_origin(0),
 	_dir(0)
 	{}
 
-	BeamComponent::~BeamComponent(){}
+	Projectile::~Projectile(){}
 
-	void BeamComponent::fire(dvec2 origin, dvec2 dir) {
-		_segment.len = 0;
-		_origin = _segment.head = _segment.tail = origin;
+	void Projectile::fire(dvec2 origin, dvec2 dir) {
+		_origin = origin;
 		_dir = normalize(dir);
 	}
 
-	double BeamComponent::getWidth() const {
-		return _config.width;
+	void Projectile::processContacts() {
+		_contacts.clear();
+
+		updateContacts();
+
+		//
+		//	Notify level of contacts
+		//
+
+		const LevelRef &level = getLevel();
+		for (const auto &contact : _contacts) {
+			level->registerContactBetweenObjects(CollisionType::WEAPON, getGameObject(), cpShapeGetCollisionType(contact.shape), contact.object);
+		}
 	}
 
-	void BeamComponent::onReady(GameObjectRef parent, LevelRef level) {
-		Component::onReady(parent, level);
+#pragma mark - BeamProjectile
+
+	/*
+	 config _config;
+	 segment _segment;
+	 */
+
+	BeamProjectile::BeamProjectile(config c, PlayerRef player):
+	Projectile(c, player),
+	_config(c)
+	{}
+
+	BeamProjectile::~BeamProjectile()
+	{}
+
+	void BeamProjectile::fire(dvec2 origin, dvec2 dir) {
+		Projectile::fire(origin, dir);
+		_segment.len = 0;
+		_segment.head = _segment.tail = origin;
 	}
 
-	void BeamComponent::update(const time_state &time) {}
-
-	// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
-	void BeamComponent::updateContacts() {
+	void BeamProjectile::updateContacts() {
 		_contacts.clear();
 
 		//
@@ -95,8 +118,8 @@ namespace core { namespace game { namespace player {
 		double radius = _config.width / 2;
 
 		vector<contact> rawContacts;
-		cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, BeamComponent_SegmentQueryFunc, &rawContacts);
-		cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, BeamComponent_SegmentQueryFunc, &rawContacts);
+		cpSpaceSegmentQuery(space, start, end, radius, CP_SHAPE_FILTER_ALL, Projectile_SegmentQueryFunc, &rawContacts);
+		cpSpaceSegmentQuery(space, end, start, radius, CP_SHAPE_FILTER_ALL, Projectile_SegmentQueryFunc, &rawContacts);
 
 		//
 		// filter to those inside the segment range
@@ -143,29 +166,10 @@ namespace core { namespace game { namespace player {
 		} else {
 			_contacts = filteredContacts;
 		}
-
-		//
-		//	Notify level of contacts
-		//
-
-		const LevelRef &level = getLevel();
-		for (const auto &contact : _contacts) {
-			level->registerContactBetweenObjects(CollisionType::WEAPON, getGameObject(), cpShapeGetCollisionType(contact.shape), contact.object);
-		}
-
-		//
-		//	Now notify Player of contacts
-		//
-
-		if(const auto player = getPlayer()) {
-			const auto self = shared_from_this_as<BeamComponent>();
-			for (auto &c : _contacts) {
-				player->onShotSomething(self, c);
-			}
-		}
 	}
 
-#pragma mark - PulseBeamComponent
+
+#pragma mark - PulseProjectile
 
 	/*
 		config _config;
@@ -173,17 +177,17 @@ namespace core { namespace game { namespace player {
 		bool _hasHit;
 	*/
 
-	PulseBeamComponent::PulseBeamComponent(config c, PlayerRef player):
-	player::BeamComponent(c, player),
+	PulseProjectile::PulseProjectile(config c, PlayerRef player):
+	BeamProjectile(c, player),
 	_config(c),
 	_distanceTraveled(0),
 	_hasHit(false)
 	{}
 
-	PulseBeamComponent::~PulseBeamComponent(){}
+	PulseProjectile::~PulseProjectile(){}
 
-	void PulseBeamComponent::update(const time_state &time) {
-		BeamComponent::update(time);
+	void PulseProjectile::update(const time_state &time) {
+		Projectile::update(time);
 
 		GameObjectRef go = getGameObject();
 		CI_ASSERT_MSG(go, "GameObject should be accessbile");
@@ -221,7 +225,7 @@ namespace core { namespace game { namespace player {
 		//
 
 		if (!_hasHit) {
-			updateContacts();
+			processContacts();
 			_hasHit = !_contacts.empty();
 
 			//
@@ -241,13 +245,13 @@ namespace core { namespace game { namespace player {
 
 		notifyMoved();
 
-		BeamComponent::update(time);
+		Projectile::update(time);
 	}
 
-#pragma mark - CutterBeamComponent
+#pragma mark - CutterProjectile
 
 	namespace {
-		void CutterBeamComponent_PointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
+		void CutterProjectile_PointQueryFunc(cpShape *shape, cpVect point, cpFloat distance, cpVect gradient, void *data) {
 			if (cpShapeGetCollisionType( shape ) != CollisionType::PLAYER) {
 				bool *hit = static_cast<bool*>(data);
 				*hit = true;
@@ -261,21 +265,21 @@ namespace core { namespace game { namespace player {
 		seconds_t _startSeconds;
 	*/
 
-	CutterBeamComponent::CutterBeamComponent(config c, PlayerRef player):
-	player::BeamComponent(c, player),
+	CutterProjectile::CutterProjectile(config c, PlayerRef player):
+	BeamProjectile(c, player),
 	_config(c),
 	_startSeconds(0)
 	{}
 
-	void CutterBeamComponent::fire(dvec2 origin, dvec2 dir) {
-		BeamComponent::fire(origin, dir);
+	void CutterProjectile::fire(dvec2 origin, dvec2 dir) {
+		Projectile::fire(origin, dir);
 	}
 
-	void CutterBeamComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void CutterProjectile::onReady(GameObjectRef parent, LevelRef level) {
 
 		_startSeconds = time_state::now();
 
-		updateContacts();
+		processContacts();
 		computeCutSegment();
 
 		terrain::TerrainObjectRef terrain = static_pointer_cast<GameLevel>(level)->getTerrain();
@@ -285,14 +289,14 @@ namespace core { namespace game { namespace player {
 
 	}
 
-	void CutterBeamComponent::update(const time_state &time) {
-		BeamComponent::update(time);
+	void CutterProjectile::update(const time_state &time) {
+		Projectile::update(time);
 		if (time.time  - _startSeconds > _config.lifespan) {
 			getGameObject()->setFinished();
 		}
 	}
 
-	void CutterBeamComponent::computeCutSegment() {
+	void CutterProjectile::computeCutSegment() {
 		// blast beam isn't animated - just a static segment
 		_segment.tail = _origin;
 		_segment.head = _origin + _dir * _config.range;
@@ -304,7 +308,7 @@ namespace core { namespace game { namespace player {
 		double penetration = 0;
 		for (double dist = 0; dist < _config.range && penetration < _config.cutDepth; dist += stepSize) {
 			bool didHit = false;
-			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, ShapeFilters::TERRAIN_PROBE, CutterBeamComponent_PointQueryFunc, &didHit);
+			cpSpacePointQuery(space, cpv(_origin + _dir * dist), 0, ShapeFilters::TERRAIN_PROBE, CutterProjectile_PointQueryFunc, &didHit);
 			if (didHit) {
 				penetration += stepSize;
 			}
@@ -316,26 +320,26 @@ namespace core { namespace game { namespace player {
 	}
 
 
-#pragma mark - BeamDrawComponent
+#pragma mark - BeamProjectileDrawComponent
 
-	BeamDrawComponent::BeamDrawComponent(){}
-	BeamDrawComponent::~BeamDrawComponent(){}
+	BeamProjectileDrawComponent::BeamProjectileDrawComponent(){}
+	BeamProjectileDrawComponent::~BeamProjectileDrawComponent(){}
 
-	void BeamDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
-		_beam = getSibling<BeamComponent>();
+	void BeamProjectileDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+		_beam = getSibling<BeamProjectile>();
 		DrawComponent::onReady(parent, level);
 	}
 
-	cpBB BeamDrawComponent::getBB() const {
-		if (BeamComponentRef beam = _beam.lock()) {
+	cpBB BeamProjectileDrawComponent::getBB() const {
+		if (BeamProjectileRef beam = _beam.lock()) {
 			auto seg = beam->getSegment();
 			return cpBBNewLineSegment(seg.head, seg.tail);
 		}
 		return cpBBInvalid;
 	}
 
-	void BeamDrawComponent::draw(const render_state &renderState) {
-		if (BeamComponentRef beam = _beam.lock()) {
+	void BeamProjectileDrawComponent::draw(const render_state &renderState) {
+		if (BeamProjectileRef beam = _beam.lock()) {
 			auto seg = beam->getSegment();
 
 			// scale width up to not be less than 1px
@@ -366,42 +370,42 @@ namespace core { namespace game { namespace player {
 		}
 	}
 
-	VisibilityDetermination::style BeamDrawComponent::getVisibilityDetermination() const {
+	VisibilityDetermination::style BeamProjectileDrawComponent::getVisibilityDetermination() const {
 		return VisibilityDetermination::FRUSTUM_CULLING;
 	}
 
-	int BeamDrawComponent::getLayer() const {
+	int BeamProjectileDrawComponent::getLayer() const {
 		return DrawLayers::PLAYER;
 	}
 
-	int BeamDrawComponent::getDrawPasses() const {
+	int BeamProjectileDrawComponent::getDrawPasses() const {
 		return 1;
 	}
 
 
-#pragma mark - PlayerGunComponent
+#pragma mark - Gun
 
 
 	/*
 		config _config;
 		bool _shooting;
-		dvec2 _beamOrigin, _beamDir;
-		double _blastCharge;
-		seconds_t _pulseStartTime, _blastStartTime;
+		dvec2 _aimOrigin, _aimDir;
+		double _charge;
+		seconds_t _chargeStartTime, _blastStartTime;
 	 */
 
-	PlayerGunComponent::PlayerGunComponent(config c):
+	Gun::Gun(config c):
 	_config(c),
 	_shooting(false),
-	_beamOrigin(0),
-	_beamDir(0),
-	_blastCharge(0),
-	_pulseStartTime(-std::numeric_limits<seconds_t>::max())
+	_aimOrigin(0),
+	_aimDir(0),
+	_charge(0),
+	_chargeStartTime(-std::numeric_limits<seconds_t>::max())
 	{}
 
-	PlayerGunComponent::~PlayerGunComponent() {}
+	Gun::~Gun() {}
 
-	void PlayerGunComponent::setShooting(bool shooting) {
+	void Gun::setShooting(bool shooting) {
 		if (shooting == _shooting) {
 			return;
 		}
@@ -411,8 +415,8 @@ namespace core { namespace game { namespace player {
 		}
 
 		if (_shooting && !shooting) {
-			if (_blastCharge >= 1 - 1e-2 ) {
-				fireBlast();
+			if (_charge >= 1 - 1e-2 ) {
+				fireCutter();
 			} else {
 				firePulse();
 			}
@@ -421,29 +425,29 @@ namespace core { namespace game { namespace player {
 		_shooting = shooting;
 	}
 
-	void PlayerGunComponent::update(const time_state &time) {
+	void Gun::update(const time_state &time) {
 		if (_shooting) {
-			_blastCharge = clamp((time.time - _pulseStartTime) * _config.cutterChargePerSecond, 0.0, 1.0);
+			_charge = clamp((time.time - _chargeStartTime) * _config.cutterChargePerSecond, 0.0, 1.0);
 		}
 	}
 
-	void PlayerGunComponent::firePulse() {
-		_blastCharge = 0;
-		_pulseStartTime = time_state::now();
+	void Gun::firePulse() {
+		_charge = 0;
+		_chargeStartTime = time_state::now();
 
-		auto pbc = make_shared<PulseBeamComponent>(_config.pulse, getGameObjectAs<Player>());
-		pbc->fire(getBeamOrigin(), getBeamDirection());
+		auto pulse = make_shared<PulseProjectile>(_config.pulse, getGameObjectAs<Player>());
+		pulse->fire(getAimOrigin(), getAimDirection());
 
-		getLevel()->addGameObject(GameObject::with("Pulse", { pbc, make_shared<BeamDrawComponent>() }));
+		getLevel()->addGameObject(GameObject::with("Pulse", { pulse, make_shared<BeamProjectileDrawComponent>() }));
 	}
 
-	void PlayerGunComponent::fireBlast() {
-		_blastCharge = 0;
+	void Gun::fireCutter() {
+		_charge = 0;
 
-		auto bbc = make_shared<CutterBeamComponent>(_config.cutter, getGameObjectAs<Player>());
-		bbc->fire(getBeamOrigin(), getBeamDirection());
+		auto cutter = make_shared<CutterProjectile>(_config.cutter, getGameObjectAs<Player>());
+		cutter->fire(getAimOrigin(), getAimDirection());
 
-		getLevel()->addGameObject(GameObject::with("Blast", { bbc, make_shared<BeamDrawComponent>() }));
+		getLevel()->addGameObject(GameObject::with("Blast", { cutter, make_shared<BeamProjectileDrawComponent>() }));
 	}
 
 #pragma mark - PlayerPhysicsComponent
@@ -947,7 +951,7 @@ namespace core { namespace game { namespace player {
 
 	void PlayerDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		_physics = getSibling<JetpackUnicyclePlayerPhysicsComponent>();
-		_gun = getSibling<PlayerGunComponent>();
+		_gun = getSibling<Gun>();
 
 		DrawComponent::onReady(parent, level);
 	}
@@ -965,8 +969,8 @@ namespace core { namespace game { namespace player {
 	}
 
 	void PlayerDrawComponent::drawScreen(const render_state &renderState) {
-		PlayerGunComponentRef gun = _gun.lock();
-		CI_ASSERT_MSG(gun, "PlayerGunComponent should be accessbile");
+		GunRef gun = _gun.lock();
+		CI_ASSERT_MSG(gun, "Gun should be accessbile");
 		drawGunCharge(gun, renderState);
 	}
 
@@ -1017,7 +1021,7 @@ namespace core { namespace game { namespace player {
 		}
 	}
 
-	void PlayerDrawComponent::drawGunCharge(PlayerGunComponentRef gun, const render_state &renderState) {
+	void PlayerDrawComponent::drawGunCharge(GunRef gun, const render_state &renderState) {
 		// we're in screen space
 		Rectd bounds = renderState.viewport->getBounds();
 
@@ -1029,7 +1033,7 @@ namespace core { namespace game { namespace player {
 		gl::color(0,1,1,1);
 		gl::drawStrokedRect(chargeRectFrame);
 
-		double charge = sqrt(gun->getCutterChargeLevel());
+		double charge = sqrt(gun->getCharge());
 		int fillHeight = static_cast<int>(ceil(charge * h));
 		Rectf chargeRectFill(bounds.getWidth() - p, p + h-fillHeight, bounds.getWidth() - p - w, p + h);
 		gl::drawSolidRect(chargeRectFill);
@@ -1149,8 +1153,8 @@ namespace core { namespace game { namespace player {
 			//	TODO: Be smarter about gun origin
 			//
 
-			_gun->setBeamOrigin((_physics->getPosition()));
-			_gun->setBeamDirection(normalize(_input->getShootingTargetWorld() - _gun->getBeamOrigin()));
+			_gun->setAimOrigin((_physics->getPosition()));
+			_gun->setAimDirection(normalize(_input->getShootingTargetWorld() - _gun->getAimOrigin()));
 			_gun->setShooting(_input->isShooting());
 		}
 	}
@@ -1159,16 +1163,12 @@ namespace core { namespace game { namespace player {
 		return TargetTrackingViewportControlComponent::tracking(_physics->getPosition(), _physics->getUp(), getConfig().physics.height * 2);
 	}
 
-	void Player::onShotSomething(const BeamComponentRef &beam, const BeamComponent::contact &contact) {
-		didShootSomething(beam, contact);
-	}
-
 	void Player::build(config c) {
 		_config = c;
 		_input = make_shared<PlayerInputComponent>();
 		_drawing = make_shared<PlayerDrawComponent>();
 		_physics = make_shared<JetpackUnicyclePlayerPhysicsComponent>(c.physics);
-		_gun = make_shared<PlayerGunComponent>(c.gun);
+		_gun = make_shared<Gun>(c.gun);
 		auto health = make_shared<HealthComponent>(c.health);
 
 		addComponent(_input);

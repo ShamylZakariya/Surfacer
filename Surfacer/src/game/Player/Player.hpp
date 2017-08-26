@@ -18,25 +18,24 @@
 namespace core { namespace game { namespace player {
 
 	SMART_PTR(Player);
-	SMART_PTR(PlayerGunComponent);
+	SMART_PTR(Gun);
 	SMART_PTR(PlayerPhysicsComponent);
 	SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
 	SMART_PTR(PlayerDrawComponent);
 	SMART_PTR(PlayerInputComponent);
-	SMART_PTR(BeamComponent);
+	SMART_PTR(Projectile);
+	SMART_PTR(BeamProjectile);
 
-#pragma mark - BeamComponent
+#pragma mark - Projectile
 
-	class BeamComponent : public Component {
+	class Projectile : public Component {
 	public:
 
 		struct config {
-			double width;
 			double range;
 			double damage;
 
 			config():
-			width(0),
 			range(0),
 			damage(0)
 			{}
@@ -62,6 +61,44 @@ namespace core { namespace game { namespace player {
 			{}
 		};
 
+	public:
+
+		Projectile(config c, PlayerRef player);
+		virtual ~Projectile();
+
+		virtual void fire(dvec2 origin, dvec2 dir);
+		dvec2 getOrigin() const { return _origin; }
+		dvec2 getDirection() const { return _dir; }
+		PlayerRef getPlayer() const { return _player.lock(); }
+		float getDamage() const { return _config.damage; }
+
+		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
+		const vector<contact> &getContacts() const { return _contacts; }
+
+	protected:
+
+		void processContacts();
+		virtual void updateContacts() = 0;
+
+	protected:
+
+		config _config;
+		PlayerWeakRef _player;
+		dvec2 _origin, _dir;
+		vector<contact> _contacts;
+
+	};
+
+	class BeamProjectile : public Projectile {
+	public:
+		struct config : public Projectile::config {
+			float width;
+
+			config():
+			width(0)
+			{}
+		};
+
 		struct segment {
 			dvec2 head, tail;
 			double len;
@@ -75,41 +112,29 @@ namespace core { namespace game { namespace player {
 
 	public:
 
-		BeamComponent(config c, PlayerRef player);
-		virtual ~BeamComponent();
+		BeamProjectile(config c, PlayerRef player);
+		virtual ~BeamProjectile();
 
-		virtual void fire(dvec2 origin, dvec2 dir);
-		dvec2 getOrigin() const { return _origin; }
-		dvec2 getDirection() const { return _dir; }
-		double getWidth() const;
+		void fire(dvec2 origin, dvec2 dir) override;
+		double getWidth() const { return _config.width; }
 		segment getSegment() const { return _segment; }
-		PlayerRef getPlayer() const { return _player.lock(); }
-
-		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
-		const vector<contact> &getContacts() const { return _contacts; }
-
-		// Component
-		void onReady(GameObjectRef parent, LevelRef level) override;
-		void update(const time_state &time) override;
 
 	protected:
 
-		void updateContacts();
+		void updateContacts() override;
 
 	protected:
 
 		config _config;
-		PlayerWeakRef _player;
-		dvec2 _origin, _dir;
 		segment _segment;
-		vector<contact> _contacts;
 
 	};
 
-	class PulseBeamComponent : public BeamComponent {
+
+	class PulseProjectile : public BeamProjectile {
 	public:
 
-		struct config : public BeamComponent::config {
+		struct config : public BeamProjectile::config {
 			double length;
 			double velocity;
 
@@ -121,8 +146,8 @@ namespace core { namespace game { namespace player {
 
 	public:
 
-		PulseBeamComponent(config c, PlayerRef player);
-		virtual ~PulseBeamComponent();
+		PulseProjectile(config c, PlayerRef player);
+		virtual ~PulseProjectile();
 
 		// Component
 		void update(const time_state &time) override;
@@ -135,10 +160,10 @@ namespace core { namespace game { namespace player {
 
 	};
 
-	class CutterBeamComponent : public BeamComponent {
+	class CutterProjectile : public BeamProjectile {
 	public:
 
-		struct config : public BeamComponent::config {
+		struct config : public BeamProjectile::config {
 			seconds_t lifespan;
 			double cutDepth;
 
@@ -150,10 +175,10 @@ namespace core { namespace game { namespace player {
 
 	public:
 
-		CutterBeamComponent(config c, PlayerRef player);
-		virtual ~CutterBeamComponent(){}
+		CutterProjectile(config c, PlayerRef player);
+		virtual ~CutterProjectile(){}
 
-		// BeamComponent
+		// Projectile
 		void fire(dvec2 origin, dvec2 dir) override;
 
 		// Component
@@ -171,13 +196,13 @@ namespace core { namespace game { namespace player {
 
 	};
 
-#pragma mark - BeamDrawComponent
+#pragma mark - BeamProjectileDrawComponent
 
-	class BeamDrawComponent : public DrawComponent {
+	class BeamProjectileDrawComponent : public DrawComponent {
 	public:
 
-		BeamDrawComponent();
-		virtual ~BeamDrawComponent();
+		BeamProjectileDrawComponent();
+		virtual ~BeamProjectileDrawComponent();
 
 		// Component
 		void onReady(GameObjectRef parent, LevelRef level) override;
@@ -192,40 +217,40 @@ namespace core { namespace game { namespace player {
 
 	private:
 
-		BeamComponentWeakRef _beam;
-
+		BeamProjectileWeakRef _beam;
+		
 	};
 
 
-#pragma mark - PlayerGunComponent
+#pragma mark - Gun
 
-	class PlayerGunComponent : public Component {
+	class Gun : public Component {
 	public:
 
 		struct config {
-			PulseBeamComponent::config pulse;
-			CutterBeamComponent::config cutter;
+			PulseProjectile::config pulse;
+			CutterProjectile::config cutter;
 			double cutterChargePerSecond;
 		};
 
 	public:
 
-		PlayerGunComponent(config c);
-		virtual ~PlayerGunComponent();
+		Gun(config c);
+		virtual ~Gun();
 
 		void setShooting(bool shooting);
 		bool isShooting() const { return _shooting; }
 
 		// get the current charge level [0,1]
-		double getCutterChargeLevel() const { return _blastCharge; }
+		double getCharge() const { return _charge; }
 
 		// origin of gun beam in world space
-		void setBeamOrigin(dvec2 origin) { _beamOrigin = origin; }
-		dvec2 getBeamOrigin() const { return _beamOrigin; }
+		void setAimOrigin(dvec2 origin) { _aimOrigin = origin; }
+		dvec2 getAimOrigin() const { return _aimOrigin; }
 
 		// normalized direction of gun beam in world space
-		void setBeamDirection(dvec2 dir) { _beamDir = dir; }
-		dvec2 getBeamDirection() const { return _beamDir; }
+		void setAimDirection(dvec2 dir) { _aimDir = dir; }
+		dvec2 getAimDirection() const { return _aimDir; }
 
 		// Component
 		void update(const time_state &time) override;
@@ -233,15 +258,15 @@ namespace core { namespace game { namespace player {
 	private:
 
 		void firePulse();
-		void fireBlast();
+		void fireCutter();
 
 	private:
 
 		config _config;
 		bool _shooting;
-		dvec2 _beamOrigin, _beamDir;
-		double _blastCharge;
-		seconds_t _pulseStartTime;
+		dvec2 _aimOrigin, _aimDir;
+		double _charge;
+		seconds_t _chargeStartTime;
 
 	};
 
@@ -409,12 +434,12 @@ namespace core { namespace game { namespace player {
 	protected:
 
 		void drawPlayer(const render_state &renderState);
-		void drawGunCharge(PlayerGunComponentRef gun, const render_state &renderState);
+		void drawGunCharge(GunRef gun, const render_state &renderState);
 
 	private:
 		
 		JetpackUnicyclePlayerPhysicsComponentWeakRef _physics;
-		PlayerGunComponentWeakRef _gun;
+		GunWeakRef _gun;
 		
 	};
 
@@ -423,11 +448,9 @@ namespace core { namespace game { namespace player {
 	class Player : public Entity, public TargetTrackingViewportControlComponent::TrackingTarget {
 	public:
 
-		signals::signal< void( const BeamComponentRef &, const BeamComponent::contact &contact ) > didShootSomething;
-
 		struct config {
 			PlayerPhysicsComponent::config physics;
-			PlayerGunComponent::config gun;
+			Gun::config gun;
 			HealthComponent::config health;
 
 			// TODO: Add a PlayerDrawComponent::config for appearance control
@@ -464,12 +487,9 @@ namespace core { namespace game { namespace player {
 
 		const PlayerPhysicsComponentRef &getPhysics() const { return _physics; }
 		const PlayerInputComponentRef &getInput() const { return _input; }
-		const PlayerGunComponentRef &getGun() const { return _gun; }
+		const GunRef &getGun() const { return _gun; }
 
 	protected:
-
-		friend class BeamComponent;
-		virtual void onShotSomething(const BeamComponentRef &beam, const BeamComponent::contact &contact);
 
 		virtual void build(config c);
 
@@ -479,7 +499,7 @@ namespace core { namespace game { namespace player {
 		PlayerPhysicsComponentRef _physics;
 		PlayerDrawComponentRef _drawing;
 		PlayerInputComponentRef _input;
-		PlayerGunComponentRef _gun;
+		GunRef _gun;
 
 	};
 

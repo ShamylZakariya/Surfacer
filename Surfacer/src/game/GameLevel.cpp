@@ -37,6 +37,24 @@ namespace core { namespace game {
 	GameLevel::~GameLevel()
 	{}
 
+	void GameLevel::addGameObject(GameObjectRef obj) {
+		Level::addGameObject(obj);
+	}
+
+	void GameLevel::removeGameObject(GameObjectRef obj) {
+		Level::removeGameObject(obj);
+
+		// if this obj was an Enemy, remove it from our store
+		if (EntityRef entity = dynamic_pointer_cast<Entity>(obj)) {
+			_enemies.erase(entity);
+		}
+
+		// if this obj was the player, remove it from our store
+		if (_player == obj) {
+			_player.reset();
+		}
+	}
+
 	void GameLevel::load(ci::DataSourceRef levelXmlData) {
 
 		auto root = XmlTree(levelXmlData);
@@ -85,24 +103,31 @@ namespace core { namespace game {
 		}
 	}
 
-	void GameLevel::addGameObject(GameObjectRef obj) {
-		Level::addGameObject(obj);
+	void GameLevel::onReady() {
+		Level::onReady();
+
+		addContactHandler(CollisionType::ENEMY, CollisionType::PLAYER, [this](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player){
+			this->onPlayerEnemyContact(dynamic_pointer_cast<Entity>(enemy));
+		});
+
+		addContactHandler(CollisionType::WEAPON, CollisionType::ENEMY, [this](const Level::collision_type_pair &ctp, const GameObjectRef &weapon, const GameObjectRef &enemy){
+			this->onPlayerShotEnemy(weapon, dynamic_pointer_cast<Entity>(enemy));
+		});
 	}
 
-	void GameLevel::removeGameObject(GameObjectRef obj) {
-		Level::removeGameObject(obj);
-
-		// if this obj was an Enemy, remove it from our store
-		if (EntityRef entity = dynamic_pointer_cast<Entity>(obj)) {
-			_enemies.erase(entity);
-		}
-
-		// if this obj was the player, remove it from our store
-		if (_player == obj) {
-			_player.reset();
-		}
+	bool GameLevel::onCollisionBegin(cpArbiter *arb) {
+		return true;
 	}
 
+	bool GameLevel::onCollisionPreSolve(cpArbiter *arb) {
+		return true;
+	}
+
+	void GameLevel::onCollisionPostSolve(cpArbiter *arb) {
+	}
+
+	void GameLevel::onCollisionSeparate(cpArbiter *arb) {
+	}
 
 	void GameLevel::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
@@ -247,35 +272,18 @@ namespace core { namespace game {
 		return nullptr;
 	}
 
-	void GameLevel::onReady() {
-		Level::onReady();
-		addCollisionBeginHandler(CollisionType::ENEMY, CollisionType::PLAYER,
-		                         [](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player, cpArbiter *arb)->bool{
-									 //CI_LOG_D("COLLISION_BEGIN - Enemy: " << enemy->getName() << " contact player: " << player->getName());
-									 return true;
-		                         });
-
-		addContactHandler(CollisionType::ENEMY, CollisionType::PLAYER, [](const Level::collision_type_pair &ctp, const GameObjectRef &enemy, const GameObjectRef &player){
-			//CI_LOG_D("CONTACT - Enemy: " << enemy->getName() << " contact player: " << player->getName());
-		});
-
-		addContactHandler(CollisionType::WEAPON, CollisionType::ENEMY, [](const Level::collision_type_pair &ctp, const GameObjectRef &weapon, const GameObjectRef &enemy){
-			CI_LOG_D("CONTACT - WEAPON: " << weapon->getName() << " contact enemy: " << enemy->getName());
-		});
+	void GameLevel::onPlayerEnemyContact(const EntityRef &enemy) {
+		HealthComponentRef health = _player->getHealthComponent();
+		// TODO: Define contact damage for enemy touching player
 	}
 
-	bool GameLevel::onCollisionBegin(cpArbiter *arb) {
-		return true;
-	}
+	void GameLevel::onPlayerShotEnemy(const GameObjectRef &weapon, const EntityRef &enemy) {
+		player::ProjectileRef projectile = weapon->getComponent<player::Projectile>();
+		HealthComponentRef health = enemy->getHealthComponent();
 
-	bool GameLevel::onCollisionPreSolve(cpArbiter *arb) {
-		return true;
-	}
-
-	void GameLevel::onCollisionPostSolve(cpArbiter *arb) {
-	}
-
-	void GameLevel::onCollisionSeparate(cpArbiter *arb) {
+		float damageToDeal = projectile->getDamage();
+		health->takeInjury(damageToDeal);
+		CI_LOG_D(enemy->getName() << " shot, taking " << damageToDeal << " damage yeilding health of: " << health->getHealth());
 	}
 
 	
