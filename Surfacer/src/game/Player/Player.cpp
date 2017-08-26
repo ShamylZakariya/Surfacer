@@ -239,7 +239,7 @@ namespace core { namespace game { namespace player {
 		//	Notify that bounds have changed
 		//
 
-		go->getDrawComponent()->notifyMoved();
+		notifyMoved();
 
 		BeamComponent::update(time);
 	}
@@ -824,7 +824,7 @@ namespace core { namespace game { namespace player {
 		//	Draw component needs update its BB for draw dispatch
 		//
 
-		player->getDrawComponent()->notifyMoved();
+		notifyMoved();
 	}
 
 	dvec2 JetpackUnicyclePlayerPhysicsComponent::getPosition() const {

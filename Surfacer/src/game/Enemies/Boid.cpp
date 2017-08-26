@@ -452,19 +452,11 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	boost::optional<pair<cpBB,dvec2>> BoidFlockController::_getGameObjectPosition(const GameObjectRef &obj) const {
-		bool hasBounds = false;
-		cpBB bounds;
 		if (PhysicsComponentRef pc = obj->getPhysicsComponent()) {
-			hasBounds = true;
-			bounds = pc->getBB();
-		} else if (DrawComponentRef dc = obj->getDrawComponent()) {
-			hasBounds = true;
-			bounds = dc->getBB();
-		}
-
-		if (hasBounds) {
+			cpBB bounds = pc->getBB();
 			return make_pair(bounds, v2(cpBBCenter(bounds)));
 		}
+
 		return boost::none;
 	}
 

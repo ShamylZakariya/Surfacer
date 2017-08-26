@@ -109,9 +109,10 @@ namespace core {
 	}
 
 	/*
-		cpSpatialIndex *_index;
-		set<DrawComponentRef> _all, _alwaysVisible, _deferredSpatialIndexInsertion;
-		collector _collector;
+		 cpSpatialIndex *_index;
+		 set<DrawComponentRef> _all, _alwaysVisible, _deferredSpatialIndexInsertion;
+		 map<size_t, set<DrawComponentRef>> _drawComponentsById;
+		 collector _collector;
 	 */
 
 	DrawDispatcher::DrawDispatcher():
@@ -123,8 +124,10 @@ namespace core {
 		cpSpatialIndexFree( _index );
 	}
 
-	void DrawDispatcher::add( const DrawComponentRef &dc )
+	void DrawDispatcher::add( size_t id, const DrawComponentRef &dc )
 	{
+		_drawComponentsById[id].insert(dc);
+
 		if (_all.insert(dc).second) {
 			switch( dc->getVisibilityDetermination() )
 			{
@@ -141,6 +144,12 @@ namespace core {
 				case VisibilityDetermination::NEVER_DRAW:
 					break;
 			}
+		}
+	}
+
+	void DrawDispatcher::remove(size_t id) {
+		for (auto &dc : _drawComponentsById[id]) {
+			remove(dc);
 		}
 	}
 
@@ -190,8 +199,10 @@ namespace core {
 	void DrawDispatcher::cull( const render_state &state )
 	{
 		// if we have any deferred insertions to spatial index, do it now
-		if (!_deferredSpatialIndexInsertion.empty()) {
-			for (const auto &dc : _deferredSpatialIndexInsertion) {
+		if (!_deferredSpatialIndexInsertion.empty())
+		{
+			for (const auto &dc : _deferredSpatialIndexInsertion)
+			{
 				cpSpatialIndexInsert( _index, dc.get(), getCPHashValue(dc) );
 			}
 			_deferredSpatialIndexInsertion.clear();
@@ -459,11 +470,13 @@ namespace core {
 	void Level::addGameObject(GameObjectRef obj) {
 		CI_ASSERT_MSG(!obj->getLevel(), "Can't add a GameObject that already has been added to this or another Level");
 
-		_objects.insert(obj);
-		_objectsById[obj->getId()] = obj;
+		size_t id = obj->getId();
 
-		if (DrawComponentRef dc = obj->getDrawComponent()) {
-			_drawDispatcher->add(dc);
+		_objects.insert(obj);
+		_objectsById[id] = obj;
+
+		for (auto &dc : obj->getDrawComponents()) {
+			_drawDispatcher->add(id, dc);
 		}
 
 		obj->onAddedToLevel(shared_from_this_as<Level>());
@@ -477,12 +490,11 @@ namespace core {
 	void Level::removeGameObject(GameObjectRef obj) {
 		CI_ASSERT_MSG(obj->getLevel().get() == this, "Can't remove a GameObject which isn't a child of this Level");
 
-		_objects.erase(obj);
-		_objectsById.erase(obj->getId());
+		size_t id = obj->getId();
 
-		if (DrawComponentRef dc = obj->getDrawComponent()) {
-			_drawDispatcher->remove(dc);
-		}
+		_objects.erase(obj);
+		_objectsById.erase(id);
+		_drawDispatcher->remove(id);
 
 		obj->onRemovedFromLevel();
 	}

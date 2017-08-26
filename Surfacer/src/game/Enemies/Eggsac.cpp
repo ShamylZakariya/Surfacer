@@ -161,7 +161,7 @@ namespace core { namespace game { namespace enemy {
 		_up = dvec2(cos(angle), sin(angle));
 		_right = rotateCW(_up);
 
-		getGameObject()->getDrawComponent()->notifyMoved();
+		notifyMoved();
 	}
 
 	cpBB EggsacPhysicsComponent::getBB() const {

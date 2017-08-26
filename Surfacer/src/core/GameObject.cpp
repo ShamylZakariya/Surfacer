@@ -43,16 +43,16 @@ namespace core {
 		return getGameObject()->getLevel();
 	}
 
+	void Component::notifyMoved() {
+		getGameObject()->notifyMoved();
+	}
+
 #pragma mark - DrawComponent
 
 	cpBB DrawComponent::getBB() const {
-		return getGameObject()->getPhysicsComponent()->getBB();
+		return getGameObject()->getBB();
 	}
-
-	void DrawComponent::notifyMoved() {
-		getGameObject()->getLevel()->getDrawDispatcher()->moved(this);
-	}
-
+	
 	void DrawComponent::onReady(GameObjectRef parent, LevelRef level) {
 		Component::onReady(parent, level);
 		level->getDrawDispatcher()->moved(this);
@@ -228,12 +228,15 @@ namespace core {
 #pragma mark - GameObject
 
 	/*
-		static size_t _idCounter;
-		size_t _id;
-		string _name;
-		bool _finished, _ready;
-		set<ComponentRef> _components;
-		DrawComponentRef _drawComponent;
+	 static size_t _idCounter;
+	 size_t _id;
+	 string _name;
+	 bool _finished;
+	 bool _ready;
+	 set<ComponentRef> _components;
+	 set<DrawComponentRef> _drawComponents;
+	 PhysicsComponentRef _physicsComponent;
+	 LevelWeakRef _level;
 	 */
 
 	size_t GameObject::_idCounter = 0;
@@ -259,8 +262,7 @@ namespace core {
 		_components.insert(component);
 
 		if (DrawComponentRef dc = dynamic_pointer_cast<DrawComponent>(component)) {
-			CI_ASSERT_MSG(!_drawComponent, "Can't assign more than one DrawComponent");
-			_drawComponent = dc;
+			_drawComponents.insert(dc);
 		}
 
 		if (PhysicsComponentRef pc = dynamic_pointer_cast<PhysicsComponent>(component)) {
@@ -280,8 +282,8 @@ namespace core {
 			_components.erase(component);
 			component->detachedFromGameObject();
 
-			if (_drawComponent == component) {
-				_drawComponent.reset();
+			if (DrawComponentRef dc = dynamic_pointer_cast<DrawComponent>(component)) {
+				_drawComponents.erase(dc);
 			}
 		}
 	}
@@ -321,18 +323,19 @@ namespace core {
 		}
 	}
 
-	bool GameObject::hasBB() const {
-		return _drawComponent != nullptr || _physicsComponent != nullptr;
-	}
-
 	// if this GameObject has a DrawComponent or a PhysicsComponent get the reported BB, else return cpBBInvalid
 	cpBB GameObject::getBB() const {
-		if (_drawComponent) {
-			return _drawComponent->getBB();
-		} else if (_physicsComponent) {
+		if (_physicsComponent) {
 			return _physicsComponent->getBB();
 		}
-		return cpBBInvalid;
+		return cpBBZero;
+	}
+
+	void GameObject::notifyMoved() {
+		const auto &dispatcher = getLevel()->getDrawDispatcher();
+		for (const auto &dc : _drawComponents) {
+			dispatcher->moved(dc.get());
+		}
 	}
 
 

@@ -99,6 +99,10 @@ namespace core {
 			_gameObject.reset();
 		}
 
+		// call this if some change moved the represented object. it will be dispatched
+		// up to gameObject, and down to DrawComponents to notify the draw dispatch graph
+		virtual void notifyMoved();
+
 	private:
 
 		GameObjectWeakRef _gameObject;
@@ -220,9 +224,6 @@ namespace core {
 		virtual int getDrawPasses() const { return 1; }
 		virtual BatchDrawDelegateRef getBatchDrawDelegate() const { return nullptr; }
 
-		// call this to notify the draw dispatch system that this DrawComponent has an updated BB
-		virtual void notifyMoved();
-
 		// Component
 		void onReady(GameObjectRef parent, LevelRef level) override;
 
@@ -336,7 +337,7 @@ namespace core {
 			return nullptr;
 		}
 
-		DrawComponentRef getDrawComponent() const { return _drawComponent; }
+		const set<DrawComponentRef> &getDrawComponents() const { return _drawComponents; }
 		PhysicsComponentRef getPhysicsComponent() const { return _physicsComponent; }
 
 		LevelRef getLevel() const { return _level.lock(); }
@@ -349,19 +350,20 @@ namespace core {
 		virtual void step(const time_state &timeState);
 		virtual void update(const time_state &timeState);
 
-		// if this GameObject has a DrawComponent or a PhysicsComponent it will have a BB
-		virtual bool hasBB() const;
-
-		// if this GameObject has a DrawComponent or a PhysicsComponent get the reported BB, else return cpBBInvalid
+		// if this GameObject has a PhysicsComponent get the reported BB, else return cpBBInfinity
 		virtual cpBB getBB() const;
 
 	protected:
 
 		friend class Level;
+		friend class Component;
+
 		virtual void onAddedToLevel(LevelRef level) { _level = level; }
 		virtual void onRemovedFromLevel() {
 			onCleanup();
 		}
+
+		void notifyMoved();
 
 	private:
 
@@ -371,7 +373,7 @@ namespace core {
 		bool _finished;
 		bool _ready;
 		set<ComponentRef> _components;
-		DrawComponentRef _drawComponent;
+		set<DrawComponentRef> _drawComponents;
 		PhysicsComponentRef _physicsComponent;
 		LevelWeakRef _level;
 

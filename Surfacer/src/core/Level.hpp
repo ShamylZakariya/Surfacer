@@ -92,7 +92,8 @@ namespace core {
 		DrawDispatcher();
 		virtual ~DrawDispatcher();
 
-		void add( const DrawComponentRef & );
+		void add( size_t id, const DrawComponentRef & );
+		void remove(size_t id);
 		void remove( const DrawComponentRef & );
 		void moved( const DrawComponentRef & );
 		void moved( DrawComponent* );
@@ -121,6 +122,7 @@ namespace core {
 
 		cpSpatialIndex *_index;
 		set<DrawComponentRef> _all, _alwaysVisible, _deferredSpatialIndexInsertion;
+		map<size_t, set<DrawComponentRef>> _drawComponentsById;
 		collector _collector;
 
 	};
