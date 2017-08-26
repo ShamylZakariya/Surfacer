@@ -42,6 +42,10 @@ namespace core { namespace game {
 		}
 	}
 
+	void HealthComponent::takeInjury(double lossOfHealth) {
+		setHealth(_config.health - lossOfHealth);
+	}
+
 	// Component
 	void HealthComponent::update(const time_state &time) {
 		if (!_died) {

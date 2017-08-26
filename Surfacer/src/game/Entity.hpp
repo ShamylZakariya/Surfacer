@@ -45,6 +45,7 @@ namespace core { namespace game {
 
 		double getHealth() const { return _config.health; }
 		void setHealth(double health);
+		void takeInjury(double healthPointsToLose);
 
 		double getMaxHealth() const { return _config.maxHealth; }
 		void setMaxHealth(double mh) { _config.maxHealth = mh; }
