@@ -244,7 +244,8 @@ namespace core {
 	 static size_t _idCounter;
 	 size_t _id;
 	 string _name;
-	 bool _finished;
+	 bool _finished, _finishingAfterDelay;
+	 seconds_t _finishingDelay, _finishedAfterTime;
 	 bool _ready;
 	 set<ComponentRef> _components;
 	 set<DrawComponentRef> _drawComponents;
@@ -258,6 +259,9 @@ namespace core {
 	_id(_idCounter++),
 	_name(name),
 	_finished(false),
+	_finishingAfterDelay(false),
+	_finishingDelay(0),
+	_finishedAfterTime(0),
 	_ready(false)
 	{}
 
@@ -301,6 +305,28 @@ namespace core {
 		}
 	}
 
+	void GameObject::setFinished(bool finished, seconds_t secondsFromNow) {
+		if (finished) {
+			if (secondsFromNow > 0) {
+				_finished = false;
+				_finishingAfterDelay = true;
+				_finishingDelay = secondsFromNow;
+				_finishedAfterTime = time_state::now() + secondsFromNow;
+			} else {
+				_finished = true; // immediate
+				_finishingAfterDelay = false;
+				_finishingDelay = 0;
+				_finishedAfterTime = 0;
+			}
+		} else {
+			_finished = false;
+			_finishingAfterDelay = false;
+			_finishingDelay = 0;
+			_finishedAfterTime = 0;
+		}
+	}
+
+
 	void GameObject::onReady(LevelRef level){
 		if (!_ready) {
 			const auto self = shared_from_this();
@@ -325,14 +351,28 @@ namespace core {
 	}
 
 	void GameObject::step(const time_state &timeState) {
-		for (auto &component : _components) {
-			component->step(timeState);
+		if (!_finished) {
+			for (auto &component : _components) {
+				component->step(timeState);
+			}
 		}
 	}
 
 	void GameObject::update(const time_state &timeState) {
-		for (auto &component : _components) {
-			component->update(timeState);
+		if (_finishingAfterDelay > 0) {
+			seconds_t remaining = _finishedAfterTime - timeState.time;
+			double amountComplete = clamp(remaining / _finishingDelay, 0.0, 1.0);
+			onFinishing(remaining, amountComplete);
+
+			if (remaining <= 0) {
+				_finished = true;
+			}
+		}
+
+		if (!_finished) {
+			for (auto &component : _components) {
+				component->update(timeState);
+			}
 		}
 	}
 

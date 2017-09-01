@@ -322,9 +322,7 @@ namespace core {
 		virtual void addComponent(ComponentRef component);
 		virtual void removeComponent(ComponentRef component);
 
-		virtual void setFinished(bool finished=true) {
-			_finished = finished;
-		}
+		virtual void setFinished(bool finished=true, seconds_t secondsFromNow=0);
 
 		virtual bool isFinished() const { return _finished; }
 
@@ -347,6 +345,9 @@ namespace core {
 		LevelRef getLevel() const { return _level.lock(); }
 
 		virtual void onReady(LevelRef level);
+
+		// called when setFinished is passed a time delay. secondsLeft will count to zero, and amountFinished will ramp from 0->1
+		virtual void onFinishing(seconds_t secondsLeft, double amountFinished){}
 
 		// called after a GameObject is removed from a Level (directly, or by calling setFinished(true)
 		virtual void onCleanup();
@@ -374,13 +375,13 @@ namespace core {
 		static size_t _idCounter;
 		size_t _id;
 		string _name;
-		bool _finished;
+		bool _finished, _finishingAfterDelay;
+		seconds_t _finishingDelay, _finishedAfterTime;
 		bool _ready;
 		set<ComponentRef> _components;
 		set<DrawComponentRef> _drawComponents;
 		PhysicsComponentRef _physicsComponent;
 		LevelWeakRef _level;
-
 
 	};
 
