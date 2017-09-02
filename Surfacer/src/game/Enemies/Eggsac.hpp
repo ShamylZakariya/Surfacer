@@ -23,7 +23,7 @@ namespace core { namespace game { namespace enemy {
 	SMART_PTR(EggsacPhysicsComponent);
 	SMART_PTR(EggsacDrawComponent);
 
-	class EggsacDrawComponent : public DrawComponent {
+	class EggsacDrawComponent : public EntityDrawComponent {
 	public:
 
 		struct config {
@@ -84,7 +84,18 @@ namespace core { namespace game { namespace enemy {
 		cpShape* getBodyShape() const { return _sacShape; }
 		cpConstraint *getAttachmentSpring() const { return _attachmentSpring; }
 
+		// return true if eggsac should automatically attach to terrain when not currently attached
+		bool shouldAutomaticallyAttach() const { return _automaticallyAttach; }
+		void setShouldAutomaticallyAttach(bool a) { _automaticallyAttach = a; }
+
+		// return true iff attached to terrain
 		bool isAttached() const;
+
+		// if !attached, attach to closest terrain
+		void attach();
+
+		// if attached, detach from whatever terrain attached to
+		void detach();
 
 		// PhysicsComponent
 		void onReady(GameObjectRef parent, LevelRef level) override;
@@ -96,13 +107,11 @@ namespace core { namespace game { namespace enemy {
 
 		void onBodyWillBeDestroyed(PhysicsComponentRef physics, cpBody *body);
 		void onShapeWillBeDestroyed(PhysicsComponentRef physics, cpShape *shape);
-		
-		void attach();
-		void detach();
 
 	protected:
 
 		config _config;
+		bool _automaticallyAttach;
 		cpBody *_sacBody, *_attachedToBody;
 		cpShape *_sacShape, *_attachedToShape;
 		cpConstraint *_attachmentSpring;
@@ -181,6 +190,7 @@ namespace core { namespace game { namespace enemy {
 
 		// GameObject
 		void update(const time_state &time) override;
+		void onFinishing(seconds_t secondsLeft, double amountFinished) override;
 
 
 	};

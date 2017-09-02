@@ -55,15 +55,29 @@ namespace core { namespace game {
 				_config.health = min(_config.health + _config.regenerationRate * time.deltaT, _config.maxHealth);
 				onHealthChanged(previousHealth, _config.health);
 			}
-
 		}
-
 	}
 
 	void HealthComponent::die() {
 		_died = true;
 		onDeath();
 	}
+
+#pragma mark - EntityDrawComponent
+
+	/*
+	 double _healthiness, _deathCycleProgress;
+	 bool _alive;
+	 */
+
+	EntityDrawComponent::EntityDrawComponent():
+	_healthiness(0),
+	_deathCycleProgress(0),
+	_alive(false)
+	{}
+
+	EntityDrawComponent::~EntityDrawComponent()
+	{}
 
 #pragma mark - Entity
 
@@ -83,8 +97,35 @@ namespace core { namespace game {
 		setFinished();
 	}
 
+	void Entity::update(const time_state &time) {
+		GameObject::update(time);
+
+		if (_entityDrawComponent) {
+			_entityDrawComponent->_alive = _healthComponent->isAlive();
+			_entityDrawComponent->_healthiness = _healthComponent->getHealthiness();
+		}
+	}
+
+	void Entity::onFinishing(seconds_t secondsLeft, double amountFinished) {
+		GameObject::onFinishing(secondsLeft, amountFinished);
+
+		if (_entityDrawComponent) {
+			_entityDrawComponent->_deathCycleProgress = amountFinished;
+		}
+	}
+
 	void Entity::addComponent(ComponentRef component) {
+
+		auto dc = dynamic_pointer_cast<DrawComponent>(component);
+		if (dc) {
+			// If adding a DrawComponent, constrain that it's an EntityDrawComponent
+			auto edc = dynamic_pointer_cast<EntityDrawComponent>(component);
+			CI_ASSERT_MSG(edc, "Only assign EntityDrawComponent subclasses to Entity");
+			_entityDrawComponent = edc;
+		}
+
 		GameObject::addComponent(component);
+
 		if (auto hc = dynamic_pointer_cast<HealthComponent>(component)) {
 			CI_ASSERT_MSG(!_healthComponent, "Can't assign more than one HealthComponent to an Entity");
 			_healthComponent = hc;
@@ -99,6 +140,8 @@ namespace core { namespace game {
 			_healthComponent->onDeath.disconnect(this);
 			_healthComponent->onHealthChanged.disconnect(this);
 			_healthComponent.reset();
+		} else if (component == _entityDrawComponent) {
+			_entityDrawComponent.reset();
 		}
 	}
 

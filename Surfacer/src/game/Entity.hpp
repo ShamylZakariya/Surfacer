@@ -17,6 +17,7 @@
 namespace core { namespace game {
 
 	SMART_PTR(HealthComponent);
+	SMART_PTR(EntityDrawComponent);
 	SMART_PTR(Entity);
 
 	class HealthComponent : public Component {
@@ -39,11 +40,16 @@ namespace core { namespace game {
 		HealthComponent(config c);
 		virtual ~HealthComponent();
 
+		bool isAlive() const {
+			return !_died && _config.health > 0;
+		}
+
 		bool isDead() const {
 			return _died;
 		}
 
 		double getHealth() const { return _config.health; }
+		double getHealthiness() const { return max(_config.health / _config.maxHealth, 0.0); }
 		void setHealth(double health);
 		void takeInjury(double healthPointsToLose);
 
@@ -67,6 +73,32 @@ namespace core { namespace game {
 
 	};
 
+	class EntityDrawComponent : public DrawComponent {
+	public:
+
+		EntityDrawComponent();
+		virtual ~EntityDrawComponent();
+
+		// returns value from 1 (perfect health) to 0 (dead)
+		virtual double getHealthiness() const { return _healthiness; }
+
+		// return true if the parent Entity is alive per its health component
+		virtual bool isAlive() const { return _alive; }
+
+		// returns true if the parent Entity is dead, per its health component
+		virtual bool isDead() const { return !isAlive(); }
+
+		// returns progress of death cycle, from 0 (starting) to 1 (complete)
+		virtual double getDeathCycleProgress() const { return _deathCycleProgress; }
+
+	private:
+
+		friend class Entity;
+		double _healthiness, _deathCycleProgress;
+		bool _alive;
+
+	};
+
 	/**
 	 @class Entity
 	 An Entity is a game object which represents a "living" thing in the game world, e.g., something with health and the ability to die.
@@ -82,8 +114,11 @@ namespace core { namespace game {
 		virtual void onDeath();
 
 		HealthComponentRef getHealthComponent() const { return _healthComponent; }
+		EntityDrawComponentRef getEntityDrawComponent() const { return _entityDrawComponent; }
 
 		// GameObject
+		void update(const time_state &time) override;
+		void onFinishing(seconds_t secondsLeft, double amountFinished) override;
 		void addComponent(ComponentRef component) override;
 		void removeComponent(ComponentRef component) override;
 
@@ -95,7 +130,7 @@ namespace core { namespace game {
 	protected:
 
 		HealthComponentRef _healthComponent;
-
+		EntityDrawComponentRef _entityDrawComponent;
 
 	};
 

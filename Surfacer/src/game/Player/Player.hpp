@@ -420,7 +420,7 @@ namespace core { namespace game { namespace player {
 
 #pragma mark - PlayerDrawComponent
 
-	class PlayerDrawComponent : public DrawComponent {
+	class PlayerDrawComponent : public EntityDrawComponent {
 	public:
 
 		PlayerDrawComponent();

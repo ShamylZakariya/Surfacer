@@ -21,7 +21,6 @@ namespace core { namespace util { namespace cdd {
 		mat4 M = glm::translate(dvec3(center.x, center.y, 0)) * glm::rotate(angle, dvec3(0,0,1));
 		gl::multModelMatrix(M);
 
-		gl::color(Color(1,1,1));
 		gl::drawSolidRoundedRect(Rectf(-len/2 - radius, -radius, +len/2 + radius, +radius), radius, 8);
 	}
 

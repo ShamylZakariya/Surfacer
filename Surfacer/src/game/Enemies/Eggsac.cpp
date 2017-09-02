@@ -42,7 +42,7 @@ namespace core { namespace game { namespace enemy {
 			auto a = v2(cpBodyLocalToWorld(body, cpSegmentShapeGetA(bodyShape)));
 			auto b = v2(cpBodyLocalToWorld(body, cpSegmentShapeGetB(bodyShape)));
 			auto radius = cpSegmentShapeGetRadius(bodyShape);
-			gl::color(1,1,1);
+			gl::color(1,1,1, 1.0 - getDeathCycleProgress());
 			util::cdd::DrawCapsule(a, b, radius);
 		}
 
@@ -77,16 +77,18 @@ namespace core { namespace game { namespace enemy {
 #pragma mark - EggsacPhysicsComponent
 
 	/*
-		config _config;
-		cpBody *_sacBody, *_attachedToBody;
-		cpShape *_sacShape, *_attachedToShape;
-		cpConstraint *_attachmentSpring;
-		dvec2 _up, _right;
-		double _mass;
+	 config _config;
+	 bool _automaticallyAttach;
+	 cpBody *_sacBody, *_attachedToBody;
+	 cpShape *_sacShape, *_attachedToShape;
+	 cpConstraint *_attachmentSpring;
+	 dvec2 _up, _right;
+	 double _mass;
 	 */
 
 	EggsacPhysicsComponent::EggsacPhysicsComponent(config c):
 	_config(c),
+	_automaticallyAttach(true),
 	_sacBody(nullptr),
 	_attachedToBody(nullptr),
 	_sacShape(nullptr),
@@ -99,6 +101,45 @@ namespace core { namespace game { namespace enemy {
 
 	bool EggsacPhysicsComponent::isAttached() const {
 		return _attachedToBody != nullptr;
+	}
+
+	void EggsacPhysicsComponent::attach() {
+		if (!isAttached()) {
+			cpPointQueryInfo pointQueryInfo;
+			cpSpace *space = getSpace()->getSpace();
+			cpVect currentPosition = cpBodyGetPosition(_sacBody);
+			cpShape *terrainShape = cpSpacePointQueryNearest(space, currentPosition, INFINITY, ShapeFilters::TERRAIN_PROBE, &pointQueryInfo);
+			if (terrainShape) {
+
+				_attachedToShape = terrainShape;
+				_attachedToBody = cpShapeGetBody(terrainShape);
+
+				double stiffness = 5 * _mass * getSpace()->getGravity(v2(currentPosition)).force;
+				double damping = 1;
+				double restLength = cpvdist(currentPosition, pointQueryInfo.point);
+				double segLength = _config.height;
+				double segRadius = _config.width/2;
+
+
+				// create spring with length set to current distance to attachment point - we'll reel in in step()
+				_attachmentSpring = add(cpDampedSpringNew(_attachedToBody, _sacBody,
+														  cpBodyWorldToLocal(_attachedToBody, pointQueryInfo.point), cpv(0,-segLength/2 - segRadius),
+														  restLength, stiffness, damping));
+
+				GameObjectRef parent = getGameObject();
+				cpConstraintSetUserData( _attachmentSpring, parent.get() );
+				getSpace()->addConstraint(_attachmentSpring);
+			}
+		}
+	}
+
+	void EggsacPhysicsComponent::detach() {
+		if (isAttached()) {
+			remove(_attachmentSpring);
+			cpCleanupAndFree(_attachmentSpring);
+			_attachedToBody = nullptr;
+			_attachedToShape = nullptr;
+		}
 	}
 
 	void EggsacPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
@@ -149,7 +190,7 @@ namespace core { namespace game { namespace enemy {
 				cpDampedSpringSetRestLength(_attachmentSpring, len);
 			}
 
-		} else {
+		} else if (shouldAutomaticallyAttach()) {
 			// try to attach to something
 			attach();
 		}
@@ -180,45 +221,6 @@ namespace core { namespace game { namespace enemy {
 		}
 	}
 
-	void EggsacPhysicsComponent::attach() {
-
-		CI_ASSERT_MSG(!isAttached(), "Can't attach when already attached!");
-
-		cpPointQueryInfo pointQueryInfo;
-		cpSpace *space = getSpace()->getSpace();
-		cpVect currentPosition = cpBodyGetPosition(_sacBody);
-		cpShape *terrainShape = cpSpacePointQueryNearest(space, currentPosition, INFINITY, ShapeFilters::TERRAIN_PROBE, &pointQueryInfo);
-		if (terrainShape) {
-
-			_attachedToShape = terrainShape;
-			_attachedToBody = cpShapeGetBody(terrainShape);
-
-			double stiffness = 5 * _mass * getSpace()->getGravity(v2(currentPosition)).force;
-			double damping = 1;
-			double restLength = cpvdist(currentPosition, pointQueryInfo.point);
-			double segLength = _config.height;
-			double segRadius = _config.width/2;
-
-
-			// create spring with length set to current distance to attachment point - we'll reel in in step()
-			_attachmentSpring = add(cpDampedSpringNew(_attachedToBody, _sacBody,
-													  cpBodyWorldToLocal(_attachedToBody, pointQueryInfo.point), cpv(0,-segLength/2 - segRadius),
-													  restLength, stiffness, damping));
-
-			GameObjectRef parent = getGameObject();
-			cpConstraintSetUserData( _attachmentSpring, parent.get() );
-			getSpace()->addConstraint(_attachmentSpring);
-		}
-	}
-
-	void EggsacPhysicsComponent::detach() {
-		if (isAttached()) {
-			remove(_attachmentSpring);
-			cpCleanupAndFree(_attachmentSpring);
-			_attachedToBody = nullptr;
-			_attachedToShape = nullptr;
-		}
-	}
 
 #pragma mark - EggsacSpawnComponent
 
@@ -332,13 +334,23 @@ namespace core { namespace game { namespace enemy {
 
 	void Eggsac::onDeath() {
 		Entity::onDeath();
+
+		CI_LOG_D(getName() << " -- onDeath - detaching grip!");
+		setFinished(true, 2);
+
+		// release grip and prevent further re-attachment
+		auto physics = getComponent<EggsacPhysicsComponent>();
+		physics->setShouldAutomaticallyAttach(false);
+		physics->detach();
 	}
 
 	void Eggsac::update(const time_state &time) {
 		GameObject::update(time);
 	}
 
-
-
+	void Eggsac::onFinishing(seconds_t secondsLeft, double amountFinished) {
+		Entity::onFinishing(secondsLeft, amountFinished);
+		CI_LOG_D(getName() << " - Dying, secondsLeft: " << secondsLeft << " amountFinished: " << amountFinished);
+	}
 
 }}} // namespace core::game::enemy

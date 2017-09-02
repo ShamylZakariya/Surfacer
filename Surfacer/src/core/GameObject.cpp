@@ -361,10 +361,13 @@ namespace core {
 	void GameObject::update(const time_state &timeState) {
 		if (_finishingAfterDelay > 0) {
 			seconds_t remaining = _finishedAfterTime - timeState.time;
-			double amountComplete = clamp(remaining / _finishingDelay, 0.0, 1.0);
-			onFinishing(remaining, amountComplete);
+			bool finished = remaining <= 0;
+			remaining = max<seconds_t>(remaining, 0);
+			double amountComplete = 1.0 - clamp(remaining / _finishingDelay, 0.0, 1.0);
 
-			if (remaining <= 0) {
+			onFinishing(remaining, amountComplete);
+			
+			if (finished) {
 				_finished = true;
 			}
 		}

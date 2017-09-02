@@ -998,6 +998,7 @@ namespace core { namespace game { namespace player {
 		gl::drawLine(FootWheel.position, FootWheel.position + FootWheel.radius * dvec2(cos(FootWheel.radians), sin(FootWheel.radians)));
 
 		// draw the capsule
+		gl::color(1,1,1);
 		util::cdd::DrawCapsule(BodyCapsule.a, BodyCapsule.b, BodyCapsule.radius);
 
 		// draw the ground normal indicator
