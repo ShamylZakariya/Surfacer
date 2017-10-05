@@ -19,7 +19,7 @@ namespace core {
 	/**
 	 @struct time_state
 	 time_state represents the current game time.
-	 It is passed to GameObject::update.
+	 It is passed to Object::update.
 	 */
 	struct time_state {
 

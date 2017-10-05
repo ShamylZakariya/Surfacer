@@ -1,13 +1,13 @@
 //
-//  GameObject.hpp
+//  Object.hpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 3/27/17.
 //
 //
 
-#ifndef GameObject_hpp
-#define GameObject_hpp
+#ifndef Object_hpp
+#define Object_hpp
 
 #include "Common.hpp"
 #include "InputDispatcher.hpp"
@@ -17,7 +17,7 @@
 
 namespace core {
 
-	SMART_PTR(GameObject);
+	SMART_PTR(Object);
 	SMART_PTR(Level);
 	SMART_PTR(SpaceAccess);
 
@@ -33,15 +33,15 @@ namespace core {
 		IChipmunkUserData();
 		virtual ~IChipmunkUserData();
 
-		// return the GameObject owning this thing, whatever this thing is
-		virtual GameObjectRef getGameObject() const { return nullptr; };
+		// return the Object owning this thing, whatever this thing is
+		virtual ObjectRef getObject() const { return nullptr; };
 
 	};
 
 	// convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IChipmunkUserData
-	GameObjectRef cpShapeGetGameObject(const cpShape *shape);
-	GameObjectRef cpBodyGetGameObject(const cpBody *body);
-	GameObjectRef cpConstraintGetGameObject(const cpConstraint *constraint);
+	ObjectRef cpShapeGetObject(const cpShape *shape);
+	ObjectRef cpBodyGetObject(const cpBody *body);
+	ObjectRef cpConstraintGetObject(const cpConstraint *constraint);
 
 
 #pragma mark - Component
@@ -54,7 +54,7 @@ namespace core {
 		virtual ~Component(){}
 
 		// IChipmunkUserData
-		GameObjectRef getGameObject() const override { return _gameObject.lock(); }
+		ObjectRef getObject() const override { return _object.lock(); }
 
 		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
 		template<typename T>
@@ -71,41 +71,41 @@ namespace core {
 		LevelRef getLevel() const;
 
 		template<typename T>
-		shared_ptr<T> getGameObjectAs() {
-			return static_pointer_cast<T>(_gameObject.lock());
+		shared_ptr<T> getObjectAs() {
+			return static_pointer_cast<T>(_object.lock());
 		}
 
 		template<typename T>
 		shared_ptr<T> getSibling() const;
 
-		// called when the owning GameObject has been added to a level
-		virtual void onReady(GameObjectRef parent, LevelRef level){}
+		// called when the owning Object has been added to a level
+		virtual void onReady(ObjectRef parent, LevelRef level){}
 		virtual void onCleanup(){}
 		virtual void step(const time_state &timeState){}
 		virtual void update(const time_state &timeState){}
 
 	protected:
-		friend class GameObject;
+		friend class Object;
 
-		// called on Components immediately after being added to a GameObject
-		// a component at this point can access its GameObject owne, but does not
+		// called on Components immediately after being added to a Object
+		// a component at this point can access its Object owne, but does not
 		// necessarily have access to its neighbors, or to a Level. Wait for onReady
 		// for these types of actions.
-		virtual void attachedToGameObject(GameObjectRef gameObject) {
-			_gameObject = gameObject;
+		virtual void attachedToObject(ObjectRef object) {
+			_object = object;
 		}
 
-		virtual void detachedFromGameObject() {
-			_gameObject.reset();
+		virtual void detachedFromObject() {
+			_object.reset();
 		}
 
 		// call this if some change moved the represented object. it will be dispatched
-		// up to gameObject, and down to DrawComponents to notify the draw dispatch graph
+		// up to object, and down to DrawComponents to notify the draw dispatch graph
 		virtual void notifyMoved();
 
 	private:
 
-		GameObjectWeakRef _gameObject;
+		ObjectWeakRef _object;
 
 	};
 
@@ -117,7 +117,7 @@ namespace core {
 		PhysicsComponent():_space(nullptr){}
 		virtual ~PhysicsComponent();
 
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		void onCleanup() override;
 
 		const SpaceAccessRef &getSpace() const { return _space; }
@@ -219,7 +219,7 @@ namespace core {
 		DrawComponent(){}
 		virtual ~DrawComponent(){}
 
-		// default implementation asks GameObject for the physicsComponent's BB
+		// default implementation asks Object for the physicsComponent's BB
 		virtual cpBB getBB() const;
 		virtual void draw(const render_state &renderState) = 0;
 		virtual void drawScreen( const render_state &state ) {};
@@ -229,7 +229,7 @@ namespace core {
 		virtual BatchDrawDelegateRef getBatchDrawDelegate() const { return nullptr; }
 
 		// Component
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 
 	};
 
@@ -243,7 +243,7 @@ namespace core {
 
 		virtual ~InputComponent(){}
 
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		bool isListening() const override;
 
 		void monitorKey( int keyCode );
@@ -275,17 +275,30 @@ namespace core {
 
 	};
 
-#pragma mark - GameObject
+#pragma mark - Object
 
-	class GameObject : public IChipmunkUserData, public enable_shared_from_this<GameObject>, public signals::receiver {
+	/**
+	 Object
+	 An Object is a thing added to a Level. An object generally is a composite of components, and can be anything -
+	 it could be the terrain for a game, it could be a power up, it could be an enemy, or it could be a controller
+	 dispatching high level changes to the game state based on player progress.
+	 
+	 A common use is to create an object and add custom DrawComponent and PhysicsComponent implementations.
+	 
+	 It is perfectly fine to subclass Object to make custom "prefab" like elements which build their own component sets.
+	 
+	 Note, things which are "alive", e.g., enemies, the player, NPCs - anything with health and a lifecycle and death
+	 should derive from Entity, which is a slim object subclass which provides access to HealthComponent and EntityDrawComponent.
+	 */
+	class Object : public IChipmunkUserData, public enable_shared_from_this<Object>, public signals::receiver {
 	public:
 
 		/**
-		 Create a non-specialized vanilla GameObject with some components. This is handy for if you
+		 Create a non-specialized vanilla Object with some components. This is handy for if you
 		 have a simple component which needs to be added to a Level.
 		 */
-		static GameObjectRef with(string name, const initializer_list<ComponentRef> &components) {
-			auto obj = make_shared<GameObject>(name);
+		static ObjectRef with(string name, const initializer_list<ComponentRef> &components) {
+			auto obj = make_shared<Object>(name);
 			for (auto &component : components) {
 				obj->addComponent(component);
 			}
@@ -295,8 +308,8 @@ namespace core {
 
 	public:
 
-		GameObject(string name);
-		virtual ~GameObject();
+		Object(string name);
+		virtual ~Object();
 
 		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
 		template<typename T>
@@ -311,23 +324,39 @@ namespace core {
 		}
 
 		// IChipmunkUserData
-		GameObjectRef getGameObject() const override { return const_cast<GameObject*>(this)->shared_from_this(); }
+		ObjectRef getObject() const override { return const_cast<Object*>(this)->shared_from_this(); }
 
-		// GameObject
+		// Object
 
+		// the unique id for this Object - each object is guaranteed a unique id at runtime
 		size_t getId() const { return _id; }
+		
+		// get the name assigned to this object
 		string getName() const { return _name; }
+		
+		// get a debug-friendly description of this object
 		string getDescription() const;
 
+		// add a component to this object
 		virtual void addComponent(ComponentRef component);
+		
+		// remove a component from this object
 		virtual void removeComponent(ComponentRef component);
 
+		// flag this object as "finished" - it will be removed from the Level at the next timestep
+		// and if nobody is holding any strong references, it will then be deallocated.
+		// if secondsFromNow is > 0, the removal will be queued to happen at least that many seconds
+		// in the future.
 		virtual void setFinished(bool finished=true, seconds_t secondsFromNow=0);
 
+		// returns true if setFinished(true) has been called.
 		virtual bool isFinished() const { return _finished; }
 
+		// returns true after this object has been added to the Level
+		// and onReady() has been called, during which all components are attached and have onReady called on them.
 		bool isReady() const { return _ready; }
 
+		// gets first component by type, e.g., fooObj->getComponent<PhysicsComponent>()
 		template<typename T>
 		shared_ptr<T> getComponent() const {
 			for (const auto &c : _components) {
@@ -339,23 +368,28 @@ namespace core {
 			return nullptr;
 		}
 
+		// get all draw components attached to this Object
 		const set<DrawComponentRef> &getDrawComponents() const { return _drawComponents; }
+		
+		// get the PhysicsComponent attached to this Object
 		PhysicsComponentRef getPhysicsComponent() const { return _physicsComponent; }
 
+		// get the level this Object is in, or null if it hasn't been added
 		LevelRef getLevel() const { return _level.lock(); }
 
+		// called after an Object is added to a Level. Subclasses must call inherited
 		virtual void onReady(LevelRef level);
 
 		// called when setFinished is passed a time delay. secondsLeft will count to zero, and amountFinished will ramp from 0->1
 		virtual void onFinishing(seconds_t secondsLeft, double amountFinished){}
 
-		// called after a GameObject is removed from a Level (directly, or by calling setFinished(true)
+		// called after a Object is removed from a Level (directly, or by calling setFinished(true)
 		virtual void onCleanup();
 
 		virtual void step(const time_state &timeState);
 		virtual void update(const time_state &timeState);
 
-		// if this GameObject has a PhysicsComponent get the reported BB, else return cpBBInfinity
+		// if this Object has a PhysicsComponent get the reported BB, else return cpBBInfinity
 		virtual cpBB getBB() const;
 
 	protected:
@@ -389,7 +423,7 @@ namespace core {
 
 	template<typename T>
 	shared_ptr<T> Component::getSibling() const {
-		return getGameObject()->getComponent<T>();
+		return getObject()->getComponent<T>();
 	}
 
 } // namespace core
@@ -400,4 +434,4 @@ inline ostream &operator << ( ostream &os, core::VisibilityDetermination::style 
 }
 
 
-#endif /* GameObject_hpp */
+#endif /* Object_hpp */

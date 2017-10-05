@@ -1,12 +1,12 @@
 //
-//  GameObject.cpp
+//  Object.cpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 3/27/17.
 //
 //
 
-#include "GameObject.hpp"
+#include "Object.hpp"
 
 #include <cinder/CinderAssert.h>
 
@@ -22,38 +22,38 @@ namespace core {
 	IChipmunkUserData::~IChipmunkUserData()
 	{}
 
-	GameObjectRef cpShapeGetGameObject(const cpShape *shape) {
+	ObjectRef cpShapeGetObject(const cpShape *shape) {
 		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpShapeGetUserData(shape));
-		return e ? e->getGameObject() : nullptr;
+		return e ? e->getObject() : nullptr;
 	}
 
-	GameObjectRef cpBodyGetGameObject(const cpBody *body) {
+	ObjectRef cpBodyGetObject(const cpBody *body) {
 		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpBodyGetUserData(body));
-		return e ? e->getGameObject() : nullptr;
+		return e ? e->getObject() : nullptr;
 	}
 
-	GameObjectRef cpConstraintGetGameObject(const cpConstraint *constraint) {
+	ObjectRef cpConstraintGetObject(const cpConstraint *constraint) {
 		IChipmunkUserData *e = static_cast<IChipmunkUserData*>(cpConstraintGetUserData(constraint));
-		return e ? e->getGameObject() : nullptr;
+		return e ? e->getObject() : nullptr;
 	}
 
 #pragma mark - Component	
 
 	LevelRef Component::getLevel() const {
-		return getGameObject()->getLevel();
+		return getObject()->getLevel();
 	}
 
 	void Component::notifyMoved() {
-		getGameObject()->notifyMoved();
+		getObject()->notifyMoved();
 	}
 
 #pragma mark - DrawComponent
 
 	cpBB DrawComponent::getBB() const {
-		return getGameObject()->getBB();
+		return getObject()->getBB();
 	}
 	
-	void DrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void DrawComponent::onReady(ObjectRef parent, LevelRef level) {
 		Component::onReady(parent, level);
 		level->getDrawDispatcher()->moved(this);
 	}
@@ -74,7 +74,7 @@ namespace core {
 	_attached(false)
 	{}
 
-	void InputComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void InputComponent::onReady(ObjectRef parent, LevelRef level) {
 		Component::onReady(parent, level);
 		setListening(true);
 		_attached = true;
@@ -137,7 +137,7 @@ namespace core {
 	PhysicsComponent::~PhysicsComponent() {
 	}
 
-	void PhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void PhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
 		Component::onReady(parent, level);
 		_space = level->getSpace();
 	}
@@ -171,8 +171,8 @@ namespace core {
 	void PhysicsComponent::build(cpShapeFilter filter, cpCollisionType collisionType) {
 		CI_ASSERT_MSG(_space, "Can't call ::build before SpaceAccess has been assigned.");
 
-		auto parent = getGameObject();
-		CI_ASSERT_MSG(parent, "Can't call ::build without a valid GameObject parent instance");
+		auto parent = getObject();
+		CI_ASSERT_MSG(parent, "Can't call ::build without a valid Object parent instance");
 
 		_shapeFilter = filter;
 		_collisionType = collisionType;
@@ -238,7 +238,7 @@ namespace core {
 
 
 
-#pragma mark - GameObject
+#pragma mark - Object
 
 	/*
 	 static size_t _idCounter;
@@ -253,9 +253,9 @@ namespace core {
 	 LevelWeakRef _level;
 	 */
 
-	size_t GameObject::_idCounter = 0;
+	size_t Object::_idCounter = 0;
 
-	GameObject::GameObject(string name):
+	Object::Object(string name):
 	_id(_idCounter++),
 	_name(name),
 	_finished(false),
@@ -265,16 +265,16 @@ namespace core {
 	_ready(false)
 	{}
 
-	GameObject::~GameObject(){}
+	Object::~Object(){}
 
-	string GameObject::getDescription() const {
+	string Object::getDescription() const {
 		stringstream buf;
 		buf << "[id: " << getId() << " name: " << getName() << " isReady: " << isReady() << " isFinished: " << isFinished() << "]";
 		return buf.str();
 	}
 
-	void GameObject::addComponent(ComponentRef component) {
-		CI_ASSERT_MSG(component->getGameObject() == nullptr, "Cannot add a component that already has been added to another GameObject");
+	void Object::addComponent(ComponentRef component) {
+		CI_ASSERT_MSG(component->getObject() == nullptr, "Cannot add a component that already has been added to another Object");
 
 		_components.insert(component);
 
@@ -289,15 +289,15 @@ namespace core {
 
 		if (_ready) {
 			const auto self = shared_from_this();
-			component->attachedToGameObject(self);
+			component->attachedToObject(self);
 			component->onReady(self,getLevel());
 		}
 	}
 
-	void GameObject::removeComponent(ComponentRef component) {
-		if (component->getGameObject() && component->getGameObject().get() == this) {
+	void Object::removeComponent(ComponentRef component) {
+		if (component->getObject() && component->getObject().get() == this) {
 			_components.erase(component);
-			component->detachedFromGameObject();
+			component->detachedFromObject();
 
 			if (DrawComponentRef dc = dynamic_pointer_cast<DrawComponent>(component)) {
 				_drawComponents.erase(dc);
@@ -305,7 +305,7 @@ namespace core {
 		}
 	}
 
-	void GameObject::setFinished(bool finished, seconds_t secondsFromNow) {
+	void Object::setFinished(bool finished, seconds_t secondsFromNow) {
 		if (finished) {
 			if (secondsFromNow > 0) {
 				_finished = false;
@@ -327,11 +327,11 @@ namespace core {
 	}
 
 
-	void GameObject::onReady(LevelRef level){
+	void Object::onReady(LevelRef level){
 		if (!_ready) {
 			const auto self = shared_from_this();
 			for (auto &component : _components) {
-				component->attachedToGameObject(self);
+				component->attachedToObject(self);
 			}
 			for (auto &component : _components) {
 				component->onReady(self, level);
@@ -340,7 +340,7 @@ namespace core {
 		}
 	}
 
-	void GameObject::onCleanup() {
+	void Object::onCleanup() {
 		for (auto &component : _components){
 			component->onCleanup();
 		}
@@ -350,7 +350,7 @@ namespace core {
 		_ready = false;
 	}
 
-	void GameObject::step(const time_state &timeState) {
+	void Object::step(const time_state &timeState) {
 		if (!_finished) {
 			for (auto &component : _components) {
 				component->step(timeState);
@@ -358,7 +358,7 @@ namespace core {
 		}
 	}
 
-	void GameObject::update(const time_state &timeState) {
+	void Object::update(const time_state &timeState) {
 		if (_finishingAfterDelay > 0) {
 			seconds_t remaining = _finishedAfterTime - timeState.time;
 			bool finished = remaining <= 0;
@@ -379,15 +379,15 @@ namespace core {
 		}
 	}
 
-	// if this GameObject has a DrawComponent or a PhysicsComponent get the reported BB, else return cpBBInvalid
-	cpBB GameObject::getBB() const {
+	// if this Object has a DrawComponent or a PhysicsComponent get the reported BB, else return cpBBInvalid
+	cpBB Object::getBB() const {
 		if (_physicsComponent) {
 			return _physicsComponent->getBB();
 		}
 		return cpBBZero;
 	}
 
-	void GameObject::notifyMoved() {
+	void Object::notifyMoved() {
 		const auto &dispatcher = getLevel()->getDrawDispatcher();
 		for (const auto &dc : _drawComponents) {
 			dispatcher->moved(dc.get());

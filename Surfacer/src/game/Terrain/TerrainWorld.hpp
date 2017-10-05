@@ -244,9 +244,9 @@ namespace core { namespace game { namespace terrain {
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
 
 		/**
-		 Get the GameObject which wraps this World for use in a Level
+		 Get the Object which wraps this World for use in a Level
 		 */
-		GameObjectRef getGameObject() const;
+		ObjectRef getObject() const;
 
 	protected:
 
@@ -257,7 +257,7 @@ namespace core { namespace game { namespace terrain {
 		void notifyCollisionShapesWillBeDestoyed(vector<cpShape*> shapes);
 		void notifyBodyWillBeDestoyed(cpBody *body);
 
-		void setGameObject(GameObjectRef gameObject);
+		void setObject(ObjectRef object);
 		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		vector<set<ShapeRef>> findShapeGroups(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		bool isShapeGroupStatic(const set<ShapeRef> shapeGroup, const GroupBaseRef &parentGroup);
@@ -277,7 +277,7 @@ namespace core { namespace game { namespace terrain {
 		DrawDispatcher _drawDispatcher;
 		ci::gl::GlslProgRef _shader;
 
-		GameObjectWeakRef _gameObject;
+		ObjectWeakRef _object;
 	};
 
 
@@ -323,7 +323,7 @@ namespace core { namespace game { namespace terrain {
 		WorldRef getWorld() const;
 
 		// IChipmunkUserData
-		GameObjectRef getGameObject() const override;
+		ObjectRef getObject() const override;
 
 	protected:
 
@@ -448,7 +448,7 @@ namespace core { namespace game { namespace terrain {
 		WorldRef getWorld() const;
 
 		// IChipmunkUserData
-		GameObjectRef getGameObject() const override;
+		ObjectRef getObject() const override;
 
 	private:
 

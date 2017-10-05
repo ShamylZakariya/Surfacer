@@ -8,18 +8,15 @@
 
 #include "Terrain.hpp"
 
-#include "GameLevel.hpp"
-
-
 namespace core { namespace game { namespace terrain {
 
 #pragma mark - TerrainObject
 
-	TerrainObject::TerrainObject(string name, WorldRef world):
-	GameObject(name),
+	TerrainObject::TerrainObject(string name, WorldRef world, int drawLayer):
+	Object(name),
 	_world(world)
 	{
-		addComponent(make_shared<TerrainDrawComponent>());
+		addComponent(make_shared<TerrainDrawComponent>(drawLayer));
 		addComponent(make_shared<TerrainPhysicsComponent>());
 	}
 
@@ -27,8 +24,8 @@ namespace core { namespace game { namespace terrain {
 	{}
 
 	void TerrainObject::onReady(LevelRef level) {
-		GameObject::onReady(level);
-		_world->setGameObject(shared_from_this());
+		Object::onReady(level);
+		_world->setObject(shared_from_this());
 	}
 
 	void TerrainObject::onCleanup() {
@@ -45,12 +42,13 @@ namespace core { namespace game { namespace terrain {
 
 #pragma mark - TerrainDrawComponent
 
-	void TerrainDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+	/*
+	 WorldRef _world;
+	 int _drawLayer;
+	 */
+	
+	void TerrainDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
-	}
-
-	int TerrainDrawComponent::getLayer() const {
-		return DrawLayers::TERRAIN;
 	}
 
 	void TerrainDrawComponent::draw(const render_state &renderState) {
@@ -59,7 +57,7 @@ namespace core { namespace game { namespace terrain {
 
 #pragma mark - TerrainPhysicsComponent
 
-	void TerrainPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void TerrainPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
 	}
 

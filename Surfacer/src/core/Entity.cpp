@@ -9,10 +9,11 @@
 #include "Entity.hpp"
 #include "Xml.hpp"
 
-namespace core { namespace game {
+namespace core {
 
 	/*
 	 config _config;
+	 bool _died;
 	 */
 
 	HealthComponent::config HealthComponent::loadConfig(util::xml::XmlMultiTree node) {
@@ -24,22 +25,24 @@ namespace core { namespace game {
 	}
 
 	HealthComponent::HealthComponent(config c):
-	_config(c)
+	_config(c),
+	_died(false)
 	{}
 
 	HealthComponent::~HealthComponent() {
 	}
 
 	void HealthComponent::setHealth(double health) {
-
-		const double previousHealth = _config.health;
-		_config.health = min(health, _config.maxHealth);
-
-		onHealthChanged(previousHealth, _config.health);
-
-		if (_config.health <= 0) {
-			die();
-		}
+		if (!_died) {
+			const double previousHealth = _config.health;
+			_config.health = min(health, _config.maxHealth);
+			
+			onHealthChanged(previousHealth, _config.health);
+			
+			if (_config.health <= 0) {
+				die();
+			}
+		}	
 	}
 
 	void HealthComponent::takeInjury(double lossOfHealth) {
@@ -82,7 +85,7 @@ namespace core { namespace game {
 #pragma mark - Entity
 
 	Entity::Entity(string name):
-	GameObject(name)
+	Object(name)
 	{}
 
 	Entity::~Entity()
@@ -98,7 +101,7 @@ namespace core { namespace game {
 	}
 
 	void Entity::update(const time_state &time) {
-		GameObject::update(time);
+		Object::update(time);
 
 		if (_entityDrawComponent) {
 			_entityDrawComponent->_alive = _healthComponent->isAlive();
@@ -107,7 +110,7 @@ namespace core { namespace game {
 	}
 
 	void Entity::onFinishing(seconds_t secondsLeft, double amountFinished) {
-		GameObject::onFinishing(secondsLeft, amountFinished);
+		Object::onFinishing(secondsLeft, amountFinished);
 
 		if (_entityDrawComponent) {
 			_entityDrawComponent->_deathCycleProgress = amountFinished;
@@ -124,7 +127,7 @@ namespace core { namespace game {
 			_entityDrawComponent = edc;
 		}
 
-		GameObject::addComponent(component);
+		Object::addComponent(component);
 
 		if (auto hc = dynamic_pointer_cast<HealthComponent>(component)) {
 			CI_ASSERT_MSG(!_healthComponent, "Can't assign more than one HealthComponent to an Entity");
@@ -135,7 +138,7 @@ namespace core { namespace game {
 	}
 
 	void Entity::removeComponent(ComponentRef component) {
-		GameObject::removeComponent(component);
+		Object::removeComponent(component);
 		if (component == _healthComponent) {
 			_healthComponent->onDeath.disconnect(this);
 			_healthComponent->onHealthChanged.disconnect(this);
@@ -153,7 +156,4 @@ namespace core { namespace game {
 		onDeath();
 	}
 
-
-
-
-}} // namespace core::game
+} // namespace core

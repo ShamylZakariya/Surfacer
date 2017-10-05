@@ -29,7 +29,7 @@
 
 // higher level stuff
 
-#include "GameObject.hpp"
+#include "Object.hpp"
 #include "Level.hpp"
 #include "Scenario.hpp"
 

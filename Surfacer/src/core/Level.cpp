@@ -54,7 +54,7 @@ namespace core {
 			return reinterpret_cast<cpHashValue>(dc);
 		}
 
-		cpBB gameObjectBBFunc( void *obj )
+		cpBB objectBBFunc( void *obj )
 		{
 			return static_cast<DrawComponent*>(obj)->getBB();
 		}
@@ -103,7 +103,7 @@ namespace core {
 			//	batchDrawDelegate, so, just order them from older to newer
 			//
 
-			return a->getGameObject()->getId() < b->getGameObject()->getId();
+			return a->getObject()->getId() < b->getObject()->getId();
 		}
 		
 	}
@@ -116,7 +116,7 @@ namespace core {
 	 */
 
 	DrawDispatcher::DrawDispatcher():
-	_index(cpBBTreeNew( gameObjectBBFunc, NULL ))
+	_index(cpBBTreeNew( objectBBFunc, NULL ))
 	{}
 
 	DrawDispatcher::~DrawDispatcher()
@@ -137,7 +137,7 @@ namespace core {
 
 				case VisibilityDetermination::FRUSTUM_CULLING:
 					// wait until ::cull to add to spatial index. This is to accommodate
-					// partially constructed GameObjects
+					// partially constructed Objects
 					_deferredSpatialIndexInsertion.insert(dc);
 					break;
 
@@ -312,8 +312,8 @@ namespace core {
 			auto force = g.force;
 
 			// objects can define a custom gravity modifier - 0 means no effect, -1 would be repulsive, etc
-			if (GameObjectRef gameObject = cpBodyGetGameObject(body)) {
-				if (PhysicsComponentRef physics = gameObject->getPhysicsComponent()) {
+			if (ObjectRef object = cpBodyGetObject(body)) {
+				if (PhysicsComponentRef physics = object->getPhysicsComponent()) {
 					force *= physics->getGravityModifier();
 				}
 			}
@@ -328,8 +328,8 @@ namespace core {
 		SpaceAccessRef _spaceAccess;
 		bool _ready, _paused;
 		ScenarioWeakRef _scenario;
-		set<GameObjectRef> _objects;
-		map<size_t,GameObjectRef> _objectsById;
+		set<ObjectRef> _objects;
+		map<size_t,ObjectRef> _objectsById;
 		time_state _time;
 		string _name;
 		DrawDispatcherRef _drawDispatcher;
@@ -397,7 +397,7 @@ namespace core {
 		}
 
 		if (!_paused) {
-			vector<GameObjectRef> moribund;
+			vector<ObjectRef> moribund;
 			for (auto &obj : _objects) {
 				if (!obj->isFinished()) {
 					obj->step(time);
@@ -408,7 +408,7 @@ namespace core {
 
 			if (!moribund.empty()) {
 				for (auto &obj : moribund) {
-					removeGameObject(obj);
+					removeObject(obj);
 				}
 			}
 		}
@@ -424,7 +424,7 @@ namespace core {
 		}
 
 		if (!_paused) {
-			vector<GameObjectRef> moribund;
+			vector<ObjectRef> moribund;
 			for (auto &obj : _objects) {
 				if (!obj->isFinished()) {
 					obj->update(time);
@@ -435,7 +435,7 @@ namespace core {
 
 			if (!moribund.empty()) {
 				for (auto &obj : moribund) {
-					removeGameObject(obj);
+					removeObject(obj);
 				}
 			}
 		}
@@ -467,8 +467,8 @@ namespace core {
 		}
 	}
 
-	void Level::addGameObject(GameObjectRef obj) {
-		CI_ASSERT_MSG(!obj->getLevel(), "Can't add a GameObject that already has been added to this or another Level");
+	void Level::addObject(ObjectRef obj) {
+		CI_ASSERT_MSG(!obj->getLevel(), "Can't add a Object that already has been added to this or another Level");
 
 		size_t id = obj->getId();
 
@@ -487,8 +487,8 @@ namespace core {
 
 	}
 
-	void Level::removeGameObject(GameObjectRef obj) {
-		CI_ASSERT_MSG(obj->getLevel().get() == this, "Can't remove a GameObject which isn't a child of this Level");
+	void Level::removeObject(ObjectRef obj) {
+		CI_ASSERT_MSG(obj->getLevel().get() == this, "Can't remove a Object which isn't a child of this Level");
 
 		size_t id = obj->getId();
 
@@ -499,7 +499,7 @@ namespace core {
 		obj->onRemovedFromLevel();
 	}
 
-	GameObjectRef Level::getGameObjectById(size_t id) const {
+	ObjectRef Level::getObjectById(size_t id) const {
 		auto pos = _objectsById.find(id);
 		if (pos != _objectsById.end()) {
 			return pos->second;
@@ -508,11 +508,11 @@ namespace core {
 		}
 	}
 
-	vector<GameObjectRef> Level::getGameObjectsByName(string name) const {
+	vector<ObjectRef> Level::getObjectsByName(string name) const {
 
-		vector<GameObjectRef> result;
-		copy_if(_objects.begin(), _objects.end(), back_inserter(result),[&name](const GameObjectRef &gameObject) -> bool {
-			return gameObject->getName() == name;
+		vector<ObjectRef> result;
+		copy_if(_objects.begin(), _objects.end(), back_inserter(result),[&name](const ObjectRef &object) -> bool {
+			return object->getName() == name;
 		});
 
 		return result;
@@ -582,8 +582,8 @@ namespace core {
 			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
 			auto pos = level->_collisionBeginHandlers.find(ctp);
 			if (pos != level->_collisionBeginHandlers.end()) {
-				GameObjectRef ga = cpShapeGetGameObject(a);
-				GameObjectRef gb = cpShapeGetGameObject(b);
+				ObjectRef ga = cpShapeGetObject(a);
+				ObjectRef gb = cpShapeGetObject(b);
 				for (const auto &cb : pos->second) {
 					if (!cb(ctp, ga, gb, arb)) {
 						accept = cpFalse;
@@ -609,8 +609,8 @@ namespace core {
 			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
 			auto pos = level->_collisionPreSolveHandlers.find(ctp);
 			if (pos != level->_collisionPreSolveHandlers.end()) {
-				GameObjectRef ga = cpShapeGetGameObject(a);
-				GameObjectRef gb = cpShapeGetGameObject(b);
+				ObjectRef ga = cpShapeGetObject(a);
+				ObjectRef gb = cpShapeGetObject(b);
 				for (const auto &cb : pos->second) {
 					if (!cb(ctp, ga, gb, arb)) {
 						accept = cpFalse;
@@ -633,8 +633,8 @@ namespace core {
 
 			// if any handlers are defined for this pairing, dispatch
 			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
-			GameObjectRef ga = cpShapeGetGameObject(a);
-			GameObjectRef gb = cpShapeGetGameObject(b);
+			ObjectRef ga = cpShapeGetObject(a);
+			ObjectRef gb = cpShapeGetObject(b);
 
 			// dispatch to post solve handlers
 			{
@@ -669,8 +669,8 @@ namespace core {
 			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
 			auto pos = level->_collisionSeparateHandlers.find(ctp);
 			if (pos != level->_collisionSeparateHandlers.end()) {
-				GameObjectRef ga = cpShapeGetGameObject(a);
-				GameObjectRef gb = cpShapeGetGameObject(b);
+				ObjectRef ga = cpShapeGetObject(a);
+				ObjectRef gb = cpShapeGetObject(b);
 				for (const auto &cb : pos->second) {
 					cb(ctp, ga, gb, arb);
 				}
@@ -767,8 +767,8 @@ namespace core {
 			const auto pos = _contactHandlers.find(ctp);
 			if (pos != _contactHandlers.end()) {
 				for (const auto &handler : pos->second) {
-					for (auto &gameObjectPair : group.second) {
-						handler(ctp, gameObjectPair.first, gameObjectPair.second);
+					for (auto &objectPair : group.second) {
+						handler(ctp, objectPair.first, objectPair.second);
 					}
 				}
 			}
@@ -776,7 +776,7 @@ namespace core {
 		_syntheticContacts.clear();
 	}
 
-	void Level::registerContactBetweenObjects(cpCollisionType a, const GameObjectRef &ga, cpCollisionType b, const GameObjectRef &gb) {
+	void Level::registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb) {
 		collision_type_pair ctp(a, b);
 		_syntheticContacts[ctp].push_back(std::make_pair(ga, gb));
 	}

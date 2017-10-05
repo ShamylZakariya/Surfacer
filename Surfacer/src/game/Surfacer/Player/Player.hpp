@@ -15,7 +15,7 @@
 #include "Entity.hpp"
 #include "DevComponents.hpp"
 
-namespace core { namespace game { namespace player {
+namespace core { namespace game {  namespace surfacer { namespace player {
 
 	SMART_PTR(Player);
 	SMART_PTR(Gun);
@@ -45,7 +45,7 @@ namespace core { namespace game { namespace player {
 			dvec2 position;
 			dvec2 normal;
 			cpShape *shape;
-			GameObjectRef object;
+			ObjectRef object;
 
 			contact():
 			position(0),
@@ -188,7 +188,7 @@ namespace core { namespace game { namespace player {
 		void fire(dvec2 origin, dvec2 dir) override;
 
 		// Component
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		void update(const time_state &time) override;
 
 	protected:
@@ -211,7 +211,7 @@ namespace core { namespace game { namespace player {
 		virtual ~BeamProjectileDrawComponent();
 
 		// Component
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 
 		// DrawComponent
 		cpBB getBB() const override;
@@ -303,7 +303,7 @@ namespace core { namespace game { namespace player {
 		virtual ~PlayerPhysicsComponent();
 
 		// PhysicsComponent
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 
 		// PlayerPhysicsComponent
 		const config& getConfig()const { return _config; }
@@ -351,7 +351,7 @@ namespace core { namespace game { namespace player {
 
 		// PhysicsComponent
 		cpBB getBB() const override;
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		void step(const time_state &timeState) override;
 
 		// PlayerPhysicsComponent
@@ -427,7 +427,7 @@ namespace core { namespace game { namespace player {
 		virtual ~PlayerDrawComponent();
 
 		// DrawComponent
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 
 		cpBB getBB() const override;
 		void draw(const render_state &renderState) override;
@@ -485,7 +485,7 @@ namespace core { namespace game { namespace player {
 		void onHealthChanged(double oldHealth, double newHealth) override;
 		void onDeath() override;
 
-		// GameObject
+		// Object
 		void update(const time_state &time) override;
 
 		// TrackingTarget
@@ -509,6 +509,6 @@ namespace core { namespace game { namespace player {
 
 	};
 
-}}} // namespace core::game::player
+}}}} // namespace core::game::surfacer::player
 
 #endif /* Player_hpp */

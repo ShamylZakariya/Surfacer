@@ -14,10 +14,10 @@
 
 #include "Core.hpp"
 #include "Entity.hpp"
-#include "GameLevel.hpp"
+#include "SurfacerLevel.hpp"
 #include "Xml.hpp"
 
-namespace core { namespace game { namespace enemy {
+namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 	SMART_PTR(BoidPhysicsComponent);
 	SMART_PTR(BoidDrawComponent);
@@ -62,7 +62,7 @@ namespace core { namespace game { namespace enemy {
 		void setFacingDirection(dvec2 dir);
 		dvec2 getFacingDirection() const { return _facingDirection; }
 
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		void onCleanup() override;
 		void step(const time_state &time) override;
 		cpBB getBB() const override;
@@ -107,7 +107,7 @@ namespace core { namespace game { namespace enemy {
 		void onHealthChanged(double oldHealth, double newHealth) override;
 		void onDeath() override;
 
-		// GameObject
+		// Object
 		void onReady(LevelRef level) override;
 		void onCleanup() override;
 
@@ -131,7 +131,7 @@ namespace core { namespace game { namespace enemy {
 		BoidFlockDrawComponent(config c);
 		virtual ~BoidFlockDrawComponent();
 
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 
 		void update(const time_state &time) override;
 		void draw(const render_state &renderState) override;
@@ -197,7 +197,7 @@ namespace core { namespace game { namespace enemy {
 			dvec2 eyeBoidPosition;
 
 			// the target
-			GameObjectRef target;
+			ObjectRef target;
 
 			// the current location of the target
 			dvec2 targetPosition;
@@ -263,19 +263,19 @@ namespace core { namespace game { namespace enemy {
 		 Internally, the targets are held as weak_ptr<> and the flock will pursue the first which is
 		 live, is in the level, and has a PhysicsRepresentation to query for position.
 		 */
-		void setTargets(vector<GameObjectRef> targets);
+		void setTargets(vector<ObjectRef> targets);
 
 		/**
 		 Add a target for the flock to pursue
 		 */
-		void addTarget(GameObjectRef target);
+		void addTarget(ObjectRef target);
 
 		/**
 		 Clear the targets this flock will pursue. Flock will continue to follow flcoking rules, but without target seeking
 		 */
 		void clearTargets();
 
-		const vector<GameObjectWeakRef> getTargets() const { return _targets; }
+		const vector<ObjectWeakRef> getTargets() const { return _targets; }
 
 		/**
 		 Get the current tracking state used to direct the flock
@@ -288,7 +288,7 @@ namespace core { namespace game { namespace enemy {
 		cpBB getFlockBB() const { return _flockBB; }
 
 		// Component
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		void update(const time_state &time) override;
 
 	protected:
@@ -297,8 +297,8 @@ namespace core { namespace game { namespace enemy {
 		friend class BoidFlockDrawComponent;
 
 		void _updateTrackingState(const time_state &time);
-		boost::optional<pair<cpBB,dvec2>> _getGameObjectPosition(const GameObjectRef &obj) const;
-		bool _checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const;
+		boost::optional<pair<cpBB,dvec2>> _getObjectPosition(const ObjectRef &obj) const;
+		bool _checkLineOfSight(dvec2 start, dvec2 end, ObjectRef target) const;
 
 		void _updateFlock_canonical(const time_state &time);
 
@@ -310,7 +310,7 @@ namespace core { namespace game { namespace enemy {
 		cpGroup _group;
 		string _name;
 		vector<BoidRef> _flock;
-		vector<GameObjectWeakRef> _targets;
+		vector<ObjectWeakRef> _targets;
 		dvec2 _lastSpawnOrigin;
 		config _config;
 		ci::Rand _rng;
@@ -327,12 +327,12 @@ namespace core { namespace game { namespace enemy {
 #pragma mark - BoidFlock
 
 	/**
-	 BoidFlock is a GameObject which acts as a controller for a flock of boids.
-	 Generally speaking, since BoidFlock is just a GameObject and not an Entity, it's not
+	 BoidFlock is a Object which acts as a controller for a flock of boids.
+	 Generally speaking, since BoidFlock is just a Object and not an Entity, it's not
 	 a thing which can be drawn or have health or be shot. Rather, an "owner" Entity, say
 	 the Eggsac, creates a BoidFlock and adds it to the Level.
 	 */
-	class BoidFlock : public GameObject {
+	class BoidFlock : public Object {
 	public:
 
 		struct config {
@@ -360,6 +360,6 @@ namespace core { namespace game { namespace enemy {
 	};
 
 
-}}}
+}}}}
 
 #endif /* Boid_hpp */

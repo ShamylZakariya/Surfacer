@@ -7,17 +7,18 @@
 //
 
 #include "TerrainTestScenario.hpp"
-#include "GameApp.hpp"
+#include "App.hpp"
 
 #include <cinder/Rand.h>
 
 #include "Strings.hpp"
-#include "GameLevel.hpp"
+#include "SurfacerLevel.hpp"
 #include "DevComponents.hpp"
 
 
 using namespace core;
 using namespace core::game;
+using namespace core::game::surfacer;
 
 namespace {
 	
@@ -115,29 +116,29 @@ void TerrainTestScenario::setup() {
 	//auto world = testSimpleSvgLoad();
 	auto world = testComplexSvgLoad();
 
-	_terrain = terrain::TerrainObject::create("Terrain", world);
-	getLevel()->addGameObject(_terrain);
+	_terrain = terrain::TerrainObject::create("Terrain", world, DrawLayers::TERRAIN);
+	getLevel()->addObject(_terrain);
 
-	auto dragger = GameObject::with("Dragger", {
+	auto dragger = Object::with("Dragger", {
 		make_shared<MousePickComponent>(ShapeFilters::GRABBABLE),
 		make_shared<MousePickDrawComponent>()
 	});
 
-	auto cutter = GameObject::with("Cutter", {
+	auto cutter = Object::with("Cutter", {
 		make_shared<MouseCutterComponent>(_terrain, 4),
 		make_shared<MouseCutterDrawComponent>()
 	});
 
-	auto cameraController = GameObject::with("ViewportControlComponent", {
+	auto cameraController = Object::with("ViewportControlComponent", {
 		make_shared<ManualViewportControlComponent>(getViewportController())
 	});
 
-	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
+	auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create() });
 
-	getLevel()->addGameObject(dragger);
-	getLevel()->addGameObject(cutter);
-	getLevel()->addGameObject(grid);
-	getLevel()->addGameObject(cameraController);	
+	getLevel()->addObject(dragger);
+	getLevel()->addObject(cutter);
+	getLevel()->addObject(grid);
+	getLevel()->addObject(cameraController);	
 }
 
 void TerrainTestScenario::cleanup() {
@@ -159,8 +160,8 @@ void TerrainTestScenario::clear( const render_state &state ) {
 
 void TerrainTestScenario::drawScreen( const render_state &state ) {
 	// draw fpf/sps
-	float fps = GameApp::get()->getAverageFps();
-	float sps = GameApp::get()->getAverageSps();
+	float fps = App::get()->getAverageFps();
+	float sps = App::get()->getAverageSps();
 	string info = strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 }

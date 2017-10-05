@@ -7,7 +7,7 @@
 //
 
 #include "SvgTestScenario.hpp"
-#include "GameApp.hpp"
+#include "App.hpp"
 #include "Strings.hpp"
 
 #include "DevComponents.hpp"
@@ -50,14 +50,14 @@ SvgTestScenario::~SvgTestScenario() {
 void SvgTestScenario::setup() {
 	setLevel(make_shared<Level>("Hello Svg"));
 
-	auto cameraController = GameObject::with("ViewportControlComponent", {
+	auto cameraController = Object::with("ViewportControlComponent", {
 		make_shared<ManualViewportControlComponent>(getViewportController())
 	});
 
-	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create(1) });
+	auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create(1) });
 
-	getLevel()->addGameObject(grid);
-	getLevel()->addGameObject(cameraController);
+	getLevel()->addObject(grid);
+	getLevel()->addObject(cameraController);
 
 	testSimpleSvgLoad();
 	//testSimpleSvgGroupOriginTransforms();
@@ -88,8 +88,8 @@ void SvgTestScenario::drawScreen( const render_state &state ) {
 	// NOTE: we're in screen space, with coordinate system origin at top left
 	//
 
-	float fps = game::GameApp::get()->getAverageFps();
-	float sps = game::GameApp::get()->getAverageSps();
+	float fps = App::get()->getAverageFps();
+	float sps = App::get()->getAverageSps();
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 
@@ -125,7 +125,7 @@ void SvgTestScenario::reset() {
 void SvgTestScenario::testSimpleSvgLoad() {
 	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/eggsac.svg"), 1);
 	doc->trace();
-	getLevel()->addGameObject(GameObject::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
+	getLevel()->addObject(Object::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
 }
 
 void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
@@ -164,6 +164,6 @@ void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
 	vector<util::svg::GroupRef> elements = { root, green, purple, green1, green2, purple1, purple2 };
 	auto wiggleComponent = make_shared<Wiggler>(elements);
 
-	auto obj = GameObject::with("Hello SVG", { drawComponent, wiggleComponent });
-	getLevel()->addGameObject(obj);
+	auto obj = Object::with("Hello SVG", { drawComponent, wiggleComponent });
+	getLevel()->addObject(obj);
 }

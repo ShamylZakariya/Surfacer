@@ -14,7 +14,7 @@
 #include "Core.hpp"
 #include "Xml.hpp"
 
-namespace core { namespace game {
+namespace core {
 
 	SMART_PTR(HealthComponent);
 	SMART_PTR(EntityDrawComponent);
@@ -104,7 +104,7 @@ namespace core { namespace game {
 	 An Entity is a game object which represents a "living" thing in the game world, e.g., something with health and the ability to die.
 	 It could be the player, an enemy, or a car which can only take so much damage before being destroyed.
 	 */
-	class Entity : public GameObject {
+	class Entity : public Object {
 	public:
 
 		Entity(string name);
@@ -116,7 +116,7 @@ namespace core { namespace game {
 		HealthComponentRef getHealthComponent() const { return _healthComponent; }
 		EntityDrawComponentRef getEntityDrawComponent() const { return _entityDrawComponent; }
 
-		// GameObject
+		// Object
 		void update(const time_state &time) override;
 		void onFinishing(seconds_t secondsLeft, double amountFinished) override;
 		void addComponent(ComponentRef component) override;
@@ -134,6 +134,6 @@ namespace core { namespace game {
 
 	};
 
-}} // namespace core::game
+} // namespace core
 
 #endif /* Entity_hpp */

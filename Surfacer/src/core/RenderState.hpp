@@ -61,7 +61,7 @@ namespace core {
 		 @param p The current pass
 		 @param t The current time
 
-		 Note that pass is optional. It's reserved for special situations where a composite GameObject
+		 Note that pass is optional. It's reserved for special situations where a composite Object
 		 draws multiple child game objects, and might need to render them multiple times, with them
 		 rendering effects after solid geometry, etc. Pass will generally be zero.
 		 */

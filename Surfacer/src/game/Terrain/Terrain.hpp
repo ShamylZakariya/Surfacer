@@ -16,16 +16,16 @@ namespace core { namespace game { namespace terrain {
 
 	SMART_PTR(TerrainObject);
 
-	class TerrainObject : public GameObject {
+	class TerrainObject : public Object {
 	public:
 
-		static TerrainObjectRef create(string name, WorldRef world) {
-			return make_shared<TerrainObject>(name, world);
+		static TerrainObjectRef create(string name, WorldRef world, int drawLayer) {
+			return make_shared<TerrainObject>(name, world, drawLayer);
 		}
 
 	public:
 
-		TerrainObject(string name, WorldRef world);
+		TerrainObject(string name, WorldRef world, int drawLayer);
 		virtual ~TerrainObject();
 
 		void onReady(LevelRef level) override;
@@ -45,20 +45,21 @@ namespace core { namespace game { namespace terrain {
 	class TerrainDrawComponent : public DrawComponent {
 	public:
 
-		TerrainDrawComponent(){}
+		TerrainDrawComponent(int drawLayer):_drawLayer(drawLayer){}
 		virtual ~TerrainDrawComponent(){}
 
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		cpBB getBB() const override { return cpBBInfinity; }
 		void draw(const render_state &renderState) override;
 		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::ALWAYS_DRAW; }
-		int getLayer() const override;
+		int getLayer() const override { return _drawLayer; }
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
 
 	private:
 
 		WorldRef _world;
+		int _drawLayer;
 
 	};
 
@@ -70,7 +71,7 @@ namespace core { namespace game { namespace terrain {
 		TerrainPhysicsComponent(){}
 		virtual ~TerrainPhysicsComponent(){}
 
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		cpBB getBB() const override;
 		vector<cpBody*> getBodies() const override;
 

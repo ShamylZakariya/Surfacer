@@ -1,5 +1,5 @@
 //
-//  GameApp.hpp
+//  App.hpp
 //  Milestone6
 //
 //  Created by Shamyl Zakariya on 2/14/17.
@@ -19,21 +19,21 @@
 #include "Scenario.hpp"
 
 
-namespace core { namespace game {
+namespace core {
 
 SMART_PTR(PhysicsLoop);
 
-class GameApp : public ci::app::App
+class App : public ci::app::App
 {
 public:
 
 	static void prepareSettings(Settings *settings);
-	static GameApp* get() { return static_cast<GameApp*>(ci::app::App::get()); }
+	static App* get() { return static_cast<App*>(ci::app::App::get()); }
 
 public:
 
-	GameApp();
-	virtual ~GameApp();
+	App();
+	virtual ~App();
 
 	// AppBasic
 	virtual void setup() override;
@@ -64,14 +64,14 @@ private:
 
 /**
 	@class PhysicsLoop
-	@brief PhysicsLoop is responsible for dispatching calls to step() on SurfacerGame,
+	@brief PhysicsLoop is responsible for dispatching calls to step() in App,
 	doing its best over time to maintain a target update rate
  */
 class PhysicsLoop
 {
 public:
 
-	PhysicsLoop( GameApp *app, int rate );
+	PhysicsLoop( App *app, int rate );
 	virtual ~PhysicsLoop( void );
 
 	int rate() const { return _rate; }
@@ -85,7 +85,7 @@ public:
 
 protected:
 
-	const GameApp *app() const { return _app; }
+	const App *app() const { return _app; }
 
 	inline void dispatchStep() {
 		_app->step();
@@ -93,7 +93,7 @@ protected:
 
 private:
 
-	GameApp *_app;
+	App *_app;
 	int _rate;
 	seconds_t _interval;
 
@@ -108,7 +108,7 @@ private:
 
 public:
 
-	AdaptivePhysicsLoop( GameApp *app, int rate );
+	AdaptivePhysicsLoop( App *app, int rate );
 	virtual ~AdaptivePhysicsLoop( void );
 
 	virtual void step( void );
@@ -122,12 +122,12 @@ private:
 
 public:
 
-	SacredSoftwarePhysicsLoop( GameApp *app, int rate );
+	SacredSoftwarePhysicsLoop( App *app, int rate );
 	virtual ~SacredSoftwarePhysicsLoop( void );
 
 	virtual void step( void );
 };
 
-}} // end namespace core::game
+} // end namespace core
 
 #endif /* GameApp_hpp */

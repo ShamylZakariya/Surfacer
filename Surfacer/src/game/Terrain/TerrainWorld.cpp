@@ -36,7 +36,7 @@ namespace core { namespace game { namespace terrain {
 			return reinterpret_cast<cpHashValue>(d->getId());
 		}
 
-		cpBB gameObjectBBFunc( void *obj )
+		cpBB objectBBFunc( void *obj )
 		{
 			return static_cast<Drawable*>(obj)->getBB();
 		}
@@ -80,7 +80,7 @@ namespace core { namespace game { namespace terrain {
 		size_t _drawPasses;
 	 */
 	DrawDispatcher::DrawDispatcher():
-	_index(cpBBTreeNew( gameObjectBBFunc, NULL )),
+	_index(cpBBTreeNew( objectBBFunc, NULL )),
 	_drawPasses(1)
 	{}
 
@@ -520,14 +520,14 @@ namespace core { namespace game { namespace terrain {
 		return nullptr;
 	}
 
-	GameObjectRef World::getGameObject() const {
-		return _gameObject.lock();
+	ObjectRef World::getObject() const {
+		return _object.lock();
 	}
 
 	void World::notifyCollisionShapesWillBeDestoyed(vector<cpShape*> shapes) {
-		if (GameObjectRef gameObject = getGameObject()) {
-			if (LevelRef level = gameObject->getLevel()) {
-				PhysicsComponentRef physics = gameObject->getPhysicsComponent();
+		if (ObjectRef object = getObject()) {
+			if (LevelRef level = object->getLevel()) {
+				PhysicsComponentRef physics = object->getPhysicsComponent();
 				for (auto shape : shapes) {
 					level->signals.onShapeWillBeDestroyed(physics, shape);
 				}
@@ -536,16 +536,16 @@ namespace core { namespace game { namespace terrain {
 	}
 
 	void World::notifyBodyWillBeDestoyed(cpBody *body) {
-		if (GameObjectRef gameObject = getGameObject()) {
-			if (LevelRef level = gameObject->getLevel()) {
-				PhysicsComponentRef physics = gameObject->getPhysicsComponent();
+		if (ObjectRef object = getObject()) {
+			if (LevelRef level = object->getLevel()) {
+				PhysicsComponentRef physics = object->getPhysicsComponent();
 				level->signals.onBodyWillBeDestroyed(physics, body);
 			}
 		}
 	}
 
-	void World::setGameObject(GameObjectRef gameObject) {
-		_gameObject = gameObject;
+	void World::setObject(ObjectRef object) {
+		_object = object;
 	}
 
 	void World::build(const vector<ShapeRef> &affectedShapes, const map<ShapeRef,GroupBaseRef> &parentage) {
@@ -712,8 +712,8 @@ namespace core { namespace game { namespace terrain {
 		return _world.lock();
 	}
 
-	GameObjectRef GroupBase::getGameObject() const {
-		return _world.lock()->getGameObject();
+	ObjectRef GroupBase::getObject() const {
+		return _world.lock()->getObject();
 	}
 
 
@@ -1151,8 +1151,8 @@ namespace core { namespace game { namespace terrain {
 	}
 
 	// IChipmunkUserData
-	GameObjectRef Drawable::getGameObject() const {
-		return _world.lock()->getGameObject();
+	ObjectRef Drawable::getObject() const {
+		return _world.lock()->getObject();
 	}
 
 

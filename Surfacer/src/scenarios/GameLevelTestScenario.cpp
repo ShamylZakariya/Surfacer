@@ -8,8 +8,8 @@
 
 #include "GameLevelTestScenario.hpp"
 
-#include "GameApp.hpp"
-#include "GameLevel.hpp"
+#include "App.hpp"
+#include "SurfacerLevel.hpp"
 #include "Strings.hpp"
 #include "Terrain.hpp"
 
@@ -23,7 +23,7 @@ GameLevelTestScenario::~GameLevelTestScenario() {
 }
 
 void GameLevelTestScenario::setup() {
-	core::game::GameLevelRef level = make_shared<core::game::GameLevel>();
+	core::game::surfacer::SurfacerLevelRef level = make_shared<core::game::surfacer::SurfacerLevel>();
 	setLevel(level);
 
 	level->load(app::loadAsset("levels/test0.xml"));
@@ -34,27 +34,27 @@ void GameLevelTestScenario::setup() {
 
 		// build camera controller, dragger, and cutter, with input dispatch indices 0,1,2 meaning CC gets input first
 
-		auto cc = GameObject::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController(), 0)});
-		getLevel()->addGameObject(cc);
+		auto cc = Object::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController(), 0)});
+		getLevel()->addObject(cc);
 
-		auto dragger = GameObject::with("Dragger", {
-			make_shared<MousePickComponent>(core::game::ShapeFilters::GRABBABLE, 1),
+		auto dragger = Object::with("Dragger", {
+			make_shared<MousePickComponent>(core::game::surfacer::ShapeFilters::GRABBABLE, 1),
 			make_shared<MousePickDrawComponent>()
 		});
-		getLevel()->addGameObject(dragger);
+		getLevel()->addObject(dragger);
 
 		if (terrain) {
-			auto cutter = GameObject::with("Cutter", {
+			auto cutter = Object::with("Cutter", {
 				make_shared<MouseCutterComponent>(terrain, 4, 2),
 				make_shared<MouseCutterDrawComponent>()
 			});
-			getLevel()->addGameObject(cutter);
+			getLevel()->addObject(cutter);
 		}
 
 	}
 
-	auto grid = GameObject::with("Grid", { WorldCartesianGridDrawComponent::create() });
-	getLevel()->addGameObject(grid);
+	auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create() });
+	getLevel()->addObject(grid);
 
 }
 
@@ -80,8 +80,8 @@ void GameLevelTestScenario::drawScreen( const render_state &state ) {
 	// NOTE: we're in screen space, with coordinate system origin at top left
 	//
 
-	float fps = core::game::GameApp::get()->getAverageFps();
-	float sps = core::game::GameApp::get()->getAverageSps();
+	float fps = core::App::get()->getAverageFps();
+	float sps = core::App::get()->getAverageSps();
 	string info = core::strings::format("%.1f %.1f", fps, sps);
 	gl::drawString(info, vec2(10,10), Color(1,1,1));
 

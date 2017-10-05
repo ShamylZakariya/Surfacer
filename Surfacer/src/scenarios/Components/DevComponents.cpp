@@ -105,7 +105,7 @@ _periodStep(periodStep)
 	_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)), _shader);
 }
 
-void WorldCartesianGridDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+void WorldCartesianGridDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 	level->signals.onViewportMotion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
 	setupShaderUniforms();
 }
@@ -399,7 +399,7 @@ MousePickComponent::~MousePickComponent() {
 	cpBodyFree(_mouseBody);
 }
 
-void MousePickComponent::onReady(GameObjectRef parent, LevelRef level) {
+void MousePickComponent::onReady(ObjectRef parent, LevelRef level) {
 	InputComponent::onReady(parent, level);
 	_mouseBody = cpBodyNewKinematic();
 }
@@ -474,7 +474,7 @@ _color(color),
 _radius(radius)
 {}
 
-void MousePickDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+void MousePickDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 	DrawComponent::onReady(parent,level);
 	_pickComponent = getSibling<MousePickComponent>();
 }
@@ -541,7 +541,7 @@ MouseCutterDrawComponent::MouseCutterDrawComponent(ColorA color):
 _color(color)
 {}
 
-void MouseCutterDrawComponent::onReady(GameObjectRef parent, LevelRef level){
+void MouseCutterDrawComponent::onReady(ObjectRef parent, LevelRef level){
 	DrawComponent::onReady(parent,level);
 	_cutterComponent = getSibling<MouseCutterComponent>();
 }

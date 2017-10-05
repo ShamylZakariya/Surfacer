@@ -10,7 +10,7 @@
 #define Level_hpp
 
 #include "Common.hpp"
-#include "GameObject.hpp"
+#include "Object.hpp"
 #include "Signals.hpp"
 #include "RenderState.hpp"
 #include "TimeState.hpp"
@@ -207,17 +207,17 @@ namespace core {
 		/**
 		 Callback functor for early phases in collision dispatch. Returning false here will prevent the collision from happening.
 		 */
-		typedef std::function<bool(const collision_type_pair &ctp, const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> EarlyCollisionCallback;
+		typedef std::function<bool(const collision_type_pair &ctp, const ObjectRef &a, const ObjectRef &b, cpArbiter *arbiter)> EarlyCollisionCallback;
 
 		/**
 		 Callback functor for late phases in collision dispatch.
 		 */
-		typedef std::function<void(const collision_type_pair &ctp, const GameObjectRef &a, const GameObjectRef &b, cpArbiter *arbiter)> LateCollisionCallback;
+		typedef std::function<void(const collision_type_pair &ctp, const ObjectRef &a, const ObjectRef &b, cpArbiter *arbiter)> LateCollisionCallback;
 
 		/**
 		 Callback for simplified contact handling
 		 */
-		typedef std::function<void(const collision_type_pair &ctp, const GameObjectRef &a, const GameObjectRef &b)> ContactCallback;
+		typedef std::function<void(const collision_type_pair &ctp, const ObjectRef &a, const ObjectRef &b)> ContactCallback;
 
 	public:
 
@@ -250,10 +250,10 @@ namespace core {
 		virtual void draw( const render_state &state );
 		virtual void drawScreen( const render_state &state );
 
-		virtual void addGameObject(GameObjectRef obj);
-		virtual void removeGameObject(GameObjectRef obj);
-		virtual GameObjectRef getGameObjectById(size_t id) const;
-		virtual vector<GameObjectRef> getGameObjectsByName(string name) const;
+		virtual void addObject(ObjectRef obj);
+		virtual void removeObject(ObjectRef obj);
+		virtual ObjectRef getObjectById(size_t id) const;
+		virtual vector<ObjectRef> getObjectsByName(string name) const;
 
 		const DrawDispatcherRef &getDrawDispatcher() const { return _drawDispatcher; }
 		const time_state &getTime() const { return _time; }
@@ -293,7 +293,7 @@ namespace core {
 		 Some contacts can't be dispatched via chipmunk's collision system (e.g., synthetic contacts like WEAPON -> ENEMY.
 		 It becomes the responsibility of such mechanisms to dispatch their contacts to Level directly, here.
 		 */
-		virtual void registerContactBetweenObjects(cpCollisionType a, const GameObjectRef &ga, cpCollisionType b, const GameObjectRef &gb);
+		virtual void registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb);
 
 	protected:
 
@@ -330,8 +330,8 @@ namespace core {
 		SpaceAccessRef _spaceAccess;
 		bool _ready, _paused;
 		ScenarioWeakRef _scenario;
-		set<GameObjectRef> _objects;
-		map<size_t,GameObjectRef> _objectsById;
+		set<ObjectRef> _objects;
+		map<size_t,ObjectRef> _objectsById;
 		time_state _time;
 		string _name;
 		DrawDispatcherRef _drawDispatcher;
@@ -345,7 +345,7 @@ namespace core {
 		map<collision_type_pair, vector<EarlyCollisionCallback>> _collisionBeginHandlers, _collisionPreSolveHandlers;
 		map<collision_type_pair, vector<LateCollisionCallback>> _collisionPostSolveHandlers, _collisionSeparateHandlers;
 		map<collision_type_pair, vector<ContactCallback>> _contactHandlers;
-		map<collision_type_pair, vector<pair<GameObjectRef, GameObjectRef>>> _syntheticContacts;
+		map<collision_type_pair, vector<pair<ObjectRef, ObjectRef>>> _syntheticContacts;
 
 	};
 

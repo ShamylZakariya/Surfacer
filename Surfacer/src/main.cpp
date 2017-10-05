@@ -7,17 +7,17 @@
 //
 
 #include "cinder/app/RendererGl.h"
-#include "GameApp.hpp"
+#include "App.hpp"
 
 #include "TerrainTestScenario.hpp"
 #include "SvgTestScenario.hpp"
 #include "GameLevelTestScenario.hpp"
 
-class DemoApp : public core::game::GameApp {
+class DemoApp : public core::App {
 public:
 
 	static void prepareSettings(Settings *settings) {
-		GameApp::prepareSettings(settings);
+		App::prepareSettings(settings);
 		settings->setTitle( "DemoApp" );
 	}
 
@@ -26,7 +26,7 @@ public:
 	DemoApp(){}
 
 	virtual void setup() override {
-		GameApp::setup();
+		App::setup();
 		setScenario(make_shared<GameLevelTestScenario>());
 	}
  

@@ -16,9 +16,9 @@
 #include "Player.hpp"
 
 
-namespace core { namespace game {
+namespace core { namespace game { namespace surfacer {
 
-	SMART_PTR(GameLevel);
+	SMART_PTR(SurfacerLevel);
 
 #pragma mark - Constants
 
@@ -81,17 +81,17 @@ namespace core { namespace game {
 
 #pragma mark - GameLevel
 
-	class GameLevel : public Level {
+	class SurfacerLevel : public Level {
 	public:
-		GameLevel();
-		virtual ~GameLevel();
+		SurfacerLevel();
+		virtual ~SurfacerLevel();
 
 		//
 		//	Level
 		//
 
-		void addGameObject(GameObjectRef obj) override;
-		void removeGameObject(GameObjectRef obj) override;
+		void addObject(ObjectRef obj) override;
+		void removeObject(ObjectRef obj) override;
 
 		//
 		//	GameLevel
@@ -122,7 +122,7 @@ namespace core { namespace game {
 		virtual EntityRef classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree node);
 
 		virtual void onPlayerEnemyContact(const EntityRef &enemy);
-		virtual void onPlayerShotEnemy(const GameObjectRef &weapon, const EntityRef &enemy);
+		virtual void onPlayerShotEnemy(const ObjectRef &weapon, const EntityRef &enemy);
 
 	private:
 
@@ -132,6 +132,6 @@ namespace core { namespace game {
 		
 	};
 	
-}} // namespace core::game
+}}} // namespace core::game::surfacer
 
 #endif /* GameLevel_hpp */

@@ -8,12 +8,12 @@
 
 #include "Eggsac.hpp"
 
-#include "GameLevel.hpp"
+#include "SurfacerLevel.hpp"
 #include "Xml.hpp"
 #include "ChipmunkDebugDraw.hpp"
 
 
-namespace core { namespace game { namespace enemy {
+namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - EggsacDrawComponent
 
@@ -26,7 +26,7 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	// DrawComponent
-	void EggsacDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void EggsacDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 		DrawComponent::onReady(parent, level);
 		_physics = getSibling<EggsacPhysicsComponent>();
 	}
@@ -126,7 +126,7 @@ namespace core { namespace game { namespace enemy {
 														  cpBodyWorldToLocal(_attachedToBody, pointQueryInfo.point), cpv(0,-segLength/2 - segRadius),
 														  restLength, stiffness, damping));
 
-				GameObjectRef parent = getGameObject();
+				ObjectRef parent = getObject();
 				cpConstraintSetUserData( _attachmentSpring, parent.get() );
 				getSpace()->addConstraint(_attachmentSpring);
 			}
@@ -142,7 +142,7 @@ namespace core { namespace game { namespace enemy {
 		}
 	}
 
-	void EggsacPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void EggsacPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
 		PhysicsComponent::onReady(parent,level);
 
 		// register to be notified when bodies/shapes are destroyed. We need to know so we can detach our spring/gear
@@ -259,11 +259,11 @@ namespace core { namespace game { namespace enemy {
 
 		if (!flock) {
 
-			GameObjectRef parent = getGameObject();
+			ObjectRef parent = getObject();
 			string flockName = parent->getName() + "_BoidFlock";
 			flock = BoidFlock::create(flockName, _config.flock);
 
-			getLevel()->addGameObject(flock);
+			getLevel()->addObject(flock);
 
 			//
 			//	add self to end of targets list so the flock will target the eggsac if nothing else is viable,
@@ -345,7 +345,7 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	void Eggsac::update(const time_state &time) {
-		GameObject::update(time);
+		Object::update(time);
 	}
 
 	void Eggsac::onFinishing(seconds_t secondsLeft, double amountFinished) {
@@ -353,4 +353,4 @@ namespace core { namespace game { namespace enemy {
 		CI_LOG_D(getName() << " - Dying, secondsLeft: " << secondsLeft << " amountFinished: " << amountFinished);
 	}
 
-}}} // namespace core::game::enemy
+}}}} // namespace core::game::surfacer::enemy

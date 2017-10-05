@@ -17,7 +17,7 @@
 
 #include "Xml.hpp"
 
-namespace core { namespace game { namespace enemy {
+namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 	SMART_PTR(Eggsac);
 	SMART_PTR(EggsacPhysicsComponent);
@@ -37,7 +37,7 @@ namespace core { namespace game { namespace enemy {
 		config getConfig() const { return _config; }
 
 		// DrawComponent
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 
 		void draw(const render_state &renderState) override;
 		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::FRUSTUM_CULLING; }
@@ -98,7 +98,7 @@ namespace core { namespace game { namespace enemy {
 		void detach();
 
 		// PhysicsComponent
-		void onReady(GameObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, LevelRef level) override;
 		void onCleanup() override;
 		void step(const time_state &time) override;
 		cpBB getBB() const override;
@@ -188,7 +188,7 @@ namespace core { namespace game { namespace enemy {
 		void onHealthChanged(double oldHealth, double newHealth) override;
 		void onDeath() override;
 
-		// GameObject
+		// Object
 		void update(const time_state &time) override;
 		void onFinishing(seconds_t secondsLeft, double amountFinished) override;
 
@@ -197,6 +197,6 @@ namespace core { namespace game { namespace enemy {
 
 
 
-}}} // namespace core::game::enemy
+}}}} // namespace core::game::surfacer::enemy
 
 #endif /* Eggsac_hpp */

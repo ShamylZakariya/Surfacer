@@ -11,14 +11,14 @@
 
 #include <chipmunk/chipmunk_unsafe.h>
 
-#include "GameLevel.hpp"
+#include "SurfacerLevel.hpp"
 #include "Strings.hpp"
 #include "Terrain.hpp"
 #include "Xml.hpp"
 #include "ChipmunkDebugDraw.hpp"
 
 
-namespace core { namespace game { namespace player {
+namespace core { namespace game {  namespace surfacer { namespace player {
 
 	namespace {
 
@@ -29,7 +29,7 @@ namespace core { namespace game { namespace player {
 				c.position = v2(point);
 				c.normal = v2(normal);
 				c.shape = shape;
-				c.object = cpShapeGetGameObject(shape);
+				c.object = cpShapeGetObject(shape);
 
 				auto contacts = static_cast<vector<Projectile::contact>*>(data);
 				contacts->push_back(c);
@@ -73,7 +73,7 @@ namespace core { namespace game { namespace player {
 
 		const LevelRef &level = getLevel();
 		for (const auto &contact : _contacts) {
-			level->registerContactBetweenObjects(CollisionType::WEAPON, getGameObject(), cpShapeGetCollisionType(contact.shape), contact.object);
+			level->registerContactBetweenObjects(CollisionType::WEAPON, getObject(), cpShapeGetCollisionType(contact.shape), contact.object);
 		}
 	}
 
@@ -187,8 +187,8 @@ namespace core { namespace game { namespace player {
 	void PulseProjectile::update(const time_state &time) {
 		Projectile::update(time);
 
-		GameObjectRef go = getGameObject();
-		CI_ASSERT_MSG(go, "GameObject should be accessbile");
+		ObjectRef go = getObject();
+		CI_ASSERT_MSG(go, "Object should be accessbile");
 
 		//
 		//	Before beam hits, we move the head, compute the length, and track the tail.
@@ -273,14 +273,14 @@ namespace core { namespace game { namespace player {
 		Projectile::fire(origin, dir);
 	}
 
-	void CutterProjectile::onReady(GameObjectRef parent, LevelRef level) {
+	void CutterProjectile::onReady(ObjectRef parent, LevelRef level) {
 
 		_startSeconds = time_state::now();
 
 		processContacts();
 		computeCutSegment();
 
-		terrain::TerrainObjectRef terrain = static_pointer_cast<GameLevel>(level)->getTerrain();
+		terrain::TerrainObjectRef terrain = static_pointer_cast<SurfacerLevel>(level)->getTerrain();
 		if (terrain) {
 			terrain->getWorld()->cut(_segment.tail, _segment.head, _config.width/2);
 		}
@@ -290,7 +290,7 @@ namespace core { namespace game { namespace player {
 	void CutterProjectile::update(const time_state &time) {
 		Projectile::update(time);
 		if (time.time  - _startSeconds > _config.lifespan) {
-			getGameObject()->setFinished();
+			getObject()->setFinished();
 		}
 	}
 
@@ -323,7 +323,7 @@ namespace core { namespace game { namespace player {
 	BeamProjectileDrawComponent::BeamProjectileDrawComponent(){}
 	BeamProjectileDrawComponent::~BeamProjectileDrawComponent(){}
 
-	void BeamProjectileDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void BeamProjectileDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 		_beam = getSibling<BeamProjectile>();
 		DrawComponent::onReady(parent, level);
 	}
@@ -433,19 +433,19 @@ namespace core { namespace game { namespace player {
 		_charge = 0;
 		_chargeStartTime = time_state::now();
 
-		auto pulse = make_shared<PulseProjectile>(_config.pulse, getGameObjectAs<Player>());
+		auto pulse = make_shared<PulseProjectile>(_config.pulse, getObjectAs<Player>());
 		pulse->fire(getAimOrigin(), getAimDirection());
 
-		getLevel()->addGameObject(GameObject::with("Pulse", { pulse, make_shared<BeamProjectileDrawComponent>() }));
+		getLevel()->addObject(Object::with("Pulse", { pulse, make_shared<BeamProjectileDrawComponent>() }));
 	}
 
 	void Gun::fireCutter() {
 		_charge = 0;
 
-		auto cutter = make_shared<CutterProjectile>(_config.cutter, getGameObjectAs<Player>());
+		auto cutter = make_shared<CutterProjectile>(_config.cutter, getObjectAs<Player>());
 		cutter->fire(getAimOrigin(), getAimDirection());
 
-		getLevel()->addGameObject(GameObject::with("Blast", { cutter, make_shared<BeamProjectileDrawComponent>() }));
+		getLevel()->addObject(Object::with("Blast", { cutter, make_shared<BeamProjectileDrawComponent>() }));
 	}
 
 #pragma mark - PlayerPhysicsComponent
@@ -498,7 +498,7 @@ namespace core { namespace game { namespace player {
 
 	PlayerPhysicsComponent::~PlayerPhysicsComponent() {}
 
-	void PlayerPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void PlayerPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
 		PhysicsComponent::onReady(parent, level);
 	}
 
@@ -591,7 +591,7 @@ namespace core { namespace game { namespace player {
 		}
 	}
 	
-	void JetpackUnicyclePlayerPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void JetpackUnicyclePlayerPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
 		PlayerPhysicsComponent::onReady(parent, level);
 
 		_input = getSibling<PlayerInputComponent>();
@@ -668,7 +668,7 @@ namespace core { namespace game { namespace player {
 	void JetpackUnicyclePlayerPhysicsComponent::step(const time_state &timeState) {
 		PlayerPhysicsComponent::step(timeState);
 
-		const PlayerRef player = getGameObjectAs<Player>();
+		const PlayerRef player = getObjectAs<Player>();
 		const PlayerPhysicsComponent::config config = getConfig();
 
 		const bool
@@ -947,7 +947,7 @@ namespace core { namespace game { namespace player {
 	PlayerDrawComponent::~PlayerDrawComponent()
 	{}
 
-	void PlayerDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void PlayerDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 		_physics = getSibling<JetpackUnicyclePlayerPhysicsComponent>();
 		_gun = getSibling<Gun>();
 
@@ -1177,4 +1177,4 @@ namespace core { namespace game { namespace player {
 		addComponent(health);
 	}
 
-}}} // namespace core::game::player
+}}}} // namespace core::game::surfacer::player

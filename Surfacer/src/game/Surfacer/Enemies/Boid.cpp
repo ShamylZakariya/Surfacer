@@ -11,7 +11,7 @@
 
 #include "Xml.hpp"
 
-namespace core { namespace game { namespace enemy {
+namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - BoidPhysicsComponent
 
@@ -55,7 +55,7 @@ namespace core { namespace game { namespace enemy {
 		_facingDirection = dir;
 	}
 
-	void BoidPhysicsComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void BoidPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
 		PhysicsComponent::onReady(parent, level);
 
 		//
@@ -203,7 +203,7 @@ namespace core { namespace game { namespace enemy {
 	}
 
 	void Boid::onReady(LevelRef level) {
-		GameObject::onReady(level);
+		Object::onReady(level);
 	}
 
 	void Boid::onCleanup() {
@@ -214,7 +214,7 @@ namespace core { namespace game { namespace enemy {
 			flockController->_onBoidFinished(shared_from_this_as<Boid>());
 		}
 
-		GameObject::onCleanup();
+		Object::onCleanup();
 	}
 
 #pragma mark - BoidFlockDrawComponent
@@ -231,7 +231,7 @@ namespace core { namespace game { namespace enemy {
 	BoidFlockDrawComponent::~BoidFlockDrawComponent()
 	{}
 
-	void BoidFlockDrawComponent::onReady(GameObjectRef parent, LevelRef level) {
+	void BoidFlockDrawComponent::onReady(ObjectRef parent, LevelRef level) {
 		DrawComponent::onReady(parent, level);
 		_flockController = getSibling<BoidFlockController>();
 
@@ -294,7 +294,7 @@ namespace core { namespace game { namespace enemy {
 		cpGroup _group;
 		string _name;
 		vector<BoidRef> _flock;
-		vector<GameObjectWeakRef> _targets;
+		vector<ObjectWeakRef> _targets;
 		dvec2 _lastSpawnOrigin;
 		config _config;
 		ci::Rand _rng;
@@ -336,7 +336,7 @@ namespace core { namespace game { namespace enemy {
 			_flock.push_back(b);
 			_flockPhysicsComponents.push_back(b->getBoidPhysicsComponent().get());
 
-			level->addGameObject(b);
+			level->addObject(b);
 		}
 	}
 
@@ -344,14 +344,14 @@ namespace core { namespace game { namespace enemy {
 		return _flock.size();
 	}
 
-	void BoidFlockController::setTargets(vector<GameObjectRef> targets) {
+	void BoidFlockController::setTargets(vector<ObjectRef> targets) {
 		_targets.clear();
 		for (auto t : targets) {
 			_targets.push_back(t);
 		}
 	}
 
-	void BoidFlockController::addTarget(GameObjectRef target) {
+	void BoidFlockController::addTarget(ObjectRef target) {
 		_targets.push_back(target);
 	}
 
@@ -359,12 +359,12 @@ namespace core { namespace game { namespace enemy {
 		_targets.clear();
 	}
 
-	void BoidFlockController::onReady(GameObjectRef parent, LevelRef level) {
+	void BoidFlockController::onReady(ObjectRef parent, LevelRef level) {
 		_space = level->getSpace()->getSpace();
 		Component::onReady(parent, level);
 
 		for (auto targetId : _config.target_ids) {
-			auto objs = level->getGameObjectsByName(targetId);
+			auto objs = level->getObjectsByName(targetId);
 			for (auto obj : objs) {
 				_targets.push_back(obj);
 			}
@@ -401,7 +401,7 @@ namespace core { namespace game { namespace enemy {
 			_trackingState.eyeBoidPosition = _trackingState.eyeBoid->getBoidPhysicsComponent()->getPosition();
 
 			// scale the swarm offset vector and apply
-			const auto position = _getGameObjectPosition(_trackingState.target);
+			const auto position = _getObjectPosition(_trackingState.target);
 			const double size = (cpBBWidth(position->first) + cpBBHeight(position->first)) * 0.5;
 			const dvec2 swarmOffset = _swarmTargetOffset * size;
 
@@ -424,7 +424,7 @@ namespace core { namespace game { namespace enemy {
 			_trackingState.targetVisible = false;
 			for (auto possibleTarget : _targets) {
 				if (auto target = possibleTarget.lock()) {
-					if (auto position = _getGameObjectPosition(target)) {
+					if (auto position = _getObjectPosition(target)) {
 						if (_checkLineOfSight(_trackingState.eyeBoidPosition, position->second, target)) {
 							_trackingState.target = target;
 							_trackingState.lastTargetVisibleTime = time.time;
@@ -451,7 +451,7 @@ namespace core { namespace game { namespace enemy {
 		}
 	}
 
-	boost::optional<pair<cpBB,dvec2>> BoidFlockController::_getGameObjectPosition(const GameObjectRef &obj) const {
+	boost::optional<pair<cpBB,dvec2>> BoidFlockController::_getObjectPosition(const ObjectRef &obj) const {
 		if (PhysicsComponentRef pc = obj->getPhysicsComponent()) {
 			cpBB bounds = pc->getBB();
 			return make_pair(bounds, v2(cpBBCenter(bounds)));
@@ -460,7 +460,7 @@ namespace core { namespace game { namespace enemy {
 		return boost::none;
 	}
 
-	bool BoidFlockController::_checkLineOfSight(dvec2 start, dvec2 end, GameObjectRef target) const {
+	bool BoidFlockController::_checkLineOfSight(dvec2 start, dvec2 end, ObjectRef target) const {
 		// set up a filter that catches everything BUT our Boids
 		cpShapeFilter filter = CP_SHAPE_FILTER_ALL;
 		filter.group = _group;
@@ -470,7 +470,7 @@ namespace core { namespace game { namespace enemy {
 		cpSpaceSegmentQueryFirst(_space, cpv(start), cpv(end), 1, filter, &info);
 
 		// test passes if we hit the target and nothing in between
-		return info.shape && cpShapeGetGameObject(info.shape) == target;
+		return info.shape && cpShapeGetObject(info.shape) == target;
 	}
 
 	void BoidFlockController::_updateFlock_canonical(const time_state &time) {
@@ -580,7 +580,7 @@ namespace core { namespace game { namespace enemy {
 
 		if (_flock.empty()) {
 			onFlockDidFinish(shared_from_this_as<BoidFlockController>());
-			getGameObject()->setFinished(true);
+			getObject()->setFinished(true);
 		}
 	}
 
@@ -636,7 +636,7 @@ namespace core { namespace game { namespace enemy {
 
 
 	BoidFlock::BoidFlock(string name, BoidFlockControllerRef controller, BoidFlockDrawComponentRef drawer):
-	core::GameObject(name),
+	core::Object(name),
 	_flockController(controller),
 	_drawer(drawer)
 	{}
@@ -645,4 +645,4 @@ namespace core { namespace game { namespace enemy {
 	{}
 
 
-}}} // namespace core::game::enemy
+}}}} // namespace core::game::enemy

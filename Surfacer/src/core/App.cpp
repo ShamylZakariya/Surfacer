@@ -6,14 +6,14 @@
 //
 //
 
-#include "GameApp.hpp"
+#include "App.hpp"
 
 #define USE_PHYSICS_LOOP 0
 
-namespace core { namespace game {
+namespace core {
 
 
-	void GameApp::prepareSettings( Settings *settings ) {
+	void App::prepareSettings( Settings *settings ) {
 		settings->setTitle( "Controlled Demolition" );
 		settings->setWindowSize( 800, 600 );
 		settings->setFrameRate( 60 );
@@ -22,25 +22,25 @@ namespace core { namespace game {
 		settings->setHighDensityDisplayEnabled(false);
 	}
 
-	GameApp::GameApp():
+	App::App():
 	_stepCount(0),
 	_stepCountTime(0),
 	_averageStepsPerSecond(0)
 	{}
 
-	GameApp::~GameApp()
+	App::~App()
 	{}
 
-	void GameApp::setup() {
+	void App::setup() {
 		InputDispatcher::set(make_shared<InputDispatcher>(getWindow()));
 	}
 
-	void GameApp::cleanup() {
+	void App::cleanup() {
 		CI_LOG_D("GameApp::cleanup - shutting down active scenario...");
 		setScenario(nullptr);
 	}
 
-	void GameApp::update() {
+	void App::update() {
 		// run physics step()
 #if USE_PHYSICS_LOOP
 		_physicsLoop->step();
@@ -52,15 +52,15 @@ namespace core { namespace game {
 		_scenario->dispatchUpdate();
 	}
 
-	void GameApp::draw() {
+	void App::draw() {
 		_scenario->dispatchDraw();
 	}
 
-	void GameApp::resize() {
+	void App::resize() {
 		_scenario->dispatchResize(getWindowSize());
 	}
 
-	void GameApp::step() {
+	void App::step() {
 #if USE_PHYSICS_LOOP
 		_stepCount++;
 		if ( _stepCount > 60 )
@@ -84,7 +84,7 @@ namespace core { namespace game {
 #endif
 	}
 
-	void GameApp::setScenario( ScenarioRef scenario ) {
+	void App::setScenario( ScenarioRef scenario ) {
 		if (_scenario) {
 			_scenario->dispatchCleanup();
 		}
@@ -105,7 +105,7 @@ namespace core { namespace game {
 	 seconds_t				_interval;
 	 */
 
-	PhysicsLoop::PhysicsLoop( GameApp *app, int rate ):
+	PhysicsLoop::PhysicsLoop( App *app, int rate ):
 	_app(app),
 	_rate(rate),
 	_interval( seconds_t(1) / seconds_t(rate))
@@ -120,7 +120,7 @@ namespace core { namespace game {
 	 seconds_t _currentTime, _lastTime, _timeRemainder;
 	 */
 
-	AdaptivePhysicsLoop::AdaptivePhysicsLoop( GameApp *app, int rate ):
+	AdaptivePhysicsLoop::AdaptivePhysicsLoop( App *app, int rate ):
 	PhysicsLoop(app, rate),
 	_timeRemainder(0)
 	{
@@ -173,7 +173,7 @@ namespace core { namespace game {
 	 seconds_t _currentTime, _lastTime, _timeRemainderm, _cyclesLeftOver;
 	 */
 
-	SacredSoftwarePhysicsLoop::SacredSoftwarePhysicsLoop( GameApp *app, int rate ):
+	SacredSoftwarePhysicsLoop::SacredSoftwarePhysicsLoop( App *app, int rate ):
 	PhysicsLoop(app,rate),
 	_timeRemainder(0),
 	_cyclesLeftOver(0)
@@ -240,4 +240,4 @@ namespace core { namespace game {
 		_lastTime = _currentTime;
 	}
 	
-}} // end namespace core::game
+} // end namespace core
