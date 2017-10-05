@@ -16,7 +16,7 @@
 #include "Player.hpp"
 
 
-namespace core { namespace game { namespace surfacer {
+namespace surfacer {
 
 	SMART_PTR(SurfacerLevel);
 
@@ -81,7 +81,7 @@ namespace core { namespace game { namespace surfacer {
 
 #pragma mark - GameLevel
 
-	class SurfacerLevel : public Level {
+	class SurfacerLevel : public core::Level {
 	public:
 		SurfacerLevel();
 		virtual ~SurfacerLevel();
@@ -90,8 +90,8 @@ namespace core { namespace game { namespace surfacer {
 		//	Level
 		//
 
-		void addObject(ObjectRef obj) override;
-		void removeObject(ObjectRef obj) override;
+		void addObject(core::ObjectRef obj) override;
+		void removeObject(core::ObjectRef obj) override;
 
 		//
 		//	GameLevel
@@ -100,7 +100,7 @@ namespace core { namespace game { namespace surfacer {
 		void load(ci::DataSourceRef levelXmlData);
 		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
 		player::PlayerRef getPlayer() const { return _player; }
-		const set<EntityRef> &getEnemies() const { return _enemies; }
+		const set<core::EntityRef> &getEnemies() const { return _enemies; }
 
 
 	protected:
@@ -119,19 +119,19 @@ namespace core { namespace game { namespace surfacer {
 		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
 		void loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode);
 
-		virtual EntityRef classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree node);
+		virtual core::EntityRef classload(string tag, string name, dvec2 position, core::util::xml::XmlMultiTree node);
 
-		virtual void onPlayerEnemyContact(const EntityRef &enemy);
-		virtual void onPlayerShotEnemy(const ObjectRef &weapon, const EntityRef &enemy);
+		virtual void onPlayerEnemyContact(const core::EntityRef &enemy);
+		virtual void onPlayerShotEnemy(const core::ObjectRef &weapon, const core::EntityRef &enemy);
 
 	private:
 
 		terrain::TerrainObjectRef _terrain;
 		player::PlayerRef _player;
-		set<EntityRef> _enemies;
+		set<core::EntityRef> _enemies;
 		
 	};
 	
-}}} // namespace core::game::surfacer
+} // namespace surfacer
 
 #endif /* GameLevel_hpp */

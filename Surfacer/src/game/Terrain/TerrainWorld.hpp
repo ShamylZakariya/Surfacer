@@ -15,7 +15,7 @@
 
 #include "Core.hpp"
 
-namespace core { namespace game { namespace terrain {
+namespace terrain {
 
 	SMART_PTR(World);
 	SMART_PTR(GroupBase);
@@ -80,17 +80,17 @@ namespace core { namespace game { namespace terrain {
 		}
 	};
 
-}}} // namespace core::game::terrain
+} // namespace terrain
 
 #pragma mark -
 
 namespace std {
 
 	template <>
-	struct hash<core::game::terrain::poly_edge> {
+	struct hash<terrain::poly_edge> {
 
 		// make island::poly_edge hashable
-		std::size_t operator()(const core::game::terrain::poly_edge& e) const {
+		std::size_t operator()(const terrain::poly_edge& e) const {
 			std::size_t seed = 0;
 			boost::hash_combine(seed, e.a.x);
 			boost::hash_combine(seed, e.a.y);
@@ -103,7 +103,7 @@ namespace std {
 }
 
 
-namespace core { namespace game { namespace terrain {
+namespace terrain {
 
 #pragma mark - Material
 
@@ -156,8 +156,8 @@ namespace core { namespace game { namespace terrain {
 		void moved( const DrawableRef & );
 		void moved( Drawable* );
 
-		void cull( const render_state & );
-		void draw( const render_state &, const ci::gl::GlslProgRef &shader);
+		void cull( const core::render_state & );
+		void draw( const core::render_state &, const ci::gl::GlslProgRef &shader);
 
 		void setDrawPasses(size_t passes) { _drawPasses = passes; }
 		size_t getPasses() const { return _drawPasses; }
@@ -172,7 +172,7 @@ namespace core { namespace game { namespace terrain {
 			render a run of shapes belonging to a common group
 			returns iterator to last shape drawn
 		 */
-		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const render_state &state, const ci::gl::GlslProgRef &shader );
+		vector<DrawableRef>::iterator _drawGroupRun( vector<DrawableRef>::iterator first, vector<DrawableRef>::iterator storageEnd, const core::render_state &state, const ci::gl::GlslProgRef &shader );
 
 	private:
 
@@ -212,7 +212,7 @@ namespace core { namespace game { namespace terrain {
 
 	public:
 
-		World(SpaceAccessRef space, material worldMaterial, material anchorMaterial);
+		World(core::SpaceAccessRef space, material worldMaterial, material anchorMaterial);
 		virtual ~World();
 
 		/**
@@ -229,16 +229,16 @@ namespace core { namespace game { namespace terrain {
 		 */
 		void cut(dvec2 a, dvec2 b, double radius);
 
-		void draw(const render_state &renderState);
-		void step(const time_state &timeState);
-		void update(const time_state &timeState);
+		void draw(const core::render_state &renderState);
+		void step(const core::time_state &timeState);
+		void update(const core::time_state &timeState);
 
 		const set<DynamicGroupRef> &getDynamicGroups() const { return _dynamicGroups; }
 		StaticGroupRef getStaticGroup() const { return _staticGroup; }
 		const vector<AnchorRef> &getAnchors() const { return _anchors; }
 		const vector<ElementRef> &getElements() const { return _elements; }
 		ElementRef getElementById(string id) const;
-		SpaceAccessRef getSpace() const { return _space; }
+		core::SpaceAccessRef getSpace() const { return _space; }
 
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
@@ -246,7 +246,7 @@ namespace core { namespace game { namespace terrain {
 		/**
 		 Get the Object which wraps this World for use in a Level
 		 */
-		ObjectRef getObject() const;
+		core::ObjectRef getObject() const;
 
 	protected:
 
@@ -257,7 +257,7 @@ namespace core { namespace game { namespace terrain {
 		void notifyCollisionShapesWillBeDestoyed(vector<cpShape*> shapes);
 		void notifyBodyWillBeDestoyed(cpBody *body);
 
-		void setObject(ObjectRef object);
+		void setObject(core::ObjectRef object);
 		void build(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		vector<set<ShapeRef>> findShapeGroups(const vector<ShapeRef> &shapes, const map<ShapeRef,GroupBaseRef> &parentage);
 		bool isShapeGroupStatic(const set<ShapeRef> shapeGroup, const GroupBaseRef &parentGroup);
@@ -267,7 +267,7 @@ namespace core { namespace game { namespace terrain {
 		static size_t _idCounter;
 
 		material _worldMaterial, _anchorMaterial;
-		SpaceAccessRef _space;
+		core::SpaceAccessRef _space;
 		StaticGroupRef _staticGroup;
 		set<DynamicGroupRef> _dynamicGroups;
 		vector<AnchorRef> _anchors;
@@ -277,21 +277,21 @@ namespace core { namespace game { namespace terrain {
 		DrawDispatcher _drawDispatcher;
 		ci::gl::GlslProgRef _shader;
 
-		ObjectWeakRef _object;
+		core::ObjectWeakRef _object;
 	};
 
 
 #pragma mark - GroupBase
 
 
-	class GroupBase : public IChipmunkUserData {
+	class GroupBase : public core::IChipmunkUserData {
 	public:
 
 		GroupBase(WorldRef world, material m, DrawDispatcher &dispatcher);
 		virtual ~GroupBase();
 
 		DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
-		const SpaceAccessRef &getSpace() const { return _space; }
+		const core::SpaceAccessRef &getSpace() const { return _space; }
 		const material &getMaterial() const { return _material; }
 		virtual string getName() const { return _name; }
 		virtual Color getColor() const { return _color; }
@@ -306,9 +306,9 @@ namespace core { namespace game { namespace terrain {
 		virtual set<ShapeRef> getShapes() const = 0;
 		virtual void releaseShapes() = 0;
 		virtual size_t getDrawingBatchId() const { return _drawingBatchId;}
-		virtual void draw(const render_state &renderState) = 0;
-		virtual void step(const time_state &timeState) = 0;
-		virtual void update(const time_state &timeState) = 0;
+		virtual void draw(const core::render_state &renderState) = 0;
+		virtual void step(const core::time_state &timeState) = 0;
+		virtual void update(const core::time_state &timeState) = 0;
 
 		cpTransform getModelTransform() const {
 			dmat4 mm = getModelMatrix();
@@ -323,14 +323,14 @@ namespace core { namespace game { namespace terrain {
 		WorldRef getWorld() const;
 
 		// IChipmunkUserData
-		ObjectRef getObject() const override;
+		core::ObjectRef getObject() const override;
 
 	protected:
 
 		DrawDispatcher &_drawDispatcher;
 		size_t _drawingBatchId;
 		WorldWeakRef _world;
-		SpaceAccessRef _space;
+		core::SpaceAccessRef _space;
 		material _material;
 		string _name;
 		Color _color;
@@ -354,9 +354,9 @@ namespace core { namespace game { namespace terrain {
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
 		virtual void releaseShapes() override;
 
-		virtual void draw(const render_state &renderState) override {}
-		virtual void step(const time_state &timeState) override {}
-		virtual void update(const time_state &timeState) override {}
+		virtual void draw(const core::render_state &renderState) override {}
+		virtual void step(const core::time_state &timeState) override {}
+		virtual void update(const core::time_state &timeState) override {}
 
 		void addShape(ShapeRef shape);
 		void removeShape(ShapeRef shape);
@@ -390,9 +390,9 @@ namespace core { namespace game { namespace terrain {
 		virtual set<ShapeRef> getShapes() const override { return _shapes; }
 		virtual void releaseShapes() override;
 
-		virtual void draw(const render_state &renderState) override;
-		virtual void step(const time_state &timeState) override;
-		virtual void update(const time_state &timeState) override;
+		virtual void draw(const core::render_state &renderState) override;
+		virtual void step(const core::time_state &timeState) override;
+		virtual void update(const core::time_state &timeState) override;
 
 
 	protected:
@@ -414,7 +414,7 @@ namespace core { namespace game { namespace terrain {
 
 #pragma mark - Drawable
 
-	class Drawable : public IChipmunkUserData, public enable_shared_from_this<Drawable> {
+	class Drawable : public core::IChipmunkUserData, public enable_shared_from_this<Drawable> {
 	public:
 		Drawable();
 		virtual ~Drawable();
@@ -430,7 +430,7 @@ namespace core { namespace game { namespace terrain {
 		virtual const TriMeshRef &getTriMesh() const = 0;
 		virtual const gl::VboMeshRef &getVboMesh() const = 0;
 		virtual Color getColor() const = 0;
-		virtual bool shouldDraw(const render_state &state) const = 0;
+		virtual bool shouldDraw(const core::render_state &state) const = 0;
 
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this_as<Shape>();
 		template<typename T>
@@ -448,7 +448,7 @@ namespace core { namespace game { namespace terrain {
 		WorldRef getWorld() const;
 
 		// IChipmunkUserData
-		ObjectRef getObject() const override;
+		core::ObjectRef getObject() const override;
 
 	private:
 
@@ -494,7 +494,7 @@ namespace core { namespace game { namespace terrain {
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 		Color getColor() const override { return Color(1,0,1); }
-		bool shouldDraw(const render_state &state) const override;
+		bool shouldDraw(const core::render_state &state) const override;
 
 	private:
 
@@ -551,12 +551,12 @@ namespace core { namespace game { namespace terrain {
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 		Color getColor() const override { return Color(0,0,0); }
-		bool shouldDraw(const render_state &state) const override { return true; }
+		bool shouldDraw(const core::render_state &state) const override { return true; }
 
 	protected:
 
 		friend class World;
-		bool build(SpaceAccessRef space, material m);
+		bool build(core::SpaceAccessRef space, material m);
 
 	private:
 
@@ -647,7 +647,7 @@ namespace core { namespace game { namespace terrain {
 
 		Color getColor() const override { return getGroup()->getColor(); }
 
-		bool shouldDraw(const render_state &state) const override { return true; }
+		bool shouldDraw(const core::render_state &state) const override { return true; }
 
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
@@ -692,6 +692,6 @@ namespace core { namespace game { namespace terrain {
 		ci::gl::VboMeshRef _vboMesh;
 	};
 	
-}}} // namespace core::game::terrain
+} // namespace terrain
 
 #endif /* TerrainWorld_hpp */

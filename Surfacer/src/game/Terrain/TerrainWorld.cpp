@@ -22,7 +22,9 @@
 #include "TerrainDetail.hpp"
 #include "SvgParsing.hpp"
 
-namespace core { namespace game { namespace terrain {
+using namespace core;
+
+namespace terrain {
 
 #pragma mark - DrawDispatcher
 
@@ -1660,4 +1662,4 @@ namespace core { namespace game { namespace terrain {
 	}
 	
 
-}}} // end namespace core::game::terrain
+} // end namespace terrain

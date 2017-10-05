@@ -17,8 +17,9 @@
 #include "Xml.hpp"
 #include "ChipmunkDebugDraw.hpp"
 
+using namespace core;
 
-namespace core { namespace game {  namespace surfacer { namespace player {
+namespace surfacer { namespace player {
 
 	namespace {
 
@@ -1177,4 +1178,4 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		addComponent(health);
 	}
 
-}}}} // namespace core::game::surfacer::player
+}} // namespace surfacer::player

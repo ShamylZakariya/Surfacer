@@ -11,7 +11,9 @@
 
 #include "Xml.hpp"
 
-namespace core { namespace game {  namespace surfacer { namespace enemy {
+using namespace core;
+
+namespace surfacer { namespace enemy {
 
 #pragma mark - BoidPhysicsComponent
 
@@ -645,4 +647,4 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 	{}
 
 
-}}}} // namespace core::game::enemy
+}} // namespace surfacer::enemy

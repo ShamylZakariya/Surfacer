@@ -1,3 +1,4 @@
+
 //
 //  Boid.hpp
 //  Surfacer
@@ -17,7 +18,7 @@
 #include "SurfacerLevel.hpp"
 #include "Xml.hpp"
 
-namespace core { namespace game {  namespace surfacer { namespace enemy {
+namespace surfacer { namespace enemy {
 
 	SMART_PTR(BoidPhysicsComponent);
 	SMART_PTR(BoidDrawComponent);
@@ -28,7 +29,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - BoidPhysicsComponent
 
-	class BoidPhysicsComponent : public PhysicsComponent {
+	class BoidPhysicsComponent : public core::PhysicsComponent {
 	public:
 
 		struct config {
@@ -62,9 +63,9 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		void setFacingDirection(dvec2 dir);
 		dvec2 getFacingDirection() const { return _facingDirection; }
 
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		void onCleanup() override;
-		void step(const time_state &time) override;
+		void step(const core::time_state &time) override;
 		cpBB getBB() const override;
 		double getGravityModifier() const override { return 0; }
 
@@ -82,12 +83,12 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - Boid
 
-	class Boid : public Entity {
+	class Boid : public core::Entity {
 	public:
 
 		struct config {
 			BoidPhysicsComponent::config physics;
-			HealthComponent::config health;
+			core::HealthComponent::config health;
 		};
 
 		static BoidRef create(string name, BoidFlockControllerRef flockController, config c, dvec2 initialPosition, dvec2 initialVelocity, double ruleVariance, cpGroup group);
@@ -108,7 +109,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		void onDeath() override;
 
 		// Object
-		void onReady(LevelRef level) override;
+		void onReady(core::LevelRef level) override;
 		void onCleanup() override;
 
 	private:
@@ -121,7 +122,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - BoidDrawComponent
 
-	class BoidFlockDrawComponent : public DrawComponent {
+	class BoidFlockDrawComponent : public core::DrawComponent {
 	public:
 		struct config {
 		};
@@ -131,11 +132,11 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		BoidFlockDrawComponent(config c);
 		virtual ~BoidFlockDrawComponent();
 
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 
-		void update(const time_state &time) override;
-		void draw(const render_state &renderState) override;
-		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::FRUSTUM_CULLING; }
+		void update(const core::time_state &time) override;
+		void draw(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::FRUSTUM_CULLING; }
 		int getLayer() const override { return DrawLayers::ENEMY; }
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
@@ -152,7 +153,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - BoidFlockController
 
-	class BoidFlockController : public Component {
+	class BoidFlockController : public core::Component {
 	public:
 
 		struct rule_contributions {
@@ -185,7 +186,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		struct config {
 			Boid::config boid;
 			rule_contributions ruleContributions;
-			seconds_t trackingMemorySeconds;
+			core::seconds_t trackingMemorySeconds;
 			vector<string> target_ids;
 		};
 
@@ -197,14 +198,14 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 			dvec2 eyeBoidPosition;
 
 			// the target
-			ObjectRef target;
+			core::ObjectRef target;
 
 			// the current location of the target
 			dvec2 targetPosition;
 
 			// true if the target was visible
 			bool targetVisible;
-			seconds_t lastTargetVisibleTime;
+			core::seconds_t lastTargetVisibleTime;
 
 			tracking_state():
 			eyeBoidPosition(0),
@@ -217,10 +218,10 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 	public:
 
 		// signal fired when all boids in the flock are gone
-		signals::signal< void(BoidFlockControllerRef) > onFlockDidFinish;
+		core::signals::signal< void(BoidFlockControllerRef) > onFlockDidFinish;
 
 		// signal fired when a boid in the flock is killed right before it's removed from the level
-		signals::signal< void(BoidFlockControllerRef, BoidRef) > onBoidFinished;
+		core::signals::signal< void(BoidFlockControllerRef, BoidRef) > onBoidFinished;
 
 	public:
 
@@ -263,19 +264,19 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		 Internally, the targets are held as weak_ptr<> and the flock will pursue the first which is
 		 live, is in the level, and has a PhysicsRepresentation to query for position.
 		 */
-		void setTargets(vector<ObjectRef> targets);
+		void setTargets(vector<core::ObjectRef> targets);
 
 		/**
 		 Add a target for the flock to pursue
 		 */
-		void addTarget(ObjectRef target);
+		void addTarget(core::ObjectRef target);
 
 		/**
 		 Clear the targets this flock will pursue. Flock will continue to follow flcoking rules, but without target seeking
 		 */
 		void clearTargets();
 
-		const vector<ObjectWeakRef> getTargets() const { return _targets; }
+		const vector<core::ObjectWeakRef> getTargets() const { return _targets; }
 
 		/**
 		 Get the current tracking state used to direct the flock
@@ -288,19 +289,19 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		cpBB getFlockBB() const { return _flockBB; }
 
 		// Component
-		void onReady(ObjectRef parent, LevelRef level) override;
-		void update(const time_state &time) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void update(const core::time_state &time) override;
 
 	protected:
 
 		friend class Boid;
 		friend class BoidFlockDrawComponent;
 
-		void _updateTrackingState(const time_state &time);
-		boost::optional<pair<cpBB,dvec2>> _getObjectPosition(const ObjectRef &obj) const;
-		bool _checkLineOfSight(dvec2 start, dvec2 end, ObjectRef target) const;
+		void _updateTrackingState(const core::time_state &time);
+		boost::optional<pair<cpBB,dvec2>> _getObjectPosition(const core::ObjectRef &obj) const;
+		bool _checkLineOfSight(dvec2 start, dvec2 end, core::ObjectRef target) const;
 
-		void _updateFlock_canonical(const time_state &time);
+		void _updateFlock_canonical(const core::time_state &time);
 
 		void _onBoidFinished(const BoidRef &boid);
 
@@ -310,14 +311,14 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		cpGroup _group;
 		string _name;
 		vector<BoidRef> _flock;
-		vector<ObjectWeakRef> _targets;
+		vector<core::ObjectWeakRef> _targets;
 		dvec2 _lastSpawnOrigin;
 		config _config;
 		ci::Rand _rng;
 		cpBB _flockBB;
 		tracking_state _trackingState;
 		dvec2 _swarmTargetOffset;
-		seconds_t _nextSwarmTargetOffsetUpdate;
+		core::seconds_t _nextSwarmTargetOffsetUpdate;
 
 		// raw ptr for performance - profiling shows 75% of update() loops are wasted on shared_ptr<> refcounting
 		vector<BoidPhysicsComponent*> _flockPhysicsComponents;
@@ -332,7 +333,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 	 a thing which can be drawn or have health or be shot. Rather, an "owner" Entity, say
 	 the Eggsac, creates a BoidFlock and adds it to the Level.
 	 */
-	class BoidFlock : public Object {
+	class BoidFlock : public core::Object {
 	public:
 
 		struct config {
@@ -340,7 +341,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 			BoidFlockDrawComponent::config draw;
 		};
 
-		static config loadConfig(util::xml::XmlMultiTree flockNode);
+		static config loadConfig(core::util::xml::XmlMultiTree flockNode);
 
 		static BoidFlockRef create(string name, config c);
 
@@ -360,6 +361,6 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 	};
 
 
-}}}}
+}} // end namespace surfacer::enemy
 
 #endif /* Boid_hpp */

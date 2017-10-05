@@ -9,7 +9,7 @@
 #include "DevComponents.hpp"
 
 using namespace core;
-using namespace core::game;
+
 #pragma mark - WorldCartesianGridDrawComponent
 
 /*

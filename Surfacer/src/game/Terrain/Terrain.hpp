@@ -12,11 +12,11 @@
 #include "Core.hpp"
 #include "TerrainWorld.hpp"
 
-namespace core { namespace game { namespace terrain {
+namespace terrain {
 
 	SMART_PTR(TerrainObject);
 
-	class TerrainObject : public Object {
+	class TerrainObject : public core::Object {
 	public:
 
 		static TerrainObjectRef create(string name, WorldRef world, int drawLayer) {
@@ -28,10 +28,10 @@ namespace core { namespace game { namespace terrain {
 		TerrainObject(string name, WorldRef world, int drawLayer);
 		virtual ~TerrainObject();
 
-		void onReady(LevelRef level) override;
+		void onReady(core::LevelRef level) override;
 		void onCleanup() override;
-		void step(const time_state &timeState) override;
-		void update(const time_state &timeState) override;
+		void step(const core::time_state &timeState) override;
+		void update(const core::time_state &timeState) override;
 
 		const WorldRef & getWorld() const { return _world; }
 
@@ -42,16 +42,16 @@ namespace core { namespace game { namespace terrain {
 	/**
 	 TerrainDrawComponent is a thin adapter to TerrainWorld's built-in draw dispatch system
 	 */
-	class TerrainDrawComponent : public DrawComponent {
+	class TerrainDrawComponent : public core::DrawComponent {
 	public:
 
 		TerrainDrawComponent(int drawLayer):_drawLayer(drawLayer){}
 		virtual ~TerrainDrawComponent(){}
 
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		cpBB getBB() const override { return cpBBInfinity; }
-		void draw(const render_state &renderState) override;
-		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::ALWAYS_DRAW; }
+		void draw(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::ALWAYS_DRAW; }
 		int getLayer() const override { return _drawLayer; }
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
@@ -66,12 +66,12 @@ namespace core { namespace game { namespace terrain {
 	/**
 	 TerrainPhysicsComponent is a thin adapter to TerrainWorld's physics system
 	 */
-	class TerrainPhysicsComponent : public PhysicsComponent {
+	class TerrainPhysicsComponent : public core::PhysicsComponent {
 	public:
 		TerrainPhysicsComponent(){}
 		virtual ~TerrainPhysicsComponent(){}
 
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		cpBB getBB() const override;
 		vector<cpBody*> getBodies() const override;
 
@@ -81,6 +81,6 @@ namespace core { namespace game { namespace terrain {
 
 	};
 
-}}} // namespace core::game::terrain
+} // namespace terrain
 
 #endif /* Terrain_hpp */

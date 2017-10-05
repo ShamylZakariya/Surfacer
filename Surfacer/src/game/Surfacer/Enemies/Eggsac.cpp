@@ -12,8 +12,8 @@
 #include "Xml.hpp"
 #include "ChipmunkDebugDraw.hpp"
 
-
-namespace core { namespace game {  namespace surfacer { namespace enemy {
+using namespace core;
+namespace surfacer { namespace enemy {
 
 #pragma mark - EggsacDrawComponent
 
@@ -353,4 +353,4 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		CI_LOG_D(getName() << " - Dying, secondsLeft: " << secondsLeft << " amountFinished: " << amountFinished);
 	}
 
-}}}} // namespace core::game::surfacer::enemy
+}} // namespace surfacer::enemy

@@ -30,7 +30,7 @@
 #include "ContourSimplification.hpp"
 #include "SvgParsing.hpp"
 
-namespace core { namespace game { namespace terrain { namespace detail {
+namespace terrain { namespace detail {
 
 		// TODO: Optimization is disabled since it seems to break edge stitching. The question is, how?
 		const double RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.125;
@@ -110,7 +110,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 
 		PolyLine2d optimize(PolyLine2d p) {
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
-				return util::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
+				return core::util::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD);
 			} else {
 				p.setClosed();
 				return p;
@@ -122,7 +122,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 
 			if (RDP_CONTOUR_OPTIMIZATION_THRESHOLD > 0) {
 				for (auto &p : ps) {
-					ret.push_back(util::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
+					ret.push_back(core::util::simplify(p, RDP_CONTOUR_OPTIMIZATION_THRESHOLD));
 				}
 			} else {
 				for (auto &p : ps) {
@@ -497,7 +497,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 		void svg_traverse_elements(XmlTree node, dmat4 worldTransform, vector<pair<string,PolyLine2d>> &idsAndContours) {
 
 			if ( node.hasAttribute( "transform" )) {
-				worldTransform = worldTransform * util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
+				worldTransform = worldTransform * core::util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
 			}
 
 			const std::string tag = node.getTag();
@@ -510,10 +510,10 @@ namespace core { namespace game { namespace terrain { namespace detail {
 				for ( auto childNode = node.begin(); childNode != node.end(); ++childNode ) {
 					svg_traverse_elements(*childNode, worldTransform, idsAndContours);
 				}
-			} else if (util::svg::canParseShape(tag)) {
+			} else if (core::util::svg::canParseShape(tag)) {
 
 				Shape2d shape;
-				util::svg::parseShape(node,shape);
+				core::util::svg::parseShape(node,shape);
 
 				//
 				//	Elements can have ONE contour each. We use the first,
@@ -533,7 +533,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 		void svg_traverse_anchors(XmlTree node, dmat4 worldTransform, vector<PolyLine2d> &contours) {
 
 			if ( node.hasAttribute( "transform" )) {
-				worldTransform = worldTransform * util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
+				worldTransform = worldTransform * core::util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
 			}
 
 			const std::string tag = node.getTag();
@@ -546,10 +546,10 @@ namespace core { namespace game { namespace terrain { namespace detail {
 				for ( auto childNode = node.begin(); childNode != node.end(); ++childNode ) {
 					svg_traverse_anchors(*childNode, worldTransform, contours);
 				}
-			} else if (util::svg::canParseShape(tag)) {
+			} else if (core::util::svg::canParseShape(tag)) {
 
 				Shape2d shape;
-				util::svg::parseShape(node,shape);
+				core::util::svg::parseShape(node,shape);
 
 				//
 				//	Anchors can have ONE contour each. We use the first,
@@ -567,7 +567,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 
 		void svg_traverse_world(XmlTree node, dmat4 worldTransform, vector<PolyLine2d> &contours) {
 			if ( node.hasAttribute( "transform" )) {
-				worldTransform = worldTransform * util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
+				worldTransform = worldTransform * core::util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
 			}
 
 			const std::string tag = node.getTag();
@@ -580,14 +580,14 @@ namespace core { namespace game { namespace terrain { namespace detail {
 				for ( auto childNode = node.begin(); childNode != node.end(); ++childNode ) {
 					svg_traverse_world(*childNode, worldTransform, contours);
 				}
-			} else if (util::svg::canParseShape(tag)) {
+			} else if (core::util::svg::canParseShape(tag)) {
 
 				//
 				//	This is a shape node ('rect', etc), parse it to contours, appending them to the soup
 				//
 
 				Shape2d shape;
-				util::svg::parseShape(node,shape);
+				core::util::svg::parseShape(node,shape);
 
 				for (const auto &path : shape.getContours()) {
 					PolyLine2d contour;
@@ -606,7 +606,7 @@ namespace core { namespace game { namespace terrain { namespace detail {
 						 vector<pair<string,PolyLine2d>> &elementIdsAndContours)
 		{
 			if ( node.hasAttribute( "transform" )) {
-				worldTransform = worldTransform * util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
+				worldTransform = worldTransform * core::util::svg::parseTransform(node.getAttribute( "transform" ).getValue());
 			}
 
 			if (node.hasAttribute("id")) {
@@ -697,6 +697,6 @@ namespace core { namespace game { namespace terrain { namespace detail {
 //	}
 
 
-}}}} // namespace core::game::terrain::detail
+}} // namespace terrain::detail
 
 #endif /* TerrainDetail_h */

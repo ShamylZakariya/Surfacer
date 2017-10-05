@@ -12,8 +12,9 @@
 #include "Eggsac.hpp"
 #include "Xml.hpp"
 
+using namespace core;
 
-namespace core { namespace game { namespace surfacer {
+namespace surfacer {
 
 	namespace ShapeFilters {
 		cpShapeFilter TERRAIN			= cpShapeFilterNew(CP_NO_GROUP, _TERRAIN,			_TERRAIN | _TERRAIN_PROBE | _GRABBABLE | _ANCHOR | _PLAYER | _ENEMY);
@@ -287,4 +288,4 @@ namespace core { namespace game { namespace surfacer {
 	}
 
 	
-}}} // namespace core::game::surfacer
+} // namespace surfacer

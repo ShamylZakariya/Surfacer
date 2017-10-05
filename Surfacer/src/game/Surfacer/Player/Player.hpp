@@ -15,7 +15,7 @@
 #include "Entity.hpp"
 #include "DevComponents.hpp"
 
-namespace core { namespace game {  namespace surfacer { namespace player {
+namespace surfacer { namespace player {
 
 	SMART_PTR(Player);
 	SMART_PTR(Gun);
@@ -28,7 +28,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 #pragma mark - Projectile
 
-	class Projectile : public Component {
+	class Projectile : public core::Component {
 	public:
 
 		struct config {
@@ -45,7 +45,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 			dvec2 position;
 			dvec2 normal;
 			cpShape *shape;
-			ObjectRef object;
+			core::ObjectRef object;
 
 			contact():
 			position(0),
@@ -156,7 +156,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		virtual ~PulseProjectile();
 
 		// Component
-		void update(const time_state &time) override;
+		void update(const core::time_state &time) override;
 
 	protected:
 
@@ -170,7 +170,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 	public:
 
 		struct config : public BeamProjectile::config {
-			seconds_t lifespan;
+			core::seconds_t lifespan;
 			double cutDepth;
 
 			config():
@@ -188,8 +188,8 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		void fire(dvec2 origin, dvec2 dir) override;
 
 		// Component
-		void onReady(ObjectRef parent, LevelRef level) override;
-		void update(const time_state &time) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void update(const core::time_state &time) override;
 
 	protected:
 
@@ -198,25 +198,25 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 	protected:
 
 		config _config;
-		seconds_t _startSeconds;
+		core::seconds_t _startSeconds;
 
 	};
 
 #pragma mark - BeamProjectileDrawComponent
 
-	class BeamProjectileDrawComponent : public DrawComponent {
+	class BeamProjectileDrawComponent : public core::DrawComponent {
 	public:
 
 		BeamProjectileDrawComponent();
 		virtual ~BeamProjectileDrawComponent();
 
 		// Component
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 
 		// DrawComponent
 		cpBB getBB() const override;
-		void draw(const render_state &renderState) override;
-		VisibilityDetermination::style getVisibilityDetermination() const override;
+		void draw(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override;
 		int getLayer() const override;
 		int getDrawPasses() const override;
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
@@ -230,7 +230,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 #pragma mark - Gun
 
-	class Gun : public Component {
+	class Gun : public core::Component {
 	public:
 
 		struct config {
@@ -259,7 +259,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		dvec2 getAimDirection() const { return _aimDir; }
 
 		// Component
-		void update(const time_state &time) override;
+		void update(const core::time_state &time) override;
 
 	private:
 
@@ -272,13 +272,13 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		bool _shooting;
 		dvec2 _aimOrigin, _aimDir;
 		double _charge;
-		seconds_t _chargeStartTime;
+		core::seconds_t _chargeStartTime;
 
 	};
 
 #pragma mark - PlayerPhysicsComponent
 
-	class PlayerPhysicsComponent : public PhysicsComponent {
+	class PlayerPhysicsComponent : public core::PhysicsComponent {
 	public:
 
 		struct config {
@@ -303,7 +303,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		virtual ~PlayerPhysicsComponent();
 
 		// PhysicsComponent
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 
 		// PlayerPhysicsComponent
 		const config& getConfig()const { return _config; }
@@ -351,8 +351,8 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 		// PhysicsComponent
 		cpBB getBB() const override;
-		void onReady(ObjectRef parent, LevelRef level) override;
-		void step(const time_state &timeState) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void step(const core::time_state &timeState) override;
 
 		// PlayerPhysicsComponent
 		dvec2 getPosition() const override;
@@ -396,7 +396,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 #pragma mark - PlayerInputComponent
 
-	class PlayerInputComponent : public InputComponent {
+	class PlayerInputComponent : public core::InputComponent {
 	public:
 
 		PlayerInputComponent();
@@ -420,27 +420,27 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 #pragma mark - PlayerDrawComponent
 
-	class PlayerDrawComponent : public EntityDrawComponent {
+	class PlayerDrawComponent : public core::EntityDrawComponent {
 	public:
 
 		PlayerDrawComponent();
 		virtual ~PlayerDrawComponent();
 
 		// DrawComponent
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 
 		cpBB getBB() const override;
-		void draw(const render_state &renderState) override;
-		void drawScreen(const render_state &renderState) override;
-		VisibilityDetermination::style getVisibilityDetermination() const override;
+		void draw(const core::render_state &renderState) override;
+		void drawScreen(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override;
 		int getLayer() const override;
 		int getDrawPasses() const override;
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
 
 	protected:
 
-		void drawPlayer(const render_state &renderState);
-		void drawGunCharge(GunRef gun, const render_state &renderState);
+		void drawPlayer(const core::render_state &renderState);
+		void drawGunCharge(GunRef gun, const core::render_state &renderState);
 
 	private:
 		
@@ -451,13 +451,13 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 #pragma mark - Player
 
-	class Player : public Entity, public TargetTrackingViewportControlComponent::TrackingTarget {
+	class Player : public core::Entity, public TargetTrackingViewportControlComponent::TrackingTarget {
 	public:
 
 		struct config {
 			PlayerPhysicsComponent::config physics;
 			Gun::config gun;
-			HealthComponent::config health;
+			core::HealthComponent::config health;
 
 			// TODO: Add a PlayerDrawComponent::config for appearance control
 
@@ -486,7 +486,7 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 		void onDeath() override;
 
 		// Object
-		void update(const time_state &time) override;
+		void update(const core::time_state &time) override;
 
 		// TrackingTarget
 		TargetTrackingViewportControlComponent::tracking getViewportTracking() const override;
@@ -509,6 +509,6 @@ namespace core { namespace game {  namespace surfacer { namespace player {
 
 	};
 
-}}}} // namespace core::game::surfacer::player
+}} // namespace surfacer::player
 
 #endif /* Player_hpp */

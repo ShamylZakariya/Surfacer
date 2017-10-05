@@ -23,7 +23,7 @@ GameLevelTestScenario::~GameLevelTestScenario() {
 }
 
 void GameLevelTestScenario::setup() {
-	core::game::surfacer::SurfacerLevelRef level = make_shared<core::game::surfacer::SurfacerLevel>();
+	surfacer::SurfacerLevelRef level = make_shared<surfacer::SurfacerLevel>();
 	setLevel(level);
 
 	level->load(app::loadAsset("levels/test0.xml"));
@@ -38,7 +38,7 @@ void GameLevelTestScenario::setup() {
 		getLevel()->addObject(cc);
 
 		auto dragger = Object::with("Dragger", {
-			make_shared<MousePickComponent>(core::game::surfacer::ShapeFilters::GRABBABLE, 1),
+			make_shared<MousePickComponent>(surfacer::ShapeFilters::GRABBABLE, 1),
 			make_shared<MousePickDrawComponent>()
 		});
 		getLevel()->addObject(dragger);

@@ -17,8 +17,7 @@
 
 
 using namespace core;
-using namespace core::game;
-using namespace core::game::surfacer;
+using namespace surfacer;
 
 namespace {
 	

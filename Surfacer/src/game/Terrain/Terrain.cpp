@@ -8,7 +8,9 @@
 
 #include "Terrain.hpp"
 
-namespace core { namespace game { namespace terrain {
+using namespace core;
+
+namespace terrain {
 
 #pragma mark - TerrainObject
 
@@ -74,4 +76,4 @@ namespace core { namespace game { namespace terrain {
 		return bodies;
 	}
 
-}}} // namespace core::game::terrain
+} // namespace terrain

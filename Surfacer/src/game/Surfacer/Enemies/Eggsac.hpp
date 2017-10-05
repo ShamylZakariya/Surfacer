@@ -17,13 +17,13 @@
 
 #include "Xml.hpp"
 
-namespace core { namespace game {  namespace surfacer { namespace enemy {
+namespace surfacer { namespace enemy {
 
 	SMART_PTR(Eggsac);
 	SMART_PTR(EggsacPhysicsComponent);
 	SMART_PTR(EggsacDrawComponent);
 
-	class EggsacDrawComponent : public EntityDrawComponent {
+	class EggsacDrawComponent : public core::EntityDrawComponent {
 	public:
 
 		struct config {
@@ -37,10 +37,10 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		config getConfig() const { return _config; }
 
 		// DrawComponent
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 
-		void draw(const render_state &renderState) override;
-		VisibilityDetermination::style getVisibilityDetermination() const override { return VisibilityDetermination::FRUSTUM_CULLING; }
+		void draw(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::FRUSTUM_CULLING; }
 		int getLayer() const override;
 		int getDrawPasses() const override { return 1; }
 		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
@@ -52,7 +52,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 	};
 
-	class EggsacPhysicsComponent : public PhysicsComponent {
+	class EggsacPhysicsComponent : public core::PhysicsComponent {
 	public:
 
 		struct config {
@@ -98,15 +98,15 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		void detach();
 
 		// PhysicsComponent
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		void onCleanup() override;
-		void step(const time_state &time) override;
+		void step(const core::time_state &time) override;
 		cpBB getBB() const override;
 
 	protected:
 
-		void onBodyWillBeDestroyed(PhysicsComponentRef physics, cpBody *body);
-		void onShapeWillBeDestroyed(PhysicsComponentRef physics, cpShape *shape);
+		void onBodyWillBeDestroyed(core::PhysicsComponentRef physics, cpBody *body);
+		void onShapeWillBeDestroyed(core::PhysicsComponentRef physics, cpShape *shape);
 
 	protected:
 
@@ -122,7 +122,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - EggsacSpawnComponent
 
-	class EggsacSpawnComponent : public Component {
+	class EggsacSpawnComponent : public core::Component {
 	public:
 
 		struct config {
@@ -150,7 +150,7 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		// spawn a new flock
 		void spawn();
 
-		void update(const time_state &time) override;
+		void update(const core::time_state &time) override;
 
 	protected:
 
@@ -167,17 +167,17 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 
 #pragma mark - Eggsac
 
-	class Eggsac : public Entity {
+	class Eggsac : public core::Entity {
 	public:
 
 		struct config {
 			EggsacPhysicsComponent::config physics;
 			EggsacDrawComponent::config draw;
 			EggsacSpawnComponent::config spawn;
-			HealthComponent::config health;
+			core::HealthComponent::config health;
 		};
 
-		static EggsacRef create(string name, dvec2 position, util::xml::XmlMultiTree node);
+		static EggsacRef create(string name, dvec2 position, core::util::xml::XmlMultiTree node);
 
 	public:
 
@@ -189,14 +189,14 @@ namespace core { namespace game {  namespace surfacer { namespace enemy {
 		void onDeath() override;
 
 		// Object
-		void update(const time_state &time) override;
-		void onFinishing(seconds_t secondsLeft, double amountFinished) override;
+		void update(const core::time_state &time) override;
+		void onFinishing(core::seconds_t secondsLeft, double amountFinished) override;
 
 
 	};
 
 
 
-}}}} // namespace core::game::surfacer::enemy
+}} // namespace surfacer::enemy
 
 #endif /* Eggsac_hpp */
