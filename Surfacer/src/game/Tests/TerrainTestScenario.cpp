@@ -124,8 +124,8 @@ void TerrainTestScenario::setup() {
 	});
 
 	auto cutter = Object::with("Cutter", {
-		make_shared<MouseCutterComponent>(_terrain, 4),
-		make_shared<MouseCutterDrawComponent>()
+		make_shared<terrain::MouseCutterComponent>(_terrain, 4),
+		make_shared<terrain::MouseCutterDrawComponent>()
 	});
 
 	auto cameraController = Object::with("ViewportControlComponent", {

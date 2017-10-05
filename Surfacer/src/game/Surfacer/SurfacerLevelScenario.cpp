@@ -49,8 +49,8 @@ namespace surfacer {
 			
 			if (terrain) {
 				auto cutter = Object::with("Cutter", {
-					make_shared<MouseCutterComponent>(terrain, 4, 2),
-					make_shared<MouseCutterDrawComponent>()
+					make_shared<terrain::MouseCutterComponent>(terrain, 4, 2),
+					make_shared<terrain::MouseCutterDrawComponent>()
 				});
 				getLevel()->addObject(cutter);
 			}
