@@ -9,27 +9,25 @@
 #include "cinder/app/RendererGl.h"
 #include "App.hpp"
 
-#include "TerrainTestScenario.hpp"
-#include "SvgTestScenario.hpp"
-#include "GameLevelTestScenario.hpp"
+#include "SurfacerLevelScenario.hpp"
 
-class DemoApp : public core::App {
+class SurfacerApp : public core::App {
 public:
 
 	static void prepareSettings(Settings *settings) {
 		App::prepareSettings(settings);
-		settings->setTitle( "DemoApp" );
+		settings->setTitle( "Surfacer" );
 	}
 
 public:
 
-	DemoApp(){}
+	SurfacerApp(){}
 
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<GameLevelTestScenario>());
+		setScenario(make_shared<surfacer::SurfacerLevelScenario>("levels/test0.xml"));
 	}
  
 };
 
-CINDER_APP( DemoApp, app::RendererGl, DemoApp::prepareSettings )
+CINDER_APP( SurfacerApp, app::RendererGl, SurfacerApp::prepareSettings )
