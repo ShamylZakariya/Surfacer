@@ -26,7 +26,7 @@
 	<terrain path="svg_tests/complex_world_test.svg" friction="1" density="1" scale="2"/>
 	<space damping="0.9"/>
 	<gravity type="radial" strength="200" falloff_power="0" />
-	<player name="player" path="player/player.xml">
+	<player name="player" path="surfacer/player/player.xml">
 		<tracking areaRadius="300" deadZoneRadius="60" tightness="0.975"/>
 	</player>
 	<enemies>

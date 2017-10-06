@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<prefabs>
+</prefabs>
+
+<level name="Hello">
+	<terrain path="svg_tests/complex_world_test.svg" friction="1" density="1" scale="2"/>
+	<space damping="0.9"/>
+	<gravity type="radial" strength="200" falloff_power="0" />
+</level>

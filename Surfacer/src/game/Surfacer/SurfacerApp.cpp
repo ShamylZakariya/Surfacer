@@ -25,7 +25,7 @@ public:
 
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<surfacer::SurfacerLevelScenario>("levels/test0.xml"));
+		setScenario(make_shared<surfacer::SurfacerLevelScenario>("surfacer/levels/0.xml"));
 	}
  
 };

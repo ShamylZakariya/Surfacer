@@ -25,7 +25,7 @@ public:
 
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<precariously::PrecariouslyLevelScenario>("levels/test0.xml"));
+		setScenario(make_shared<precariously::PrecariouslyLevelScenario>("precariously/levels/0.xml"));
 	}
  
 };
