@@ -210,14 +210,36 @@ namespace core { namespace util { namespace xml {
 		return boost::none;
 	}
 
-	double readNumericAttribute(const XmlMultiTree &node, string attributeName, double defaultValue) {
+	// read an int numeric attribute
+	template <>
+	int readNumericAttribute<int>(const XmlMultiTree &node, string attributeName, int defaultValue) {
 		auto value = node.getAttribute(attributeName);
 		if (value) {
-			return strtod(value->c_str(), nullptr);
+			return static_cast<int>(strtol(value->c_str(), nullptr, 10));
 		}
 		return defaultValue;
 	}
-
+	
+	// read an unsigned int numeric attribute
+	template <>
+	unsigned int readNumericAttribute<unsigned int>(const XmlMultiTree &node, string attributeName, unsigned int defaultValue) {
+		auto value = node.getAttribute(attributeName);
+		if (value) {
+			return static_cast<unsigned int>(strtoul(value->c_str(), nullptr, 10));
+		}
+		return defaultValue;
+	}
+	
+	// read an unsigned int numeric attribute
+	template <>
+	std::size_t readNumericAttribute<std::size_t>(const XmlMultiTree &node, string attributeName, std::size_t defaultValue) {
+		auto value = node.getAttribute(attributeName);
+		if (value) {
+			return static_cast<std::size_t>(strtoul(value->c_str(), nullptr, 10));
+		}
+		return defaultValue;
+	}
+	
 	vector<double> readNumericSequenceAttribute(const XmlMultiTree &node, string attributeName, vector<double> defaultValue) {
 		auto value = node.getAttribute(attributeName);
 		if (value) {

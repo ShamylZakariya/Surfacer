@@ -604,23 +604,23 @@ namespace surfacer { namespace enemy {
 				c.controller.target_ids.push_back(target);
 			}
 
-			c.controller.trackingMemorySeconds = util::xml::readNumericAttribute(targetNode, "memory_seconds", 5);
+			c.controller.trackingMemorySeconds = util::xml::readNumericAttribute<double>(targetNode, "memory_seconds", 5);
 		} else {
 			c.controller.trackingMemorySeconds = 5;
 		}
 
 		auto rulesNode = flockNode.getChild("rule_contributions");
-		c.controller.ruleContributions.collisionAvoidance = util::xml::readNumericAttribute(rulesNode, "collision_avoidance", 0.1);
-		c.controller.ruleContributions.flockVelocity = util::xml::readNumericAttribute(rulesNode, "flock_velocity", 0.1);
-		c.controller.ruleContributions.flockCentroid = util::xml::readNumericAttribute(rulesNode, "flock_centroid", 0.1);
-		c.controller.ruleContributions.targetSeeking = util::xml::readNumericAttribute(rulesNode, "target_seeking", 0.1);
-		c.controller.ruleContributions.ruleVariance = saturate(util::xml::readNumericAttribute(rulesNode, "rule_variance", 0.25));
+		c.controller.ruleContributions.collisionAvoidance = util::xml::readNumericAttribute<double>(rulesNode, "collision_avoidance", 0.1);
+		c.controller.ruleContributions.flockVelocity = util::xml::readNumericAttribute<double>(rulesNode, "flock_velocity", 0.1);
+		c.controller.ruleContributions.flockCentroid = util::xml::readNumericAttribute<double>(rulesNode, "flock_centroid", 0.1);
+		c.controller.ruleContributions.targetSeeking = util::xml::readNumericAttribute<double>(rulesNode, "target_seeking", 0.1);
+		c.controller.ruleContributions.ruleVariance = saturate(util::xml::readNumericAttribute<double>(rulesNode, "rule_variance", 0.25));
 
 		auto boidNode = flockNode.getChild("boid");
-		c.controller.boid.physics.radius = util::xml::readNumericAttribute(boidNode, "radius", 1);
-		c.controller.boid.physics.speed = util::xml::readNumericAttribute(boidNode, "speed", 2);
-		c.controller.boid.physics.density = util::xml::readNumericAttribute(boidNode, "density", 0.5);
-		c.controller.boid.physics.sensorRadius = util::xml::readNumericAttribute(boidNode, "sensorRadius", c.controller.boid.physics.radius * 8);
+		c.controller.boid.physics.radius = util::xml::readNumericAttribute<double>(boidNode, "radius", 1);
+		c.controller.boid.physics.speed = util::xml::readNumericAttribute<double>(boidNode, "speed", 2);
+		c.controller.boid.physics.density = util::xml::readNumericAttribute<double>(boidNode, "density", 0.5);
+		c.controller.boid.physics.sensorRadius = util::xml::readNumericAttribute<double>(boidNode, "sensorRadius", c.controller.boid.physics.radius * 8);
 		c.controller.boid.health = HealthComponent::loadConfig(boidNode.getChild("health"));
 
 		return c;

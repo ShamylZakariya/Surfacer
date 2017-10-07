@@ -297,15 +297,15 @@ namespace surfacer { namespace enemy {
 	EggsacRef Eggsac::create(string name, dvec2 position, util::xml::XmlMultiTree node) {
 		Eggsac::config config;
 
-		config.physics.width = util::xml::readNumericAttribute(node, "width", 8);
-		config.physics.height = util::xml::readNumericAttribute(node, "height", 8);
-		config.physics.density = util::xml::readNumericAttribute(node, "density", 1);
+		config.physics.width = util::xml::readNumericAttribute<double>(node, "width", 8);
+		config.physics.height = util::xml::readNumericAttribute<double>(node, "height", 8);
+		config.physics.density = util::xml::readNumericAttribute<double>(node, "density", 1);
 		config.physics.suggestedAttachmentPosition = position;
 
 		if (node.hasChild("spawn")) {
 			auto spawnNode = node.getChild("spawn");
-			config.spawn.spawnCount = util::xml::readNumericAttribute(spawnNode, "count", 1);
-			config.spawn.spawnSize = util::xml::readNumericAttribute(spawnNode, "size", 1);
+			config.spawn.spawnCount = util::xml::readNumericAttribute<double>(spawnNode, "count", 1);
+			config.spawn.spawnSize = util::xml::readNumericAttribute<double>(spawnNode, "size", 1);
 
 			CI_ASSERT_MSG(spawnNode.hasChild("flock"), "If <eggsac> node specifies a child <spawn> node, that child must have a <boid> subnode to configure its flock");
 			auto flockNode = spawnNode.getChild("flock");

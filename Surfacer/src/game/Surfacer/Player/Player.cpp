@@ -1052,29 +1052,29 @@ namespace surfacer { namespace player {
 		Player::config config;
 
 		XmlTree playerNode = XmlTree(playerXmlFile).getChild("player");
-		config.walkSpeed = util::xml::readNumericAttribute(playerNode, "walkSpeed", 1);
-		config.runMultiplier = util::xml::readNumericAttribute(playerNode, "runMultiplier", 10);
+		config.walkSpeed = util::xml::readNumericAttribute<double>(playerNode, "walkSpeed", 1);
+		config.runMultiplier = util::xml::readNumericAttribute<double>(playerNode, "runMultiplier", 10);
 
 		//
 		//	Gun
 		//
 
 		XmlTree gunNode = playerNode.getChild("gun");
-		config.gun.cutterChargePerSecond = util::xml::readNumericAttribute(gunNode, "blastChargePerSecond", 0.3);
+		config.gun.cutterChargePerSecond = util::xml::readNumericAttribute<double>(gunNode, "blastChargePerSecond", 0.3);
 
 		XmlTree pulseNode = gunNode.getChild("pulse");
-		config.gun.pulse.range = util::xml::readNumericAttribute(pulseNode, "range", 1000);
-		config.gun.pulse.width = util::xml::readNumericAttribute(pulseNode, "width", 2);
-		config.gun.pulse.damage = util::xml::readNumericAttribute(pulseNode, "damage", 0);
-		config.gun.pulse.length = util::xml::readNumericAttribute(pulseNode, "length", 100);
-		config.gun.pulse.velocity = util::xml::readNumericAttribute(pulseNode, "velocity", 100);
+		config.gun.pulse.range = util::xml::readNumericAttribute<double>(pulseNode, "range", 1000);
+		config.gun.pulse.width = util::xml::readNumericAttribute<double>(pulseNode, "width", 2);
+		config.gun.pulse.damage = util::xml::readNumericAttribute<double>(pulseNode, "damage", 0);
+		config.gun.pulse.length = util::xml::readNumericAttribute<double>(pulseNode, "length", 100);
+		config.gun.pulse.velocity = util::xml::readNumericAttribute<double>(pulseNode, "velocity", 100);
 
 		XmlTree cutterNode = gunNode.getChild("cutter");
-		config.gun.cutter.range = util::xml::readNumericAttribute(cutterNode, "range", 1000);
-		config.gun.cutter.width = util::xml::readNumericAttribute(cutterNode, "width", 2);
-		config.gun.cutter.damage = util::xml::readNumericAttribute(cutterNode, "damage", 0);
-		config.gun.cutter.lifespan = util::xml::readNumericAttribute(cutterNode, "lifespan", 0.5);
-		config.gun.cutter.cutDepth = util::xml::readNumericAttribute(cutterNode, "cutDepth", config.gun.cutter.range);
+		config.gun.cutter.range = util::xml::readNumericAttribute<double>(cutterNode, "range", 1000);
+		config.gun.cutter.width = util::xml::readNumericAttribute<double>(cutterNode, "width", 2);
+		config.gun.cutter.damage = util::xml::readNumericAttribute<double>(cutterNode, "damage", 0);
+		config.gun.cutter.lifespan = util::xml::readNumericAttribute<double>(cutterNode, "lifespan", 0.5);
+		config.gun.cutter.cutDepth = util::xml::readNumericAttribute<double>(cutterNode, "cutDepth", config.gun.cutter.range);
 
 		//
 		//	Physics
@@ -1083,17 +1083,17 @@ namespace surfacer { namespace player {
 		XmlTree physicsNode = playerNode.getChild("physics");
 
 		config.physics.position = position;
-		config.physics.width = util::xml::readNumericAttribute(physicsNode, "width", 5);
-		config.physics.height = util::xml::readNumericAttribute(physicsNode, "height", 20);
-		config.physics.density = util::xml::readNumericAttribute(physicsNode, "density", 1);
-		config.physics.footFriction = util::xml::readNumericAttribute(physicsNode, "footFriction", 1);
-		config.physics.bodyFriction = util::xml::readNumericAttribute(physicsNode, "bodyFriction", 0.2);
+		config.physics.width = util::xml::readNumericAttribute<double>(physicsNode, "width", 5);
+		config.physics.height = util::xml::readNumericAttribute<double>(physicsNode, "height", 20);
+		config.physics.density = util::xml::readNumericAttribute<double>(physicsNode, "density", 1);
+		config.physics.footFriction = util::xml::readNumericAttribute<double>(physicsNode, "footFriction", 1);
+		config.physics.bodyFriction = util::xml::readNumericAttribute<double>(physicsNode, "bodyFriction", 0.2);
 
 		XmlTree jetpackNode = physicsNode.getChild("jetpack");
-		config.physics.jetpackAntigravity = util::xml::readNumericAttribute(jetpackNode, "antigravity", 10);
-		config.physics.jetpackFuelMax = util::xml::readNumericAttribute(jetpackNode, "fuelMax", 1);
-		config.physics.jetpackFuelConsumptionPerSecond = util::xml::readNumericAttribute(jetpackNode, "consumption", 0.3);
-		config.physics.jetpackFuelRegenerationPerSecond = util::xml::readNumericAttribute(jetpackNode, "regeneration", 0.3);
+		config.physics.jetpackAntigravity = util::xml::readNumericAttribute<double>(jetpackNode, "antigravity", 10);
+		config.physics.jetpackFuelMax = util::xml::readNumericAttribute<double>(jetpackNode, "fuelMax", 1);
+		config.physics.jetpackFuelConsumptionPerSecond = util::xml::readNumericAttribute<double>(jetpackNode, "consumption", 0.3);
+		config.physics.jetpackFuelRegenerationPerSecond = util::xml::readNumericAttribute<double>(jetpackNode, "regeneration", 0.3);
 
 		//
 		//	Health

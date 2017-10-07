@@ -132,7 +132,7 @@ namespace surfacer {
 
 	void SurfacerLevel::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
-			double damping = util::xml::readNumericAttribute(spaceNode, "damping", 0.95);
+			double damping = util::xml::readNumericAttribute<double>(spaceNode, "damping", 0.95);
 			damping = clamp(damping, 0.0, 1.0);
 			cpSpaceSetDamping(getSpace()->getSpace(), damping);
 		}
@@ -142,8 +142,8 @@ namespace surfacer {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
 			radial_gravity_info rgi = getRadialGravity();
-			rgi.strength = util::xml::readNumericAttribute(gravityNode, "strength", 10);
-			rgi.falloffPower = util::xml::readNumericAttribute(gravityNode, "falloff_power", 0);
+			rgi.strength = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
+			rgi.falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
 			setRadialGravity(rgi);
 			setGravityType(RADIAL);
 
@@ -160,9 +160,9 @@ namespace surfacer {
 
 	void SurfacerLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
 
-		double friction = util::xml::readNumericAttribute(terrainNode, "friction", 1);
-		double density = util::xml::readNumericAttribute(terrainNode, "density", 1);
-		double scale = util::xml::readNumericAttribute(terrainNode, "scale", 1);
+		double friction = util::xml::readNumericAttribute<double>(terrainNode, "friction", 1);
+		double density = util::xml::readNumericAttribute<double>(terrainNode, "density", 1);
+		double scale = util::xml::readNumericAttribute<double>(terrainNode, "scale", 1);
 
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
@@ -210,10 +210,10 @@ namespace surfacer {
 
 		if (playerNode.hasChild("tracking")) {
 			XmlTree trackingNode = playerNode.getChild("tracking");
-			double areaRadius = util::xml::readNumericAttribute(trackingNode, "areaRadius", 200);
-			double deadZoneRadius = util::xml::readNumericAttribute(trackingNode, "deadZoneRadius", 30);
-			double tightness = util::xml::readNumericAttribute(trackingNode, "tightness", 0.99);
-			double correctiveRampPower = util::xml::readNumericAttribute(trackingNode, "correctiveRampPower", 2);
+			double areaRadius = util::xml::readNumericAttribute<double>(trackingNode, "areaRadius", 200);
+			double deadZoneRadius = util::xml::readNumericAttribute<double>(trackingNode, "deadZoneRadius", 30);
+			double tightness = util::xml::readNumericAttribute<double>(trackingNode, "tightness", 0.99);
+			double correctiveRampPower = util::xml::readNumericAttribute<double>(trackingNode, "correctiveRampPower", 2);
 
 			auto t = make_shared<TargetTrackingViewportControlComponent>(_player, getViewportController());
 			t->setTrackingRegion(areaRadius, deadZoneRadius, correctiveRampPower, tightness);

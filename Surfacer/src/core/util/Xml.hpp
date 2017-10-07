@@ -69,10 +69,27 @@ namespace core { namespace util { namespace xml {
 	// find first node in tree of a given tag with a given attribute name/value
 	boost::optional<ci::XmlTree> findNode(const ci::XmlTree &node, string tagName, string attributeName, string attributeValue);
 
-	// read a numeric attribute
-	double readNumericAttribute(const XmlMultiTree &node, string attributeName, double defaultValue);
+	// read a double numeric attribute
+	template <typename T>
+	T readNumericAttribute(const XmlMultiTree &node, string attributeName, T defaultValue) {
+		auto value = node.getAttribute(attributeName);
+		if (value) {
+			return strtod(value->c_str(), nullptr);
+		}
+		return defaultValue;
+	}
 
-	// read a sequence of numeric attributes from an xml node (where a sequence is a list of numbers separated by comma, space, or comma-space)
+	// specializations for ints, etc
+	template <>
+	int readNumericAttribute<int>(const XmlMultiTree &node, string attributeName, int defaultValue);
+	
+	template <>
+	unsigned int readNumericAttribute<unsigned int>(const XmlMultiTree &node, string attributeName, unsigned int defaultValue);
+
+	template <>
+	std::size_t readNumericAttribute<std::size_t>(const XmlMultiTree &node, string attributeName, std::size_t defaultValue);
+	
+	// read a sequence of numeric attributes from an xml node (where a sequence is a list of numbers separated by comma, space, or comma-space)	
 	vector<double> readNumericSequenceAttribute(const XmlMultiTree &node, string attributeName, vector<double> defaultValue);
 
 	// read dvec2, dvec3 from attribute values

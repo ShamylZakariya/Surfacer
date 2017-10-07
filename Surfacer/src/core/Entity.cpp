@@ -18,9 +18,9 @@ namespace core {
 
 	HealthComponent::config HealthComponent::loadConfig(util::xml::XmlMultiTree node) {
 		config c;
-		c.maxHealth = util::xml::readNumericAttribute(node, "max_health", 100);
-		c.health = util::xml::readNumericAttribute(node, "health", c.maxHealth);
-		c.regenerationRate = util::xml::readNumericAttribute(node, "regeneration_rate", 1);
+		c.maxHealth = util::xml::readNumericAttribute<double>(node, "max_health", 100);
+		c.health = util::xml::readNumericAttribute<double>(node, "health", c.maxHealth);
+		c.regenerationRate = util::xml::readNumericAttribute<double>(node, "regeneration_rate", 1);
 		return c;
 	}
 
