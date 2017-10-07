@@ -514,7 +514,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 	world->build(partitionedShapes, anchors);
 	
 	
-	// this sequence of cuts causes trouble
+	// this sequence of cuts caused trouble
 	string cutDescriptions = R"(
 	[ -155.994,   84.944] to [ -483.285,  336.033] radius: 2.49663
 	[ -269.808,  242.250] to [ -417.349,  337.285] radius: 1.04977
