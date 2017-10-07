@@ -29,6 +29,14 @@ namespace terrain {
 #pragma mark - DrawDispatcher
 
 	namespace {
+		
+		const double MIN_TRIANGLE_AREA = 1.0;
+		const double COLLISION_SHAPE_RADIUS = 2;
+		
+		// if > 0 we add a water-tight perimeter geometry around shapes
+		// unfortunately, mitering is HARD and so right now this is disabled.
+		const double PERIMETER_SEGMENT_RADIUS = 0;
+
 
 		cpHashValue getCPHashValue(const DrawableRef &d) {
 			return reinterpret_cast<cpHashValue>(d->getId());
@@ -1275,7 +1283,7 @@ namespace terrain {
 				area = cpAreaForPoly(3, triangle, 0);
 			}
 
-			if (area >= detail::MIN_TRIANGLE_AREA) {
+			if (area >= MIN_TRIANGLE_AREA) {
 				_shapes.push_back(cpPolyShapeNew(_staticBody, 3, triangle, cpTransformIdentity, 0));
 			}
 		}
@@ -1621,8 +1629,8 @@ namespace terrain {
 				area = cpAreaForPoly(3, triangle, 0);
 			}
 
-			if (area >= detail::MIN_TRIANGLE_AREA) {
-				cpShape *polyShape = cpPolyShapeNew(body, 3, triangle, cpTransformIdentity, detail::COLLISION_SHAPE_RADIUS);
+			if (area >= MIN_TRIANGLE_AREA) {
+				cpShape *polyShape = cpPolyShapeNew(body, 3, triangle, cpTransformIdentity, COLLISION_SHAPE_RADIUS);
 				cpShapeSetUserData(polyShape, this);
 				_shapes.push_back(polyShape);
 
@@ -1633,12 +1641,12 @@ namespace terrain {
 			}
 		}
 
-		if (detail::PERIMETER_SEGMENT_RADIUS > 0) {
+		if (PERIMETER_SEGMENT_RADIUS > 0) {
 
 			// TODO: Implement robust mitering - this isn't it. We have oddities at some corners.
 			// TODO: inset vertex positions by half-radius
 
-			const auto insetContour = detail::inset_contour(_outerContour.model, detail::PERIMETER_SEGMENT_RADIUS);
+			const auto insetContour = detail::inset_contour(_outerContour.model, PERIMETER_SEGMENT_RADIUS);
 			const auto insetContourPoints = insetContour.getPoints();
 
 			for (size_t i = 0, N = insetContourPoints.size(); i < N; i++) {
@@ -1649,7 +1657,7 @@ namespace terrain {
 				dvec2 c = insetContourPoints[(i+1) % N];
 				dvec2 d = insetContourPoints[(i+2) % N];
 
-				cpShape *segment = cpSegmentShapeNew(body, cpv(b), cpv(c), detail::PERIMETER_SEGMENT_RADIUS);
+				cpShape *segment = cpSegmentShapeNew(body, cpv(b), cpv(c), PERIMETER_SEGMENT_RADIUS);
 				cpSegmentShapeSetNeighbors(segment, cpv(a), cpv(d));
 				cpShapeSetUserData(segment, this);
 				_shapes.push_back(segment);
