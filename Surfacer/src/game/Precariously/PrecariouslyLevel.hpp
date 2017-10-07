@@ -12,7 +12,7 @@
 #include <cinder/Xml.h>
 
 #include "Core.hpp"
-#include "Terrain.hpp"
+#include "Planet.hpp"
 
 
 namespace precariously {
@@ -71,7 +71,7 @@ namespace precariously {
 	namespace DrawLayers {
 		enum layer {
 			BACKGROUND = 0,
-			TERRAIN = 1,
+			PLANET = 1,
 			ENEMY = 2,
 			PLAYER = 3
 		};
@@ -97,7 +97,7 @@ namespace precariously {
 		//
 
 		void load(ci::DataSourceRef levelXmlData);
-		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
+		PlanetRef getPlanet() const { return _planet; }
 
 
 	protected:
@@ -112,11 +112,11 @@ namespace precariously {
 		// GameLevel
 		void applySpaceAttributes(XmlTree spaceNode);
 		void applyGravityAttributes(XmlTree gravityNode);
-		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
+		void loadPlanet(XmlTree planetNode);
 
 	private:
 
-		terrain::TerrainObjectRef _terrain;
+		PlanetRef _planet;
 		
 	};
 	

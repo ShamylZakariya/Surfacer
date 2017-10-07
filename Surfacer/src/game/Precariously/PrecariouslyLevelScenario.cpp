@@ -30,7 +30,7 @@ namespace precariously {
 		setLevel(level);
 		
 		level->load(app::loadAsset(_levelXmlFile));
-		auto terrain = level->getTerrain();
+		auto planet = level->getPlanet();
 		
 		if (true) {
 			
@@ -45,9 +45,9 @@ namespace precariously {
 			});
 			getLevel()->addObject(dragger);
 			
-			if (terrain) {
+			if (planet) {
 				auto cutter = Object::with("Cutter", {
-					make_shared<terrain::MouseCutterComponent>(terrain, 4, 2),
+					make_shared<terrain::MouseCutterComponent>(planet, 4, 2),
 					make_shared<terrain::MouseCutterDrawComponent>()
 				});
 				getLevel()->addObject(cutter);

@@ -22,6 +22,12 @@
 		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
 		632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622FF1E7D9A630051ABE2 /* Viewport.cpp */; };
 		6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623011E7D9A630051ABE2 /* ViewportController.cpp */; };
+		638F4D921F87D4F3004437E8 /* Planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D901F87D4F3004437E8 /* Planet.cpp */; };
+		638F4D951F87D7BC004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
+		638F4D961F87D7BC004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
+		638F4D981F8957F8004437E8 /* TerrainDetail.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D971F8957F8004437E8 /* TerrainDetail.cpp */; };
+		638F4D991F895CE5004437E8 /* TerrainDetail.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D971F8957F8004437E8 /* TerrainDetail.cpp */; };
+		638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D901F87D4F3004437E8 /* Planet.cpp */; };
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
@@ -117,6 +123,11 @@
 		632623001E7D9A630051ABE2 /* Viewport.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Viewport.hpp; sourceTree = "<group>"; };
 		632623011E7D9A630051ABE2 /* ViewportController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ViewportController.cpp; sourceTree = "<group>"; };
 		632623021E7D9A630051ABE2 /* ViewportController.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ViewportController.hpp; sourceTree = "<group>"; };
+		638F4D901F87D4F3004437E8 /* Planet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Planet.cpp; sourceTree = "<group>"; };
+		638F4D911F87D4F3004437E8 /* Planet.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Planet.hpp; sourceTree = "<group>"; };
+		638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerlinNoise.cpp; sourceTree = "<group>"; };
+		638F4D941F87D7BC004437E8 /* PerlinNoise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PerlinNoise.hpp; sourceTree = "<group>"; };
+		638F4D971F8957F8004437E8 /* TerrainDetail.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainDetail.cpp; sourceTree = "<group>"; };
 		639168A61E93E21A007FD4FA /* BlendMode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BlendMode.hpp; sourceTree = "<group>"; };
 		639168A71E93E289007FD4FA /* BlendMode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlendMode.cpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
@@ -348,6 +359,15 @@
 			path = game;
 			sourceTree = "<group>";
 		};
+		638F4D8F1F87D4E8004437E8 /* elements */ = {
+			isa = PBXGroup;
+			children = (
+				638F4D901F87D4F3004437E8 /* Planet.cpp */,
+				638F4D911F87D4F3004437E8 /* Planet.hpp */,
+			);
+			path = elements;
+			sourceTree = "<group>";
+		};
 		63F93C0C1F86877D00F537CA /* Surfacer */ = {
 			isa = PBXGroup;
 			children = (
@@ -394,11 +414,12 @@
 		63F93C1C1F86F6C000F537CA /* Terrain */ = {
 			isa = PBXGroup;
 			children = (
-				63F93C1D1F86F6C000F537CA /* Terrain.hpp */,
-				63F93C1E1F86F6C000F537CA /* TerrainWorld.hpp */,
-				63F93C1F1F86F6C000F537CA /* TerrainDetail.hpp */,
 				63F93C201F86F6C000F537CA /* Terrain.cpp */,
+				63F93C1D1F86F6C000F537CA /* Terrain.hpp */,
+				63F93C1F1F86F6C000F537CA /* TerrainDetail.hpp */,
 				63F93C211F86F6C000F537CA /* TerrainWorld.cpp */,
+				63F93C1E1F86F6C000F537CA /* TerrainWorld.hpp */,
+				638F4D971F8957F8004437E8 /* TerrainDetail.cpp */,
 			);
 			path = Terrain;
 			sourceTree = "<group>";
@@ -426,15 +447,17 @@
 		63F93C321F86F96A00F537CA /* util */ = {
 			isa = PBXGroup;
 			children = (
-				63F93C331F86F96A00F537CA /* ContourSimplification.hpp */,
-				63F93C341F86F96A00F537CA /* Svg.cpp */,
-				63F93C351F86F96A00F537CA /* SvgParsing.hpp */,
 				63F93C361F86F96A00F537CA /* ChipmunkDebugDraw.cpp */,
-				63F93C371F86F96A00F537CA /* Xml.hpp */,
-				63F93C381F86F96A00F537CA /* SvgParsing.cpp */,
 				63F93C391F86F96A00F537CA /* ChipmunkDebugDraw.hpp */,
-				63F93C3A1F86F96A00F537CA /* Xml.cpp */,
+				63F93C331F86F96A00F537CA /* ContourSimplification.hpp */,
+				638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */,
+				638F4D941F87D7BC004437E8 /* PerlinNoise.hpp */,
+				63F93C341F86F96A00F537CA /* Svg.cpp */,
 				63F93C3B1F86F96A00F537CA /* Svg.hpp */,
+				63F93C381F86F96A00F537CA /* SvgParsing.cpp */,
+				63F93C351F86F96A00F537CA /* SvgParsing.hpp */,
+				63F93C3A1F86F96A00F537CA /* Xml.cpp */,
+				63F93C371F86F96A00F537CA /* Xml.hpp */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -442,6 +465,7 @@
 		63F93C711F87185A00F537CA /* Precariously */ = {
 			isa = PBXGroup;
 			children = (
+				638F4D8F1F87D4E8004437E8 /* elements */,
 				63F93C721F87185A00F537CA /* PrecariouslyLevelScenario.hpp */,
 				63F93C731F87185A00F537CA /* PrecariouslyLevel.hpp */,
 				63F93C741F87185A00F537CA /* PrecariouslyApp.cpp */,
@@ -542,6 +566,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				638F4D991F895CE5004437E8 /* TerrainDetail.cpp in Sources */,
+				638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */,
 				63F93C771F87188600F537CA /* PrecariouslyApp.cpp in Sources */,
 				63F93C781F87188600F537CA /* PrecariouslyLevelScenario.cpp in Sources */,
 				63F93C791F87188600F537CA /* PrecariouslyLevel.cpp in Sources */,
@@ -562,6 +588,7 @@
 				63F93C561F8714B200F537CA /* Scenario.cpp in Sources */,
 				63F93C571F8714B200F537CA /* BlendMode.cpp in Sources */,
 				63F93C581F8714B200F537CA /* Level.cpp in Sources */,
+				638F4D951F87D7BC004437E8 /* PerlinNoise.cpp in Sources */,
 				63F93C591F8714B200F537CA /* Entity.cpp in Sources */,
 				63F93C5A1F8714B200F537CA /* App.cpp in Sources */,
 			);
@@ -573,6 +600,7 @@
 			files = (
 				63F93C6F1F87167100F537CA /* SurfacerApp.cpp in Sources */,
 				63F93C3C1F86F98000F537CA /* Svg.cpp in Sources */,
+				638F4D981F8957F8004437E8 /* TerrainDetail.cpp in Sources */,
 				63F93C3D1F86F98000F537CA /* ChipmunkDebugDraw.cpp in Sources */,
 				63F93C3E1F86F98000F537CA /* SvgParsing.cpp in Sources */,
 				63F93C3F1F86F98000F537CA /* Xml.cpp in Sources */,
@@ -588,8 +616,10 @@
 				6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */,
 				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
 				63BFD8161E89565600D821E4 /* Object.cpp in Sources */,
+				638F4D921F87D4F3004437E8 /* Planet.cpp in Sources */,
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
 				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
+				638F4D961F87D7BC004437E8 /* PerlinNoise.cpp in Sources */,
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
 				639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */,
 				63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */,

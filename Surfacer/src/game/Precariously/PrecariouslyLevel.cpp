@@ -50,7 +50,7 @@ namespace precariously {
 		auto levelNode = root.getChild("level");
 
 		setName(levelNode.getAttribute("name").getValue());
-
+		
 		//
 		//	Load some basic level properties
 		//
@@ -64,13 +64,12 @@ namespace precariously {
 		applyGravityAttributes(*gravityNode);
 
 		//
-		//	Load terrain
+		//	Load Planet
 		//
 
-		auto terrainNode = util::xml::findElement(levelNode, "terrain");
-		CI_ASSERT_MSG(terrainNode, "Expect a <terrain> node in <level> definition");
-		string terrainSvgPath = terrainNode->getAttribute("path").getValue();
-		loadTerrain(*terrainNode, app::loadAsset(terrainSvgPath));
+		auto planetNode = util::xml::findElement(levelNode, "planet");
+		CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
+		loadPlanet(planetNode.value());
 	}
 
 	void PrecariouslyLevel::onReady() {
@@ -93,7 +92,7 @@ namespace precariously {
 
 	void PrecariouslyLevel::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
-			double damping = util::xml::readNumericAttribute(spaceNode, "damping", 0.95);
+			double damping = util::xml::readNumericAttribute<double>(spaceNode, "damping", 0.95);
 			damping = clamp(damping, 0.0, 1.0);
 			cpSpaceSetDamping(getSpace()->getSpace(), damping);
 		}
@@ -102,9 +101,9 @@ namespace precariously {
 	void PrecariouslyLevel::applyGravityAttributes(XmlTree gravityNode) {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
-			radial_gravity_info rgi = getRadialGravity();
-			rgi.strength = util::xml::readNumericAttribute(gravityNode, "strength", 10);
-			rgi.falloffPower = util::xml::readNumericAttribute(gravityNode, "falloff_power", 0);
+			radial_gravity_info rgi = getRadialGravity();			
+			rgi.strength = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
+			rgi.falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
 			setRadialGravity(rgi);
 			setGravityType(RADIAL);
 
@@ -118,50 +117,25 @@ namespace precariously {
 			CI_LOG_D("gravity DIRECTIONAL dir: " << dir );
 		}
 	}
-
-	void PrecariouslyLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
-
-		double friction = util::xml::readNumericAttribute(terrainNode, "friction", 1);
-		double density = util::xml::readNumericAttribute(terrainNode, "density", 1);
-		double scale = util::xml::readNumericAttribute(terrainNode, "scale", 1);
-
+	
+	void PrecariouslyLevel::loadPlanet(XmlTree planetNode) {
+		double friction = util::xml::readNumericAttribute<double>(planetNode, "friction", 1);
+		double density = util::xml::readNumericAttribute<double>(planetNode, "density", 1);
+		
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
-
+		
 		const terrain::material terrainMaterial(density, friction, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
 		const terrain::material anchorMaterial(1, friction, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
-
-		//
-		//	Load terrain
-		//
-
-		// load shapes and anchors
-		vector<terrain::ShapeRef> shapes;
-		vector<terrain::AnchorRef> anchors;
-		vector<terrain::ElementRef> elements;
-		terrain::World::loadSvg(svgData, dmat4(scale), shapes, anchors, elements, true);
-		if (!shapes.empty()) {
-			// partition
-			auto partitionedShapes = terrain::World::partition(shapes, dvec2(0,0), 500);
-
-			// construct
-			auto world = make_shared<terrain::World>(getSpace(),terrainMaterial, anchorMaterial);
-			world->build(partitionedShapes, anchors, elements);
-
-			_terrain = terrain::TerrainObject::create("Terrain", world, DrawLayers::TERRAIN);
-			addObject(_terrain);
-		}
-
-		//
-		//	Look for a center_of_mass for gravity
-		//
-
-		if (terrain::ElementRef e = _terrain->getWorld()->getElementById("center_of_mass")) {
-			radial_gravity_info rgi = getRadialGravity();
-			rgi.centerOfMass = e->getModelMatrix() * e->getModelCentroid();
-			setRadialGravity(rgi);
-			CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.falloffPower << " centerOfMass: " << rgi.centerOfMass);
-		}
+		auto world = make_shared<terrain::World>(getSpace(),terrainMaterial, anchorMaterial);
+		
+		_planet = Planet::create("Planet", world, planetNode, DrawLayers::PLANET);
+		addObject(_planet);
+		
+		// set the physics center of mass to the planet's center
+		radial_gravity_info rgi = getRadialGravity();
+		rgi.centerOfMass = _planet->getOrigin();
+		setRadialGravity(rgi);
 	}
 	
 } // namespace surfacer

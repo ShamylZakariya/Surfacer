@@ -3,8 +3,21 @@
 <prefabs>
 </prefabs>
 
-<level name="Hello">
-	<terrain path="svg_tests/complex_world_test.svg" friction="1" density="1" scale="2"/>
-	<space damping="0.9"/>
-	<gravity type="radial" strength="200" falloff_power="0" />
+<level name="Hello Precariously Level 0">
+	<space damping="0.99"/>
+	<gravity type="radial" strength="2000" falloff_power="0" />
+	<planet origin="0,0" friction="1" density="1">
+		<surface
+			radius="1000"
+			noiseOctaves="8"
+			noiseFalloff="0.5"
+			noiseOffset="250"
+		/>
+		<core
+			radius="200"
+			noiseOctaves="4"
+			noiseFalloff="0.5"
+			noiseOffset="20"
+		/>
+	</planet>
 </level>
