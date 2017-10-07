@@ -8,6 +8,7 @@
 
 #include "PrecariouslyLevel.hpp"
 
+#include "PrecariouslyConstants.hpp"
 #include "DevComponents.hpp"
 #include "Xml.hpp"
 
@@ -15,18 +16,9 @@ using namespace core;
 
 namespace precariously {
 
-	namespace ShapeFilters {
-		cpShapeFilter TERRAIN			= cpShapeFilterNew(CP_NO_GROUP, _TERRAIN,			_TERRAIN | _TERRAIN_PROBE | _GRABBABLE | _ANCHOR | _PLAYER | _ENEMY);
-		cpShapeFilter TERRAIN_PROBE		= cpShapeFilterNew(CP_NO_GROUP, _TERRAIN_PROBE,		_TERRAIN);
-		cpShapeFilter ANCHOR			= cpShapeFilterNew(CP_NO_GROUP, _ANCHOR,			_TERRAIN | _PLAYER | _ENEMY);
-		cpShapeFilter GRABBABLE			= cpShapeFilterNew(CP_NO_GROUP, _GRABBABLE,			_TERRAIN | _ENEMY);
-		cpShapeFilter PLAYER			= cpShapeFilterNew(CP_NO_GROUP, _PLAYER,			_TERRAIN | _ANCHOR | _ENEMY);
-		cpShapeFilter ENEMY				= cpShapeFilterNew(CP_NO_GROUP, _ENEMY,				_TERRAIN | _ANCHOR | _PLAYER | _GRABBABLE);
-	}
-
-
 	/*
-	 terrain::TerrainObjectRef _terrain;
+	 BackgroundRef _background;
+	 PlanetRef _planet;
 	 */
 
 	PrecariouslyLevel::PrecariouslyLevel():
@@ -62,6 +54,14 @@ namespace precariously {
 		auto gravityNode = util::xml::findElement(levelNode, "gravity");
 		CI_ASSERT_MSG(spaceNode, "Expect a <gravity> node in <level> definition");
 		applyGravityAttributes(*gravityNode);
+		
+		//
+		//	Load background
+		//
+		
+		auto backgroundNode = util::xml::findElement(levelNode, "background");
+		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in level XML");
+		loadBackground(backgroundNode.value());
 
 		//
 		//	Load Planet
@@ -116,6 +116,11 @@ namespace precariously {
 
 			CI_LOG_D("gravity DIRECTIONAL dir: " << dir );
 		}
+	}
+	
+	void PrecariouslyLevel::loadBackground(XmlTree backgroundNode) {
+		_background = Background::create(backgroundNode);
+		addObject(_background);
 	}
 	
 	void PrecariouslyLevel::loadPlanet(XmlTree planetNode) {

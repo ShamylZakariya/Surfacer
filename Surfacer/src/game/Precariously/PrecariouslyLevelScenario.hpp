@@ -26,7 +26,6 @@ namespace precariously {
 		
 		virtual void step( const core::time_state &time ) override;
 		virtual void update( const core::time_state &time ) override;
-		virtual void clear( const core::render_state &state ) override;
 		virtual void drawScreen( const core::render_state &state ) override;
 		
 		virtual bool keyDown( const ci::app::KeyEvent &event ) override;

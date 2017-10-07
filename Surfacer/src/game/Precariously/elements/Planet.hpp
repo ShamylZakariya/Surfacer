@@ -30,6 +30,7 @@ namespace precariously {
 			std::size_t noiseOctaves;
 			double noiseFalloff;
 			double noiseOffset;
+			double noiseRoughness;
 			
 			config():
 			seed(12345),
@@ -37,7 +38,8 @@ namespace precariously {
 			arcPrecisionDegrees(1),
 			noiseOctaves(4),
 			noiseFalloff(0.5),
-			noiseOffset(0)
+			noiseOffset(0),
+			noiseRoughness(0.25)
 			{}
 			
 			static config parse(core::util::xml::XmlMultiTree node);

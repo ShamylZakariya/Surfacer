@@ -270,5 +270,28 @@ namespace core { namespace util { namespace xml {
 
 		return defaultValue;
 	}
+	
+	Color readColorAttribute(const XmlMultiTree &node, string attributeName, Color defaultValue) {
+		auto value = node.getAttribute(attributeName);
+		if (value) {
+			auto r = readNumericSequence(*value);
+			CI_ASSERT_MSG(r.size() >= 3, ("Color readColorAttribute expects 3 components in sequence, got: " + str(r.size())).c_str());
+			return Color(r[0], r[1], r[2]) / 255;
+		}
+		
+		return defaultValue;
+	}
+
+	ColorA readColorAttribute(const XmlMultiTree &node, string attributeName, ColorA defaultValue) {
+		auto value = node.getAttribute(attributeName);
+		if (value) {
+			auto r = readNumericSequence(*value);
+			CI_ASSERT_MSG(r.size() >= 3, ("Color readColorAttribute expects 3 components in sequence, got: " + str(r.size())).c_str());
+			return ColorA(r[0], r[1], r[2], r[3]) / 255;
+		}
+		
+		return defaultValue;
+	}
+
 
 }}}

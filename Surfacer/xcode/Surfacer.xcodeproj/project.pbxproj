@@ -28,6 +28,8 @@
 		638F4D981F8957F8004437E8 /* TerrainDetail.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D971F8957F8004437E8 /* TerrainDetail.cpp */; };
 		638F4D991F895CE5004437E8 /* TerrainDetail.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D971F8957F8004437E8 /* TerrainDetail.cpp */; };
 		638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D901F87D4F3004437E8 /* Planet.cpp */; };
+		638F4DA11F897FB7004437E8 /* PrecariouslyConstants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D9E1F897F60004437E8 /* PrecariouslyConstants.cpp */; };
+		638F4DA21F898602004437E8 /* Background.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D9B1F897BD5004437E8 /* Background.cpp */; };
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
@@ -128,6 +130,10 @@
 		638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerlinNoise.cpp; sourceTree = "<group>"; };
 		638F4D941F87D7BC004437E8 /* PerlinNoise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PerlinNoise.hpp; sourceTree = "<group>"; };
 		638F4D971F8957F8004437E8 /* TerrainDetail.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainDetail.cpp; sourceTree = "<group>"; };
+		638F4D9B1F897BD5004437E8 /* Background.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Background.cpp; sourceTree = "<group>"; };
+		638F4D9C1F897BD5004437E8 /* Background.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Background.hpp; sourceTree = "<group>"; };
+		638F4D9E1F897F60004437E8 /* PrecariouslyConstants.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyConstants.cpp; sourceTree = "<group>"; };
+		638F4D9F1F897F60004437E8 /* PrecariouslyConstants.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyConstants.hpp; sourceTree = "<group>"; };
 		639168A61E93E21A007FD4FA /* BlendMode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BlendMode.hpp; sourceTree = "<group>"; };
 		639168A71E93E289007FD4FA /* BlendMode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlendMode.cpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
@@ -364,6 +370,8 @@
 			children = (
 				638F4D901F87D4F3004437E8 /* Planet.cpp */,
 				638F4D911F87D4F3004437E8 /* Planet.hpp */,
+				638F4D9B1F897BD5004437E8 /* Background.cpp */,
+				638F4D9C1F897BD5004437E8 /* Background.hpp */,
 			);
 			path = elements;
 			sourceTree = "<group>";
@@ -466,11 +474,13 @@
 			isa = PBXGroup;
 			children = (
 				638F4D8F1F87D4E8004437E8 /* elements */,
-				63F93C721F87185A00F537CA /* PrecariouslyLevelScenario.hpp */,
-				63F93C731F87185A00F537CA /* PrecariouslyLevel.hpp */,
 				63F93C741F87185A00F537CA /* PrecariouslyApp.cpp */,
-				63F93C751F87185A00F537CA /* PrecariouslyLevelScenario.cpp */,
+				638F4D9E1F897F60004437E8 /* PrecariouslyConstants.cpp */,
+				638F4D9F1F897F60004437E8 /* PrecariouslyConstants.hpp */,
 				63F93C761F87185A00F537CA /* PrecariouslyLevel.cpp */,
+				63F93C731F87185A00F537CA /* PrecariouslyLevel.hpp */,
+				63F93C751F87185A00F537CA /* PrecariouslyLevelScenario.cpp */,
+				63F93C721F87185A00F537CA /* PrecariouslyLevelScenario.hpp */,
 			);
 			path = Precariously;
 			sourceTree = "<group>";
@@ -566,6 +576,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				638F4DA21F898602004437E8 /* Background.cpp in Sources */,
+				638F4DA11F897FB7004437E8 /* PrecariouslyConstants.cpp in Sources */,
 				638F4D991F895CE5004437E8 /* TerrainDetail.cpp in Sources */,
 				638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */,
 				63F93C771F87188600F537CA /* PrecariouslyApp.cpp in Sources */,

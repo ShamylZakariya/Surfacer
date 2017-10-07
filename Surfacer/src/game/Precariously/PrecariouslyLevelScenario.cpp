@@ -54,10 +54,6 @@ namespace precariously {
 			}
 			
 		}
-		
-		auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create() });
-		getLevel()->addObject(grid);
-		
 	}
 	
 	void PrecariouslyLevelScenario::cleanup() {
@@ -72,11 +68,7 @@ namespace precariously {
 	
 	void PrecariouslyLevelScenario::update( const time_state &time ) {
 	}
-	
-	void PrecariouslyLevelScenario::clear( const render_state &state ) {
-		gl::clear( Color( 0.2, 0.2, 0.2 ) );
-	}
-	
+		
 	void PrecariouslyLevelScenario::drawScreen( const render_state &state ) {
 		
 		//

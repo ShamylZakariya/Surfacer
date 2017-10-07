@@ -95,6 +95,8 @@ namespace core { namespace util { namespace xml {
 	// read dvec2, dvec3 from attribute values
 	dvec2 readPointAttribute(const XmlMultiTree &node, string attributeName, dvec2 defaultValue);
 	dvec3 readPointAttribute(const XmlMultiTree &node, string attributeName, dvec3 defaultValue);
+	Color readColorAttribute(const XmlMultiTree &node, string attributeName, Color defaultValue);
+	ColorA readColorAttribute(const XmlMultiTree &node, string attributeName, ColorA defaultValue);
 
 }}}
 

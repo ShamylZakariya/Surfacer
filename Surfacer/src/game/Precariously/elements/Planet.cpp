@@ -16,8 +16,8 @@ using namespace terrain;
 namespace {
 	
 	using terrain::detail::polygon;
-	polygon circle(dvec2 origin, double radius, double arcPrecisionDegrees, util::PerlinNoise *permuter, double noiseOffset) {
-		permuter->setScale(22.5 / 360.0);
+	polygon circle(dvec2 origin, double radius, double arcPrecisionDegrees, util::PerlinNoise *permuter, double noiseRoughness, double noiseOffset) {
+		permuter->setScale(noiseRoughness);
 		polygon contour;
 		for (double angle = 0; angle < 360; angle += arcPrecisionDegrees)
 		{
@@ -47,6 +47,7 @@ namespace precariously {
 		c.noiseOctaves = util::xml::readNumericAttribute<std::size_t>(configNode, "noiseOctaves", c.noiseOctaves);
 		c.noiseFalloff = util::xml::readNumericAttribute<double>(configNode, "noiseFalloff", c.noiseFalloff);
 		c.noiseOffset = util::xml::readNumericAttribute<double>(configNode, "noiseOffset", c.noiseOffset);
+		c.noiseRoughness = util::xml::readNumericAttribute<double>(configNode, "noiseRoughness", c.noiseRoughness);
 		
 		return c;
 	}
@@ -65,11 +66,11 @@ namespace precariously {
 		
 		// create basic planet outer contour
 		vector<polygon> contourPolygons = {
-			circle(origin, surfaceConfig.radius, surfaceConfig.arcPrecisionDegrees, &surfacePermuter, surfaceConfig.noiseOffset)
+			circle(origin, surfaceConfig.radius, surfaceConfig.arcPrecisionDegrees, &surfacePermuter, surfaceConfig.noiseRoughness, surfaceConfig.noiseOffset)
 		};
 
 		// build planet core contour
-		polygon corePolygon = circle(origin, coreConfig.radius, coreConfig.arcPrecisionDegrees / 2, &corePermuter, coreConfig.noiseOffset);
+		polygon corePolygon = circle(origin, coreConfig.radius, coreConfig.arcPrecisionDegrees, &corePermuter, surfaceConfig.noiseRoughness, coreConfig.noiseOffset);
 		PolyLine2d corePolyline = terrain::detail::convertBoostGeometryToPolyline2d(corePolygon);
 
 		// now convert the contours to a form consumable by terrain::World::build
