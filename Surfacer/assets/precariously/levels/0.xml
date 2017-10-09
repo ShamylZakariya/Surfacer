@@ -10,13 +10,13 @@
 		<fill spaceColor="50,60,70" atmosphereColor="200,255,255" steps="4" innerRadius="1000" outerRadius="1400"/>
 		<!-- other stuff like clouds, stars, planets, etc -->
 	</background>
-	<planet origin="0,0" friction="1" density="1">
+	<planet origin="0,0" friction="1" density="1" partitionSize="250">
 		<surface
 			radius="1000"
 			noiseOctaves="8"
 			noiseFalloff="0.4"
 			noiseOffset="500"
-			noiseRoughness="0.04"
+			noiseRoughness="0.03"
 		/>
 		<core
 			radius="200"

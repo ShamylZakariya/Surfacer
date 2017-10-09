@@ -76,7 +76,7 @@ namespace precariously {
 	BackgroundFillDrawComponent::~BackgroundFillDrawComponent()
 	{}
 	
-	void BackgroundFillDrawComponent::draw(const core::render_state &state) {		
+	void BackgroundFillDrawComponent::draw(const core::render_state &state) {
 		// set up a scale to fill viewport with plane
 		cpBB frustum = state.viewport->getFrustum();
 		dvec2 centerWorld = v2(cpBBCenter(frustum));

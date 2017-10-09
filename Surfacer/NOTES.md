@@ -1,10 +1,14 @@
-# Surfacer Modernization Rewrite
+# Precariously Assured Destruction
 
 This is going to be done in steps; since I need to learn new Cinder APIs (primarily the new vector/matrix/etc stuff), and I need to learn the modern OpenGL stuff.
 
 ## PRESENTLY
 
-Implementing shooting/collisions of things
+Implement partitioning of the world geometry
+Get rid of or significantly reduce the collision radius around planet geometry.
+Implement the shattering cut
+Implement a particle system for smoke and clouds. The clouds would orbit the planet, might respond to explosions. The smoke be for explosions.
+
 
 
 ## BUGS PRIORITY 0
@@ -20,4 +24,4 @@ CameraControllerComponent is acting oddly - it no longer allows camera re-center
 	- is there a robust way to respond to this from a design standpoint?
 
 ## NOTES
-Contour where the last vertex == the first cause tons of problems. util::simplify will automatically remove that last vertex for me in the process of simplification.
+Contour where the last vertex == the first cause tons of problems. util::simplify automatically removes that last vertex for me in the process of simplification.

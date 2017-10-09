@@ -35,7 +35,7 @@ namespace precariously {
 			config():
 			seed(12345),
 			radius(500),
-			arcPrecisionDegrees(1),
+			arcPrecisionDegrees(0.5),
 			noiseOctaves(4),
 			noiseFalloff(0.5),
 			noiseOffset(0),
@@ -47,7 +47,7 @@ namespace precariously {
 		};
 		
 		static PlanetRef create(string name, terrain::WorldRef world, core::util::xml::XmlMultiTree planetNode, int drawLayer);
-		static PlanetRef create(string name, terrain::WorldRef world, dvec2 origin, const config &surfaceConfig, const config &coreConfig, int drawLayer);
+		static PlanetRef create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer);
 		
 	public:
 		

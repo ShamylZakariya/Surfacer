@@ -54,12 +54,13 @@ namespace precariously {
 	
 	PlanetRef Planet::create(string name, terrain::WorldRef world, core::util::xml::XmlMultiTree planetNode, int drawLayer) {
 		dvec2 origin = util::xml::readPointAttribute(planetNode, "origin", dvec2(0,0));
+		double partitionSize = util::xml::readNumericAttribute<double>(planetNode, "partitionSize", 250);
 		config surfaceConfig = config::parse(planetNode.getChild("surface"));
 		config coreConfig = config::parse(planetNode.getChild("core"));
-		return create(name, world, origin, surfaceConfig, coreConfig, drawLayer);
+		return create(name, world, surfaceConfig, coreConfig, origin, partitionSize, drawLayer);
 	}
 	
-	PlanetRef Planet::create(string name, terrain::WorldRef world, dvec2 origin, const config &surfaceConfig, const config &coreConfig, int drawLayer) {
+	PlanetRef Planet::create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer) {
 		
 		util::PerlinNoise surfacePermuter(surfaceConfig.noiseOctaves, surfaceConfig.noiseFalloff, 1, surfaceConfig.seed);
 		util::PerlinNoise corePermuter(coreConfig.noiseOctaves, coreConfig.noiseFalloff, 1, coreConfig.seed);
@@ -75,6 +76,11 @@ namespace precariously {
 
 		// now convert the contours to a form consumable by terrain::World::build
 		vector<ShapeRef> shapes = terrain::detail::convertBoostGeometryToTerrainShapes(contourPolygons, dmat4());
+		
+		if (partitionSize > 0) {
+			shapes = terrain::World::partition(shapes, origin, partitionSize);
+		}
+
 		vector<AnchorRef> anchors = { terrain::Anchor::fromContour(corePolyline) };
 		world->build(shapes, anchors);
 		
