@@ -30,6 +30,41 @@
 		638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D901F87D4F3004437E8 /* Planet.cpp */; };
 		638F4DA11F897FB7004437E8 /* PrecariouslyConstants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D9E1F897F60004437E8 /* PrecariouslyConstants.cpp */; };
 		638F4DA21F898602004437E8 /* Background.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D9B1F897BD5004437E8 /* Background.cpp */; };
+		638F4DA71F8BCFCE004437E8 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 25DBEB1187074B2580185053 /* CinderApp.icns */; };
+		638F4DA91F8BCFCE004437E8 /* Background.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D9B1F897BD5004437E8 /* Background.cpp */; };
+		638F4DAB1F8BCFCE004437E8 /* TerrainDetail.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D971F8957F8004437E8 /* TerrainDetail.cpp */; };
+		638F4DB01F8BCFCE004437E8 /* Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C341F86F96A00F537CA /* Svg.cpp */; };
+		638F4DB11F8BCFCE004437E8 /* ChipmunkDebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C361F86F96A00F537CA /* ChipmunkDebugDraw.cpp */; };
+		638F4DB21F8BCFCE004437E8 /* SvgParsing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C381F86F96A00F537CA /* SvgParsing.cpp */; };
+		638F4DB31F8BCFCE004437E8 /* Xml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C3A1F86F96A00F537CA /* Xml.cpp */; };
+		638F4DB41F8BCFCE004437E8 /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C231F86F70D00F537CA /* DevComponents.cpp */; };
+		638F4DB51F8BCFCE004437E8 /* Terrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C201F86F6C000F537CA /* Terrain.cpp */; };
+		638F4DB61F8BCFCE004437E8 /* TerrainWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C211F86F6C000F537CA /* TerrainWorld.cpp */; };
+		638F4DB71F8BCFCE004437E8 /* ViewportController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623011E7D9A630051ABE2 /* ViewportController.cpp */; };
+		638F4DB81F8BCFCE004437E8 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
+		638F4DB91F8BCFCE004437E8 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
+		638F4DBA1F8BCFCE004437E8 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622FF1E7D9A630051ABE2 /* Viewport.cpp */; };
+		638F4DBB1F8BCFCE004437E8 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
+		638F4DBC1F8BCFCE004437E8 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
+		638F4DBD1F8BCFCE004437E8 /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
+		638F4DBE1F8BCFCE004437E8 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
+		638F4DBF1F8BCFCE004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
+		638F4DC01F8BCFCE004437E8 /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C081F8681E100F537CA /* Entity.cpp */; };
+		638F4DC11F8BCFCE004437E8 /* App.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C061F86804900F537CA /* App.cpp */; };
+		638F4DC31F8BCFCE004437E8 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720219952D00008149E2 /* AVFoundation.framework */; };
+		638F4DC41F8BCFCE004437E8 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720319952D00008149E2 /* CoreMedia.framework */; };
+		638F4DC51F8BCFCE004437E8 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		638F4DC61F8BCFCE004437E8 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0091D8F80E81B9330029341E /* OpenGL.framework */; };
+		638F4DC71F8BCFCE004437E8 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		638F4DC81F8BCFCE004437E8 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784AF0FF439BC000DE1D7 /* Accelerate.framework */; };
+		638F4DC91F8BCFCE004437E8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B00FF439BC000DE1D7 /* AudioToolbox.framework */; };
+		638F4DCA1F8BCFCE004437E8 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B10FF439BC000DE1D7 /* AudioUnit.framework */; };
+		638F4DCB1F8BCFCE004437E8 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
+		638F4DCC1F8BCFCE004437E8 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
+		638F4DCD1F8BCFCE004437E8 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
+		638F4DD31F8BCFEA004437E8 /* SvgTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2C1F86F84F00F537CA /* SvgTestScenario.cpp */; };
+		638F4DD41F8BCFEA004437E8 /* TerrainTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */; };
+		638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4DA31F8BCF53004437E8 /* TestsApp.cpp */; };
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
@@ -43,8 +78,6 @@
 		63F93C2D1F86F88300F537CA /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C231F86F70D00F537CA /* DevComponents.cpp */; };
 		63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C201F86F6C000F537CA /* Terrain.cpp */; };
 		63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C211F86F6C000F537CA /* TerrainWorld.cpp */; };
-		63F93C301F86F88300F537CA /* TerrainTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */; };
-		63F93C311F86F88300F537CA /* SvgTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2C1F86F84F00F537CA /* SvgTestScenario.cpp */; };
 		63F93C3C1F86F98000F537CA /* Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C341F86F96A00F537CA /* Svg.cpp */; };
 		63F93C3D1F86F98000F537CA /* ChipmunkDebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C361F86F96A00F537CA /* ChipmunkDebugDraw.cpp */; };
 		63F93C3E1F86F98000F537CA /* SvgParsing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C381F86F96A00F537CA /* SvgParsing.cpp */; };
@@ -57,8 +90,6 @@
 		63F93C481F8714B200F537CA /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C231F86F70D00F537CA /* DevComponents.cpp */; };
 		63F93C491F8714B200F537CA /* Terrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C201F86F6C000F537CA /* Terrain.cpp */; };
 		63F93C4A1F8714B200F537CA /* TerrainWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C211F86F6C000F537CA /* TerrainWorld.cpp */; };
-		63F93C4B1F8714B200F537CA /* TerrainTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */; };
-		63F93C4C1F8714B200F537CA /* SvgTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2C1F86F84F00F537CA /* SvgTestScenario.cpp */; };
 		63F93C511F8714B200F537CA /* ViewportController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623011E7D9A630051ABE2 /* ViewportController.cpp */; };
 		63F93C521F8714B200F537CA /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
 		63F93C531F8714B200F537CA /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
@@ -134,6 +165,10 @@
 		638F4D9C1F897BD5004437E8 /* Background.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Background.hpp; sourceTree = "<group>"; };
 		638F4D9E1F897F60004437E8 /* PrecariouslyConstants.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyConstants.cpp; sourceTree = "<group>"; };
 		638F4D9F1F897F60004437E8 /* PrecariouslyConstants.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyConstants.hpp; sourceTree = "<group>"; };
+		638F4DA31F8BCF53004437E8 /* TestsApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TestsApp.cpp; sourceTree = "<group>"; };
+		638F4DD11F8BCFCE004437E8 /* Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		638F4DD21F8BCFCE004437E8 /* Tests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Tests-Info.plist"; path = "/Users/shamyl/Code/Projects/Surfacer/Surfacer/xcode/Tests-Info.plist"; sourceTree = "<absolute>"; };
+		638F4DD61F8BD25F004437E8 /* Precariously-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Precariously-Info.plist"; sourceTree = "<group>"; };
 		639168A61E93E21A007FD4FA /* BlendMode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BlendMode.hpp; sourceTree = "<group>"; };
 		639168A71E93E289007FD4FA /* BlendMode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlendMode.cpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
@@ -177,7 +212,6 @@
 		63F93C3A1F86F96A00F537CA /* Xml.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Xml.cpp; sourceTree = "<group>"; };
 		63F93C3B1F86F96A00F537CA /* Svg.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Svg.hpp; sourceTree = "<group>"; };
 		63F93C6C1F8714B200F537CA /* Precariously.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Precariously.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		63F93C6D1F8714B200F537CA /* Surfacer copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Surfacer copy-Info.plist"; path = "/Users/shamyl/Code/Projects/Surfacer/Surfacer/xcode/Surfacer copy-Info.plist"; sourceTree = "<absolute>"; };
 		63F93C6E1F87167100F537CA /* SurfacerApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SurfacerApp.cpp; sourceTree = "<group>"; };
 		63F93C721F87185A00F537CA /* PrecariouslyLevelScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyLevelScenario.hpp; sourceTree = "<group>"; };
 		63F93C731F87185A00F537CA /* PrecariouslyLevel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyLevel.hpp; sourceTree = "<group>"; };
@@ -189,6 +223,24 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		638F4DC21F8BCFCE004437E8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				638F4DC31F8BCFCE004437E8 /* AVFoundation.framework in Frameworks */,
+				638F4DC41F8BCFCE004437E8 /* CoreMedia.framework in Frameworks */,
+				638F4DC51F8BCFCE004437E8 /* Cocoa.framework in Frameworks */,
+				638F4DC61F8BCFCE004437E8 /* OpenGL.framework in Frameworks */,
+				638F4DC71F8BCFCE004437E8 /* CoreVideo.framework in Frameworks */,
+				638F4DC81F8BCFCE004437E8 /* Accelerate.framework in Frameworks */,
+				638F4DC91F8BCFCE004437E8 /* AudioToolbox.framework in Frameworks */,
+				638F4DCA1F8BCFCE004437E8 /* AudioUnit.framework in Frameworks */,
+				638F4DCB1F8BCFCE004437E8 /* CoreAudio.framework in Frameworks */,
+				638F4DCC1F8BCFCE004437E8 /* IOKit.framework in Frameworks */,
+				638F4DCD1F8BCFCE004437E8 /* IOSurface.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63F93C5D1F8714B200F537CA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -260,6 +312,7 @@
 			children = (
 				8D1107320486CEB800E47090 /* Surfacer.app */,
 				63F93C6C1F8714B200F537CA /* Precariously.app */,
+				638F4DD11F8BCFCE004437E8 /* Tests.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -273,7 +326,6 @@
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
-				63F93C6D1F8714B200F537CA /* Surfacer copy-Info.plist */,
 			);
 			name = Surfacer;
 			sourceTree = "<group>";
@@ -290,6 +342,8 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				638F4DD61F8BD25F004437E8 /* Precariously-Info.plist */,
+				638F4DD21F8BCFCE004437E8 /* Tests-Info.plist */,
 				25DBEB1187074B2580185053 /* CinderApp.icns */,
 				0106167B3AC444DC89159381 /* Surfacer-Info.plist */,
 			);
@@ -448,6 +502,7 @@
 				63F93C291F86F84F00F537CA /* SvgTestScenario.hpp */,
 				63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */,
 				63F93C2A1F86F84F00F537CA /* TerrainTestScenario.hpp */,
+				638F4DA31F8BCF53004437E8 /* TestsApp.cpp */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -488,6 +543,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		638F4DA51F8BCFCE004437E8 /* Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 638F4DCE1F8BCFCE004437E8 /* Build configuration list for PBXNativeTarget "Tests" */;
+			buildPhases = (
+				638F4DA61F8BCFCE004437E8 /* Resources */,
+				638F4DA81F8BCFCE004437E8 /* Sources */,
+				638F4DC21F8BCFCE004437E8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tests;
+			productInstallPath = "$(HOME)/Applications";
+			productName = Surfacer;
+			productReference = 638F4DD11F8BCFCE004437E8 /* Tests.app */;
+			productType = "com.apple.product-type.application";
+		};
 		63F93C401F8714B200F537CA /* Precariously */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 63F93C691F8714B200F537CA /* Build configuration list for PBXNativeTarget "Precariously" */;
@@ -548,11 +621,20 @@
 			targets = (
 				8D1107260486CEB800E47090 /* Surfacer */,
 				63F93C401F8714B200F537CA /* Precariously */,
+				638F4DA51F8BCFCE004437E8 /* Tests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		638F4DA61F8BCFCE004437E8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				638F4DA71F8BCFCE004437E8 /* CinderApp.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63F93C411F8714B200F537CA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -572,6 +654,36 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		638F4DA81F8BCFCE004437E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				638F4DD31F8BCFEA004437E8 /* SvgTestScenario.cpp in Sources */,
+				638F4DD41F8BCFEA004437E8 /* TerrainTestScenario.cpp in Sources */,
+				638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */,
+				638F4DA91F8BCFCE004437E8 /* Background.cpp in Sources */,
+				638F4DAB1F8BCFCE004437E8 /* TerrainDetail.cpp in Sources */,
+				638F4DB01F8BCFCE004437E8 /* Svg.cpp in Sources */,
+				638F4DB11F8BCFCE004437E8 /* ChipmunkDebugDraw.cpp in Sources */,
+				638F4DB21F8BCFCE004437E8 /* SvgParsing.cpp in Sources */,
+				638F4DB31F8BCFCE004437E8 /* Xml.cpp in Sources */,
+				638F4DB41F8BCFCE004437E8 /* DevComponents.cpp in Sources */,
+				638F4DB51F8BCFCE004437E8 /* Terrain.cpp in Sources */,
+				638F4DB61F8BCFCE004437E8 /* TerrainWorld.cpp in Sources */,
+				638F4DB71F8BCFCE004437E8 /* ViewportController.cpp in Sources */,
+				638F4DB81F8BCFCE004437E8 /* ChipmunkHelpers.cpp in Sources */,
+				638F4DB91F8BCFCE004437E8 /* Object.cpp in Sources */,
+				638F4DBA1F8BCFCE004437E8 /* Viewport.cpp in Sources */,
+				638F4DBB1F8BCFCE004437E8 /* InputDispatcher.cpp in Sources */,
+				638F4DBC1F8BCFCE004437E8 /* Scenario.cpp in Sources */,
+				638F4DBD1F8BCFCE004437E8 /* BlendMode.cpp in Sources */,
+				638F4DBE1F8BCFCE004437E8 /* Level.cpp in Sources */,
+				638F4DBF1F8BCFCE004437E8 /* PerlinNoise.cpp in Sources */,
+				638F4DC01F8BCFCE004437E8 /* Entity.cpp in Sources */,
+				638F4DC11F8BCFCE004437E8 /* App.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63F93C431F8714B200F537CA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -590,8 +702,6 @@
 				63F93C481F8714B200F537CA /* DevComponents.cpp in Sources */,
 				63F93C491F8714B200F537CA /* Terrain.cpp in Sources */,
 				63F93C4A1F8714B200F537CA /* TerrainWorld.cpp in Sources */,
-				63F93C4B1F8714B200F537CA /* TerrainTestScenario.cpp in Sources */,
-				63F93C4C1F8714B200F537CA /* SvgTestScenario.cpp in Sources */,
 				63F93C511F8714B200F537CA /* ViewportController.cpp in Sources */,
 				63F93C521F8714B200F537CA /* ChipmunkHelpers.cpp in Sources */,
 				63F93C531F8714B200F537CA /* Object.cpp in Sources */,
@@ -619,8 +729,6 @@
 				63F93C2D1F86F88300F537CA /* DevComponents.cpp in Sources */,
 				63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */,
 				63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */,
-				63F93C301F86F88300F537CA /* TerrainTestScenario.cpp in Sources */,
-				63F93C311F86F88300F537CA /* SvgTestScenario.cpp in Sources */,
 				63F93C171F8687F700F537CA /* SurfacerLevel.cpp in Sources */,
 				63F93C181F8687F700F537CA /* Eggsac.cpp in Sources */,
 				63F93C191F8687F700F537CA /* Boid.cpp in Sources */,
@@ -644,6 +752,80 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		638F4DCF1F8BCFCE004437E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Surfacer_Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					TARGET_PRECARIOUSLY,
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"\"$(CINDER_PATH)/include\"",
+					"$(CHIPMUNK_PATH)/include\"",
+				);
+				INFOPLIST_FILE = "Tests-Info.plist";
+				INSTALL_PATH = "$(HOME)/Applications";
+				OTHER_LDFLAGS = (
+					"\"$(CINDER_PATH)/lib/libcinder_d.a\"",
+					"$(CHIPMUNK_PATH)/xcode/build/Debug/libChipmunk-Mac.a",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.zakariya.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = ./build;
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" $(CHIPMUNK_PATH)/include\" ../include";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		638F4DD01F8BCFCE004437E8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_FAST_MATH = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Surfacer_Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					TARGET_PRECARIOUSLY,
+					"NDEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"\"$(CINDER_PATH)/include\"",
+					"$(CHIPMUNK_PATH)/include\"",
+				);
+				INFOPLIST_FILE = "Tests-Info.plist";
+				INSTALL_PATH = "$(HOME)/Applications";
+				OTHER_LDFLAGS = (
+					"\"$(CINDER_PATH)/lib/libcinder.a\"",
+					"$(CHIPMUNK_PATH)/xcode/build/Release/libChipmunk-Mac.a",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.zakariya.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = YES;
+				SYMROOT = ./build;
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" $(CHIPMUNK_PATH)/include\" ../include";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
 		63F93C6A1F8714B200F537CA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -873,6 +1055,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		638F4DCE1F8BCFCE004437E8 /* Build configuration list for PBXNativeTarget "Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				638F4DCF1F8BCFCE004437E8 /* Debug */,
+				638F4DD01F8BCFCE004437E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		63F93C691F8714B200F537CA /* Build configuration list for PBXNativeTarget "Precariously" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

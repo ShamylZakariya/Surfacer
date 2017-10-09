@@ -4,7 +4,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## PRESENTLY
 
-Implement partitioning of the world geometry
+@done Implement partitioning of the world geometry
 Get rid of or significantly reduce the collision radius around planet geometry.
 Implement the shattering cut
 Implement a particle system for smoke and clouds. The clouds would orbit the planet, might respond to explosions. The smoke be for explosions.
