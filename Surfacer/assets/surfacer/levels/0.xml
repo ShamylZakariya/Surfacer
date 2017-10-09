@@ -4,7 +4,7 @@
 	<prefab id="eggsac">
 		<eggsac width="16" height="24">
 			<health max_health="50" regeneration_rate="0.5"/>
-			<spawn count="0" size="1">
+			<spawn count="100" size="1">
 				<flock>
 					<target names="player" memory_seconds="3"/>
 					<!--
@@ -31,7 +31,7 @@
 	</player>
 	<enemies>
 		<eggsac name="eggsac_0" prefab_id="eggsac" width="16" height="24" />
-		<!-- <eggsac name="eggsac_1" prefab_id="eggsac" width="24" height="24"/>
-		<eggsac name="eggsac_2" prefab_id="eggsac" width="32" height="32"/> -->
+		<eggsac name="eggsac_1" prefab_id="eggsac" width="24" height="24"/>
+		<eggsac name="eggsac_2" prefab_id="eggsac" width="32" height="32"/>
 	</enemies>
 </level>
