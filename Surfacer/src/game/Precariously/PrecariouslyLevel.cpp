@@ -126,12 +126,13 @@ namespace precariously {
 	void PrecariouslyLevel::loadPlanet(XmlTree planetNode) {
 		double friction = util::xml::readNumericAttribute<double>(planetNode, "friction", 1);
 		double density = util::xml::readNumericAttribute<double>(planetNode, "density", 1);
+		double collisionShapeRadius = 0.1;
 		
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
 		
-		const terrain::material terrainMaterial(density, friction, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
-		const terrain::material anchorMaterial(1, friction, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
+		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
+		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
 		auto world = make_shared<terrain::World>(getSpace(),terrainMaterial, anchorMaterial);
 		
 		_planet = Planet::create("Planet", world, planetNode, DrawLayers::PLANET);

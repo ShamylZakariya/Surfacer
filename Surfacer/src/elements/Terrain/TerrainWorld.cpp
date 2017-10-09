@@ -31,7 +31,6 @@ namespace terrain {
 	namespace {
 		
 		const double MIN_TRIANGLE_AREA = 1.0;
-		const double COLLISION_SHAPE_RADIUS = 2;
 		
 		// if > 0 we add a water-tight perimeter geometry around shapes
 		// unfortunately, mitering is HARD and so right now this is disabled.
@@ -800,7 +799,7 @@ namespace terrain {
 				vector<cpShape*> collisionShapes = shape->getShapes(modelBB);
 				bool didCreateNewShapes = false;
 				if (collisionShapes.empty()) {
-					collisionShapes = shape->createCollisionShapes(_body, modelBB);
+					collisionShapes = shape->createCollisionShapes(_body, modelBB, getMaterial().collisionShapeRadius);
 					didCreateNewShapes = true;
 				}
 
@@ -1040,7 +1039,7 @@ namespace terrain {
 				// destroy any lingering collision shapes from previous tessellations and build new shapes
 
 				shape->destroyCollisionShapes();
-				vector<cpShape*> collisionShapes = shape->createCollisionShapes(_body, modelBB);
+				vector<cpShape*> collisionShapes = shape->createCollisionShapes(_body, modelBB, getMaterial().collisionShapeRadius);
 
 				if (!collisionShapes.empty() && cpBBIsValid(modelBB)) {
 					_modelBB = cpBBExpand(_modelBB, modelBB);
@@ -1608,7 +1607,7 @@ namespace terrain {
 		_shapes.clear();
 	}
 
-	const vector<cpShape*> &Shape::createCollisionShapes(cpBody *body, cpBB &modelBB) {
+	const vector<cpShape*> &Shape::createCollisionShapes(cpBody *body, cpBB &modelBB, double collisionShapeRadius) {
 		CI_ASSERT_MSG(_shapes.empty(), "Can't call createCollisionShapes on a Shape more than once. Always call destroyCollisionShapes first");
 
 		cpBB bb = cpBBInvalid;
@@ -1630,7 +1629,7 @@ namespace terrain {
 			}
 
 			if (area >= MIN_TRIANGLE_AREA) {
-				cpShape *polyShape = cpPolyShapeNew(body, 3, triangle, cpTransformIdentity, COLLISION_SHAPE_RADIUS);
+				cpShape *polyShape = cpPolyShapeNew(body, 3, triangle, cpTransformIdentity, collisionShapeRadius);
 				cpShapeSetUserData(polyShape, this);
 				_shapes.push_back(polyShape);
 

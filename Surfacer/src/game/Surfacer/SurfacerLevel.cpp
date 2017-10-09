@@ -163,12 +163,13 @@ namespace surfacer {
 		double friction = util::xml::readNumericAttribute<double>(terrainNode, "friction", 1);
 		double density = util::xml::readNumericAttribute<double>(terrainNode, "density", 1);
 		double scale = util::xml::readNumericAttribute<double>(terrainNode, "scale", 1);
+		double collisionShapeRadius = 1;
 
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
 
-		const terrain::material terrainMaterial(density, friction, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
-		const terrain::material anchorMaterial(1, friction, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
+		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
+		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
 
 		//
 		//	Load terrain

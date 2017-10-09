@@ -113,19 +113,22 @@ namespace terrain {
 	struct material {
 		cpFloat density;
 		cpFloat friction;
+		cpFloat collisionShapeRadius;
 		cpShapeFilter filter;
 		cpCollisionType collisionType;
 
 		material():
 		density(1),
 		friction(1),
+		collisionShapeRadius(0),
 		filter({0,0,0}),
 		collisionType(0)
 		{}
 
-		material(cpFloat d, cpFloat f, cpShapeFilter flt, cpCollisionType ct):
+		material(cpFloat d, cpFloat f, cpFloat csr, cpShapeFilter flt, cpCollisionType ct):
 		density(d),
 		friction(f),
+		collisionShapeRadius(csr),
 		filter(flt),
 		collisionType(ct)
 		{}
@@ -670,7 +673,7 @@ namespace terrain {
 		void computeMassAndMoment(double density, double &mass, double &moment, double &area);
 
 		void destroyCollisionShapes();
-		const vector<cpShape*> &createCollisionShapes(cpBody *body, cpBB &shapesModelBB);
+		const vector<cpShape*> &createCollisionShapes(cpBody *body, cpBB &shapesModelBB, double collisionShapeRadius);
 
 	private:
 
