@@ -15,6 +15,7 @@
 namespace core {
 
 	typedef double seconds_t;
+	using std::size_t;
 
 	/**
 	 @struct time_state
@@ -25,9 +26,9 @@ namespace core {
 
 		seconds_t		time;
 		seconds_t		deltaT;
-		std::size_t		step;
+		size_t		step;
 
-		time_state( seconds_t t, seconds_t dt, std::size_t s ):
+		time_state( seconds_t t, seconds_t dt, size_t s ):
 		time( t ),
 		deltaT( dt ),
 		step(s)

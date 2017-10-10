@@ -33,15 +33,19 @@
 	@brief core::util::strings is a toolbox of convenient string-related functions
  */
 namespace core {
+	
+	using std::size_t;
+	using std::string;
+	using std::stringstream;
 
 	/**
 	 @brief Convert @a v to a string
 	 @return the input parameter as a string.
 	 */
 	template< class T >
-	std::string str( T v )
+	string str( T v )
 	{
-		std::stringstream ss;
+		stringstream ss;
 		ss << v;
 		return ss.str();
 	}
@@ -51,9 +55,9 @@ namespace core {
 	 @return the input parameter as a string with real precision @a prec
 	 */
 	template< class T >
-	std::string str( T v, int prec )
+	string str( T v, int prec )
 	{
-		std::stringstream ss;
+		stringstream ss;
 		ss << std::setprecision( prec ) << std::fixed << v;
 		return ss.str();
 	}
@@ -62,9 +66,9 @@ namespace core {
 	 @brief Convert pointer value @a v to a string
 	 */
 	template< class T >
-	std::string str( T *v )
+	string str( T *v )
 	{
-		std::stringstream ss;
+		stringstream ss;
 		ss << "0x" << std::hex << v;
 		return ss.str();
 	}
@@ -73,7 +77,7 @@ namespace core {
 	 @brief Convert a boolean to string
 	 @return "true" or "false" according to @a v
 	 */
-	inline std::string str( bool v )
+	inline string str( bool v )
 	{
 		return v ? "true" : "false";
 	}
@@ -81,23 +85,23 @@ namespace core {
 	/**
 	 @brief Convert a const chararacter pointer to a string
 	 */
-	inline std::string str( const char *s )
+	inline string str( const char *s )
 	{
-		return std::string( s );
+		return string( s );
 	}
 
 	/**
 	 @brief Convert a non-const chararacter pointer to a string
 	 */
-	inline std::string str( char *s )
+	inline string str( char *s )
 	{
-		return std::string( s );
+		return string( s );
 	}
 
 	/**
 	 @brief identity function string->string
 	 */
-	inline std::string str( const std::string &s )
+	inline string str( const string &s )
 	{
 		return s;
 	}
@@ -105,9 +109,9 @@ namespace core {
 
 	namespace strings {
 
-	typedef std::vector< std::string > stringvec;
+	typedef std::vector< string > stringvec;
 	typedef std::vector< char > charvec;
-	typedef std::set< std::string > stringset;
+	typedef std::set< string > stringset;
 	typedef std::set< char > charset;
 
 	enum numeric_base { Binary, Octal, Decimal, Hexadecimal };
@@ -117,13 +121,13 @@ namespace core {
 	 @ingroup stringutil
 	 @return a lowercased version of @a str
 	 */
-	inline std::string
-	lowercase( const std::string &str )
+	inline string
+	lowercase( const string &str )
 	{
 		using namespace std;
 
 		string out;
-		std::size_t l = str.length();
+		size_t l = str.length();
 		for (int i = 0; i < l; i++)
 			out.push_back( tolower( str[i] ) );
 
@@ -136,13 +140,13 @@ namespace core {
 	 @ingroup stringutil
 	 @return an uppercased version of @a str
 	 */
-	inline std::string
-	uppercase( const std::string &str )
+	inline string
+	uppercase( const string &str )
 	{
 		using namespace std;
 
 		string out;
-		std::size_t l = str.length();
+		size_t l = str.length();
 		for (int i = 0; i < l; i++)
 			out.push_back( toupper( str[i] ) );
 
@@ -151,14 +155,14 @@ namespace core {
 
 
 	/**
-	 @brief Variant of sprintf for std::string
+	 @brief Variant of sprintf for string
 	 @ingroup stringutil
 
 	 works like sprintf, but is reasonably "safe"
 
-	 @note You're better off using std::stringstream and overloaded insertion operators.
+	 @note You're better off using stringstream and overloaded insertion operators.
 	 */
-	inline std::string format( const char *format, ... )
+	inline string format( const char *format, ... )
 	{
 		using namespace std;
 
@@ -175,12 +179,12 @@ namespace core {
 	}
 
 	/**
-	 @brief multi replace for std::string
+	 @brief multi replace for string
 	 @ingroup stringutil
 	 replaces all instances of @a token in @a src with @a with
 	 */
-	inline std::string
-	replaceAll( const std::string &src, const std::string &token, const std::string &with )
+	inline string
+	replaceAll( const string &src, const string &token, const string &with )
 	{
 		using namespace std;
 
@@ -199,12 +203,12 @@ namespace core {
 	}
 
 	/**
-	 @brief case-insensitive multi replace for std::string
+	 @brief case-insensitive multi replace for string
 	 @ingroup stringutil
 	 replaces all instances of @a token in @a src with @a with, case insensitive
 	 */
-	inline std::string
-	iReplaceAll( const std::string &src, const std::string &token,  const std::string &with )
+	inline string
+	iReplaceAll( const string &src, const string &token,  const string &with )
 	{
 		using namespace std;
 
@@ -231,7 +235,7 @@ namespace core {
 	 @return the tokens between the delimeter, minus the delimeter.
 	 */
 	inline stringvec
-	split( const std::string &str, const std::string &delimeter )
+	split( const string &str, const string &delimeter )
 	{
 		using namespace std;
 
@@ -268,7 +272,7 @@ namespace core {
 	 @return the tokens between the delimeter, minus the delimeter.
 	 */
 	inline stringvec
-	split( const std::string &str, char delimeter)
+	split( const string &str, char delimeter)
 	{
 		using namespace std;
 
@@ -309,7 +313,7 @@ namespace core {
 	 @returns the tokens between the delimeter chars, separated by delimeters if @a includeDelimeters is true
 	 */
 	inline stringvec
-	split( const std::string &str, const charset &delimeters, bool includeDelimeters = true )
+	split( const string &str, const charset &delimeters, bool includeDelimeters = true )
 	{
 		using namespace std;
 
@@ -352,7 +356,7 @@ namespace core {
 
 	 */
 	inline stringvec
-	split( const std::string &str, const stringset &delimeters )
+	split( const string &str, const stringset &delimeters )
 	{
 		using namespace std;
 
@@ -404,8 +408,8 @@ namespace core {
 	 @ingroup stringutil
 	 @return each string in @a tokens with the string @a delimeter in between as one string
 	 */
-	inline std::string
-	join( const stringvec &tokens, const std::string &delimeter )
+	inline string
+	join( const stringvec &tokens, const string &delimeter )
 	{
 		using namespace std;
 
@@ -424,7 +428,7 @@ namespace core {
 	}
 
 	template<typename T>
-	std::string join( const std::vector<T> &tokens, const std::string &delimeter) {
+	string join( const std::vector<T> &tokens, const string &delimeter) {
 		using namespace std;
 
 		string joined;
@@ -446,8 +450,8 @@ namespace core {
 	 @ingroup stringutil
 	 @return @a str with whitespace stripped from the left side
 	 */
-	inline std::string
-	lStrip( const std::string &str )
+	inline string
+	lStrip( const string &str )
 	{
 		using namespace std;
 
@@ -467,8 +471,8 @@ namespace core {
 	 @ingroup stringutil
 	 @return @a str with whitespace stripped from the right side
 	 */
-	inline std::string
-	rStrip( const std::string &str )
+	inline string
+	rStrip( const string &str )
 	{
 		using namespace std;
 
@@ -488,8 +492,8 @@ namespace core {
 	 @ingroup stringutil
 	 @return @a str with whitespace stripped from both sides
 	 */
-	inline std::string
-	strip( const std::string &str )
+	inline string
+	strip( const string &str )
 	{
 		return rStrip(lStrip(str));
 	}
@@ -500,7 +504,7 @@ namespace core {
 	 @return true if @a str contains @a c
 	 */
 	inline bool
-	contains( const std::string &str, char c)
+	contains( const string &str, char c)
 	{
 		for (int i = 0; i < (int)str.length(); i++)
 			if (str[i] == c) return true;
@@ -514,9 +518,9 @@ namespace core {
 	 @return true if @a str contains @a substr
 	 */
 	inline bool
-	contains( const std::string &str, const std::string &substr)
+	contains( const string &str, const string &substr)
 	{
-		return (str.find( substr ) != std::string::npos );
+		return (str.find( substr ) != string::npos );
 	}
 
 	/**
@@ -525,7 +529,7 @@ namespace core {
 	 @return true if @a str begins with @a substr
 	 */
 	inline bool
-	startsWith( const std::string &str, const std::string &substr )
+	startsWith( const string &str, const string &substr )
 	{
 		return (str.find( substr ) == 0 );
 	}
@@ -536,7 +540,7 @@ namespace core {
 	 @return true if @a str ends with @a substr
 	 */
 	inline bool
-	endsWith( const std::string &str, const std::string &substr )
+	endsWith( const string &str, const string &substr )
 	{
 		return (str.find( substr ) == str.length() - substr.length() );
 	}
@@ -570,7 +574,7 @@ namespace core {
 	 @endverbatim
 	 */
 	inline int
-	findClosingSymbol( const std::string &str, int openPos, char openSymbol = '(')
+	findClosingSymbol( const string &str, int openPos, char openSymbol = '(')
 	{
 		using namespace std;
 
@@ -645,7 +649,7 @@ namespace core {
 	 @endverbatim
 
 	 */
-	inline int findClosingSymbol( const stringvec &strlist, int openPos, const std::string &openSymbol = "(")
+	inline int findClosingSymbol( const stringvec &strlist, int openPos, const string &openSymbol = "(")
 	{
 		using namespace std;
 
@@ -680,13 +684,13 @@ namespace core {
 	 @ingroup stringutil
 	 @return a string made up of @a str, but with all chars in @a set cut out.
 	 */
-	inline std::string
-	removeSet( const std::string &str, const std::string &set )
+	inline string
+	removeSet( const string &str, const string &set )
 	{
 		using namespace std;
 
 		string out;
-		std::size_t l = str.length();
+		size_t l = str.length();
 		for (int i = 0; i < l; i++)
 		{
 			if ( set.find( str[i] ) == string::npos )
@@ -702,8 +706,8 @@ namespace core {
 	 @ingroup stringutil
 	 @return str with the substring starting at @a startingAt @a charCount long cut out
 	 */
-	inline std::string
-	remove( const std::string &str, int startingAt, int charCount )
+	inline string
+	remove( const string &str, int startingAt, int charCount )
 	{
 		using namespace std;
 
@@ -722,7 +726,7 @@ namespace core {
 	 @ingroup stringutil
 	 */
 	inline void
-	moveInto( std::string &src, std::string &dest, int startingAt, int charCount )
+	moveInto( string &src, string &dest, int startingAt, int charCount )
 	{
 		using namespace std;
 
@@ -747,7 +751,7 @@ namespace core {
 
 	 Would print APPL.
 	 */
-	inline std::string
+	inline string
 	intCodeToString( unsigned int code )
 	{
 		char buf[5];
@@ -757,7 +761,7 @@ namespace core {
 		buf[3] = (char)( code & 0x000000FF);
 		buf[4] = '\0';
 
-		return std::string(buf);
+		return string(buf);
 	}
 
 	/**
@@ -766,11 +770,11 @@ namespace core {
 	 @return a hash-code for a string @a s.
 	 @note the hash algorithm is adapted from java.lang.String
 	 */
-	inline std::size_t
-	hash( const std::string &s )
+	inline size_t
+	hash( const string &s )
 	{
-		std::size_t n = s.length(), h = 0;
-		for ( std::size_t i = 0; i < n; i++ )
+		size_t n = s.length(), h = 0;
+		for ( size_t i = 0; i < n; i++ )
 		{
 			h += s[i] * static_cast<size_t>(powi( 31, static_cast<int>(n - 1 - i)));
 		}
@@ -780,8 +784,8 @@ namespace core {
 		return h;
 	}
 
-	inline std::string
-	readFile( const std::string &filename )
+	inline string
+	readFile( const string &filename )
 	{
 		using namespace std;
 
@@ -791,7 +795,7 @@ namespace core {
 
 		if (size <= 0)
 		{
-			return std::string();
+			return string();
 		}
 
 		char *buf = new char[size];
@@ -806,9 +810,9 @@ namespace core {
 
 
 	inline stringvec
-	readFileIntoLines( const std::string &filename )
+	readFileIntoLines( const string &filename )
 	{
-		std::string buf = readFile( filename );
+		string buf = readFile( filename );
 		if ( buf.size() == 0 ) return stringvec();
 
 		stringvec lines = split( buf, '\n' );

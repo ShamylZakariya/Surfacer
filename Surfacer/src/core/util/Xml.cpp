@@ -232,10 +232,10 @@ namespace core { namespace util { namespace xml {
 	
 	// read an unsigned int numeric attribute
 	template <>
-	std::size_t readNumericAttribute<std::size_t>(const XmlMultiTree &node, string attributeName, std::size_t defaultValue) {
+	size_t readNumericAttribute<size_t>(const XmlMultiTree &node, string attributeName, size_t defaultValue) {
 		auto value = node.getAttribute(attributeName);
 		if (value) {
-			return static_cast<std::size_t>(strtoul(value->c_str(), nullptr, 10));
+			return static_cast<size_t>(strtoul(value->c_str(), nullptr, 10));
 		}
 		return defaultValue;
 	}

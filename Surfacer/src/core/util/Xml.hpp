@@ -87,7 +87,7 @@ namespace core { namespace util { namespace xml {
 	unsigned int readNumericAttribute<unsigned int>(const XmlMultiTree &node, string attributeName, unsigned int defaultValue);
 
 	template <>
-	std::size_t readNumericAttribute<std::size_t>(const XmlMultiTree &node, string attributeName, std::size_t defaultValue);
+	size_t readNumericAttribute<size_t>(const XmlMultiTree &node, string attributeName, size_t defaultValue);
 	
 	// read a sequence of numeric attributes from an xml node (where a sequence is a list of numbers separated by comma, space, or comma-space)	
 	vector<double> readNumericSequenceAttribute(const XmlMultiTree &node, string attributeName, vector<double> defaultValue);

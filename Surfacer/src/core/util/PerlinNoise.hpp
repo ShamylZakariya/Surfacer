@@ -26,7 +26,7 @@ namespace core { namespace util {
 	protected:
 		
 		struct rng {
-			std::size_t _seed, _lo, _hi;
+			size_t _seed, _lo, _hi;
 			
 			rng( void ):
 			_seed( 4357U ),
@@ -47,7 +47,7 @@ namespace core { namespace util {
 				return *this;
 			}
 			
-			void seed( std::size_t s ) {
+			void seed( size_t s ) {
 				_seed = _lo = s;
 				_hi = ~s;
 			}
@@ -61,7 +61,7 @@ namespace core { namespace util {
 			}
 		};
 		
-		std::size_t _octaves;
+		size_t _octaves;
 		int _seed;
 		rng _rng;
 		double _persistence, _persistenceMax, _scale;
@@ -72,7 +72,7 @@ namespace core { namespace util {
 		
 	public:
 		
-		PerlinNoise( std::size_t octaves = 4, double falloff = 0.5, double scale = 1, int seed = 123 );
+		PerlinNoise( size_t octaves = 4, double falloff = 0.5, double scale = 1, int seed = 123 );
 		PerlinNoise( const PerlinNoise & );
 		
 		~PerlinNoise( void ) {
@@ -95,7 +95,7 @@ namespace core { namespace util {
 			y*= _scale;
 			z*= _scale;
 			
-			for ( std::size_t i = 0; i < _octaves; i++ )
+			for ( size_t i = 0; i < _octaves; i++ )
 			{
 				double freq = _octFrequency[i],
 				pers = _octPersistence[i];
@@ -108,15 +108,15 @@ namespace core { namespace util {
 			return s*_persistenceMax;
 		}
 		
-		void setOctaves( std::size_t oct ) {
-			oct = std::max( oct, std::size_t(1) );
+		void setOctaves( size_t oct ) {
+			oct = std::max( oct, size_t(1) );
 			if ( oct != _octaves ) {
 				_octaves = oct;
 				octFreqPers();
 			}
 		}
 		
-		std::size_t octaves( void ) const { return _octaves; }
+		size_t octaves( void ) const { return _octaves; }
 		
 		void setScale( double scale ) { _scale = scale; }
 		double scale( void ) const { return _scale; }
@@ -131,14 +131,14 @@ namespace core { namespace util {
 		
 		double falloff( void ) const { return _persistence; }
 		
-		void setSeed( std::size_t s ) {
+		void setSeed( size_t s ) {
 			if ( !_initialized ) init();
 			_rng.seed( s );
 			_seed = static_cast<int>(s);
 			seedOffset();
 		}
 		
-		std::size_t seed( void ) {
+		size_t seed( void ) {
 			if ( !_initialized ) init();
 			return _seed;
 		}
@@ -153,7 +153,7 @@ namespace core { namespace util {
 			_octPersistence = new double[_octaves];
 			
 			_persistenceMax = 0;
-			for ( std::size_t i = 0; i < _octaves; i++ ) {
+			for ( size_t i = 0; i < _octaves; i++ ) {
 				double freq = std::pow( 2.0, int(i) );
 				double pers = std::pow( _persistence, int(i) );
 				

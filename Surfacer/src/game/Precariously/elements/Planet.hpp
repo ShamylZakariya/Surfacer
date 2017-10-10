@@ -27,7 +27,7 @@ namespace precariously {
 			double radius;
 			double arcPrecisionDegrees;
 			
-			std::size_t noiseOctaves;
+			size_t noiseOctaves;
 			double noiseFalloff;
 			double noiseOffset;
 			double noiseRoughness;

@@ -21,13 +21,14 @@ namespace core { namespace signals {
 	using std::placeholders::_1;
 	using std::placeholders::_2;
 	using std::placeholders::_3;
+	using std::size_t;
 
 
 	class receiver;
 
 	namespace detail {
 
-		typedef std::size_t free_function_id;
+		typedef size_t free_function_id;
 
 		class slot_registry
 		{
@@ -200,7 +201,7 @@ namespace core { namespace signals {
 			*/
 		void connect( void (*function)() )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.push_back( function_vec_value_type( fId, std::bind( function )));
 		}
 
@@ -210,7 +211,7 @@ namespace core { namespace signals {
 		template< class A >
 		void connect( void (*function)(A) )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.push_back( function_vec_value_type( fId, std::bind( function, _1 )));
 		}
 
@@ -220,7 +221,7 @@ namespace core { namespace signals {
 		template< class A, class B >
 		void connect( void (*function)(A,B) )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.push_back( function_vec_value_type( fId, std::bind( function, _1, _2 )));
 		}
 
@@ -230,7 +231,7 @@ namespace core { namespace signals {
 		template< class A, class B, class C >
 		void connect( void (*function)(A,B,C) )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.push_back( function_vec_value_type( fId, std::bind( function, _1, _2, _3 )));
 		}
 
@@ -239,7 +240,7 @@ namespace core { namespace signals {
 			*/
 		void disconnect( void (*function)() )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.erase(
 							 std::remove_if( _functions.begin(), _functions.end(), same_function( fId )),
 							 _functions.end() );
@@ -251,7 +252,7 @@ namespace core { namespace signals {
 		template< class A >
 		void disconnect( void (*function)(A) )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.erase(
 							 std::remove_if( _functions.begin(), _functions.end(), same_function( fId )),
 							 _functions.end() );
@@ -263,7 +264,7 @@ namespace core { namespace signals {
 		template< class A, class B >
 		void disconnect( void (*function)(A,B) )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.erase(
 							 std::remove_if( _functions.begin(), _functions.end(), same_function( fId )),
 							 _functions.end() );
@@ -275,7 +276,7 @@ namespace core { namespace signals {
 		template< class A, class B, class C >
 		void disconnect( void (*function)(A,B,C) )
 		{
-			std::size_t fId = (std::size_t) function;
+			size_t fId = (size_t) function;
 			_functions.erase(
 							 std::remove_if( _functions.begin(), _functions.end(), same_function( fId )),
 							 _functions.end() );

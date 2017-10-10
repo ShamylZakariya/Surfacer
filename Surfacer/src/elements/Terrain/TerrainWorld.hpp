@@ -90,8 +90,8 @@ namespace std {
 	struct hash<terrain::poly_edge> {
 
 		// make island::poly_edge hashable
-		std::size_t operator()(const terrain::poly_edge& e) const {
-			std::size_t seed = 0;
+		size_t operator()(const terrain::poly_edge& e) const {
+			size_t seed = 0;
 			boost::hash_combine(seed, e.a.x);
 			boost::hash_combine(seed, e.a.y);
 			boost::hash_combine(seed, e.b.x);

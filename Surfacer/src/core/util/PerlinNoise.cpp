@@ -54,7 +54,7 @@ namespace {
 }
 
 /*
-		std::size_t _octaves;
+		size_t _octaves;
 		int _seed;
 		rng _rng;
 		double _persistence, _persistenceMax, _scale;
@@ -64,7 +64,7 @@ namespace {
 		bool _initialized;
 */
 
-PerlinNoise::PerlinNoise( std::size_t octaves, double falloff, double scale, int seed ):
+PerlinNoise::PerlinNoise( size_t octaves, double falloff, double scale, int seed ):
 	_octaves(octaves),
 	_seed(seed),
 	_persistence(saturate(falloff)),

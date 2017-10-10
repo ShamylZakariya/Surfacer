@@ -51,7 +51,7 @@ namespace core {
 			//
 
 			T maxDist = 0;
-			std::size_t maxDistIndex = 0;
+			size_t maxDistIndex = 0;
 			line_segment<T,P> line( in.front(), in.back() );
 
 			for ( auto it(in.begin()+1),end(in.end()); it != end; ++it ) {
