@@ -63,13 +63,23 @@ namespace precariously {
 		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in level XML");
 		loadBackground(backgroundNode.value());
 
-		//
-		//	Load Planet
-		//
-
-		auto planetNode = util::xml::findElement(levelNode, "planet");
-		CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
-		loadPlanet(planetNode.value());
+		
+		if (true) {
+			
+			radial_crack_template crack(dvec2(0,0),4,2,500,20,200);
+			auto obj = Object::with("Crack", { make_shared<RadialCrackDrawComponent>(crack) });
+			addObject(obj);
+			
+		} else {
+			//
+			//	Load Planet
+			//
+			
+			auto planetNode = util::xml::findElement(levelNode, "planet");
+			CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
+			loadPlanet(planetNode.value());
+		}
+		
 	}
 
 	void PrecariouslyLevel::onReady() {

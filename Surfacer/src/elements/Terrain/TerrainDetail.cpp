@@ -11,11 +11,6 @@
 #include <queue>
 #include <functional>
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/multi/multi.hpp>
-
 #include "MathHelpers.hpp"
 #include "ContourSimplification.hpp"
 #include "SvgParsing.hpp"
@@ -140,9 +135,9 @@ namespace terrain { namespace detail {
 	typedef polygon::inner_container_type::const_iterator RingIterator;
 	typedef polygon::ring_type::const_iterator PointIterator;
 	
-	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes( std::vector<polygon> &polygons, const dmat4 &modelview) {
+	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<polygon> &polygons, const dmat4 &modelview) {
 		const double Dist2Epsilon = 1e-2;
-		std::vector<ShapeRef> result;
+		std::vector<polyline_with_holes> result;
 		
 		for( std::vector<polygon>::iterator outIt = polygons.begin(); outIt != polygons.end(); ++outIt ) {
 			
@@ -221,7 +216,18 @@ namespace terrain { namespace detail {
 			}
 			
 			// if we're here we're good
-			result.push_back(make_shared<Shape>(shapeContour, holeContours));
+			result.emplace_back( shapeContour, holeContours );
+		}
+		
+		return result;
+	}
+	
+	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<polygon> &polygons, const dmat4 &modelview) {
+		
+		const auto plhs = buildPolyLinesFromBoostGeometry(polygons, modelview);
+		std::vector<ShapeRef> result;
+		for (const auto &plh : plhs) {
+			result.push_back(make_shared<Shape>(plh.contour, plh.holes));
 		}
 		
 		return result;

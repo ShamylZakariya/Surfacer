@@ -19,6 +19,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## BUGS PRIORITY 0
 
+- Make the terrain::detail boost geometry / cinder methods parameterized on double/float
 - For my sanity I really must make zooming about mouse cursor work again
 - Consider rewriting DrawDispatcher using raw pointers and not shared_ptr<> ?
 

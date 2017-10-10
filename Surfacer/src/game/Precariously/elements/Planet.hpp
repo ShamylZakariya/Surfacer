@@ -66,6 +66,42 @@ namespace precariously {
 		
 	};
 	
+	typedef boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> polygon;
+
+	struct radial_crack_template {
+		double thickness;
+		dvec2 origin;
+		vector<dvec2> vertices;
+		vector<vector<pair<size_t, size_t>>> spokes, rings;
+		
+		radial_crack_template(dvec2 origin, int numSpokes, int numRings, double radius, double thickness, double variance);
+		
+		polygon to_polygon() const;
+		
+	private:
+		
+		polygon to_polygon(const pair<std::size_t, std::size_t> &segment) const;
+		polygon line_segment_to_polygon(dvec2 a, dvec2 b, double width) const;
+	};
+	
+	class RadialCrackDrawComponent : public core::DrawComponent {
+	public:
+		
+		RadialCrackDrawComponent(const radial_crack_template &crack);
+		~RadialCrackDrawComponent();
+		
+		cpBB getBB() const override;
+		void draw(const core::render_state &renderState) override;
+		core::VisibilityDetermination::style getVisibilityDetermination() const override;
+		int getLayer() const override;
+
+	private:
+		radial_crack_template _crackTemplate;
+		TriMeshRef _trimesh;
+		cpBB _bb;		
+	};
+	
+		
 	
 }
 

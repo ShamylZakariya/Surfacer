@@ -64,7 +64,8 @@ namespace precariously {
 			BACKGROUND = 0,
 			PLANET = 1000,
 			ENEMY = 2000,
-			PLAYER = 3000
+			PLAYER = 3000,
+			EFFECTS = 4000
 		};
 	}
 	

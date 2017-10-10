@@ -17,10 +17,6 @@
 #include <cinder/Rand.h>
 #include <cinder/Xml.h>
 
-#include <list>
-#include <queue>
-#include <functional>
-
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -63,7 +59,16 @@ namespace terrain { namespace detail {
 	typedef polygon::inner_container_type::const_iterator RingIterator;
 	typedef polygon::ring_type::const_iterator PointIterator;
 	
-	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes( std::vector<polygon> &polygons, const dmat4 &modelview);
+	struct polyline_with_holes {
+		PolyLine2d contour;
+		vector<PolyLine2d> holes;
+		
+		polyline_with_holes(const PolyLine2d c, const vector<PolyLine2d> &h): contour(c), holes(h){}
+	};
+	
+	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<polygon> &polygons, const dmat4 &modelview);
+	
+	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<polygon> &polygons, const dmat4 &modelview);
 	
 	polygon convertTerrainShapeToBoostGeometry( ShapeRef shape );
 	
