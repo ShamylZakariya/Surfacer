@@ -664,7 +664,6 @@ namespace terrain {
 		const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 		cpBB getWorldSpaceContourEdgesBB();
 
-		vector<ShapeRef> subtract(const PolyLine2d &contourToSubtract) const;
 		vector<ShapeRef> subtract(const dpolygon2 &polygonToSubtract) const;
 
 	protected:

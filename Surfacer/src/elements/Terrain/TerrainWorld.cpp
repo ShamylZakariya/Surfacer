@@ -364,108 +364,21 @@ namespace terrain {
 			dir /= l;
 
 			dvec2 right = radius * rotateCW(dir);
+			dvec2 forward = radius * dir;
 			dvec2 left = -right;
-
-			dvec2 ca = a + right;
-			dvec2 cb = a + left;
-			dvec2 cc = b + left;
-			dvec2 cd = b + right;
+			dvec2 backward = -forward;
 
 			PolyLine2d contour;
-			contour.push_back(ca);
-			contour.push_back(cb);
-			contour.push_back(cc);
-			contour.push_back(cd);
+			contour.push_back(a + right);
+			contour.push_back(a + backward);
+			contour.push_back(a + left);
+			contour.push_back(b + left);
+			contour.push_back(b + forward);
+			contour.push_back(b + right);
 			contour.setClosed();
-
-			CI_LOG_D("Performing cut from " << a << " to " << b << " radius: " << radius);
-
-
-			cut_collector collector(_worldMaterial.filter, _worldMaterial.collisionType);
-
-			//
-			// while intuition would have us use a segment query, the cpSegmentQuery call seemed to miss
-			// literal "corner cases" where a TINY corner of a shape, even if it was WELL INSIDE the segment,
-			// would be missed. My guess is segment queries use some sort of stepping algorithm and miss
-			// tiny overhangs. So we're building a cpShape explicitly.
-			//
-
-			cpVect verts[] = { cpv(cd), cpv(cc), cpv(cb), cpv(ca) };
-			cpShape *cuttingShape = cpPolyShapeNew(cpSpaceGetStaticBody(_space->getSpace()), 4, verts, cpTransformIdentity, radius * 2);
-			cpSpaceShapeQuery(_space->getSpace(), cuttingShape, [](cpShape *collisionShape, cpContactPointSet *points, void *data){
-				cut_collector *collector = static_cast<cut_collector*>(data);
-				if (cpShapeGetCollisionType(collisionShape) == collector->collisionType) {
-					Shape *terrainShapePtr = static_cast<Shape*>(cpShapeGetUserData(collisionShape));
-					ShapeRef terrainShape = terrainShapePtr->shared_from_this_as<Shape>();
-					collector->shapes.insert(terrainShape);
-					collector->groups.insert(terrainShape->getGroup());
-				}
-			}, &collector);
-
-			cpShapeFree(cuttingShape);
-
-			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.groups.size() << " groups) to cut" );
-
-			//
-			// Collect all shapes which are in groups affected by the cut
-			//
-
-			vector<ShapeRef> affectedShapes;
-			for (auto &group : collector.groups) {
-				for (auto &shape : group->getShapes()) {
-					if (collector.shapes.find(shape) == collector.shapes.end()) {
-						affectedShapes.push_back(shape);
-					}
-				}
-			}
-
-			//
-			//	Perform cut, adding results to affectedShapes and assigning parentage
-			//	so we can apply lin/ang vel to new bodies
-			//
-
-			map<ShapeRef,GroupBaseRef> parentage;
-			for (const ShapeRef &shapeToCut : collector.shapes) {
-				GroupBaseRef parentGroup = shapeToCut->getGroup();
-
-				auto result = shapeToCut->subtract(contour);
-				affectedShapes.insert(end(affectedShapes), begin(result), end(result));
-
-				//
-				//	Update parentage map for use in build() - maps a shape to its previous parent group
-				//
-
-				for (auto &newShape : result) {
-					parentage[newShape] = parentGroup;
-				}
-
-				//
-				//	Release the parent group's shapes. we do this because the group's
-				//	destructors would remove the shapes from the draw dispatcher, and that
-				//	would run right after build() completes, which would result in active shapes
-				//	not being in the draw dispatcher!
-				//
-
-				parentGroup->releaseShapes();
-
-				//
-				// if the shape belonged to the static group, just remove it
-				// otherwise, remove the shape's dynamic parent group because
-				// we'll be rebuilding it completely in build()
-				//
-
-				if (parentGroup == _staticGroup) {
-					_staticGroup->removeShape(shapeToCut);
-				} else {
-					_dynamicGroups.erase(dynamic_pointer_cast<DynamicGroup>(parentGroup));
-				}
-			}
-
-			// let go of strong references
-			collector.clear();
-
-			build(affectedShapes, parentage);
-
+			
+			dpolygon2 contourPolygon = detail::convertPolyLineToBoostGeometry(contour);
+			cut(contourPolygon);
 		} else {
 			CI_LOG_E("Either length and/or radius were below minimum thresholds");
 		}
@@ -1509,45 +1422,6 @@ namespace terrain {
 	cpBB Shape::getWorldSpaceContourEdgesBB() {
 		updateWorldSpaceContourAndBB();
 		return _worldSpaceContourEdgesBB;
-	}
-
-	vector<ShapeRef> Shape::subtract(const PolyLine2d &contourToSubtract) const {
-		if (!contourToSubtract.getPoints().empty()) {
-
-			//
-			// move the shape to subtract from world space to the our model space, and convert to a boost poly
-			//
-
-			PolyLine2d transformedShapeToSubtract = detail::transformed(contourToSubtract, getInverseModelMatrix());
-			dpolygon2 polyToSubtract = detail::convertPolyLineToBoostGeometry( transformedShapeToSubtract );
-
-			//
-			// convert self (outerContour & holeContours) to a boost poly in model space
-			//
-
-			dpolygon2 thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
-
-			//
-			// now subtract - results are in model space
-			//
-
-			std::vector<dpolygon2> output;
-			boost::geometry::difference( thisPoly, polyToSubtract, output );
-
-			//
-			// convert output to Shapes - they need to have our modelview applied to them to move them back to world space
-			//
-
-			vector<ShapeRef> newShapes = detail::convertBoostGeometryToTerrainShapes( output, getModelMatrix() );
-
-			if (!newShapes.empty()) {
-				return newShapes;
-			}
-		}
-
-		// handle failure case
-		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this_as<Shape>() };
-		return result;
 	}
 	
 	vector<ShapeRef> Shape::subtract(const dpolygon2 &polygonToSubtract) const {

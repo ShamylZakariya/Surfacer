@@ -32,27 +32,29 @@ namespace precariously {
 			{}
 			
 			bool mouseDown( const ci::app::MouseEvent &event ) override {
-				_mouseScreen = event.getPos();
-				_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+				if (event.isMetaDown()) {
+					vec2 mouseScreen = event.getPos();
+					vec2 mouseWorld = getLevel()->getViewport()->screenToWorld(mouseScreen);
+					
+					// create a radial crack
+					auto crack = make_shared<RadialCrackGeometry>(mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
+					
+					// create a thing to draw the crack, and dispose of it in 2 seconds
+					auto crackDrawer = Object::with("Crack", { make_shared<CrackGeometryDrawComponent>(crack) });
+					crackDrawer->setFinished(true, 2);
+					getLevel()->addObject(crackDrawer);
+					
+					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB());
+					return true;
+				}
 				
-				// create a radial crack
-				auto crack = make_shared<RadialCrackGeometry>(_mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
-
-				// create a thing to draw the crack, and dispose of it in 2 seconds
-				auto crackDrawer = Object::with("Crack", { make_shared<CrackGeometryDrawComponent>(crack) });
-				crackDrawer->setFinished(true, 2);
-				getLevel()->addObject(crackDrawer);
-
-				_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB());
-				
-				return true;
+				return false;
 			}
 			
 		private:
 			
 			int _numSpokes, _numRings;
 			double _radius, _thickness, _variance;
-			vec2 _mouseScreen, _mouseWorld;
 			terrain::TerrainObjectRef _terrain;
 			
 		};
@@ -118,7 +120,7 @@ namespace precariously {
 		
 		if (true) {
 
-			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, 7, 4, 400, 20, 200) }));
+			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, 7, 4, 75, 2, 100) }));
 			
 		}
 		
