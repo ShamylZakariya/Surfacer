@@ -114,7 +114,7 @@ namespace surfacer { namespace enemy {
 				_attachedToShape = terrainShape;
 				_attachedToBody = cpShapeGetBody(terrainShape);
 
-				double stiffness = 5 * _mass * getSpace()->getGravity(v2(currentPosition)).force;
+				double stiffness = 5 * _mass * getSpace()->getGravity(v2(currentPosition)).magnitude;
 				double damping = 1;
 				double restLength = cpvdist(currentPosition, pointQueryInfo.point);
 				double segLength = _config.height;

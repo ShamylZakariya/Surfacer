@@ -54,7 +54,7 @@ namespace precariously {
 
 		// PrecariouslyLevel
 		void applySpaceAttributes(XmlTree spaceNode);
-		void applyGravityAttributes(XmlTree gravityNode);
+		void buildGravity(XmlTree gravityNode);
 		void loadBackground(XmlTree planetNode);
 		void loadPlanet(XmlTree planetNode);
 
@@ -62,6 +62,7 @@ namespace precariously {
 
 		BackgroundRef _background;
 		PlanetRef _planet;
+		core::RadialGravitationCalculatorRef _gravity;
 		
 	};
 	

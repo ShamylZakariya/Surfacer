@@ -738,7 +738,7 @@ namespace surfacer { namespace player {
 
 		if (flying) {
 			_jetpackForceDir = normalize((-2 * Dir * Right) + G.dir);
-			dvec2 force = -config.jetpackAntigravity * _totalMass * G.force * _jetpackForceDir;
+			dvec2 force = -config.jetpackAntigravity * _totalMass * G.magnitude * _jetpackForceDir;
 			cpBodyApplyForceAtWorldPoint(_body, cpv(force), cpBodyLocalToWorld(_wheelBody, cpvzero));
 			_jetpackFuelLevel -= config.jetpackFuelConsumptionPerSecond * timeState.deltaT;
 		} else if (!isFlying()) {

@@ -28,6 +28,7 @@ namespace surfacer {
 
 	/*
 	 terrain::TerrainObjectRef _terrain;
+	 RadialGravitationCalculatorRef _gravity;
 	 player::PlayerRef _player;
 	 set<EntityRef> _enemies;
 	 */
@@ -71,10 +72,12 @@ namespace surfacer {
 		auto spaceNode = util::xml::findElement(levelNode, "space");
 		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <level> definition");
 		applySpaceAttributes(*spaceNode);
-
-		auto gravityNode = util::xml::findElement(levelNode, "gravity");
-		CI_ASSERT_MSG(spaceNode, "Expect a <gravity> node in <level> definition");
-		applyGravityAttributes(*gravityNode);
+		
+		for (const auto &childNode : levelNode.getChildren()) {
+			if (childNode->getTag() == "gravity") {
+				buildGravity(*childNode);
+			}
+		}
 
 		//
 		//	Load terrain
@@ -138,23 +141,22 @@ namespace surfacer {
 		}
 	}
 
-	void SurfacerLevel::applyGravityAttributes(XmlTree gravityNode) {
+	void SurfacerLevel::buildGravity(XmlTree gravityNode) {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
-			radial_gravity_info rgi = getRadialGravity();
-			rgi.strength = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
-			rgi.falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
-			setRadialGravity(rgi);
-			setGravityType(RADIAL);
-
-			CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.falloffPower);
-
+			dvec2 origin = util::xml::readPointAttribute(gravityNode, "origin", dvec2(0,0));
+			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
+			double falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
+			auto gravity = RadialGravitationCalculator::create(origin, magnitude, falloffPower);
+			addGravity(gravity);
+			
+			if (gravityNode.getAttribute("primary") == "true") {
+				_gravity = gravity;
+			}
 		} else if (type == "directional") {
 			dvec2 dir = util::xml::readPointAttribute(gravityNode, "dir", dvec2(0,0));
-			setDirectionalGravityDirection(dir);
-			setGravityType(DIRECTIONAL);
-
-			CI_LOG_D("gravity DIRECTIONAL dir: " << dir );
+			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
+			addGravity(DirectionalGravitationCalculator::create(dir, magnitude));
 		}
 	}
 
@@ -193,14 +195,14 @@ namespace surfacer {
 		}
 
 		//
-		//	Look for a center_of_mass for gravity
+		//	Look for a center of mass for gravity
 		//
 
-		if (terrain::ElementRef e = _terrain->getWorld()->getElementById("center_of_mass")) {
-			radial_gravity_info rgi = getRadialGravity();
-			rgi.centerOfMass = e->getModelMatrix() * e->getModelCentroid();
-			setRadialGravity(rgi);
-			CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.falloffPower << " centerOfMass: " << rgi.centerOfMass);
+		if (_gravity) {
+			if (terrain::ElementRef e = _terrain->getWorld()->getElementById("center_of_mass")) {
+				dvec2 centerOfMass = e->getModelMatrix() * e->getModelCentroid();
+				_gravity->setCenterOfMass(centerOfMass);
+			}			
 		}
 	}
 

@@ -65,6 +65,7 @@ namespace precariously {
 	/*
 	 BackgroundRef _background;
 	 PlanetRef _planet;
+	 core::RadialGravitationCalculatorRef _gravity;
 	 */
 
 	PrecariouslyLevel::PrecariouslyLevel():
@@ -97,9 +98,15 @@ namespace precariously {
 		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <level> definition");
 		applySpaceAttributes(*spaceNode);
 
-		auto gravityNode = util::xml::findElement(levelNode, "gravity");
-		CI_ASSERT_MSG(spaceNode, "Expect a <gravity> node in <level> definition");
-		applyGravityAttributes(*gravityNode);
+		//
+		//	Apply gravity
+		//
+
+		for (const auto &childNode : levelNode.getChildren()) {
+			if (childNode->getTag() == "gravity") {
+				buildGravity(*childNode);
+			}
+		}
 		
 		//
 		//	Load background
@@ -152,23 +159,23 @@ namespace precariously {
 		}
 	}
 
-	void PrecariouslyLevel::applyGravityAttributes(XmlTree gravityNode) {
+	void PrecariouslyLevel::buildGravity(XmlTree gravityNode) {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
-			radial_gravity_info rgi = getRadialGravity();			
-			rgi.strength = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
-			rgi.falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
-			setRadialGravity(rgi);
-			setGravityType(RADIAL);
-
-			CI_LOG_D("gravity RADIAL strength: " << rgi.strength << " falloffPower: " << rgi.falloffPower);
-
+			dvec2 origin = util::xml::readPointAttribute(gravityNode, "origin", dvec2(0,0));
+			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
+			double falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
+			auto gravity = RadialGravitationCalculator::create(origin, magnitude, falloffPower);
+			addGravity(gravity);
+			
+			if (gravityNode.getAttribute("primary") == "true") {
+				_gravity = gravity;
+			}
+			
 		} else if (type == "directional") {
 			dvec2 dir = util::xml::readPointAttribute(gravityNode, "dir", dvec2(0,0));
-			setDirectionalGravityDirection(dir);
-			setGravityType(DIRECTIONAL);
-
-			CI_LOG_D("gravity DIRECTIONAL dir: " << dir );
+			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
+			addGravity(DirectionalGravitationCalculator::create(dir, magnitude));
 		}
 	}
 	
@@ -192,10 +199,16 @@ namespace precariously {
 		_planet = Planet::create("Planet", world, planetNode, DrawLayers::PLANET);
 		addObject(_planet);
 		
-		// set the physics center of mass to the planet's center
-		radial_gravity_info rgi = getRadialGravity();
-		rgi.centerOfMass = _planet->getOrigin();
-		setRadialGravity(rgi);
+		//
+		//	Look for a center of mass for gravity
+		//
+		
+		if (_gravity) {
+			if (terrain::ElementRef e = _planet->getWorld()->getElementById("center_of_mass")) {
+				dvec2 centerOfMass = e->getModelMatrix() * e->getModelCentroid();
+				_gravity->setCenterOfMass(centerOfMass);
+			}
+		}
 	}
 	
 } // namespace surfacer

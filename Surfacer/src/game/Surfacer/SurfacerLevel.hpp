@@ -114,7 +114,7 @@ namespace surfacer {
 
 		// GameLevel
 		void applySpaceAttributes(XmlTree spaceNode);
-		void applyGravityAttributes(XmlTree gravityNode);
+		void buildGravity(XmlTree gravityNode);
 		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
 		void loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement);
 		void loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode);
@@ -127,6 +127,7 @@ namespace surfacer {
 	private:
 
 		terrain::TerrainObjectRef _terrain;
+		core::RadialGravitationCalculatorRef _gravity;
 		player::PlayerRef _player;
 		set<core::EntityRef> _enemies;
 		

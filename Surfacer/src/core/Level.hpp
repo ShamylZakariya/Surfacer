@@ -22,7 +22,97 @@ namespace core {
 	SMART_PTR(Level);
 	SMART_PTR(DrawDispatcher);
 	SMART_PTR(SpaceAccess);
-
+	SMART_PTR(GravitationCalculator);
+	SMART_PTR(DirectionalGravitationCalculator);
+	SMART_PTR(RadialGravitationCalculator);
+	
+#pragma mark - GravitationCalculator
+	
+	class GravitationCalculator {
+	public:
+		
+		struct force {
+			dvec2 dir;
+			double magnitude;
+			
+			force(const dvec2 &d, double m):
+			dir(d),
+			magnitude(m)
+			{}
+			
+			force(const force &g):
+			dir(g.dir),
+			magnitude(g.magnitude)
+			{}
+			
+			dvec2 getForce() const {
+				return dir * magnitude;
+			}
+		};
+		
+	public:
+		GravitationCalculator(){}
+		virtual ~GravitationCalculator(){}
+		
+		virtual force calculate(const dvec2 &world) const = 0;
+		
+	};
+	
+	class DirectionalGravitationCalculator : public GravitationCalculator {
+	public:
+		
+		static DirectionalGravitationCalculatorRef create(dvec2 dir, double magnitude);
+		
+	public:
+		
+		DirectionalGravitationCalculator(dvec2 dir, double magnitude);
+		~DirectionalGravitationCalculator(){}
+		
+		// GravitationCalculator
+		force calculate(const dvec2 &world) const override;
+		
+		// DirectionalGravitationCalculator
+		void setDir(dvec2 dir);
+		dvec2 getDir() const { return _force.dir; }
+		
+		void setMagnitude(double mag);
+		double getMagnitude() const { return _force.magnitude; }
+		
+	private:
+		
+		force _force;
+		
+	};
+	
+	class RadialGravitationCalculator : public GravitationCalculator {
+	public:
+		
+		static RadialGravitationCalculatorRef create(dvec2 centerOfMass, double magnitude, double falloffPower);
+		
+	public:
+		RadialGravitationCalculator(dvec2 centerOfMass, double magnitude, double falloffPower);
+		~RadialGravitationCalculator(){}
+		
+		// GravitationCalculator
+		force calculate(const dvec2 &world) const override;
+		
+		void setCenterOfMass(dvec2 centerOfMass);
+		dvec2 getCenterOfMass() const { return _centerOfMass; }
+		
+		void setMagnitude(double mag);
+		double getMagnitude() const { return _magnitude; }
+		
+		void setFalloffPower(double fp);
+		double getFalloffPower() const { return _falloffPower; }
+		
+	private:
+		
+		dvec2 _centerOfMass;
+		double _magnitude;
+		double _falloffPower;
+		
+	};
+	
 #pragma mark - SpaceAccess
 
 	class SpaceAccess {
@@ -31,22 +121,6 @@ namespace core {
 		signals::signal< void(cpBody*) > bodyWasAddedToSpace;
 		signals::signal< void(cpShape*) > shapeWasAddedToSpace;
 		signals::signal< void(cpConstraint*) > constraintWasAddedToSpace;
-
-		struct gravitation {
-			dvec2 dir;
-			double force;
-
-			gravitation(const dvec2 &d, double f):
-			dir(d),
-			force(f)
-			{}
-
-			gravitation(const gravitation &g):
-			dir(g.dir),
-			force(g.force)
-			{}
-		};
-
 
 	public:
 
@@ -58,7 +132,7 @@ namespace core {
 		/**
 		 Get gravity vector (direction and magnitude) for a given position in space.
 		 */
-		 gravitation getGravity(const dvec2 &world);
+		GravitationCalculator::force getGravity(const dvec2 &world);
 
 		cpSpace *getSpace() const { return _space; }
 
@@ -127,7 +201,6 @@ namespace core {
 
 	};
 
-
 #pragma mark - Level
 
 	namespace detail {
@@ -171,18 +244,6 @@ namespace core {
 		inline static Level* getLevelPtrFromSpace(cpSpace *space) {
 			return static_cast<Level*>(cpSpaceGetUserData(space));
 		}
-
-
-		enum GravityType {
-			DIRECTIONAL,
-			RADIAL
-		};
-
-		struct radial_gravity_info {
-			dvec2 centerOfMass;
-			double strength;
-			double falloffPower;
-		};
 
 		struct collision_type_pair {
 			cpCollisionType a;
@@ -260,19 +321,14 @@ namespace core {
 		ViewportRef getViewport() const;
 		ViewportControllerRef getViewportController() const;
 
-		void setGravityType(GravityType type);
-		GravityType getGravityType() const { return _gravityType; }
-
-		void setDirectionalGravityDirection(dvec2 dir);
-		dvec2 getDirectionalGravityDirection(void) const { return _directionalGravityDir; }
-
-		void setRadialGravity(radial_gravity_info rgi);
-		radial_gravity_info getRadialGravity() const { return _radialGravityInfo; }
-
+		void addGravity(const GravitationCalculatorRef &gravityCalculator);
+		void removeGravity(const GravitationCalculatorRef &gravityCalculator);
+		const vector<GravitationCalculatorRef> getGravities() const { return _gravities; }
+		
 		/**
 		 get the direction and strength of gravity at a point in world space
 		 */
-		SpaceAccess::gravitation getGravitation(dvec2 world) const;
+		GravitationCalculator::force getGravitation(dvec2 world) const;
 
 		/**
 		 Listen for collisions between the two collision types. Override onCollision* methods to handle the collisions.
@@ -336,11 +392,8 @@ namespace core {
 		string _name;
 		DrawDispatcherRef _drawDispatcher;
 		cpBodyVelocityFunc _bodyVelocityFunc;
-
-		GravityType _gravityType;
-		dvec2 _directionalGravityDir;
-		radial_gravity_info _radialGravityInfo;
-
+		vector<GravitationCalculatorRef> _gravities;
+		
 		set<collision_type_pair> _monitoredCollisions;
 		map<collision_type_pair, vector<EarlyCollisionCallback>> _collisionBeginHandlers, _collisionPreSolveHandlers;
 		map<collision_type_pair, vector<LateCollisionCallback>> _collisionPostSolveHandlers, _collisionSeparateHandlers;

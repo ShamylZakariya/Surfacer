@@ -25,7 +25,7 @@ public:
 	
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<TerrainTestScenario>());
+		setScenario(make_shared<SvgTestScenario>());
 	}
 	
 };

@@ -14,6 +14,75 @@
 #include "Scenario.hpp"
 
 namespace core {
+	
+#pragma mark - GravitationCalculator
+	
+	/*
+	 force _force;
+	 */
+	
+	DirectionalGravitationCalculatorRef DirectionalGravitationCalculator::create(dvec2 dir, double magnitude) {
+		return make_shared<DirectionalGravitationCalculator>(dir, magnitude);
+	}
+	
+	DirectionalGravitationCalculator::DirectionalGravitationCalculator(dvec2 dir, double magnitude):
+	_force(normalize(dir), magnitude)
+	{}
+	
+	GravitationCalculator::force DirectionalGravitationCalculator::calculate(const dvec2 &world) const {
+		return _force;
+	}
+	
+	void DirectionalGravitationCalculator::setDir(dvec2 dir) {
+		_force.dir = normalize(dir);
+	}
+	
+	void DirectionalGravitationCalculator::setMagnitude(double mag) {
+		_force.magnitude = mag;
+	}
+	
+	/*
+	 dvec2 _centerOfMass;
+	 double _magnitude;
+	 double _falloffPower;
+	 */
+	
+	RadialGravitationCalculatorRef RadialGravitationCalculator::create(dvec2 centerOfMass, double magnitude, double falloffPower) {
+		return make_shared<RadialGravitationCalculator>(centerOfMass, magnitude, falloffPower);
+	}
+	
+	RadialGravitationCalculator::RadialGravitationCalculator(dvec2 centerOfMass, double magnitude, double falloffPower):
+	_centerOfMass(centerOfMass),
+	_magnitude(magnitude),
+	_falloffPower(max(falloffPower, 0.0))
+	{}
+	
+	// GravitationCalculator
+	GravitationCalculator::force RadialGravitationCalculator::calculate(const dvec2 &world) const {
+		dvec2 p_to_com = _centerOfMass - world;
+		double dist = length(p_to_com);
+		if (dist > 1e-5) {
+			p_to_com /= dist;
+			dvec2 g = p_to_com * (_magnitude / pow(dist, _falloffPower));
+			double f = length(g);
+			return force(g/f, f);
+		}
+		return force(dvec2(0,0), 0);
+	}
+	
+	void RadialGravitationCalculator::setCenterOfMass(dvec2 centerOfMass) {
+		_centerOfMass = centerOfMass;
+	}
+	
+	void RadialGravitationCalculator::setMagnitude(double mag) {
+		_magnitude = mag;
+	}
+	
+	void RadialGravitationCalculator::setFalloffPower(double fp) {
+		_falloffPower = max(fp, 0.0);
+	}
+	
+
 
 #pragma mark - SpaceAccess
 
@@ -37,7 +106,7 @@ namespace core {
 		constraintWasAddedToSpace(constraint);
 	}
 
-	SpaceAccess::gravitation SpaceAccess::getGravity(const dvec2 &world) {
+	GravitationCalculator::force SpaceAccess::getGravity(const dvec2 &world) {
 		return _level->getGravitation(world);
 	}
 
@@ -301,39 +370,47 @@ namespace core {
 		return dcIt - 1;
 	}
 
+	
 #pragma mark - Level
 
 	namespace {
 
-		void radialGravityVelocityFunc(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt) {
+		void gravitationCalculatorVelocityFunc(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt) {
 			cpSpace *space = cpBodyGetSpace(body);
 			Level *level = static_cast<Level*>(cpSpaceGetUserData(space));
 			auto g = level->getGravitation(v2(cpBodyGetPosition(body)));
-			auto force = g.force;
+			auto magnitude = g.magnitude;
 
 			// objects can define a custom gravity modifier - 0 means no effect, -1 would be repulsive, etc
 			if (ObjectRef object = cpBodyGetObject(body)) {
 				if (PhysicsComponentRef physics = object->getPhysicsComponent()) {
-					force *= physics->getGravityModifier();
+					magnitude *= physics->getGravityModifier();
 				}
 			}
 
-			cpBodyUpdateVelocity(body, cpv(g.dir * force), damping, dt);
+			cpBodyUpdateVelocity(body, cpv(g.dir * magnitude), damping, dt);
 		}
 
 	}
 
 	/*
-		cpSpace *_space;
-		SpaceAccessRef _spaceAccess;
-		bool _ready, _paused;
-		ScenarioWeakRef _scenario;
-		set<ObjectRef> _objects;
-		map<size_t,ObjectRef> _objectsById;
-		time_state _time;
-		string _name;
-		DrawDispatcherRef _drawDispatcher;
-		cpBodyVelocityFunc _bodyVelocityFunc;
+	 cpSpace *_space;
+	 SpaceAccessRef _spaceAccess;
+	 bool _ready, _paused;
+	 ScenarioWeakRef _scenario;
+	 set<ObjectRef> _objects;
+	 map<size_t,ObjectRef> _objectsById;
+	 time_state _time;
+	 string _name;
+	 DrawDispatcherRef _drawDispatcher;
+	 cpBodyVelocityFunc _bodyVelocityFunc;
+	 vector<GravitationCalculatorRef> _gravities;
+	 
+	 set<collision_type_pair> _monitoredCollisions;
+	 map<collision_type_pair, vector<EarlyCollisionCallback>> _collisionBeginHandlers, _collisionPreSolveHandlers;
+	 map<collision_type_pair, vector<LateCollisionCallback>> _collisionPostSolveHandlers, _collisionSeparateHandlers;
+	 map<collision_type_pair, vector<ContactCallback>> _contactHandlers;
+	 map<collision_type_pair, vector<pair<ObjectRef, ObjectRef>>> _syntheticContacts;
 	 */
 
 	Level::Level(string name):
@@ -355,9 +432,8 @@ namespace core {
 		_spaceAccess->bodyWasAddedToSpace.connect(this, &Level::onBodyAddedToSpace);
 		_spaceAccess->shapeWasAddedToSpace.connect(this, &Level::onShapeAddedToSpace);
 		_spaceAccess->constraintWasAddedToSpace.connect(this, &Level::onConstraintAddedToSpace);
-
-		setGravityType(DIRECTIONAL);
-		setDirectionalGravityDirection(dvec2(0,-9.8));
+		
+		setCpBodyVelocityUpdateFunc(gravitationCalculatorVelocityFunc);
 	}
 
 	Level::~Level() {
@@ -525,47 +601,32 @@ namespace core {
 	ViewportControllerRef Level::getViewportController() const {
 		return getScenario()->getViewportController();
 	}
-
-	void Level::setGravityType(GravityType type) {
-		_gravityType = type;
-		switch(_gravityType) {
-			case DIRECTIONAL:
-				setCpBodyVelocityUpdateFunc(cpBodyUpdateVelocity);
-				break;
-			case RADIAL:
-				setCpBodyVelocityUpdateFunc(radialGravityVelocityFunc);
-				break;
-		}
+	
+	void Level::addGravity(const GravitationCalculatorRef &gravityCalculator) {
+		removeGravity(gravityCalculator);
+		_gravities.push_back(gravityCalculator);
 	}
 
-	void Level::setDirectionalGravityDirection(dvec2 dir) {
-		_directionalGravityDir = dir;
-		cpSpaceSetGravity(_space, cpv(_directionalGravityDir));
+	void Level::removeGravity(const GravitationCalculatorRef &gravityCalculator) {
+		_gravities.erase(remove(_gravities.begin(), _gravities.end(), gravityCalculator), _gravities.end());
 	}
 
-	void Level::setRadialGravity(radial_gravity_info rgi) {
-		_radialGravityInfo = rgi;
-	}
-
-	SpaceAccess::gravitation Level::getGravitation(dvec2 world) const {
-		switch(_gravityType) {
-			case RADIAL: {
-				dvec2 p_2_com = _radialGravityInfo.centerOfMass - world;
-				double dist = length(p_2_com);
-				if (dist > 1e-5) {
-					p_2_com /= dist;
-					dvec2 g = p_2_com * (_radialGravityInfo.strength / pow(dist, _radialGravityInfo.falloffPower));
-					double f = length(g);
-					return SpaceAccess::gravitation(g/f, f);
-				}
-				return SpaceAccess::gravitation(dvec2(0,0), 0);
+	GravitationCalculator::force Level::getGravitation(dvec2 world) const {
+		
+		if (!_gravities.empty()) {
+			dvec2 gravity(0,0);
+			for (const auto &calc : _gravities) {
+				gravity += calc->calculate(world).getForce();
 			}
-
-			case Level::DIRECTIONAL:
-				dvec2 g = v2(cpSpaceGetGravity(_space));
-				double f = length(g);
-				return SpaceAccess::gravitation(g/f, f);
+			
+			double magnitude = length(gravity);
+			if (magnitude > 1e-5) {
+				dvec2 dir = gravity / magnitude;
+				return GravitationCalculator::force(dir, magnitude);
+			}
 		}
+		
+		return GravitationCalculator::force(dvec2(0,0),0);
 	}
 
 
