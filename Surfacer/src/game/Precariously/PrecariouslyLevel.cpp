@@ -15,6 +15,50 @@
 using namespace core;
 
 namespace precariously {
+	
+	namespace {
+		
+		class MouseBomberComponent : public core::InputComponent {
+		public:
+			
+			MouseBomberComponent(terrain::TerrainObjectRef terrain, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
+			InputComponent(dispatchReceiptIndex),
+			_terrain(terrain),
+			_numSpokes(numSpokes),
+			_numRings(numRings),
+			_radius(radius),
+			_thickness(thickness),
+			_variance(variance)
+			{}
+			
+			bool mouseDown( const ci::app::MouseEvent &event ) override {
+				_mouseScreen = event.getPos();
+				_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+				
+				// create a radial crack
+				auto crack = make_shared<RadialCrackGeometry>(_mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
+
+				// create a thing to draw the crack, and dispose of it in 2 seconds
+				auto crackDrawer = Object::with("Crack", { make_shared<CrackGeometryDrawComponent>(crack) });
+				crackDrawer->setFinished(true, 2);
+				getLevel()->addObject(crackDrawer);
+
+				_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB());
+				
+				return true;
+			}
+			
+		private:
+			
+			int _numSpokes, _numRings;
+			double _radius, _thickness, _variance;
+			vec2 _mouseScreen, _mouseWorld;
+			terrain::TerrainObjectRef _terrain;
+			
+		};
+		
+	}
+	
 
 	/*
 	 BackgroundRef _background;
@@ -63,21 +107,19 @@ namespace precariously {
 		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in level XML");
 		loadBackground(backgroundNode.value());
 
+		//
+		//	Load Planet
+		//
+		
+		auto planetNode = util::xml::findElement(levelNode, "planet");
+		CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
+		loadPlanet(planetNode.value());
+		
 		
 		if (true) {
+
+			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, 7, 4, 400, 20, 200) }));
 			
-			radial_crack_template crack(dvec2(0,0),4,2,500,20,200);
-			auto obj = Object::with("Crack", { make_shared<RadialCrackDrawComponent>(crack) });
-			addObject(obj);
-			
-		} else {
-			//
-			//	Load Planet
-			//
-			
-			auto planetNode = util::xml::findElement(levelNode, "planet");
-			CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
-			loadPlanet(planetNode.value());
 		}
 		
 	}

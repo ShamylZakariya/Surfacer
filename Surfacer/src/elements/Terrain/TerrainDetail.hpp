@@ -38,7 +38,9 @@ namespace terrain { namespace detail {
 	void wind_counter_clockwise(PolyLine2d &contour);
 	
 	PolyLine2d transformed(const PolyLine2d &pl, const dmat4 &m);
-	
+
+	dpolygon2 transformed(const dpolygon2 &pl, const dmat4 &m);
+
 	void transform(PolyLine2d &pl, const dmat4 &m);
 	
 	void transform(const PolyLine2d &a, PolyLine2d &b, const dmat4 &m);
@@ -54,10 +56,7 @@ namespace terrain { namespace detail {
 	
 #pragma mark - Boost::Geometry - Shape Interop
 	
-	
-	typedef boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > polygon;
-	typedef polygon::inner_container_type::const_iterator RingIterator;
-	typedef polygon::ring_type::const_iterator PointIterator;
+	cpBB polygon_bb(const dpolygon2 poly);
 	
 	struct polyline_with_holes {
 		PolyLine2d contour;
@@ -66,15 +65,15 @@ namespace terrain { namespace detail {
 		polyline_with_holes(const PolyLine2d c, const vector<PolyLine2d> &h): contour(c), holes(h){}
 	};
 	
-	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<polygon> &polygons, const dmat4 &modelview);
+	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<dpolygon2> &polygons, const dmat4 &modelview);
 	
-	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<polygon> &polygons, const dmat4 &modelview);
+	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<dpolygon2> &polygons, const dmat4 &modelview);
 	
-	polygon convertTerrainShapeToBoostGeometry( ShapeRef shape );
+	dpolygon2 convertTerrainShapeToBoostGeometry( ShapeRef shape );
 	
-	polygon convertPolyLineToBoostGeometry( const PolyLine2d &polyLine );
+	dpolygon2 convertPolyLineToBoostGeometry( const PolyLine2d &polyLine );
 	
-	PolyLine2d convertBoostGeometryToPolyline2d(polygon &poly);
+	PolyLine2d convertBoostGeometryToPolyline2d(dpolygon2 &poly);
 	
 	
 #pragma mark - Contour Soup

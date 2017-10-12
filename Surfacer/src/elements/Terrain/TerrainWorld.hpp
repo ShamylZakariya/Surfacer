@@ -17,6 +17,9 @@
 
 namespace terrain {
 
+	typedef boost::geometry::model::d2::point_xy<double> dpoint2;
+	typedef boost::geometry::model::polygon<dpoint2> dpolygon2;
+
 	SMART_PTR(World);
 	SMART_PTR(GroupBase);
 	SMART_PTR(StaticGroup);
@@ -231,6 +234,12 @@ namespace terrain {
 		 Perform a cut in world space from a to b, with half-thickness of radius
 		 */
 		void cut(dvec2 a, dvec2 b, double radius);
+		
+		/**
+		 Perform a cut in world space removing any geometry which overlaps the enclosed space of `polygonShape`
+		 */
+		void cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds = cpBBInvalid);
+		
 
 		void draw(const core::render_state &renderState);
 		void step(const core::time_state &timeState);
@@ -656,6 +665,7 @@ namespace terrain {
 		cpBB getWorldSpaceContourEdgesBB();
 
 		vector<ShapeRef> subtract(const PolyLine2d &contourToSubtract) const;
+		vector<ShapeRef> subtract(const dpolygon2 &polygonToSubtract) const;
 
 	protected:
 

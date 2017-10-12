@@ -25,6 +25,7 @@
 using namespace core;
 
 namespace terrain {
+	
 
 #pragma mark - DrawDispatcher
 
@@ -229,7 +230,7 @@ namespace terrain {
 		vector<ShapeRef> result;
 
 		for (auto shape : shapes) {
-			detail::polygon testPolygon = detail::convertTerrainShapeToBoostGeometry( shape );
+			dpolygon2 testPolygon = detail::convertTerrainShapeToBoostGeometry( shape );
 
 			for (int marchY = marchBottom; marchY <= marchTop; marchY++) {
 
@@ -249,7 +250,7 @@ namespace terrain {
 
 						auto polygonToIntersect = detail::convertPolyLineToBoostGeometry( quad );
 
-						std::vector<detail::polygon> output;
+						std::vector<dpolygon2> output;
 						boost::geometry::intersection( testPolygon, polygonToIntersect, output );
 
 						auto newShapes = detail::convertBoostGeometryToTerrainShapes( output, identity );
@@ -333,6 +334,24 @@ namespace terrain {
 		// now build
 		build(shapes, map<ShapeRef,GroupBaseRef>());
 	}
+	
+	namespace {
+		
+		struct cut_collector {
+			cpShapeFilter filter;
+			cpCollisionType collisionType;
+			set<ShapeRef> shapes;
+			set<GroupBaseRef> groups;
+			
+			cut_collector(cpShapeFilter f, cpCollisionType t):filter(f), collisionType(t){}
+			
+			void clear() {
+				shapes.clear();
+				groups.clear();
+			}
+		};
+		
+	}
 
 	void World::cut(dvec2 a, dvec2 b, double radius) {
 		const double MinLength = 1e-2;
@@ -361,19 +380,6 @@ namespace terrain {
 
 			CI_LOG_D("Performing cut from " << a << " to " << b << " radius: " << radius);
 
-			struct cut_collector {
-				cpShapeFilter filter;
-				cpCollisionType collisionType;
-				set<ShapeRef> shapes;
-				set<GroupBaseRef> groups;
-
-				cut_collector(cpShapeFilter f, cpCollisionType t):filter(f), collisionType(t){}
-
-				void clear() {
-					shapes.clear();
-					groups.clear();
-				}
-			};
 
 			cut_collector collector(_worldMaterial.filter, _worldMaterial.collisionType);
 
@@ -460,6 +466,97 @@ namespace terrain {
 
 			build(affectedShapes, parentage);
 
+		} else {
+			CI_LOG_E("Either length and/or radius were below minimum thresholds");
+		}
+	}
+	
+	void World::cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds) {
+		
+		if (!polygonShape.outer().empty()) {
+			
+			if (!cpBBIsValid(polygonShapeWorldBounds)) {
+				polygonShapeWorldBounds = detail::polygon_bb(polygonShape);
+			}
+			
+			cut_collector collector(_worldMaterial.filter, _worldMaterial.collisionType);
+			
+			//
+			// perform a bounding box query
+			//
+			
+			cpSpaceBBQuery(_space->getSpace(), polygonShapeWorldBounds, _worldMaterial.filter, [](cpShape *collisionShape, void *data){
+				cut_collector *collector = static_cast<cut_collector*>(data);
+				if (cpShapeGetCollisionType(collisionShape) == collector->collisionType) {
+					Shape *terrainShapePtr = static_cast<Shape*>(cpShapeGetUserData(collisionShape));
+					ShapeRef terrainShape = terrainShapePtr->shared_from_this_as<Shape>();
+					collector->shapes.insert(terrainShape);
+					collector->groups.insert(terrainShape->getGroup());
+				}
+			}, &collector);
+						
+			CI_LOG_D("Collected " << collector.shapes.size() << " shapes (" << collector.groups.size() << " groups) to cut" );
+			
+			//
+			// Collect all shapes which are in groups affected by the cut
+			//
+			
+			vector<ShapeRef> affectedShapes;
+			for (auto &group : collector.groups) {
+				for (auto &shape : group->getShapes()) {
+					if (collector.shapes.find(shape) == collector.shapes.end()) {
+						affectedShapes.push_back(shape);
+					}
+				}
+			}
+			
+			//
+			//	Perform cut, adding results to affectedShapes and assigning parentage
+			//	so we can apply lin/ang vel to new bodies
+			//
+			
+			map<ShapeRef,GroupBaseRef> parentage;
+			for (const ShapeRef &shapeToCut : collector.shapes) {
+				GroupBaseRef parentGroup = shapeToCut->getGroup();
+				
+				auto result = shapeToCut->subtract(polygonShape);
+				affectedShapes.insert(end(affectedShapes), begin(result), end(result));
+				
+				//
+				//	Update parentage map for use in build() - maps a shape to its previous parent group
+				//
+				
+				for (auto &newShape : result) {
+					parentage[newShape] = parentGroup;
+				}
+				
+				//
+				//	Release the parent group's shapes. we do this because the group's
+				//	destructors would remove the shapes from the draw dispatcher, and that
+				//	would run right after build() completes, which would result in active shapes
+				//	not being in the draw dispatcher!
+				//
+				
+				parentGroup->releaseShapes();
+				
+				//
+				// if the shape belonged to the static group, just remove it
+				// otherwise, remove the shape's dynamic parent group because
+				// we'll be rebuilding it completely in build()
+				//
+				
+				if (parentGroup == _staticGroup) {
+					_staticGroup->removeShape(shapeToCut);
+				} else {
+					_dynamicGroups.erase(dynamic_pointer_cast<DynamicGroup>(parentGroup));
+				}
+			}
+			
+			// let go of strong references
+			collector.clear();
+			
+			build(affectedShapes, parentage);
+			
 		} else {
 			CI_LOG_E("Either length and/or radius were below minimum thresholds");
 		}
@@ -1422,19 +1519,19 @@ namespace terrain {
 			//
 
 			PolyLine2d transformedShapeToSubtract = detail::transformed(contourToSubtract, getInverseModelMatrix());
-			detail::polygon polyToSubtract = detail::convertPolyLineToBoostGeometry( transformedShapeToSubtract );
+			dpolygon2 polyToSubtract = detail::convertPolyLineToBoostGeometry( transformedShapeToSubtract );
 
 			//
 			// convert self (outerContour & holeContours) to a boost poly in model space
 			//
 
-			detail::polygon thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
+			dpolygon2 thisPoly = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
 
 			//
 			// now subtract - results are in model space
 			//
 
-			std::vector<detail::polygon> output;
+			std::vector<dpolygon2> output;
 			boost::geometry::difference( thisPoly, polyToSubtract, output );
 
 			//
@@ -1443,6 +1540,44 @@ namespace terrain {
 
 			vector<ShapeRef> newShapes = detail::convertBoostGeometryToTerrainShapes( output, getModelMatrix() );
 
+			if (!newShapes.empty()) {
+				return newShapes;
+			}
+		}
+
+		// handle failure case
+		vector<ShapeRef> result = { const_cast<Shape*>(this)->shared_from_this_as<Shape>() };
+		return result;
+	}
+	
+	vector<ShapeRef> Shape::subtract(const dpolygon2 &polygonToSubtract) const {
+		if (!polygonToSubtract.outer().empty()) {
+			
+			//
+			// move the polygon to subtract from world space to the our model space
+			//
+			
+			dpolygon2 polygonToSubtractModelSpace = detail::transformed(polygonToSubtract, getInverseModelMatrix());
+			
+			//
+			// convert self (outerContour & holeContours) to a boost poly in model space
+			//
+			
+			dpolygon2 thisPolyModelSpace = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
+			
+			//
+			// now subtract - results are in model space
+			//
+			
+			std::vector<dpolygon2> output;
+			boost::geometry::difference( thisPolyModelSpace, polygonToSubtractModelSpace, output );
+			
+			//
+			// convert output to Shapes - they need to have our modelview applied to them to move them back to world space
+			//
+			
+			vector<ShapeRef> newShapes = detail::convertBoostGeometryToTerrainShapes( output, getModelMatrix() );
+			
 			if (!newShapes.empty()) {
 				return newShapes;
 			}

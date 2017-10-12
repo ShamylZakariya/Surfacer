@@ -63,6 +63,28 @@ namespace terrain { namespace detail {
 		return transformed;
 	}
 	
+	dpolygon2 transformed(const dpolygon2 &src, const dmat4 &m) {
+		dpolygon2 transformed;
+		
+		for( auto outerIt = src.outer().begin(); outerIt != src.outer().end(); ++outerIt ) {
+			dvec2 p(boost::geometry::get<0>(*outerIt), boost::geometry::get<1>(*outerIt));
+			dvec2 tp = m * p;
+			transformed.outer().push_back(boost::geometry::make<dpoint2>(tp.x, tp.y));
+		}
+		
+		for (auto innerIt = src.inners().begin(); innerIt != src.inners().end(); ++innerIt) {
+			dpolygon2::ring_type ring;
+			for (auto pIt = innerIt->begin(); pIt != innerIt->end(); ++pIt) {
+				dvec2 p(boost::geometry::get<0>(*pIt), boost::geometry::get<1>(*pIt));
+				dvec2 tp = m * p;
+				ring.push_back(boost::geometry::make<dpoint2>(tp.x, tp.y));
+			}
+			transformed.inners().push_back(ring);
+		}
+		
+		return transformed;
+	}
+	
 	void transform(PolyLine2d &pl, const dmat4 &m) {
 		for (auto &p : pl) {
 			dvec2 tp = m * p;
@@ -130,16 +152,25 @@ namespace terrain { namespace detail {
 	
 #pragma mark - Boost::Geometry - Shape Interop
 	
+	cpBB polygon_bb(const dpolygon2 poly) {
+		cpBB bb = cpBBInvalid;
+		for (auto outer : poly.outer()) {
+			dvec2 p(boost::geometry::get<0>(outer), boost::geometry::get<1>(outer));
+			bb = cpBBExpand(bb, p);
+		}
+		
+		return bb;
+	}
+			
 	
-	typedef boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > polygon;
-	typedef polygon::inner_container_type::const_iterator RingIterator;
-	typedef polygon::ring_type::const_iterator PointIterator;
+	typedef dpolygon2::inner_container_type::const_iterator RingIterator;
+	typedef dpolygon2::ring_type::const_iterator PointIterator;
 	
-	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<polygon> &polygons, const dmat4 &modelview) {
+	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<dpolygon2> &polygons, const dmat4 &modelview) {
 		const double Dist2Epsilon = 1e-2;
 		std::vector<polyline_with_holes> result;
 		
-		for( std::vector<polygon>::iterator outIt = polygons.begin(); outIt != polygons.end(); ++outIt ) {
+		for( std::vector<dpolygon2>::iterator outIt = polygons.begin(); outIt != polygons.end(); ++outIt ) {
 			
 			boost::geometry::correct(*outIt);
 			
@@ -222,7 +253,7 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<polygon> &polygons, const dmat4 &modelview) {
+	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<dpolygon2> &polygons, const dmat4 &modelview) {
 		
 		const auto plhs = buildPolyLinesFromBoostGeometry(polygons, modelview);
 		std::vector<ShapeRef> result;
@@ -233,17 +264,17 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	polygon convertTerrainShapeToBoostGeometry( ShapeRef shape ) {
-		polygon result;
+	dpolygon2 convertTerrainShapeToBoostGeometry( ShapeRef shape ) {
+		dpolygon2 result;
 		
 		for (auto &p : shape->getOuterContour().model.getPoints()) {
-			result.outer().push_back( boost::geometry::make<boost::geometry::model::d2::point_xy<double> >( p.x, p.y ) );
+			result.outer().push_back( boost::geometry::make<dpoint2>( p.x, p.y ) );
 		}
 		
 		for (auto &holeContour : shape->getHoleContours()) {
-			polygon::ring_type ring;
+			dpolygon2::ring_type ring;
 			for( auto &p : holeContour.model.getPoints() ) {
-				ring.push_back( boost::geometry::make<boost::geometry::model::d2::point_xy<double> >( p.x, p.y ) );
+				ring.push_back( boost::geometry::make<dpoint2>( p.x, p.y ) );
 			}
 			result.inners().push_back( ring );
 		}
@@ -252,19 +283,19 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	polygon convertPolyLineToBoostGeometry( const PolyLine2d &polyLine )
+	dpolygon2 convertPolyLineToBoostGeometry( const PolyLine2d &polyLine )
 	{
-		polygon result;
+		dpolygon2 result;
 		
 		for (auto &p : polyLine.getPoints()) {
-			result.outer().push_back( boost::geometry::make<boost::geometry::model::d2::point_xy<double> >( p.x, p.y ) );
+			result.outer().push_back( boost::geometry::make<dpoint2>( p.x, p.y ) );
 		}
 		
 		boost::geometry::correct( result );
 		return result;
 	}
 	
-	PolyLine2d convertBoostGeometryToPolyline2d(polygon &poly)
+	PolyLine2d convertBoostGeometryToPolyline2d(dpolygon2 &poly)
 	{
 		const double Dist2Epsilon = 1e-2;
 		boost::geometry::correct(poly);

@@ -7,11 +7,11 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 * ~~Implement partitioning of the world geometry~~
 * ~~Get rid of or significantly reduce the collision radius around planet geometry.~~
 * Implement the shattering cut
-	* first make a radial spider web sequence of vertices.
-	* then move each by some random perturbation
-	* then create line quad polygons connecting these vertices
-	* then use boost::geometry to stitch these into one polygon
-	* then make a method for cutting/subtracting an arbitrary boost::polygon from the terrain
+	* ~first make a radial spider web sequence of vertices.~
+	* ~then move each by some random perturbation~
+	* ~then create line quad polygons connecting these vertices~
+	* ~then use boost::geometry to stitch these into one polygon~
+	* ~then make a method for cutting/subtracting an arbitrary boost::polygon from the terrain~
 	
 * Implement a particle system for smoke and clouds. The clouds would orbit the planet, might respond to explosions. The smoke be for explosions.
 
