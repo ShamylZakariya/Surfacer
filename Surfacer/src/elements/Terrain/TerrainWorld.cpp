@@ -230,7 +230,7 @@ namespace terrain {
 		vector<ShapeRef> result;
 
 		for (auto shape : shapes) {
-			dpolygon2 testPolygon = detail::convertTerrainShapeToBoostGeometry( shape );
+			dpolygon2 testPolygon = detail::shape_to_dpolygon2( shape );
 
 			for (int marchY = marchBottom; marchY <= marchTop; marchY++) {
 
@@ -248,12 +248,12 @@ namespace terrain {
 						quad.getPoints()[2] = dvec2(quadBB.r, quadBB.t);
 						quad.getPoints()[3] = dvec2(quadBB.r, quadBB.b);
 
-						auto polygonToIntersect = detail::convertPolyLineToBoostGeometry( quad );
+						auto polygonToIntersect = detail::polyline2d_to_dpolygon2( quad );
 
 						std::vector<dpolygon2> output;
 						boost::geometry::intersection( testPolygon, polygonToIntersect, output );
 
-						auto newShapes = detail::convertBoostGeometryToTerrainShapes( output, identity );
+						auto newShapes = detail::dpolygon2_to_shape( output, identity );
 						result.insert(result.end(), newShapes.begin(), newShapes.end());
 					}
 				}
@@ -377,7 +377,7 @@ namespace terrain {
 			contour.push_back(b + right);
 			contour.setClosed();
 			
-			dpolygon2 contourPolygon = detail::convertPolyLineToBoostGeometry(contour);
+			dpolygon2 contourPolygon = detail::polyline2d_to_dpolygon2(contour);
 			cut(contourPolygon);
 		} else {
 			CI_LOG_E("Either length and/or radius were below minimum thresholds");
@@ -649,7 +649,7 @@ namespace terrain {
 		// note: A singleton shape (no neighbors) still becomes a group
 		//
 
-		// TODO: Speed up findGroup with a spatial index when the search space > ~400
+		// TODO: Speed up find_contact_group with a spatial index when the search space > ~400
 
 		set<ShapeRef> affectedShapesSet(affectedShapes.begin(), affectedShapes.end());
 		vector<set<ShapeRef>> shapeGroups;
@@ -657,7 +657,7 @@ namespace terrain {
 		while(!affectedShapesSet.empty()) {
 			ShapeRef shape = *affectedShapesSet.begin(); // grab one
 
-			set<ShapeRef> group = detail::findGroup(shape, affectedShapesSet, parentage);
+			set<ShapeRef> group = detail::find_contact_group(shape, affectedShapesSet, parentage);
 			for (auto groupedShape : group) {
 				affectedShapesSet.erase(groupedShape);
 			}
@@ -1437,7 +1437,7 @@ namespace terrain {
 			// convert self (outerContour & holeContours) to a boost poly in model space
 			//
 			
-			dpolygon2 thisPolyModelSpace = detail::convertTerrainShapeToBoostGeometry( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
+			dpolygon2 thisPolyModelSpace = detail::shape_to_dpolygon2( const_cast<Shape*>(this)->shared_from_this_as<Shape>() );
 			
 			//
 			// now subtract - results are in model space
@@ -1450,7 +1450,7 @@ namespace terrain {
 			// convert output to Shapes - they need to have our modelview applied to them to move them back to world space
 			//
 			
-			vector<ShapeRef> newShapes = detail::convertBoostGeometryToTerrainShapes( output, getModelMatrix() );
+			vector<ShapeRef> newShapes = detail::dpolygon2_to_shape( output, getModelMatrix() );
 			
 			if (!newShapes.empty()) {
 				return newShapes;

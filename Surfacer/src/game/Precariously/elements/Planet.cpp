@@ -74,10 +74,10 @@ namespace precariously {
 
 		// build planet core contour
 		dpolygon2 corePolygon = circle(origin, coreConfig.radius, coreConfig.arcPrecisionDegrees, &corePermuter, surfaceConfig.noiseRoughness, coreConfig.noiseOffset);
-		PolyLine2d corePolyline = terrain::detail::convertBoostGeometryToPolyline2d(corePolygon);
+		PolyLine2d corePolyline = terrain::detail::dpolygon2_to_polyline2d(corePolygon);
 
 		// now convert the contours to a form consumable by terrain::World::build
-		vector<ShapeRef> shapes = terrain::detail::convertBoostGeometryToTerrainShapes(contourPolygons, dmat4());
+		vector<ShapeRef> shapes = terrain::detail::dpolygon2_to_shape(contourPolygons, dmat4());
 		
 		if (partitionSize > 0) {
 			shapes = terrain::World::partition(shapes, origin, partitionSize);
@@ -293,7 +293,7 @@ namespace precariously {
 	{
 		// convert polygon to something we can tesselate
 		vector<dpolygon2> crackPolys = { _crackGeometry->getPolygon() };
-		vector<terrain::detail::polyline_with_holes> result = terrain::detail::buildPolyLinesFromBoostGeometry(crackPolys, dmat4());
+		vector<terrain::detail::polyline_with_holes> result = terrain::detail::dpolygon2_to_polyline_with_holes(crackPolys, dmat4());
 
 		Triangulator triangulator;
 		for (const auto &thing : result) {

@@ -53,10 +53,9 @@ namespace terrain { namespace detail {
 	
 	PolyLine2d polyline2f_to_2d(const PolyLine2f &p2f);
 	
-	
-#pragma mark - Boost::Geometry - Shape Interop
-	
 	cpBB polygon_bb(const dpolygon2 poly);
+	
+#pragma mark - Conversion to/from Boost::Geometry, PolyLine2d & Shape
 	
 	struct polyline_with_holes {
 		PolyLine2d contour;
@@ -65,15 +64,15 @@ namespace terrain { namespace detail {
 		polyline_with_holes(const PolyLine2d c, const vector<PolyLine2d> &h): contour(c), holes(h){}
 	};
 	
-	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<dpolygon2> &polygons, const dmat4 &modelview);
+	vector<polyline_with_holes> dpolygon2_to_polyline_with_holes(std::vector<dpolygon2> &polygons, const dmat4 &modelview);
 	
-	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<dpolygon2> &polygons, const dmat4 &modelview);
+	std::vector<ShapeRef> dpolygon2_to_shape(std::vector<dpolygon2> &polygons, const dmat4 &modelview);
 	
-	dpolygon2 convertTerrainShapeToBoostGeometry( ShapeRef shape );
+	dpolygon2 shape_to_dpolygon2( ShapeRef shape );
 	
-	dpolygon2 convertPolyLineToBoostGeometry( const PolyLine2d &polyLine );
+	dpolygon2 polyline2d_to_dpolygon2( const PolyLine2d &polyLine );
 	
-	PolyLine2d convertBoostGeometryToPolyline2d(dpolygon2 &poly);
+	PolyLine2d dpolygon2_to_polyline2d(dpolygon2 &poly);
 	
 	
 #pragma mark - Contour Soup
@@ -130,15 +129,9 @@ namespace terrain { namespace detail {
 	bool shared_edges(const ShapeRef &a, const ShapeRef &b);
 	
 #pragma mark - Flood Fill
-	
-	template<typename T>
-	bool contains(const set<T> &s, const T &v) {
-		return s.find(v) != s.end();
-	}
-	
-	GroupBaseRef getParentGroup(const ShapeRef &shape, const map<ShapeRef,GroupBaseRef> &parentage);
-	
-	set<ShapeRef> findGroup(ShapeRef origin, const set<ShapeRef> &all, const map<ShapeRef,GroupBaseRef> &parentage);
+		
+	// flood fill, finding all shapes which can reach origin
+	set<ShapeRef> find_contact_group(ShapeRef origin, const set<ShapeRef> &all, const map<ShapeRef,GroupBaseRef> &parentage);
 	
 #pragma mark - Svg
 	

@@ -149,9 +149,6 @@ namespace terrain { namespace detail {
 		return p2d;
 	}
 	
-	
-#pragma mark - Boost::Geometry - Shape Interop
-	
 	cpBB polygon_bb(const dpolygon2 poly) {
 		cpBB bb = cpBBInvalid;
 		for (auto outer : poly.outer()) {
@@ -161,12 +158,13 @@ namespace terrain { namespace detail {
 		
 		return bb;
 	}
-			
+	
+#pragma mark - Conversion to/from Boost::Geometry, PolyLine2d & Shape
 	
 	typedef dpolygon2::inner_container_type::const_iterator RingIterator;
 	typedef dpolygon2::ring_type::const_iterator PointIterator;
 	
-	vector<polyline_with_holes> buildPolyLinesFromBoostGeometry(std::vector<dpolygon2> &polygons, const dmat4 &modelview) {
+	vector<polyline_with_holes> dpolygon2_to_polyline_with_holes(std::vector<dpolygon2> &polygons, const dmat4 &modelview) {
 		const double Dist2Epsilon = 1e-2;
 		std::vector<polyline_with_holes> result;
 		
@@ -253,9 +251,9 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	std::vector<ShapeRef> convertBoostGeometryToTerrainShapes(std::vector<dpolygon2> &polygons, const dmat4 &modelview) {
+	std::vector<ShapeRef> dpolygon2_to_shape(std::vector<dpolygon2> &polygons, const dmat4 &modelview) {
 		
-		const auto plhs = buildPolyLinesFromBoostGeometry(polygons, modelview);
+		const auto plhs = dpolygon2_to_polyline_with_holes(polygons, modelview);
 		std::vector<ShapeRef> result;
 		for (const auto &plh : plhs) {
 			result.push_back(make_shared<Shape>(plh.contour, plh.holes));
@@ -264,7 +262,7 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	dpolygon2 convertTerrainShapeToBoostGeometry( ShapeRef shape ) {
+	dpolygon2 shape_to_dpolygon2( ShapeRef shape ) {
 		dpolygon2 result;
 		
 		for (auto &p : shape->getOuterContour().model.getPoints()) {
@@ -283,7 +281,7 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	dpolygon2 convertPolyLineToBoostGeometry( const PolyLine2d &polyLine )
+	dpolygon2 polyline2d_to_dpolygon2( const PolyLine2d &polyLine )
 	{
 		dpolygon2 result;
 		
@@ -295,7 +293,7 @@ namespace terrain { namespace detail {
 		return result;
 	}
 	
-	PolyLine2d convertBoostGeometryToPolyline2d(dpolygon2 &poly)
+	PolyLine2d dpolygon2_to_polyline2d(dpolygon2 &poly)
 	{
 		const double Dist2Epsilon = 1e-2;
 		boost::geometry::correct(poly);
@@ -454,20 +452,29 @@ namespace terrain { namespace detail {
 	
 #pragma mark - Flood Fill
 	
-	GroupBaseRef getParentGroup(const ShapeRef &shape, const map<ShapeRef,GroupBaseRef> &parentage) {
-		if (shape->getGroup()) {
-			return shape->getGroup();
-		} else {
-			auto pos = parentage.find(shape);
-			if (pos != parentage.end()) {
-				return pos->second;
-			}
-		}
+	namespace floodfill {
 		
-		return nullptr;
-	};
+		GroupBaseRef shape_get_parent_group(const ShapeRef &shape, const map<ShapeRef,GroupBaseRef> &parentage) {
+			if (shape->getGroup()) {
+				return shape->getGroup();
+			} else {
+				auto pos = parentage.find(shape);
+				if (pos != parentage.end()) {
+					return pos->second;
+				}
+			}
+			
+			return nullptr;
+		};
+		
+		template<typename T>
+		bool contains(const set<T> &s, const T &v) {
+			return s.find(v) != s.end();
+		}
+
+	}
 	
-	set<ShapeRef> findGroup(ShapeRef origin, const set<ShapeRef> &all, const map<ShapeRef,GroupBaseRef> &parentage) {
+	set<ShapeRef> find_contact_group(ShapeRef origin, const set<ShapeRef> &all, const map<ShapeRef,GroupBaseRef> &parentage) {
 		/*
 		 Very loosely adapted from Wikipedia's FloodFill page:
 		 http://en.wikipedia.org/wiki/Flood_fill
@@ -481,15 +488,15 @@ namespace terrain { namespace detail {
 			ShapeRef currentShape = Q.front();
 			Q.pop();
 			
-			if (!contains(group, currentShape)) {
+			if (!floodfill::contains(group, currentShape)) {
 				group.insert(currentShape);
-				const auto currentShapeParent = getParentGroup(currentShape, parentage);
+				const auto currentShapeParent = floodfill::shape_get_parent_group(currentShape, parentage);
 				
 				// now find all connected neighbors with shared parentage, add them to group and Q
 				
 				for (auto queryShape : all) {
-					if (queryShape != currentShape && !contains(group,queryShape)) {
-						const auto queryShapeParent = getParentGroup(queryShape, parentage);
+					if (queryShape != currentShape && !floodfill::contains(group,queryShape)) {
+						const auto queryShapeParent = floodfill::shape_get_parent_group(queryShape, parentage);
 						if (queryShapeParent == currentShapeParent && shared_edges(queryShape, currentShape)) {
 							Q.push(queryShape);
 						}
