@@ -51,10 +51,18 @@ namespace core {
 		};
 		
 	public:
-		GravitationCalculator(){}
+		GravitationCalculator();
 		virtual ~GravitationCalculator(){}
 		
 		virtual force calculate(const dvec2 &world) const = 0;
+		virtual void update(const time_state &time){}
+		
+		void setFinished(bool finished) { _finished = finished; }
+		virtual bool isFinished() const { return _finished; }
+
+	private:
+		
+		bool _finished;
 		
 	};
 	

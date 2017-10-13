@@ -16,6 +16,13 @@
 namespace core {
 	
 #pragma mark - GravitationCalculator
+
+	/*
+	 bool _finished;
+	 */
+	GravitationCalculator::GravitationCalculator():
+	_finished(false)
+	{}
 	
 	/*
 	 force _force;
@@ -470,21 +477,22 @@ namespace core {
 
 			// dispatch any synthetic contacts which were generated
 			dispatchSyntheticContacts();
-		}
-
-		if (!_paused) {
-			vector<ObjectRef> moribund;
-			for (auto &obj : _objects) {
-				if (!obj->isFinished()) {
-					obj->step(time);
-				} else {
-					moribund.push_back(obj);
+	
+			// step objects and dispose of those which are finished
+			{
+				vector<ObjectRef> moribund;
+				for (auto &obj : _objects) {
+					if (!obj->isFinished()) {
+						obj->step(time);
+					} else {
+						moribund.push_back(obj);
+					}
 				}
-			}
-
-			if (!moribund.empty()) {
-				for (auto &obj : moribund) {
-					removeObject(obj);
+				
+				if (!moribund.empty()) {
+					for (auto &obj : moribund) {
+						removeObject(obj);
+					}
 				}
 			}
 		}
@@ -500,18 +508,40 @@ namespace core {
 		}
 
 		if (!_paused) {
-			vector<ObjectRef> moribund;
-			for (auto &obj : _objects) {
-				if (!obj->isFinished()) {
-					obj->update(time);
-				} else {
-					moribund.push_back(obj);
+			
+			{
+				// update gravitation calculators and dispose of finished
+				vector<GravitationCalculatorRef> moribund;
+				for (const auto &gravity : _gravities) {
+					if (!gravity->isFinished()) {
+						gravity->update(time);
+					} else {
+						moribund.push_back(gravity);
+					}
+				}
+				
+				if (!moribund.empty()) {
+					for (const auto &obj : moribund) {
+						removeGravity(obj);
+					}
 				}
 			}
+			
+			{
+				// update objects and dispose of finished
+				vector<ObjectRef> moribund;
+				for (auto &obj : _objects) {
+					if (!obj->isFinished()) {
+						obj->update(time);
+					} else {
+						moribund.push_back(obj);
+					}
+				}
 
-			if (!moribund.empty()) {
-				for (auto &obj : moribund) {
-					removeObject(obj);
+				if (!moribund.empty()) {
+					for (auto &obj : moribund) {
+						removeObject(obj);
+					}
 				}
 			}
 		}
