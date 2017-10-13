@@ -5,7 +5,7 @@
 
 <level name="Hello Precariously Level 0">
 	<space damping="0.99"/>
-	<gravity type="radial" strength="2000" falloff_power="0" primary="true"/>
+	<gravity type="radial" strength="2000" falloff_power="0.5" primary="true"/>
 	<background>
 		<fill spaceColor="50,60,70" atmosphereColor="200,255,255" steps="4" innerRadius="1000" outerRadius="1400"/>
 		<!-- other stuff like clouds, stars, planets, etc -->

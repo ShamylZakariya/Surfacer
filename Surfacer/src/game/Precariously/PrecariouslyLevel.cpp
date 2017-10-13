@@ -18,12 +18,46 @@ namespace precariously {
 	
 	namespace {
 		
+		SMART_PTR(ExplosionForceCalculator);
+		class ExplosionForceCalculator : public RadialGravitationCalculator {
+		public:
+			static ExplosionForceCalculatorRef create(dvec2 origin, double magnitude, double falloffPower, seconds_t lifespanSeconds = 2) {
+				return make_shared<ExplosionForceCalculator>(origin, magnitude, falloffPower, lifespanSeconds);
+			}
+			
+		public:
+			ExplosionForceCalculator(dvec2 origin, double magnitude, double falloffPower, seconds_t lifespanSeconds):
+			RadialGravitationCalculator(origin, -abs(magnitude), falloffPower),
+			_startSeconds(time_state::now()),
+			_lifespanSeconds(lifespanSeconds),
+			_magnitudeScale(0)
+			{}
+			
+			void update(const time_state &time) override {
+				seconds_t age = time.time - _startSeconds;
+				double life = age / _lifespanSeconds;
+				if (life <= 1) {
+					_magnitudeScale = 1 - life;
+				} else {
+					_magnitudeScale = 0;
+					setFinished(true);
+				}
+			}
+			
+		private:
+			
+			seconds_t _startSeconds, _lifespanSeconds;
+			double _magnitudeScale;
+			
+		};
+		
 		class MouseBomberComponent : public core::InputComponent {
 		public:
 			
-			MouseBomberComponent(terrain::TerrainObjectRef terrain, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
+			MouseBomberComponent(terrain::TerrainObjectRef terrain, dvec2 centerOfMass, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
 			InputComponent(dispatchReceiptIndex),
 			_terrain(terrain),
+			_centerOfMass(centerOfMass),
 			_numSpokes(numSpokes),
 			_numRings(numRings),
 			_radius(radius),
@@ -33,18 +67,17 @@ namespace precariously {
 			
 			bool mouseDown( const ci::app::MouseEvent &event ) override {
 				if (event.isMetaDown()) {
-					vec2 mouseScreen = event.getPos();
-					vec2 mouseWorld = getLevel()->getViewport()->screenToWorld(mouseScreen);
+					dvec2 mouseScreen = event.getPos();
+					dvec2 mouseWorld = getLevel()->getViewport()->screenToWorld(mouseScreen);
 					
-					// create a radial crack
+					// create a radial crack and cut the world with it
 					auto crack = make_shared<RadialCrackGeometry>(mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
-					
-					// create a thing to draw the crack, and dispose of it in 2 seconds
-					auto crackDrawer = Object::with("Crack", { make_shared<CrackGeometryDrawComponent>(crack) });
-					crackDrawer->setFinished(true, 2);
-					getLevel()->addObject(crackDrawer);
-					
 					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB());
+					
+					// add an explosive force
+					dvec2 explosiveOrigin = mouseWorld - 2*_radius * normalize(mouseWorld - _centerOfMass);
+					getLevel()->addGravity(ExplosionForceCalculator::create(explosiveOrigin, 2000, 0.5, 2));
+					
 					return true;
 				}
 				
@@ -56,8 +89,10 @@ namespace precariously {
 			int _numSpokes, _numRings;
 			double _radius, _thickness, _variance;
 			terrain::TerrainObjectRef _terrain;
+			dvec2 _centerOfMass;
 			
 		};
+		
 		
 	}
 	
@@ -127,7 +162,7 @@ namespace precariously {
 		
 		if (true) {
 
-			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, 7, 4, 75, 2, 100) }));
+			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
 			
 		}
 		
@@ -204,10 +239,7 @@ namespace precariously {
 		//
 		
 		if (_gravity) {
-			if (terrain::ElementRef e = _planet->getWorld()->getElementById("center_of_mass")) {
-				dvec2 centerOfMass = e->getModelMatrix() * e->getModelCentroid();
-				_gravity->setCenterOfMass(centerOfMass);
-			}
+			_gravity->setCenterOfMass(_planet->getOrigin());
 		}
 	}
 	
