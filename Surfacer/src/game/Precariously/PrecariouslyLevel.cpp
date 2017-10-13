@@ -37,7 +37,7 @@ namespace precariously {
 				seconds_t age = time.time - _startSeconds;
 				double life = age / _lifespanSeconds;
 				if (life <= 1) {
-					_magnitudeScale = 1 - life;
+					_magnitudeScale = sin(life);
 				} else {
 					_magnitudeScale = 0;
 					setFinished(true);
@@ -76,7 +76,7 @@ namespace precariously {
 					
 					// add an explosive force
 					dvec2 explosiveOrigin = mouseWorld - 2*_radius * normalize(mouseWorld - _centerOfMass);
-					getLevel()->addGravity(ExplosionForceCalculator::create(explosiveOrigin, 2000, 0.5, 2));
+					getLevel()->addGravity(ExplosionForceCalculator::create(explosiveOrigin, 4000, 0.5, 0.5));
 					
 					return true;
 				}

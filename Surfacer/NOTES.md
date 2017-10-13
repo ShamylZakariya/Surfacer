@@ -4,15 +4,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## PRESENTLY
 
-* ~~Implement partitioning of the world geometry~~
-* ~~Get rid of or significantly reduce the collision radius around planet geometry.~~
-* Implement the shattering cut
-	* ~first make a radial spider web sequence of vertices.~
-	* ~then move each by some random perturbation~
-	* ~then create line quad polygons connecting these vertices~
-	* ~then use boost::geometry to stitch these into one polygon~
-	* ~then make a method for cutting/subtracting an arbitrary boost::polygon from the terrain~
-	
+* Make pieces smaller than some area threshold be deleted. Can do this as a property on terrain::World?
 * Implement a particle system for smoke and clouds. The clouds would orbit the planet, might respond to explosions. The smoke be for explosions.
 
 
