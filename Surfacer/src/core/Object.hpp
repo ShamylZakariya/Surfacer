@@ -248,6 +248,9 @@ namespace core {
 
 		void monitorKey( int keyCode );
 		void ignoreKey( int keyCode );
+		
+		void monitorKeys(const initializer_list<int> &keyCodes);
+		void ignoreKeys(const initializer_list<int> &keyCodes);
 
 		/**
 			Called when a monitored key is pressed
@@ -265,8 +268,8 @@ namespace core {
 		 */
 		bool isMonitoredKeyDown( int keyCode ) const;
 
-		virtual bool keyDown( const ci::app::KeyEvent &event ) override;
-		virtual bool keyUp( const ci::app::KeyEvent &event ) override;
+		bool keyDown( const ci::app::KeyEvent &event ) override;
+		bool keyUp( const ci::app::KeyEvent &event ) override;
 
 	private:
 
@@ -295,7 +298,7 @@ namespace core {
 
 		/**
 		 Create a non-specialized vanilla Object with some components. This is handy for if you
-		 have a simple component which needs to be added to a Level.
+		 have a simple set of component which needs to be added to a Level but not be on a complex thing.
 		 */
 		static ObjectRef with(string name, const initializer_list<ComponentRef> &components) {
 			auto obj = make_shared<Object>(name);
@@ -303,6 +306,16 @@ namespace core {
 				obj->addComponent(component);
 			}
 
+			return obj;
+		}
+		
+		/**
+		 Create a non-specialized vanilla Object with a single component. This is handy for if you
+		 have a simple component which needs to be added to a Level.
+		 */
+		static ObjectRef with(string name, ComponentRef component) {
+			auto obj = make_shared<Object>(name);
+			obj->addComponent(component);
 			return obj;
 		}
 

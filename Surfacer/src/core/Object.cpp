@@ -91,6 +91,18 @@ namespace core {
 	void InputComponent::ignoreKey( int keyCode ) {
 		_monitoredKeyStates.erase( keyCode );
 	}
+	
+	void InputComponent::monitorKeys(const initializer_list<int> &keyCodes) {
+		for (int kc : keyCodes) {
+			monitorKey(kc);
+		}
+	}
+
+	void InputComponent::ignoreKeys(const initializer_list<int> &keyCodes) {
+		for (int kc : keyCodes) {
+			ignoreKey(kc);
+		}
+	}
 
 	bool InputComponent::isMonitoredKeyDown( int keyCode ) const {
 		auto pos = _monitoredKeyStates.find( keyCode );
