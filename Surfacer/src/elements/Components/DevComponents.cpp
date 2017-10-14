@@ -489,3 +489,26 @@ void MousePickDrawComponent::draw(const render_state &renderState) {
 	}
 }
 
+#pragma mark - KeyboardDelegateComponent
+
+KeyboardDelegateComponent::KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes, const KeyHandler &keyUpHandler, const KeyHandler &keyDownHandler):
+InputComponent(dispatchReceiptIndex),
+_upHandler(keyUpHandler),
+_downHandler(keyDownHandler)
+{
+	monitorKeys(keycodes);
+}
+
+void KeyboardDelegateComponent::monitoredKeyDown( int keyCode ) {
+	if (_downHandler) {
+		_downHandler(keyCode);
+	}
+}
+
+void KeyboardDelegateComponent::monitoredKeyUp( int keyCode ) {
+	if (_upHandler) {
+		_upHandler(keyCode);
+	}
+}
+
+

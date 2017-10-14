@@ -96,36 +96,6 @@ namespace precariously {
 			
 		};
 		
-		class KeyboardDelegateComponent : public core::InputComponent {
-		public:
-			
-			typedef function<void(int keyCode)> KeyHandler;
-			
-		public:
-			KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes, const KeyHandler &keyUpHandler, const KeyHandler &keyDownHandler = KeyHandler()):
-			InputComponent(dispatchReceiptIndex),
-			_upHandler(keyUpHandler),
-			_downHandler(keyDownHandler)
-			{
-				monitorKeys(keycodes);
-			}
-			
-			void monitoredKeyDown( int keyCode ) override {
-				if (_downHandler) {
-					_downHandler(keyCode);
-				}
-			}
-			
-			void monitoredKeyUp( int keyCode ) override {
-				if (_upHandler) {
-					_upHandler(keyCode);
-				}
-			}
-			
-		private:
-			function<void(int keyCode)> _upHandler, _downHandler;
-		};
-		
 		
 	}
 	

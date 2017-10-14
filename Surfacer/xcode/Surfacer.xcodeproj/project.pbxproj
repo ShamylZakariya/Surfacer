@@ -447,10 +447,10 @@
 		63F93C0F1F86877D00F537CA /* Enemies */ = {
 			isa = PBXGroup;
 			children = (
-				63F93C101F86877D00F537CA /* Eggsac.cpp */,
 				63F93C111F86877D00F537CA /* Boid.cpp */,
-				63F93C121F86877D00F537CA /* Eggsac.hpp */,
 				63F93C131F86877D00F537CA /* Boid.hpp */,
+				63F93C101F86877D00F537CA /* Eggsac.cpp */,
+				63F93C121F86877D00F537CA /* Eggsac.hpp */,
 			);
 			path = Enemies;
 			sourceTree = "<group>";

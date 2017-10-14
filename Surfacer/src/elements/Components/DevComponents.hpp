@@ -183,4 +183,19 @@ private:
 
 };
 
+class KeyboardDelegateComponent : public core::InputComponent {
+public:
+	
+	typedef function<void(int keyCode)> KeyHandler;
+	
+public:
+	KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes, const KeyHandler &keyUpHandler, const KeyHandler &keyDownHandler = KeyHandler());
+	
+	void monitoredKeyDown( int keyCode ) override;
+	void monitoredKeyUp( int keyCode ) override;
+	
+private:
+	function<void(int keyCode)> _upHandler, _downHandler;
+};
+
 #endif /* DevComponents_hpp */
