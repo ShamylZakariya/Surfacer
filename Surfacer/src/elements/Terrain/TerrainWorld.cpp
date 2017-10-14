@@ -31,7 +31,7 @@ namespace terrain {
 
 	namespace {
 		
-		const double MIN_TRIANGLE_AREA = 1.0;
+		const double MIN_TRIANGLE_AREA = 1;
 		
 		// if > 0 we add a water-tight perimeter geometry around shapes
 		// unfortunately, mitering is HARD and so right now this is disabled.
@@ -353,7 +353,7 @@ namespace terrain {
 		
 	}
 
-	void World::cut(dvec2 a, dvec2 b, double radius) {
+	void World::cut(dvec2 a, dvec2 b, double radius, double minSurfaceArea) {
 		const double MinLength = 1e-2;
 		const double MinRadius = 1e-2;
 
@@ -378,13 +378,13 @@ namespace terrain {
 			contour.setClosed();
 			
 			dpolygon2 contourPolygon = detail::polyline2d_to_dpolygon2(contour);
-			cut(contourPolygon);
+			cut(contourPolygon, cpBBInvalid, minSurfaceArea);
 		} else {
 			CI_LOG_E("Either length and/or radius were below minimum thresholds");
 		}
 	}
 	
-	void World::cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds) {
+	void World::cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds, double minSurfaceArea) {
 		
 		if (!polygonShape.outer().empty()) {
 			
@@ -468,7 +468,13 @@ namespace terrain {
 			// let go of strong references
 			collector.clear();
 			
+			// temporarily adjust the min surface area for shape generation
+			double msa = _worldMaterial.minSurfaceArea;
+			_worldMaterial.minSurfaceArea = minSurfaceArea > 0 ? minSurfaceArea : msa;
+			
 			build(affectedShapes, parentage);
+			
+			_worldMaterial.minSurfaceArea = msa;
 			
 		} else {
 			CI_LOG_E("Either length and/or radius were below minimum thresholds");
@@ -614,7 +620,7 @@ namespace terrain {
 				//
 
 				for (const auto &shape : shapeGroup) {
-					_staticGroup->addShape(shape);
+					_staticGroup->addShape(shape, _worldMaterial.minSurfaceArea);
 				}
 			} else {
 
@@ -632,9 +638,8 @@ namespace terrain {
 				//	Build a dynamic group
 				//
 
-
 				DynamicGroupRef group = make_shared<DynamicGroup>(shared_from_this(), _worldMaterial, _drawDispatcher);
-				if (group->build(shapeGroup, parentGroup)) {
+				if (group->build(shapeGroup, parentGroup, _worldMaterial.minSurfaceArea)) {
 					_dynamicGroups.insert(group);
 				}
 			}
@@ -781,7 +786,7 @@ namespace terrain {
 		_shapes.clear();
 	}
 
-	void StaticGroup::addShape(ShapeRef shape) {
+	void StaticGroup::addShape(ShapeRef shape, double minShapeArea) {
 
 		if (!shape->hasValidTriMesh()) {
 			if (!shape->triangulate()) {
@@ -794,7 +799,7 @@ namespace terrain {
 			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
 
 			double area = shape->computeArea();
-			if (area >= detail::MIN_SHAPE_AREA) {
+			if (area >= minShapeArea) {
 
 				shape->setGroup(shared_from_this());
 				_shapes.insert(shape);
@@ -937,7 +942,7 @@ namespace terrain {
 	void DynamicGroup::update(const time_state &timeState) {
 	}
 
-	bool DynamicGroup::build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup) {
+	bool DynamicGroup::build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup, double minShapeArea) {
 
 		set<ShapeRef> garbage;
 		auto emptyGarbage = [&garbage, &shapes]() {
@@ -1032,7 +1037,7 @@ namespace terrain {
 		}
 
 
-		if (totalArea > detail::MIN_SHAPE_AREA) {
+		if (totalArea > minShapeArea) {
 
 			_body = cpBodyNew(totalMass, totalMoment);
 			cpBodySetUserData(_body, this);
@@ -1276,6 +1281,7 @@ namespace terrain {
 		_material = m;
 		_staticBody = cpBodyNewStatic();
 
+		double areaSum = 0;
 		cpVect triangle[3];
 		for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
 			vec2 a,b,c;
@@ -1294,10 +1300,11 @@ namespace terrain {
 
 			if (area >= MIN_TRIANGLE_AREA) {
 				_shapes.push_back(cpPolyShapeNew(_staticBody, 3, triangle, cpTransformIdentity, 0));
+				areaSum += area;
 			}
 		}
 
-		if (!_shapes.empty()) {
+		if (areaSum >= _material.minSurfaceArea && !_shapes.empty()) {
 
 			//
 			// looks like we got some valid collision hulls, set them up

@@ -24,9 +24,6 @@
 
 namespace terrain { namespace detail {
 	
-	const extern double MIN_SHAPE_AREA;
-
-	
 #pragma mark - Helpers
 	
 	Color next_random_color();

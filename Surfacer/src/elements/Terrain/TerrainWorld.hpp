@@ -119,21 +119,24 @@ namespace terrain {
 		cpFloat collisionShapeRadius;
 		cpShapeFilter filter;
 		cpCollisionType collisionType;
+		double minSurfaceArea;
 
 		material():
 		density(1),
 		friction(1),
 		collisionShapeRadius(0),
 		filter({0,0,0}),
-		collisionType(0)
+		collisionType(0),
+		minSurfaceArea(0.1)
 		{}
 
-		material(cpFloat d, cpFloat f, cpFloat csr, cpShapeFilter flt, cpCollisionType ct):
+		material(cpFloat d, cpFloat f, cpFloat csr, cpShapeFilter flt, cpCollisionType ct, double msa):
 		density(d),
 		friction(f),
 		collisionShapeRadius(csr),
 		filter(flt),
-		collisionType(ct)
+		collisionType(ct),
+		minSurfaceArea(msa)
 		{}
 	};
 
@@ -233,12 +236,12 @@ namespace terrain {
 		/**
 		 Perform a cut in world space from a to b, with half-thickness of radius
 		 */
-		void cut(dvec2 a, dvec2 b, double radius);
+		void cut(dvec2 a, dvec2 b, double radius, double minSurfaceArea = 1);
 		
 		/**
 		 Perform a cut in world space removing any geometry which overlaps the enclosed space of `polygonShape`
 		 */
-		void cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds = cpBBInvalid);
+		void cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds = cpBBInvalid, double minSurfaceArea = 0);
 		
 
 		void draw(const core::render_state &renderState);
@@ -370,7 +373,7 @@ namespace terrain {
 		virtual void step(const core::time_state &timeState) override {}
 		virtual void update(const core::time_state &timeState) override {}
 
-		void addShape(ShapeRef shape);
+		void addShape(ShapeRef shape, double minShapeArea);
 		void removeShape(ShapeRef shape);
 
 	protected:
@@ -410,7 +413,7 @@ namespace terrain {
 	protected:
 		friend class World;
 
-		bool build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup);
+		bool build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup, double minShapeArea);
 		void syncToCpBody();
 
 	private:

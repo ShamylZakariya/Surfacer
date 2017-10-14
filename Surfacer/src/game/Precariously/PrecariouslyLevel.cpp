@@ -70,9 +70,12 @@ namespace precariously {
 					dvec2 mouseScreen = event.getPos();
 					dvec2 mouseWorld = getLevel()->getViewport()->screenToWorld(mouseScreen);
 					
-					// create a radial crack and cut the world with it
+					// create a radial crack and cut the world with it. note, to reduce tiny fragments
+					// we set a fairly high min surface area for the cut.
+
+					double minSurfaceAreaThreshold = 64;
 					auto crack = make_shared<RadialCrackGeometry>(mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
-					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB());
+					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
 					
 					// add an explosive force
 					dvec2 explosiveOrigin = mouseWorld - 2*_radius * normalize(mouseWorld - _centerOfMass);
@@ -227,9 +230,11 @@ namespace precariously {
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
 		
-		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
-		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
-		auto world = make_shared<terrain::World>(getSpace(),terrainMaterial, anchorMaterial);
+		const double minSurfaceArea = 2;
+		
+		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN, minSurfaceArea);
+		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR, minSurfaceArea);
+		auto world = make_shared<terrain::World>(getSpace() ,terrainMaterial, anchorMaterial);
 		
 		_planet = Planet::create("Planet", world, planetNode, DrawLayers::PLANET);
 		addObject(_planet);

@@ -17,8 +17,8 @@
 
 namespace terrain { namespace detail {
 	
+	const double MIN_SHAPE_AREA = 1;
 	const double RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.125;
-	const double MIN_SHAPE_AREA = 1.0;
 	
 #pragma mark - Helpers
 	
