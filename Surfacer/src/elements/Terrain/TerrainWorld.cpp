@@ -544,6 +544,40 @@ namespace terrain {
 		}
 		return nullptr;
 	}
+	
+	size_t World::cullDynamicGroups(double minSurfaceArea, double portion, const DynamicGroupVisitor &test) {
+
+		vector<DynamicGroupRef> culled;
+		for (const auto &group : _dynamicGroups) {
+			if (group->getSurfaceArea() < minSurfaceArea) {
+				if (!test || test(group)) {
+					culled.push_back(group);
+				}
+			}
+		}
+		
+		portion = saturate(portion);
+		size_t count = min(static_cast<size_t>(round(portion * culled.size())), culled.size());
+		
+		CI_LOG_D("found: " << culled.size() << " candidates, of which we'll cull: " << count);
+		
+		if (!culled.empty() && count > 0) {
+			// sort our cull list by surface area
+			std::sort(culled.begin(), culled.end(), [](const DynamicGroupRef &a, const DynamicGroupRef &b){
+				return a->getSurfaceArea() < b->getSurfaceArea();
+			});
+			
+			// remove the chosen ones from our storage
+			for (size_t i = 0; i < count; i++) {
+				_dynamicGroups.erase(culled[i]);
+			}
+			
+			return count;
+		}
+	
+		return 0;
+	}
+
 
 	ObjectRef World::getObject() const {
 		return _object.lock();
@@ -744,15 +778,18 @@ namespace terrain {
 #pragma mark - StaticGroup
 
 	/*
-		cpBody *_body;
-		set<ShapeRef> _shapes;
-		mutable cpBB _worldBB;
+	 cpBody *_body;
+	 set<ShapeRef> _shapes;
+	 mutable cpBB _worldBB;
+	 double _surfaceArea;
 	 */
 
 	StaticGroup::StaticGroup(WorldRef world, material m, DrawDispatcher &dispatcher):
 	terrain::GroupBase(world, m, dispatcher),
 	_body(nullptr),
-	_worldBB(cpBBInvalid) {
+	_worldBB(cpBBInvalid),
+	_surfaceArea(0)
+	{
 		_name = "StaticGroup";
 		_color = Color(0.15,0.15,0.15);
 
@@ -798,11 +835,12 @@ namespace terrain {
 
 			shape->_modelCentroid = shape->_outerContour.model.calcCentroid();
 
-			double area = shape->computeArea();
+			double area = shape->getSurfaceArea();
 			if (area >= minShapeArea) {
-
+				
 				shape->setGroup(shared_from_this());
 				_shapes.insert(shape);
+				_surfaceArea += area;
 
 				//
 				//	Create new collision shapes if needed. Note, since static shapes can only stay static or become dynamic
@@ -840,8 +878,10 @@ namespace terrain {
 					}
 
 				} else {
+					// no collision shapes - sorry, it just didn't work out
 					cpCleanupAndFree(collisionShapes);
 					_shapes.erase(shape);
+					_surfaceArea -= area;
 				}
 			}
 		}
@@ -851,6 +891,7 @@ namespace terrain {
 		if (_shapes.erase(shape)) {
 			shape->setGroup(nullptr);
 			_worldBB = cpBBInvalid;
+			_surfaceArea -= shape->getSurfaceArea();
 
 			//
 			//	Unregister this shape with the world's draw dispatcher
@@ -864,22 +905,14 @@ namespace terrain {
 #pragma mark - DynamicGroup
 
 	/*
-		static size_t _count;
-
-		bool _dynamic;
-		material _material;
-		SpaceAccessRef _space;
-		cpBody *_body;
-		cpVect _position;
-		cpFloat _angle;
-		cpBB _worldBB, _modelBB;
-		dmat4 _modelMatrix, _inverseModelMatrix;
-
-		set<ShapeRef> _shapes;
-
-		string _name;
-		cpHashValue _hash;
-		Color _color;
+	 cpBody *_body;
+	 cpVect _position;
+	 cpFloat _angle;
+	 double _surfaceArea;
+	 cpBB _worldBB, _modelBB;
+	 dmat4 _modelMatrix, _inverseModelMatrix;
+	 
+	 set<ShapeRef> _shapes;
 	 */
 
 	DynamicGroup::DynamicGroup(WorldRef world, material m, DrawDispatcher &dispatcher):
@@ -887,6 +920,7 @@ namespace terrain {
 	_body(nullptr),
 	_position(cpv(0,0)),
 	_angle(0),
+	_surfaceArea(0),
 	_worldBB(cpBBInvalid),
 	_modelBB(cpBBInvalid),
 	_modelMatrix(1),
@@ -1079,6 +1113,7 @@ namespace terrain {
 				//
 
 				_shapes = shapes;
+				_surfaceArea = totalArea;
 
 				//
 				//	Add the shapes to the draw dispatcher
@@ -1366,22 +1401,24 @@ namespace terrain {
 	}
 
 	/*
-		bool _worldSpaceShapeContourEdgesDirty;
-		contour_pair _outerContour;
-		vector<contour_pair> _holeContours;
-		dvec2 _modelCentroid;
-
-		cpBB _shapesModelBB;
-		vector<cpShape*> _shapes;
-		GroupBaseWeakRef _group;
-		size_t _groupDrawingBatchId;
-		cpHashValue _groupHash;
-
-		unordered_set<poly_edge> _worldSpaceContourEdges;
-		cpBB _worldSpaceContourEdgesBB;
-
-		TriMeshRef _trimesh;
-		ci::gl::VboMeshRef _vboMesh;	 */
+	 bool _worldSpaceShapeContourEdgesDirty;
+	 contour_pair _outerContour;
+	 vector<contour_pair> _holeContours;
+	 dvec2 _modelCentroid;
+	 double _surfaceArea;
+	 
+	 cpBB _shapesModelBB;
+	 vector<cpShape*> _shapes;
+	 GroupBaseWeakRef _group;
+	 size_t _groupDrawingBatchId;
+	 cpHashValue _groupHash;
+	 
+	 unordered_set<poly_edge> _worldSpaceContourEdges;
+	 cpBB _worldSpaceContourEdgesBB;
+	 
+	 TriMeshRef _trimesh;
+	 ci::gl::VboMeshRef _vboMesh;
+	 */
 
 
 	Shape::Shape(const PolyLine2d &sc):
@@ -1531,36 +1568,35 @@ namespace terrain {
 		return false;
 	}
 
-	double Shape::computeArea() {
+	double Shape::getSurfaceArea() const {
 		double area = 0;
 		cpVect triangle[3];
-
+		
 		for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
 			vec2 a,b,c;
 			_trimesh->getTriangleVertices(i, &a, &b, &c);
-
+			
 			// find the winding with positive area
 			triangle[0] = cpv(a);
 			triangle[1] = cpv(b);
 			triangle[2] = cpv(c);
 			double triArea = length(cross(dvec3(b-a,0),dvec3(c-a,0))) * 0.5;
-
+			
 			if (triArea < 0) {
-
+				
 				//
 				// sanity check. this doesn't seem to ever actually happen
 				// but it's no skin off my back to be prepared
 				//
-
+				
 				triangle[0] = cpv(c);
 				triangle[1] = cpv(b);
 				triangle[2] = cpv(a);
 				triArea = -triArea;
 			}
-
+			
 			area += triArea;
 		}
-
 		return area;
 	}
 

@@ -234,12 +234,14 @@ namespace terrain {
 				   const vector<ElementRef> &elements = vector<ElementRef>());
 
 		/**
-		 Perform a cut in world space from a to b, with half-thickness of radius
+		 Perform a cut in world space from a to b, with half-thickness of radius.
+		 Discard any resultant geometry with less than minSurfaceArea
 		 */
 		void cut(dvec2 a, dvec2 b, double radius, double minSurfaceArea = 1);
 		
 		/**
 		 Perform a cut in world space removing any geometry which overlaps the enclosed space of `polygonShape`
+		 Discard any resultant geometry with less than minSurfaceArea
 		 */
 		void cut(const dpolygon2 &polygonShape, cpBB polygonShapeWorldBounds = cpBBInvalid, double minSurfaceArea = 0);
 		
@@ -257,6 +259,18 @@ namespace terrain {
 
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
+		
+		
+		typedef function<bool(const DynamicGroupRef &)> DynamicGroupVisitor;
+		
+		/**
+		 Perform a culling of dynamic groups with less than a given surface area.
+		 All geometry of less than `minSurfaceArea will be collected and sorted,
+		 and `portion amount of that geometry (0 (none) to 1 (all)) will be discarded.
+		 Optional test argument is a functor called for each group smaller than minSurfaceArea to decide if it should be in the cull set.
+		 Returns number of groups culled.
+		 */
+		size_t cullDynamicGroups(double minSurfaceArea, double portion = 1, const DynamicGroupVisitor &test = DynamicGroupVisitor());
 
 		/**
 		 Get the Object which wraps this World for use in a Level
@@ -318,6 +332,7 @@ namespace terrain {
 		virtual dmat4 getInverseModelMatrix() const = 0;
 		virtual dvec2 getPosition() const = 0;
 		virtual double getAngle() const = 0;
+		virtual double getSurfaceArea() const = 0;
 		virtual set<ShapeRef> getShapes() const = 0;
 		virtual void releaseShapes() = 0;
 		virtual size_t getDrawingBatchId() const { return _drawingBatchId;}
@@ -358,20 +373,21 @@ namespace terrain {
 	class StaticGroup : public GroupBase, public enable_shared_from_this<StaticGroup> {
 	public:
 		StaticGroup(WorldRef world, material m, DrawDispatcher &dispatcher);
-		virtual ~StaticGroup();
+		~StaticGroup();
 
-		virtual cpBody* getBody() const override { return _body; }
-		virtual cpBB getBB() const override;
-		virtual dmat4 getModelMatrix() const override { return dmat4(1); }
-		virtual dmat4 getInverseModelMatrix() const override { return dmat4(1); }
-		virtual dvec2 getPosition() const override { return dvec2(0); }
-		virtual double getAngle() const override { return 0; }
-		virtual set<ShapeRef> getShapes() const override { return _shapes; }
-		virtual void releaseShapes() override;
+		cpBody* getBody() const override { return _body; }
+		cpBB getBB() const override;
+		dmat4 getModelMatrix() const override { return dmat4(1); }
+		dmat4 getInverseModelMatrix() const override { return dmat4(1); }
+		dvec2 getPosition() const override { return dvec2(0); }
+		double getAngle() const override { return 0; }
+		double getSurfaceArea() const override { return _surfaceArea; }
+		set<ShapeRef> getShapes() const override { return _shapes; }
+		void releaseShapes() override;
 
-		virtual void draw(const core::render_state &renderState) override {}
-		virtual void step(const core::time_state &timeState) override {}
-		virtual void update(const core::time_state &timeState) override {}
+		void draw(const core::render_state &renderState) override {}
+		void step(const core::time_state &timeState) override {}
+		void update(const core::time_state &timeState) override {}
 
 		void addShape(ShapeRef shape, double minShapeArea);
 		void removeShape(ShapeRef shape);
@@ -384,6 +400,7 @@ namespace terrain {
 		cpBody *_body;
 		set<ShapeRef> _shapes;
 		mutable cpBB _worldBB;
+		double _surfaceArea;
 	};
 
 
@@ -393,21 +410,22 @@ namespace terrain {
 	class DynamicGroup : public GroupBase, public enable_shared_from_this<DynamicGroup>{
 	public:
 		DynamicGroup(WorldRef world, material m, DrawDispatcher &dispatcher);
-		virtual ~DynamicGroup();
+		~DynamicGroup();
 
-		virtual string getName() const override;
-		virtual cpBody* getBody() const override { return _body; }
+		string getName() const override;
+		cpBody* getBody() const override { return _body; }
 		cpBB getBB() const override { return _worldBB; }
-		virtual dmat4 getModelMatrix() const override { return _modelMatrix; }
-		virtual dmat4 getInverseModelMatrix() const override { return _inverseModelMatrix; }
-		virtual dvec2 getPosition() const override { return v2(_position); }
-		virtual double getAngle() const override { return static_cast<double>(_angle); }
-		virtual set<ShapeRef> getShapes() const override { return _shapes; }
-		virtual void releaseShapes() override;
+		dmat4 getModelMatrix() const override { return _modelMatrix; }
+		dmat4 getInverseModelMatrix() const override { return _inverseModelMatrix; }
+		dvec2 getPosition() const override { return v2(_position); }
+		double getAngle() const override { return static_cast<double>(_angle); }
+		double getSurfaceArea() const override { return _surfaceArea; }
+		set<ShapeRef> getShapes() const override { return _shapes; }
+		void releaseShapes() override;
 
-		virtual void draw(const core::render_state &renderState) override;
-		virtual void step(const core::time_state &timeState) override;
-		virtual void update(const core::time_state &timeState) override;
+		void draw(const core::render_state &renderState) override;
+		void step(const core::time_state &timeState) override;
+		void update(const core::time_state &timeState) override;
 
 
 	protected:
@@ -421,6 +439,7 @@ namespace terrain {
 		cpBody *_body;
 		cpVect _position;
 		cpFloat _angle;
+		double _surfaceArea;
 		cpBB _worldBB, _modelBB;
 		dmat4 _modelMatrix, _inverseModelMatrix;
 
@@ -681,7 +700,7 @@ namespace terrain {
 		// build the trimesh, returning true iff we got > 0 triangles
 		bool triangulate();
 
-		double computeArea();
+		double getSurfaceArea() const;
 		void computeMassAndMoment(double density, double &mass, double &moment, double &area);
 
 		void destroyCollisionShapes();
