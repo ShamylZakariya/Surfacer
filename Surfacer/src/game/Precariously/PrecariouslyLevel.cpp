@@ -70,6 +70,7 @@ namespace precariously {
 					dvec2 mouseScreen = event.getPos();
 					dvec2 mouseWorld = getLevel()->getViewport()->screenToWorld(mouseScreen);
 					
+					
 					// create a radial crack and cut the world with it. note, to reduce tiny fragments
 					// we set a fairly high min surface area for the cut.
 					
@@ -77,9 +78,13 @@ namespace precariously {
 					auto crack = make_shared<RadialCrackGeometry>(mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
 					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
 					
-					// add an explosive force
-					dvec2 explosiveOrigin = mouseWorld - 2*_radius * normalize(mouseWorld - _centerOfMass);
-					getLevel()->addGravity(ExplosionForceCalculator::create(explosiveOrigin, 4000, 0.5, 0.5));
+					// get the closest point on terrain surface and use that to place explosive charge
+					if (auto r = getLevel()->queryNearest(mouseWorld, ShapeFilters::TERRAIN_PROBE)) {
+					
+						dvec2 origin = mouseWorld + _radius * normalize(_centerOfMass - r.point);
+						getLevel()->addGravity(ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5));
+
+					}
 					
 					return true;
 				}
