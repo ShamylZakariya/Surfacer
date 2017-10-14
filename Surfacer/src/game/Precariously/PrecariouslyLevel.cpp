@@ -72,7 +72,7 @@ namespace precariously {
 					
 					// create a radial crack and cut the world with it. note, to reduce tiny fragments
 					// we set a fairly high min surface area for the cut.
-
+					
 					double minSurfaceAreaThreshold = 64;
 					auto crack = make_shared<RadialCrackGeometry>(mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
 					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
@@ -96,50 +96,80 @@ namespace precariously {
 			
 		};
 		
+		class KeyboardDelegateComponent : public core::InputComponent {
+		public:
+			
+			typedef function<void(int keyCode)> KeyHandler;
+			
+		public:
+			KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes, const KeyHandler &keyUpHandler, const KeyHandler &keyDownHandler = KeyHandler()):
+			InputComponent(dispatchReceiptIndex),
+			_upHandler(keyUpHandler),
+			_downHandler(keyDownHandler)
+			{
+				monitorKeys(keycodes);
+			}
+			
+			void monitoredKeyDown( int keyCode ) override {
+				if (_downHandler) {
+					_downHandler(keyCode);
+				}
+			}
+			
+			void monitoredKeyUp( int keyCode ) override {
+				if (_upHandler) {
+					_upHandler(keyCode);
+				}
+			}
+			
+		private:
+			function<void(int keyCode)> _upHandler, _downHandler;
+		};
+		
 		
 	}
 	
-
+	
 	/*
 	 BackgroundRef _background;
 	 PlanetRef _planet;
 	 core::RadialGravitationCalculatorRef _gravity;
 	 */
-
+	
 	PrecariouslyLevel::PrecariouslyLevel():
 	Level("Unnamed") {}
-
+	
 	PrecariouslyLevel::~PrecariouslyLevel()
 	{}
-
+	
 	void PrecariouslyLevel::addObject(ObjectRef obj) {
 		Level::addObject(obj);
 	}
-
+	
 	void PrecariouslyLevel::removeObject(ObjectRef obj) {
 		Level::removeObject(obj);
 	}
-
+	
 	void PrecariouslyLevel::load(ci::DataSourceRef levelXmlData) {
-
+		
 		auto root = XmlTree(levelXmlData);
 		auto prefabsNode = root.getChild("prefabs");
 		auto levelNode = root.getChild("level");
-
+		
 		setName(levelNode.getAttribute("name").getValue());
 		
 		//
 		//	Load some basic level properties
 		//
-
+		
 		auto spaceNode = util::xml::findElement(levelNode, "space");
 		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <level> definition");
 		applySpaceAttributes(*spaceNode);
-
+		
 		//
 		//	Apply gravity
 		//
-
+		
 		for (const auto &childNode : levelNode.getChildren()) {
 			if (childNode->getTag() == "gravity") {
 				buildGravity(*childNode);
@@ -153,7 +183,7 @@ namespace precariously {
 		auto backgroundNode = util::xml::findElement(levelNode, "background");
 		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in level XML");
 		loadBackground(backgroundNode.value());
-
+		
 		//
 		//	Load Planet
 		//
@@ -164,31 +194,40 @@ namespace precariously {
 		
 		
 		if (true) {
-
+			
 			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
+			
+			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c },
+				[&](int keyCode){
+					switch(keyCode) {
+						case app::KeyEvent::KEY_c:
+							cullRubble();
+							break;
+				  }
+			})));
 			
 		}
 		
 	}
-
+	
 	void PrecariouslyLevel::onReady() {
 		Level::onReady();
 	}
-
+	
 	bool PrecariouslyLevel::onCollisionBegin(cpArbiter *arb) {
 		return true;
 	}
-
+	
 	bool PrecariouslyLevel::onCollisionPreSolve(cpArbiter *arb) {
 		return true;
 	}
-
+	
 	void PrecariouslyLevel::onCollisionPostSolve(cpArbiter *arb) {
 	}
-
+	
 	void PrecariouslyLevel::onCollisionSeparate(cpArbiter *arb) {
 	}
-
+	
 	void PrecariouslyLevel::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
 			double damping = util::xml::readNumericAttribute<double>(spaceNode, "damping", 0.95);
@@ -196,7 +235,7 @@ namespace precariously {
 			cpSpaceSetDamping(getSpace()->getSpace(), damping);
 		}
 	}
-
+	
 	void PrecariouslyLevel::buildGravity(XmlTree gravityNode) {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
@@ -246,6 +285,11 @@ namespace precariously {
 		if (_gravity) {
 			_gravity->setCenterOfMass(_planet->getOrigin());
 		}
+	}
+	
+	void PrecariouslyLevel::cullRubble() {
+		size_t count = _planet->getWorld()->cullDynamicGroups(128, 0.75);
+		CI_LOG_D("Culled " << count << " bits of rubble");
 	}
 	
 } // namespace surfacer

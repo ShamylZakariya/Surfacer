@@ -57,6 +57,8 @@ namespace precariously {
 		void buildGravity(XmlTree gravityNode);
 		void loadBackground(XmlTree planetNode);
 		void loadPlanet(XmlTree planetNode);
+		
+		void cullRubble();
 
 	private:
 
