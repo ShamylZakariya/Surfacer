@@ -358,6 +358,45 @@ namespace core {
 		 It becomes the responsibility of such mechanisms to dispatch their contacts to Level directly, here.
 		 */
 		virtual void registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb);
+		
+		struct query_nearest_result {
+			dvec2 point;
+			double distance;
+			cpShape *shape;
+			cpBody *body;
+			ObjectRef object;
+			
+			query_nearest_result():
+			distance(0),
+			shape(nullptr),
+			body(nullptr)
+			{}
+			
+			operator bool() const {
+				return shape != nullptr;
+			}
+		};
+		
+		query_nearest_result queryNearest(dvec2 point, cpShapeFilter filter, double maxDistance = INFINITY);
+		
+		struct query_segment_result {
+			dvec2 point;
+			dvec2 normal;
+			cpShape *shape;
+			cpBody *body;
+			ObjectRef object;
+			
+			query_segment_result():
+			shape(nullptr),
+			body(nullptr)
+			{}
+			
+			operator bool() const {
+				return shape != nullptr;
+			}
+		};
+		
+		query_segment_result querySegment(dvec2 a, dvec2 b, double radius, cpShapeFilter filter);
 
 	protected:
 

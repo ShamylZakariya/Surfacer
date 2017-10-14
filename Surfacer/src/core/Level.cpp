@@ -810,6 +810,41 @@ namespace core {
 		const auto ctp = addCollisionMonitor(a,b);
 		_contactHandlers[ctp].push_back(cb);
 	}
+	
+	void Level::registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb) {
+		collision_type_pair ctp(a, b);
+		_syntheticContacts[ctp].push_back(std::make_pair(ga, gb));
+	}
+	
+	Level::query_nearest_result Level::queryNearest(dvec2 point, cpShapeFilter filter, double maxDistance) {
+		query_nearest_result result;
+		
+		cpPointQueryInfo pointQueryInfo;
+		cpShape *shape = cpSpacePointQueryNearest(_space, cpv(point), maxDistance, filter, &pointQueryInfo);
+		if (shape) {
+			result.point = v2(pointQueryInfo.point);
+			result.distance = pointQueryInfo.distance;
+			result.shape = shape;
+			result.body = cpShapeGetBody(shape);
+			result.object = cpShapeGetObject(shape);
+		}
+		
+		return result;
+	}
+	
+	Level::query_segment_result Level::querySegment(dvec2 a, dvec2 b, double radius, cpShapeFilter filter) {
+		query_segment_result result;
+		cpSegmentQueryInfo info;
+		cpShape *shape = cpSpaceSegmentQueryFirst(_space, cpv(a), cpv(b), radius, filter, &info);
+		if (shape) {
+			result.point = v2(info.point);
+			result.normal = v2(info.normal);
+			result.shape = shape;
+			result.body = cpShapeGetBody(shape);
+			result.object = cpShapeGetObject(shape);
+		}
+		return result;
+	}
 
 	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
 		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
@@ -866,10 +901,4 @@ namespace core {
 		}
 		_syntheticContacts.clear();
 	}
-
-	void Level::registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb) {
-		collision_type_pair ctp(a, b);
-		_syntheticContacts[ctp].push_back(std::make_pair(ga, gb));
-	}
-	
 }
