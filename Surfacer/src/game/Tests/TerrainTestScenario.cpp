@@ -323,9 +323,6 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 	getViewportController()->setLook(vec2(0,0));
 	
-	cpSpaceSetGravity(getLevel()->getSpace()->getSpace(), cpv(0,-9.8 * 10));
-	
-	
 	const vec2 boxSize(50,50);
 	auto boxPos = [boxSize](float x, float y)->vec2 {
 		return vec2(x * boxSize.x + boxSize.x/2,y * boxSize.y + boxSize.y/2);

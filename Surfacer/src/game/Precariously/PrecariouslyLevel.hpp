@@ -59,6 +59,7 @@ namespace precariously {
 		void loadPlanet(XmlTree planetNode);
 		
 		void cullRubble();
+		void makeSleepersStatic();
 
 	private:
 

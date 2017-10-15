@@ -271,6 +271,13 @@ namespace terrain {
 		 Returns number of groups culled.
 		 */
 		size_t cullDynamicGroups(double minSurfaceArea, double portion = 1, const DynamicGroupVisitor &test = DynamicGroupVisitor());
+		
+		/**
+		 Gather DynamicGroups that have been sleeping for at least `minSleepTime (and if `test is provided, winnow to those who
+		 pass the test), then take the longest sleeping portion of that set and make them part of the static group.
+		 Think of this as a way of saying, "I want the rubble which has been still for a long time to become static environment"
+		 */
+		size_t makeSleepingDynamicGroupsStatic(core::seconds_t minSleepTime, double portion = 1, const DynamicGroupVisitor &test = DynamicGroupVisitor());
 
 		/**
 		 Get the Object which wraps this World for use in a Level
@@ -412,6 +419,7 @@ namespace terrain {
 		DynamicGroup(WorldRef world, material m, DrawDispatcher &dispatcher);
 		~DynamicGroup();
 
+		// GroupBase
 		string getName() const override;
 		cpBody* getBody() const override { return _body; }
 		cpBB getBB() const override { return _worldBB; }
@@ -427,6 +435,12 @@ namespace terrain {
 		void step(const core::time_state &timeState) override;
 		void update(const core::time_state &timeState) override;
 
+		// DynamicGroup
+		// return true iff the physics body is sleeping
+		bool isSleeping() const;
+		
+		// return the number of seconds that the body has been sleeping, or < 0 if it is awake
+		core::seconds_t getSleepDuration() const { return _sleepDuration; }
 
 	protected:
 		friend class World;
@@ -442,6 +456,7 @@ namespace terrain {
 		double _surfaceArea;
 		cpBB _worldBB, _modelBB;
 		dmat4 _modelMatrix, _inverseModelMatrix;
+		core::seconds_t _sleepDuration;
 
 		set<ShapeRef> _shapes;
 	};

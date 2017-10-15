@@ -430,17 +430,19 @@ namespace core {
 	_bodyVelocityFunc(cpBodyUpdateVelocity)
 	{
 		// some defaults
+		cpSpaceSetGravity(_space, cpvzero);
 		cpSpaceSetIterations( _space, 30 );
 		cpSpaceSetDamping( _space, 0.95 );
 		cpSpaceSetSleepTimeThreshold( _space, 1 );
+		cpSpaceSetIdleSpeedThreshold(_space, 0.05);
 		cpSpaceSetUserData(_space, this);
+		setCpBodyVelocityUpdateFunc(gravitationCalculatorVelocityFunc);
 
 		_spaceAccess = SpaceAccessRef(new SpaceAccess(_space, this));
 		_spaceAccess->bodyWasAddedToSpace.connect(this, &Level::onBodyAddedToSpace);
 		_spaceAccess->shapeWasAddedToSpace.connect(this, &Level::onShapeAddedToSpace);
 		_spaceAccess->constraintWasAddedToSpace.connect(this, &Level::onConstraintAddedToSpace);
 		
-		setCpBodyVelocityUpdateFunc(gravitationCalculatorVelocityFunc);
 	}
 
 	Level::~Level() {

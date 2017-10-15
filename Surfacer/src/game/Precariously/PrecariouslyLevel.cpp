@@ -172,11 +172,14 @@ namespace precariously {
 			
 			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
 			
-			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c },
+			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c, app::KeyEvent::KEY_s },
 				[&](int keyCode){
 					switch(keyCode) {
 						case app::KeyEvent::KEY_c:
 							cullRubble();
+							break;
+						case app::KeyEvent::KEY_s:
+							makeSleepersStatic();
 							break;
 				  }
 			})));
@@ -265,6 +268,11 @@ namespace precariously {
 	void PrecariouslyLevel::cullRubble() {
 		size_t count = _planet->getWorld()->cullDynamicGroups(128, 0.75);
 		CI_LOG_D("Culled " << count << " bits of rubble");
+	}
+	
+	void PrecariouslyLevel::makeSleepersStatic() {
+		size_t count = _planet->getWorld()->makeSleepingDynamicGroupsStatic(5, 0.75);
+		CI_LOG_D("Static'd " << count << " bits of sleeping rubble");
 	}
 	
 } // namespace surfacer

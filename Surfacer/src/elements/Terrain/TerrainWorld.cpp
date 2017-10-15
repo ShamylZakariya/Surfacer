@@ -577,6 +577,62 @@ namespace terrain {
 	
 		return 0;
 	}
+	
+	size_t World::makeSleepingDynamicGroupsStatic(core::seconds_t minSleepTime, double portion, const DynamicGroupVisitor &test) {
+		
+		// gather candidates
+		vector<DynamicGroupRef> sleeping;
+		for (const auto &group : _dynamicGroups) {
+			if (group->getSleepDuration() >= minSleepTime) {
+				if (!test || test(group)) {
+					sleeping.push_back(group);
+				}
+			}
+		}
+		
+		portion = saturate(portion);
+		size_t count = min(static_cast<size_t>(round(portion * sleeping.size())), sleeping.size());
+		
+		CI_LOG_D("found: " << sleeping.size() << " candidates, of which we'll make static: " << count);
+
+		if (!sleeping.empty() && count > 0) {
+			// sort our sleeping list such that the longest sleepers are first
+			std::sort(sleeping.begin(), sleeping.end(), [](const DynamicGroupRef &a, const DynamicGroupRef &b){
+				return a->getSleepDuration() > b->getSleepDuration();
+			});
+			
+			// remove them from the dynamic sets
+			for (size_t i = 0; i < count; i++) {
+				DynamicGroupRef sleeper = sleeping[i];
+				_dynamicGroups.erase(sleeper);
+				
+				const dmat4 mm = sleeper->getModelMatrix();
+				
+				// for each shape, create a copy using its contours and add to static group
+				// note: We can't just move a Shape across because, well, the Shape was dynamic
+				// and has a lot of baggage. We also need to use the model space contours and move them
+				// to world via the group's model matrix
+				for (const ShapeRef &shape : sleeper->getShapes()) {
+
+					PolyLine2d outerContour = shape->getOuterContour().model;
+					detail::transform(outerContour, mm);
+					
+					vector<PolyLine2d> holeContours;
+					for (const auto &hc : shape->getHoleContours()) {
+						holeContours.push_back(detail::transformed(hc.model, mm));
+					}
+
+					ShapeRef newShape = make_shared<Shape>(outerContour, holeContours);
+					_staticGroup->addShape(newShape,_worldMaterial.minSurfaceArea);
+				}
+			}
+			
+			return count;
+		}
+		
+		return 0;
+	}
+
 
 
 	ObjectRef World::getObject() const {
@@ -911,6 +967,7 @@ namespace terrain {
 	 double _surfaceArea;
 	 cpBB _worldBB, _modelBB;
 	 dmat4 _modelMatrix, _inverseModelMatrix;
+	 seconds_t _sleepDuration;
 	 
 	 set<ShapeRef> _shapes;
 	 */
@@ -924,7 +981,9 @@ namespace terrain {
 	_worldBB(cpBBInvalid),
 	_modelBB(cpBBInvalid),
 	_modelMatrix(1),
-	_inverseModelMatrix(1) {
+	_inverseModelMatrix(1),
+	_sleepDuration(-1)
+	{
 		_name = str(World::nextId());
 		_hash = hash<string>{}(_name);
 		_color = detail::next_random_color();
@@ -971,11 +1030,25 @@ namespace terrain {
 
 	void DynamicGroup::step(const time_state &timeState) {
 		syncToCpBody();
+		
+		if (cpBodyIsSleeping(_body)) {
+			if (_sleepDuration < 0) {
+				_sleepDuration = 0;
+			} else {
+				_sleepDuration += timeState.deltaT;
+			}
+		} else {
+			_sleepDuration = -1;
+		}
 	}
 
 	void DynamicGroup::update(const time_state &timeState) {
 	}
-
+	
+	bool DynamicGroup::isSleeping() const {
+		return cpBodyIsSleeping(_body);
+	}
+	
 	bool DynamicGroup::build(set<ShapeRef> shapes, const GroupBaseRef &parentGroup, double minShapeArea) {
 
 		set<ShapeRef> garbage;
@@ -1152,38 +1225,40 @@ namespace terrain {
 	}
 
 	void DynamicGroup::syncToCpBody() {
-		// extract position and rotation from body and apply to _modelMatrix
-		cpVect position = cpBodyGetPosition(_body);
-		cpVect rotation = cpBodyGetRotation(_body);
-		cpFloat angle = cpBodyGetAngle(_body);
-
-		// determine if we moved/rotated since last step
-		const cpFloat Epsilon = 1e-3;
-		bool moved = (cpvlengthsq(cpvsub(position, _position)) > Epsilon || abs(angle - _angle) > Epsilon);
-		_position = position;
-		_angle = angle;
-
-		// dmat4 - column major, each column is a vec4
-		_modelMatrix = dmat4(
-			vec4(rotation.x, rotation.y, 0, 0),
-			vec4(-rotation.y, rotation.x, 0, 0),
-			vec4(0,0,1,0),
-			vec4(position.x, position.y, 0, 1));
-
-		_inverseModelMatrix = glm::inverse(_modelMatrix);
-
-		// update our world BB
-		_worldBB = cpTransformbBB(getModelTransform(), _modelBB);
-
-		//
-		//	If this shape moved we need to mark our edges as dirty (so world space edges and bounds
-		//	can be correctly recomputed, and we need to notify the draw dispatcher
-		//
-		if (moved) {
-			DrawDispatcher &drawDispatcher = getDrawDispatcher();
-			for (auto &shape : _shapes) {
-				shape->_worldSpaceShapeContourEdgesDirty = true;
-				drawDispatcher.moved(shape);
+		if (!cpBodyIsSleeping(_body)) {
+			// extract position and rotation from body and apply to _modelMatrix
+			cpVect position = cpBodyGetPosition(_body);
+			cpVect rotation = cpBodyGetRotation(_body);
+			cpFloat angle = cpBodyGetAngle(_body);
+			
+			// determine if we moved/rotated since last step
+			const cpFloat Epsilon = 1e-3;
+			bool moved = (cpvlengthsq(cpvsub(position, _position)) > Epsilon || abs(angle - _angle) > Epsilon);
+			_position = position;
+			_angle = angle;
+			
+			// dmat4 - column major, each column is a vec4
+			_modelMatrix = dmat4(
+								 vec4(rotation.x, rotation.y, 0, 0),
+								 vec4(-rotation.y, rotation.x, 0, 0),
+								 vec4(0,0,1,0),
+								 vec4(position.x, position.y, 0, 1));
+			
+			_inverseModelMatrix = glm::inverse(_modelMatrix);
+			
+			// update our world BB
+			_worldBB = cpTransformbBB(getModelTransform(), _modelBB);
+			
+			//
+			//	If this shape moved we need to mark our edges as dirty (so world space edges and bounds
+			//	can be correctly recomputed, and we need to notify the draw dispatcher
+			//
+			if (moved) {
+				DrawDispatcher &drawDispatcher = getDrawDispatcher();
+				for (auto &shape : _shapes) {
+					shape->_worldSpaceShapeContourEdgesDirty = true;
+					drawDispatcher.moved(shape);
+				}
 			}
 		}
 	}
