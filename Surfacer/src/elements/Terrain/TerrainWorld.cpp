@@ -1008,6 +1008,13 @@ namespace terrain {
 		ss << ")";
 		return ss.str();
 	}
+	
+	Color DynamicGroup::getColor() const {
+		if (isSleeping()) {
+			return Color(0,0,0);
+		}
+		return GroupBase::getColor();
+	}
 
 	void DynamicGroup::releaseShapes() {
 		// remove shapes from draw dispatcher

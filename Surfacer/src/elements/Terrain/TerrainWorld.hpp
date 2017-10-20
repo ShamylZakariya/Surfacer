@@ -421,6 +421,7 @@ namespace terrain {
 
 		// GroupBase
 		string getName() const override;
+		Color getColor() const override;
 		cpBody* getBody() const override { return _body; }
 		cpBB getBB() const override { return _worldBB; }
 		dmat4 getModelMatrix() const override { return _modelMatrix; }
