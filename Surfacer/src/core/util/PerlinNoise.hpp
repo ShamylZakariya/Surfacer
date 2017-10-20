@@ -13,6 +13,7 @@
 
 #include "Common.hpp"
 #include "MathHelpers.hpp"
+#include "Xml.hpp"
 
 #include <cinder/Channel.h>
 
@@ -23,56 +24,28 @@ namespace core { namespace util {
 	 Implements a simple PerlinNoise algorithm with octaves, persistence and freqency scaling
 	 */
 	class PerlinNoise {
-	protected:
+	public:
 		
-		struct rng {
-			size_t _seed, _lo, _hi;
+		struct config {
+			size_t octaves;
+			double falloff;
+			double scale;
+			int seed;
 			
-			rng( void ):
-			_seed( 4357U ),
-			_lo( 4357U ),
-			_hi( 4357U )
+			config():
+			octaves(4),
+			falloff(0.5),
+			scale(1),
+			seed(123)
 			{}
 			
-			rng( const rng &c ):
-			_seed( c._seed ),
-			_lo( c._lo ),
-			_hi( c._hi )
-			{}
-			
-			rng & operator = ( const rng &rhs ) {
-				_seed = rhs._seed;
-				_lo = rhs._lo;
-				_hi = rhs._hi;
-				return *this;
-			}
-			
-			void seed( size_t s ) {
-				_seed = _lo = s;
-				_hi = ~s;
-			}
-			
-			int next( void ) {
-				_hi = ( _hi << 16 ) + ( _hi >> 16 );
-				_hi += _lo;
-				_lo += _hi;
-				
-				return static_cast<int>(_hi);
-			}
+			static config parse(xml::XmlMultiTree perlinConfigNode);
 		};
-		
-		size_t _octaves;
-		int _seed;
-		rng _rng;
-		double _persistence, _persistenceMax, _scale;
-		double *_octFrequency, *_octPersistence;
-		const int *_p;
-		int _offsetX, _offsetY, _offsetZ;
-		bool _initialized;
 		
 	public:
 		
 		PerlinNoise( size_t octaves = 4, double falloff = 0.5, double scale = 1, int seed = 123 );
+		PerlinNoise(const config &c);
 		PerlinNoise( const PerlinNoise & );
 		
 		~PerlinNoise( void ) {
@@ -143,7 +116,43 @@ namespace core { namespace util {
 			return _seed;
 		}
 		
-	protected:
+	private:
+		
+		struct rng {
+			size_t _seed, _lo, _hi;
+			
+			rng( void ):
+			_seed( 4357U ),
+			_lo( 4357U ),
+			_hi( 4357U )
+			{}
+			
+			rng( const rng &c ):
+			_seed( c._seed ),
+			_lo( c._lo ),
+			_hi( c._hi )
+			{}
+			
+			rng & operator = ( const rng &rhs ) {
+				_seed = rhs._seed;
+				_lo = rhs._lo;
+				_hi = rhs._hi;
+				return *this;
+			}
+			
+			void seed( size_t s ) {
+				_seed = _lo = s;
+				_hi = ~s;
+			}
+			
+			int next( void ) {
+				_hi = ( _hi << 16 ) + ( _hi >> 16 );
+				_hi += _lo;
+				_lo += _hi;
+				
+				return static_cast<int>(_hi);
+			}
+		};
 		
 		void octFreqPers( void ) {
 			delete [] _octFrequency;
@@ -225,6 +234,18 @@ namespace core { namespace util {
 			double v = h < 4 ? y : h==12||h==14 ? x : z;
 			return ((h&1) == 0 ? u : -u) + ((h&2) == 0 ? v : -v);
 		}
+		
+	private:
+		
+		size_t _octaves;
+		int _seed;
+		rng _rng;
+		double _persistence, _persistenceMax, _scale;
+		double *_octFrequency, *_octPersistence;
+		const int *_p;
+		int _offsetX, _offsetY, _offsetZ;
+		bool _initialized;
+
 		
 	};
 	

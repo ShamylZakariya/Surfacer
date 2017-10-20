@@ -10,10 +10,10 @@
 #include "PerlinNoise.hpp"
 
 namespace core { namespace util {
-
-namespace {
-
-	const int permutation[] = 
+	
+	namespace {
+		
+		const int permutation[] =
 		{
 			151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,
 			225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,
@@ -50,102 +50,123 @@ namespace {
 			176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,
 			67,29,24,72,243,141,128,195,78,66,215,61,156,180
 		};
-
-}
-
-/*
-		size_t _octaves;
-		int _seed;
-		rng _rng;
-		double _persistence, _persistenceMax, _scale;
-		double *_octFrequency, *_octPersistence;
-		const int *_p;
-		int _offsetX, _offsetY, _offsetZ;
-		bool _initialized;
-*/
-
-PerlinNoise::PerlinNoise( size_t octaves, double falloff, double scale, int seed ):
+		
+	}
+	
+	PerlinNoise::config PerlinNoise::config::parse(xml::XmlMultiTree perlinConfigNode) {
+		config c;
+		c.octaves = xml::readNumericAttribute<size_t>(perlinConfigNode, "octaves", c.octaves);
+		c.falloff = xml::readNumericAttribute<double>(perlinConfigNode, "falloff", c.falloff);
+		c.scale = xml::readNumericAttribute<double>(perlinConfigNode, "scale", c.scale);
+		c.seed = xml::readNumericAttribute<int>(perlinConfigNode, "seed", c.seed);
+		return c;
+	}
+	
+	
+	/*
+	 size_t _octaves;
+	 int _seed;
+	 rng _rng;
+	 double _persistence, _persistenceMax, _scale;
+	 double *_octFrequency, *_octPersistence;
+	 const int *_p;
+	 int _offsetX, _offsetY, _offsetZ;
+	 bool _initialized;
+	 */
+	
+	PerlinNoise::PerlinNoise( size_t octaves, double falloff, double scale, int seed ):
 	_octaves(octaves),
 	_seed(seed),
 	_persistence(saturate(falloff)),
 	_scale(scale),
-	_octFrequency(NULL),
-	_octPersistence(NULL),
+	_octFrequency(nullptr),
+	_octPersistence(nullptr),
 	_p( permutation ),
 	_initialized( false )
-{}
-
-PerlinNoise::PerlinNoise( const PerlinNoise &copy ):
+	{}
+	
+	PerlinNoise::PerlinNoise(const config &c):
+	_octaves(c.octaves),
+	_seed(c.seed),
+	_persistence(saturate(c.falloff)),
+	_scale(c.scale),
+	_octFrequency(nullptr),
+	_octPersistence(nullptr),
+	_p( permutation ),
+	_initialized( false )
+	{}
+	
+	PerlinNoise::PerlinNoise( const PerlinNoise &copy ):
 	_octaves( copy._octaves ),
 	_seed( copy._seed ),
 	_rng( copy._rng ),
 	_persistence( copy._persistence ),
 	_persistenceMax( copy._persistenceMax ),
 	_scale( copy._scale ),
-	_octFrequency(NULL), // this will be initted as normal
-	_octPersistence(NULL), // ditto
+	_octFrequency(nullptr), // this will be initted as normal
+	_octPersistence(nullptr), // ditto
 	_p( permutation ),
 	_initialized( false )
-{}
-
-PerlinNoise &
-PerlinNoise::operator = ( const PerlinNoise &copy ) {
-	_octaves = copy._octaves;
-	_seed = copy._seed;
-	_rng = copy._rng;
-	_persistence = copy._persistence;
-	_persistenceMax = copy._persistenceMax;
-	_scale = copy._scale;
-	_initialized = false;
+	{}
 	
-	delete [] _octFrequency;
-	delete [] _octPersistence;
-	_octFrequency = _octPersistence = NULL;
+	PerlinNoise &
+	PerlinNoise::operator = ( const PerlinNoise &copy ) {
+		_octaves = copy._octaves;
+		_seed = copy._seed;
+		_rng = copy._rng;
+		_persistence = copy._persistence;
+		_persistenceMax = copy._persistenceMax;
+		_scale = copy._scale;
+		_initialized = false;
+		
+		delete [] _octFrequency;
+		delete [] _octPersistence;
+		_octFrequency = _octPersistence = nullptr;
+		
+		return *this;
+	}
 	
-	return *this;
-}
-
 #pragma mark -
-
-ci::Channel32f fill( PerlinNoise &pn, const ivec2 &size, const ivec2 &offset, bool normalized ) {
-	ci::Channel32f channel( size.x, size.y );
-	fill( channel, pn, offset, normalized );
-	return channel;
-}
-
-void fill( ci::Channel32f &channel, PerlinNoise &pn, const ivec2 &offset, bool normalized ) {
-	ci::Channel32f::Iter iterator = channel.getIter();
 	
-	const double
+	ci::Channel32f fill( PerlinNoise &pn, const ivec2 &size, const ivec2 &offset, bool normalized ) {
+		ci::Channel32f channel( size.x, size.y );
+		fill( channel, pn, offset, normalized );
+		return channel;
+	}
+	
+	void fill( ci::Channel32f &channel, PerlinNoise &pn, const ivec2 &offset, bool normalized ) {
+		ci::Channel32f::Iter iterator = channel.getIter();
+		
+		const double
 		width = channel.getWidth(),
 		height = channel.getHeight(),
 		ox = offset.x,
 		oy = offset.y;
-
-	while( iterator.line() ) {
-		while( iterator.pixel() ) {
-			double 
+		
+		while( iterator.line() ) {
+			while( iterator.pixel() ) {
+				double
 				xf = ox + double( iterator.x() ) / width,
 				yf = oy + double( iterator.y() ) / height;
-
-			float v = float(normalized ? pn.noise(xf, yf, 1) : pn.noiseUnit(xf, yf, 1));
-			iterator.v() = v;
+				
+				float v = float(normalized ? pn.noise(xf, yf, 1) : pn.noiseUnit(xf, yf, 1));
+				iterator.v() = v;
+			}
 		}
+		
 	}
 	
-}
-
-void fill( std::vector< double > &data, PerlinNoise &pn, const int offset, bool normalized ) {
-	double 
+	void fill( std::vector< double > &data, PerlinNoise &pn, const int offset, bool normalized ) {
+		double
 		x = 0,
 		width = data.size(),
 		xInc = 1 / width;
-	
-	for ( std::vector< double >::iterator v( data.begin()), end( data.end()); v != end; ++v, x += xInc ) {
-		*v = normalized ? pn.noise(x) : pn.noiseUnit(x);
+		
+		for ( std::vector< double >::iterator v( data.begin()), end( data.end()); v != end; ++v, x += xInc ) {
+			*v = normalized ? pn.noise(x) : pn.noiseUnit(x);
+		}
 	}
-}
-
-
-
+	
+	
+	
 }} // end namespace core::util
