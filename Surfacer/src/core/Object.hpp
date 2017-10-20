@@ -310,11 +310,32 @@ namespace core {
 		}
 		
 		/**
+		 Create a non-specialized vanilla Object with some components. This is handy for if you
+		 have a simple set of component which needs to be added to a Level but not be on a complex thing.
+		 */
+		template <typename T>
+		static shared_ptr<T> create(string name, const initializer_list<ComponentRef> &components) {
+			auto obj = make_shared<T>(name);
+			for (auto &component : components) {
+				obj->addComponent(component);
+			}
+			
+			return obj;
+		}
+		
+		/**
 		 Create a non-specialized vanilla Object with a single component. This is handy for if you
 		 have a simple component which needs to be added to a Level.
 		 */
 		static ObjectRef with(string name, ComponentRef component) {
 			auto obj = make_shared<Object>(name);
+			obj->addComponent(component);
+			return obj;
+		}
+
+		template <typename T>
+		static shared_ptr<T> create(string name, ComponentRef component) {
+			auto obj = make_shared<T>(name);
 			obj->addComponent(component);
 			return obj;
 		}
