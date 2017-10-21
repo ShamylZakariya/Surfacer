@@ -26,4 +26,11 @@
 			noiseRoughness="0.1"
 		/>
 	</planet>
+	<cloudLayer>
+		<draw textureAtlas="precariously/textures/Circle.png" atlasType="None"/>
+		<simulation origin="0,0" radius="1100" count="500" period="300">
+			<generator octaves="8" falloff="0.5"/>
+			<particle minRadius="0" maxRadius="100" minRadiusNoiseValue="0.5"/>
+		</simulation>
+	</cloudLayer>
 </level>

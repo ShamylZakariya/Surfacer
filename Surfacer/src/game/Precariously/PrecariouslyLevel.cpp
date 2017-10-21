@@ -108,6 +108,7 @@ namespace precariously {
 	/*
 	 BackgroundRef _background;
 	 PlanetRef _planet;
+	 CloudLayerParticleSimulation _cloudLayerSimulation;
 	 core::RadialGravitationCalculatorRef _gravity;
 	 */
 	
@@ -157,7 +158,7 @@ namespace precariously {
 		
 		auto backgroundNode = util::xml::findElement(levelNode, "background");
 		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in level XML");
-		loadBackground(backgroundNode.value());
+		loadBackground(*backgroundNode);
 		
 		//
 		//	Load Planet
@@ -165,8 +166,16 @@ namespace precariously {
 		
 		auto planetNode = util::xml::findElement(levelNode, "planet");
 		CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
-		loadPlanet(planetNode.value());
+		loadPlanet(*planetNode);
 		
+		//
+		//	Load cloud layer
+		//
+		
+		auto cloudLayerNode = util::xml::findElement(levelNode, "cloudLayer");
+		if (cloudLayerNode) {
+			loadCloudLayer(*cloudLayerNode);
+		}
 		
 		if (true) {
 			
@@ -263,6 +272,12 @@ namespace precariously {
 		if (_gravity) {
 			_gravity->setCenterOfMass(_planet->getOrigin());
 		}
+	}
+	
+	void PrecariouslyLevel::loadCloudLayer(XmlTree cloudLayer) {
+		CloudLayerParticleSystem::config config = CloudLayerParticleSystem::config::parse(cloudLayer);
+		_cloudLayer = CloudLayerParticleSystem::create(config);
+		addObject(_cloudLayer);
 	}
 	
 	void PrecariouslyLevel::cullRubble() {

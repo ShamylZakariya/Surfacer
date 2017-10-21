@@ -520,10 +520,25 @@ void mat4WithPositionAndRotation( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &p
 	R[3] = glm::tvec4<T,P>(position.x, position.y, 0, 1);
 }
 
+template< class T, glm::precision P >
+void mat4WithPositionAndRotationAndScale( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &position, const glm::tvec2<T,P> &rotation, T scale )
+{
+	R[0] = glm::tvec4<T,P>(scale * rotation.x, scale * rotation.y, 0, 0);
+	R[1] = glm::tvec4<T,P>(scale * -rotation.y, scale * rotation.x, 0, 0);
+	R[2] = glm::tvec4<T,P>(0, 0, scale, 0);
+	R[3] = glm::tvec4<T,P>(position.x, position.y, 0, 1);
+}
+
 template< typename T, glm::precision P >
 void mat4WithPositionAndRotation( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &position, T rotation )
 {
 	mat4WithPositionAndRotation( R, position, glm::tvec2<T,P>( std::cos( rotation ), std::sin( rotation )));
+}
+
+template< typename T, glm::precision P >
+void mat4WithPositionAndRotationAndScale( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &position, T rotation, T scale )
+{
+	mat4WithPositionAndRotationAndScale( R, position, glm::tvec2<T,P>( std::cos( rotation ), std::sin( rotation )), scale);
 }
 
 template< typename T, glm::precision P >
