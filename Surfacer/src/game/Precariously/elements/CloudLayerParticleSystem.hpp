@@ -43,12 +43,14 @@ namespace precariously {
 			double radius;
 			core::seconds_t period;
 			size_t count;
+			double displacementForce;
 			
 			config():
 			origin(0,0),
 			radius(500),
 			period(1),
-			count(100)
+			count(100),
+			displacementForce(10)
 			{}
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);
@@ -66,18 +68,25 @@ namespace precariously {
 		size_t getFirstActive() const override { return 0; };
 		size_t getActiveCount() const override { return _storage.size(); }
 		cpBB getBB() const override { return _bb; }
-
+		
+		//CloudLayerParticleSimulation
+		
+		// adds a gravity to take into account when simulation cloud position. the gravity
+		// will be automatically discarded when it is finished		
+		void addGravityDisplacement(const core::RadialGravitationCalculatorRef &gravity);
 
 	protected:
 		
-		virtual void simulate();
+		virtual void simulate(const core::time_state &timeState);
+		void pruneDisplacements();
 
 	private:
-	
+		
 		config _config;
 		core::util::PerlinNoise _generator;
 		core::seconds_t _time;
 		cpBB _bb;
+		vector<core::RadialGravitationCalculatorRef> _displacements;
 	};
 	
 	class CloudLayerParticleSystemDrawComponent : public particles::ParticleSystemDrawComponent {

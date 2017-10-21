@@ -48,6 +48,7 @@ namespace precariously {
 
 		// Level
 		void onReady() override;
+		void update( const core::time_state &time ) override;
 		bool onCollisionBegin(cpArbiter *arb) override;
 		bool onCollisionPreSolve(cpArbiter *arb) override;
 		void onCollisionPostSolve(cpArbiter *arb) override;

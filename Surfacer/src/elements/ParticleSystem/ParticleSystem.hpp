@@ -61,18 +61,20 @@ namespace particles {
 	
 	
 	struct particle_state {
-		vec2		position;			// position in world coordinates
+		dvec2		position;			// base position in world coordinates
+		dvec2		displacement;		// if non-zero, the offset from base position in world coordinates
 		ci::ColorA	color;				// color of particle
-		float		radius;				// particle horizontal radius
-		float		xScale;
-		float		yScale;
-		float		angle;				// rotational angle
-		float		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
+		double		radius;				// particle horizontal radius
+		double		xScale;
+		double		yScale;
+		double		angle;				// rotational angle
+		double		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
 		size_t		idx;				// index for this particle, from 0 to N in terms of ParticleSimulation's storage
 		size_t		atlasIdx;			// index into the texture atlas
 		
 		particle_state():
 		position(0,0),
+		displacement(0,0),
 		color(1,1,1,1),
 		radius(0),
 		xScale(1),

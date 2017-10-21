@@ -32,6 +32,7 @@ namespace precariously {
 		c.radius = util::xml::readNumericAttribute<double>(node, "radius", c.radius);
 		c.count = util::xml::readNumericAttribute<size_t>(node, "count", c.count);
 		c.period = util::xml::readNumericAttribute<seconds_t>(node, "period", c.period);
+		c.displacementForce = util::xml::readNumericAttribute<double>(node, "displacementForce", c.displacementForce);
 		
 		return c;
 	}
@@ -55,26 +56,36 @@ namespace precariously {
 		// create store, and run simulate() once to populate
 		initialize(_config.count);
 
-		// set some invariants
+		// set some invariants and default state
+		double dr = 2 * M_PI / getActiveCount();
+		double a = 0;
 		auto pIt = _storage.begin();
-		for (size_t i = 0, N = getStorageSize(); i < N; i++, ++pIt) {
+		for (size_t i = 0, N = getStorageSize(); i < N; i++, ++pIt, a += dr) {
 			pIt->idx = i;
 			pIt->atlasIdx = 0;
 			pIt->xScale = 1;
 			pIt->yScale = 1;
 			pIt->color = ci::ColorA(1,1,1,1);
 			pIt->additivity = 0;
+			pIt->position = _config.origin + _config.radius * dvec2(cos(a), sin(a));
+			pIt->displacement = vec2(0,0);
 		}
 		
-		simulate();
+		simulate(level->getTimeState());
 	}
 	
 	void CloudLayerParticleSimulation::update(const core::time_state &timeState) {
 		_time += timeState.deltaT;
-		simulate();
+		simulate(timeState);
 	}
 	
-	void CloudLayerParticleSimulation::simulate() {
+	void CloudLayerParticleSimulation::addGravityDisplacement(const core::RadialGravitationCalculatorRef &gravity) {
+		_displacements.push_back(gravity);
+	}
+	
+	void CloudLayerParticleSimulation::simulate(const core::time_state &timeState) {
+		pruneDisplacements();
+		
 		// distribute particles in an even circle, and apply radius based on value of generator at a given angle
 		
 		double dr = 2 * M_PI / getActiveCount();
@@ -82,19 +93,33 @@ namespace precariously {
 		double particleRadiusDelta = _config.particle.maxRadius - _config.particle.minRadius;
 		double particleMinRadius = _config.particle.minRadius;
 		double radius = 0;
-		double positionRadius = _config.radius;
 		double noiseYAxis = _time / _config.period;
 		double noiseMin = _config.particle.minRadiusNoiseValue;
 		double rNoiseRange = 1.0 / (1.0 - noiseMin);
-		dvec2 origin = _config.origin;
-		dvec2 position;
 		cpBB bounds = cpBBInvalid;
 		
 		for (auto pIt = _storage.begin(), pEnd = _storage.end(); pIt != pEnd; ++pIt, a += dr) {
-			position.x = origin.x + positionRadius * cos(a);
-			position.y = origin.y + positionRadius * sin(a);
-			pIt->position = position;
-			pIt->angle = a;
+			
+			pIt->displacement *= 0.999;
+			
+			if (!_displacements.empty()) {
+				for (const auto &g : _displacements) {
+					auto force = g->calculate(pIt->position + pIt->displacement, g->getCenterOfMass(), g->getMagnitude(), 1);
+					pIt->displacement += _config.displacementForce * force.magnitude * force.dir * timeState.deltaT;
+				}
+			}
+			
+			// Adjust displacement to keep the clouds on their circle
+			if (lengthSquared(pIt->displacement) > 1e-2) {
+				dvec2 world = pIt->position + pIt->displacement;
+				dvec2 worldOnCircle = _config.origin + _config.radius * normalize(world - _config.origin);
+				pIt->displacement = worldOnCircle - pIt->position;
+				
+				pIt->angle = atan2(worldOnCircle.y, worldOnCircle.x);
+			} else {
+				pIt->angle = a;
+			}
+			
 
 			double noise = _generator.noiseUnit(a,noiseYAxis);
 			if (noise > noiseMin) {
@@ -103,12 +128,19 @@ namespace precariously {
 			} else {
 				radius = 0;
 			}
-			pIt->radius = radius;
-			bounds = cpBBExpand(bounds, position, radius);
+			pIt->radius = lrp(0.25, pIt->radius, radius);
+			bounds = cpBBExpand(bounds, pIt->position + pIt->displacement, pIt->radius);
 		}
 
 		_bb = bounds;
 	}
+	
+	void CloudLayerParticleSimulation::pruneDisplacements() {
+		_displacements.erase(std::remove_if(_displacements.begin(), _displacements.end(),[](const GravitationCalculatorRef &g){
+			return g->isFinished();
+		}), _displacements.end());
+	}
+
 	
 #pragma mark - CloudLayerParticleSystemDrawComponent
 	/*
@@ -163,7 +195,7 @@ namespace precariously {
 						   void main(void) {
 							   // controlled-additive-blending requires premultiplied alpha
 							   vec4 texColor = texture( uTex0, TexCoord0 );
-							   texColor.rgb *= texColor.a;
+//							   texColor.rgb *= texColor.a;
 
 							   oColor = texColor * uColor;
 						   }
@@ -175,7 +207,7 @@ namespace precariously {
 	
 	void CloudLayerParticleSystemDrawComponent::draw(const render_state &renderState) {
 		
-		mat4 MM;
+		dmat4 MM;
 
 		_config.textureAtlas->bind(0);
 		_shader->uniform("uTex0", 0);
@@ -192,7 +224,7 @@ namespace precariously {
 			
 			gl::pushModelMatrix();
 			
-			mat4WithPositionAndRotationAndScale(MM, ps.position, ps.angle, ps.radius);
+			mat4WithPositionAndRotationAndScale(MM, ps.position + ps.displacement, ps.angle, ps.radius);
 			gl::multModelMatrix(MM);
 			_batch->draw();
 			

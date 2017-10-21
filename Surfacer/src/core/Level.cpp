@@ -66,11 +66,15 @@ namespace core {
 	
 	// GravitationCalculator
 	GravitationCalculator::force RadialGravitationCalculator::calculate(const dvec2 &world) const {
-		dvec2 p_to_com = _centerOfMass - world;
+		return calculate(world, _centerOfMass, _magnitude, _falloffPower);
+	}
+	
+	GravitationCalculator::force RadialGravitationCalculator::calculate(const dvec2 &world, const dvec2 &centerOfMass, double magnitude, double falloffPower) const {
+		dvec2 p_to_com = centerOfMass - world;
 		double dist = length(p_to_com);
 		if (dist > 1e-5) {
 			p_to_com /= dist;
-			dvec2 g = p_to_com * (_magnitude / pow(dist, _falloffPower));
+			dvec2 g = p_to_com * (magnitude / pow(dist, falloffPower));
 			double f = length(g);
 			return force(g/f, f);
 		}

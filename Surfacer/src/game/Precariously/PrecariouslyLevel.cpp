@@ -54,9 +54,10 @@ namespace precariously {
 		class MouseBomberComponent : public core::InputComponent {
 		public:
 			
-			MouseBomberComponent(terrain::TerrainObjectRef terrain, dvec2 centerOfMass, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
+			MouseBomberComponent(terrain::TerrainObjectRef terrain, CloudLayerParticleSimulationRef cloudLayerSimulation, dvec2 centerOfMass, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
 			InputComponent(dispatchReceiptIndex),
 			_terrain(terrain),
+			_cloudLayerSimulation(cloudLayerSimulation),
 			_centerOfMass(centerOfMass),
 			_numSpokes(numSpokes),
 			_numRings(numRings),
@@ -82,8 +83,13 @@ namespace precariously {
 					if (auto r = getLevel()->queryNearest(mouseWorld, ShapeFilters::TERRAIN_PROBE)) {
 					
 						dvec2 origin = mouseWorld + _radius * normalize(_centerOfMass - r.point);
-						getLevel()->addGravity(ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5));
+						auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
+						getLevel()->addGravity(gravity);
 
+						if (_cloudLayerSimulation) {
+							_cloudLayerSimulation->addGravityDisplacement(gravity);
+						}
+						
 					}
 					
 					return true;
@@ -97,6 +103,7 @@ namespace precariously {
 			int _numSpokes, _numRings;
 			double _radius, _thickness, _variance;
 			terrain::TerrainObjectRef _terrain;
+			CloudLayerParticleSimulationRef _cloudLayerSimulation;
 			dvec2 _centerOfMass;
 			
 		};
@@ -179,7 +186,8 @@ namespace precariously {
 		
 		if (true) {
 			
-			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
+			CloudLayerParticleSimulationRef cls = _cloudLayer ? _cloudLayer->getSimulation<CloudLayerParticleSimulation>() : nullptr;
+			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, cls, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
 			
 			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c, app::KeyEvent::KEY_s },
 				[&](int keyCode){
@@ -199,6 +207,10 @@ namespace precariously {
 	
 	void PrecariouslyLevel::onReady() {
 		Level::onReady();
+	}
+	
+	void PrecariouslyLevel::update( const core::time_state &time ) {
+		Level::update(time);
 	}
 	
 	bool PrecariouslyLevel::onCollisionBegin(cpArbiter *arb) {

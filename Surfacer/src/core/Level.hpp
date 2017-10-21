@@ -104,6 +104,8 @@ namespace core {
 		// GravitationCalculator
 		force calculate(const dvec2 &world) const override;
 		
+		virtual force calculate(const dvec2 &world, const dvec2 &centerOfMass, double magnitude, double falloffPower) const;
+
 		void setCenterOfMass(dvec2 centerOfMass);
 		dvec2 getCenterOfMass() const { return _centerOfMass; }
 		
@@ -325,7 +327,7 @@ namespace core {
 		virtual vector<ObjectRef> getObjectsByName(string name) const;
 
 		const DrawDispatcherRef &getDrawDispatcher() const { return _drawDispatcher; }
-		const time_state &getTime() const { return _time; }
+		const time_state &getTimeState() const { return _time; }
 		ViewportRef getViewport() const;
 		ViewportControllerRef getViewportController() const;
 

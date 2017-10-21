@@ -4,9 +4,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## PRESENTLY
 
-* Make pieces smaller than some area threshold be deleted. Can do this as a property on terrain::World?
-* Implement a particle system for smoke and clouds. The clouds would orbit the planet, might respond to explosions. The smoke be for explosions.
-
+Need to optimize rendering of clouds. write many VAOs
 
 
 ## BUGS PRIORITY 0
