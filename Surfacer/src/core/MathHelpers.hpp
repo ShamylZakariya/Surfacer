@@ -512,6 +512,19 @@ inline bool isPow2( int n )
 }
 
 template< class T, glm::precision P >
+void mat2WithRotation( glm::tmat2x2<T,P> &R, const glm::tvec2<T,P> &rotation )
+{
+	R[0] = glm::tvec2<T,P>(rotation.x, rotation.y);
+	R[1] = glm::tvec2<T,P>(-rotation.y, rotation.x);
+}
+
+template< class T, glm::precision P >
+void mat2WithRotation( glm::tmat2x2<T,P> &R, T rotation )
+{
+	mat2WithRotation(R, glm::tvec2<T,P>( std::cos( rotation ), std::sin( rotation )));
+}
+
+template< class T, glm::precision P >
 void mat4WithPositionAndRotation( glm::tmat4x4<T,P> &R, const glm::tvec2<T,P> &position, const glm::tvec2<T,P> &rotation )
 {
 	R[0] = glm::tvec4<T,P>(rotation.x, rotation.y, 0, 0);
@@ -563,6 +576,8 @@ using ci::ivec4;
 using ci::vec4;
 using ci::dvec4;
 
+using ci::mat2;
+using ci::dmat2;
 using ci::mat4;
 using ci::dmat4;
 
