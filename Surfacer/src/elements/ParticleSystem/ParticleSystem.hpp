@@ -72,6 +72,7 @@ namespace particles {
 	struct particle_state {
 		dvec2		home;				// initial position of particle, emission point or "default" location
 		dvec2		position;			// base position in world coordinates
+		dvec2		previous_position;  // previous_position of particle
 		dvec2		velocity;			// velocity of particle in world space
 		ci::ColorA	color;				// color of particle
 		double		damping;			// damping of particle's velocity per timestep. 0 is no dsamping, 1 is completely zero velocity
@@ -86,6 +87,7 @@ namespace particles {
 		particle_state():
 		home(0,0),
 		position(0,0),
+		previous_position(0,0),
 		velocity(0,0),
 		color(1,1,1,1),
 		damping(0),

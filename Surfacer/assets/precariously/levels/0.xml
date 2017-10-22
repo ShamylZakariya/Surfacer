@@ -28,7 +28,7 @@
 	</planet>
 	<cloudLayer>
 		<draw textureAtlas="precariously/textures/CloudTop.png" atlasType="None"/>
-		<simulation origin="0,0" radius="1100" count="500" period="300" displacementForce="100">
+		<simulation origin="0,0" radius="1100" count="500" period="300" displacementForce="50" returnForce="2">
 			<generator octaves="4" falloff="0.5"/>
 			<particle minRadius="10" maxRadius="100" minRadiusNoiseValue="0.5"/>
 		</simulation>

@@ -44,13 +44,15 @@ namespace precariously {
 			core::seconds_t period;
 			size_t count;
 			double displacementForce;
+			double returnForce;
 			
 			config():
 			origin(0,0),
 			radius(500),
 			period(1),
 			count(100),
-			displacementForce(10)
+			displacementForce(10),
+			returnForce(32)
 			{}
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);
@@ -79,6 +81,7 @@ namespace precariously {
 		
 		virtual void simulate(const core::time_state &timeState);
 		void pruneDisplacements();
+		void applyGravityDisplacements(const core::time_state &timeState);
 
 	private:
 		

@@ -16,7 +16,7 @@ using namespace particles;
 
 namespace precariously {
 	
-	CloudLayerParticleSimulation::particle_template CloudLayerParticleSimulation::particle_template::parse(const core::util::xml::XmlMultiTree &node) {
+	CloudLayerParticleSimulation::particle_template CloudLayerParticleSimulation::particle_template::parse(const util::xml::XmlMultiTree &node) {
 		particle_template pt;
 		pt.minRadius = util::xml::readNumericAttribute<double>(node, "minRadius", pt.minRadius);
 		pt.maxRadius = util::xml::readNumericAttribute<double>(node, "maxRadius", pt.maxRadius);
@@ -25,7 +25,7 @@ namespace precariously {
 	}
 
 	
-	CloudLayerParticleSimulation::config CloudLayerParticleSimulation::config::parse(const core::util::xml::XmlMultiTree &node) {
+	CloudLayerParticleSimulation::config CloudLayerParticleSimulation::config::parse(const util::xml::XmlMultiTree &node) {
 		config c;
 		
 		c.generator = util::PerlinNoise::config::parse(node.getChild("generator"));
@@ -35,14 +35,15 @@ namespace precariously {
 		c.count = util::xml::readNumericAttribute<size_t>(node, "count", c.count);
 		c.period = util::xml::readNumericAttribute<seconds_t>(node, "period", c.period);
 		c.displacementForce = util::xml::readNumericAttribute<double>(node, "displacementForce", c.displacementForce);
-		
+		c.returnForce = util::xml::readNumericAttribute<double>(node, "returnForce", c.returnForce);
+
 		return c;
 	}
 
 	/*
 	 config _config;
-	 core::util::PerlinNoise _generator;
-	 core::seconds_t _time;
+	 util::PerlinNoise _generator;
+	 seconds_t _time;
 	 cpBB _bb;
 	 */
 	
@@ -52,7 +53,7 @@ namespace precariously {
 	_time(0)
 	{}
 
-	void CloudLayerParticleSimulation::onReady(core::ObjectRef parent, core::LevelRef level) {
+	void CloudLayerParticleSimulation::onReady(ObjectRef parent, LevelRef level) {
 		_generator.setScale(2*M_PI);
 		
 		// create store, and run simulate() once to populate
@@ -72,69 +73,91 @@ namespace precariously {
 			pIt->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
 			pIt->position = pIt->home;
 			pIt->velocity = dvec2(0,0);
-			pIt->damping = Rand::randFloat(0.01, 0.02);
+			pIt->damping = Rand::randFloat(0.4, 0.7);
 		}
 		
 		simulate(level->getTimeState());
 	}
 	
-	void CloudLayerParticleSimulation::update(const core::time_state &timeState) {
+	void CloudLayerParticleSimulation::update(const time_state &timeState) {
 		_time += timeState.deltaT;
 		simulate(timeState);
 	}
 	
-	void CloudLayerParticleSimulation::addGravityDisplacement(const core::RadialGravitationCalculatorRef &gravity) {
+	void CloudLayerParticleSimulation::addGravityDisplacement(const RadialGravitationCalculatorRef &gravity) {
 		_displacements.push_back(gravity);
 	}
 	
-	void CloudLayerParticleSimulation::simulate(const core::time_state &timeState) {
-		pruneDisplacements();
+	void CloudLayerParticleSimulation::simulate(const time_state &timeState) {
 		
-		// distribute particles in an even circle, and apply radius based on value of generator at a given angle
+		if (!_displacements.empty()) {
+			pruneDisplacements();
+			applyGravityDisplacements(timeState);
+		}
 		
-		double dr = 2 * M_PI / getActiveCount();
+		const double dr = 2 * M_PI / getActiveCount();
 		double a = 0;
-		double particleRadiusDelta = _config.particle.maxRadius - _config.particle.minRadius;
-		double particleMinRadius = _config.particle.minRadius;
-		double radius = 0;
-		double noiseYAxis = _time / _config.period;
-		double noiseMin = _config.particle.minRadiusNoiseValue;
-		double rNoiseRange = 1.0 / (1.0 - noiseMin);
+		const double cloudLayerRadius = _config.radius;
+		const double cloudLayerRadius2 = cloudLayerRadius * cloudLayerRadius;
+		const double particleRadiusDelta = _config.particle.maxRadius - _config.particle.minRadius;
+		const double particleMinRadius = _config.particle.minRadius;
+		const double noiseYAxis = _time / _config.period;
+		const double noiseMin = _config.particle.minRadiusNoiseValue;
+		const double rNoiseRange = 1.0 / (1.0 - noiseMin);
+		const double returnForce = _config.returnForce;
+		const double deltaT2 = timeState.deltaT * timeState.deltaT;
+		const dvec2 origin = _config.origin;
 		cpBB bounds = cpBBInvalid;
 		
 		for (auto pIt = _storage.begin(), pEnd = _storage.end(); pIt != pEnd; ++pIt, a += dr) {
 
-			// move towards home
-			pIt->position = lrp(0.01, pIt->position, pIt->home);
+			//
+			// simplistic verlet integration
+			//
 
-			dvec2 displacement = pIt->position - pIt->home;
-			if (!_displacements.empty()) {
-				for (const auto &g : _displacements) {
-					auto force = g->calculate(pIt->home + displacement, g->getCenterOfMass(), g->getMagnitude(), 1);
-					displacement += _config.displacementForce * force.magnitude * force.dir * timeState.deltaT;
-				}
+			pIt->velocity = (pIt->position - pIt->previous_position) * pIt->damping;
+			pIt->previous_position = pIt->position;
+			
+			dvec2 acceleration = (pIt->home - pIt->position) * returnForce;
+			pIt->position += pIt->velocity + (acceleration * deltaT2);
+			
+			//
+			// move position back to circle
+			//
+
+			dvec2 dirToPosition = pIt->position - origin;
+			double d2 = lengthSquared(dirToPosition);
+			if (d2 < cloudLayerRadius2 - 1e-1 || d2 > cloudLayerRadius2 + 1e-1) {
+				dirToPosition /= sqrt(d2);
+				pIt->position = origin + cloudLayerRadius * dirToPosition;
 			}
 			
-			// Adjust displacement to keep the clouds on their circle
-			if (lengthSquared(displacement) > 1e-2) {
-				dvec2 world = pIt->home + displacement;
-				dvec2 worldOnCircle = _config.origin + _config.radius * normalize(world - _config.origin);
-				pIt->position = worldOnCircle;
-				
-				pIt->angle = M_PI_2 + atan2(worldOnCircle.y, worldOnCircle.x);
+			//
+			//	Update rotation of particle
+			//
+
+			if (lengthSquared(pIt->position - pIt->home) > 1e-2) {
+				pIt->angle = M_PI_2 + atan2(pIt->position.y, pIt->position.x);
 			} else {
 				pIt->angle = M_PI_2 + a;
 			}
-			
 
+			//
+			// update particle radius based radial position and time
+			//
+			
 			double noise = _generator.noiseUnit(a,noiseYAxis);
+			double radius = 0;
 			if (noise > noiseMin) {
 				double remappedNoiseVale = (noise - noiseMin) * rNoiseRange;
 				radius = particleMinRadius + remappedNoiseVale * particleRadiusDelta;
-			} else {
-				radius = 0;
 			}
 			pIt->radius = lrp(0.25, pIt->radius, radius);
+			
+			//
+			//	Update bounds
+			//
+
 			bounds = cpBBExpand(bounds, pIt->position, pIt->radius);
 		}
 
@@ -145,6 +168,18 @@ namespace precariously {
 		_displacements.erase(std::remove_if(_displacements.begin(), _displacements.end(),[](const GravitationCalculatorRef &g){
 			return g->isFinished();
 		}), _displacements.end());
+	}
+	
+	void CloudLayerParticleSimulation::applyGravityDisplacements(const time_state &timeState) {
+		for (const auto &g : _displacements) {
+			dvec2 centerOfMass = g->getCenterOfMass();
+			double magnitude = -1 * g->getMagnitude() * timeState.deltaT * _config.displacementForce;
+			for (auto pIt = _storage.begin(), pEnd = _storage.end(); pIt != pEnd; ++pIt) {
+				dvec2 dir = pIt->position - centerOfMass;
+				double d2 = length2(dir);
+				pIt->position += magnitude * dir / d2;
+			}
+		}
 	}
 
 	
@@ -157,7 +192,7 @@ namespace precariously {
 	 gl::BatchRef _particlesBatch;
 	 */
 	
-	CloudLayerParticleSystemDrawComponent::config CloudLayerParticleSystemDrawComponent::config::parse(const core::util::xml::XmlMultiTree &node) {
+	CloudLayerParticleSystemDrawComponent::config CloudLayerParticleSystemDrawComponent::config::parse(const util::xml::XmlMultiTree &node) {
 		config c = ParticleSystemDrawComponent::config::parse(node);
 		
 		auto textureName = node.getAttribute("textureAtlas");
@@ -344,7 +379,7 @@ namespace precariously {
 
 #pragma mark - CloudLayerParticleSystem
 	
-	CloudLayerParticleSystem::config CloudLayerParticleSystem::config::parse(const core::util::xml::XmlMultiTree &node) {
+	CloudLayerParticleSystem::config CloudLayerParticleSystem::config::parse(const util::xml::XmlMultiTree &node) {
 		config c;
 		c.drawConfig = CloudLayerParticleSystemDrawComponent::config::parse(node.getChild("draw"));
 		c.simulationConfig = CloudLayerParticleSimulation::config::parse(node.getChild("simulation"));
