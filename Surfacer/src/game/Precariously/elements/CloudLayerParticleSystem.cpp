@@ -9,6 +9,8 @@
 
 #include "PrecariouslyConstants.hpp"
 
+#include <cinder/Rand.h>
+
 using namespace core;
 using namespace particles;
 
@@ -67,8 +69,10 @@ namespace precariously {
 			pIt->yScale = 1;
 			pIt->color = ci::ColorA(1,1,1,1);
 			pIt->additivity = 0;
-			pIt->position = _config.origin + _config.radius * dvec2(cos(a), sin(a));
-			pIt->displacement = vec2(0,0);
+			pIt->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
+			pIt->position = pIt->home;
+			pIt->velocity = dvec2(0,0);
+			pIt->damping = Rand::randFloat(0.01, 0.02);
 		}
 		
 		simulate(level->getTimeState());
@@ -99,21 +103,23 @@ namespace precariously {
 		cpBB bounds = cpBBInvalid;
 		
 		for (auto pIt = _storage.begin(), pEnd = _storage.end(); pIt != pEnd; ++pIt, a += dr) {
-			
-			pIt->displacement *= 0.999;
-			
+
+			// move towards home
+			pIt->position = lrp(0.01, pIt->position, pIt->home);
+
+			dvec2 displacement = pIt->position - pIt->home;
 			if (!_displacements.empty()) {
 				for (const auto &g : _displacements) {
-					auto force = g->calculate(pIt->position + pIt->displacement, g->getCenterOfMass(), g->getMagnitude(), 1);
-					pIt->displacement += _config.displacementForce * force.magnitude * force.dir * timeState.deltaT;
+					auto force = g->calculate(pIt->home + displacement, g->getCenterOfMass(), g->getMagnitude(), 1);
+					displacement += _config.displacementForce * force.magnitude * force.dir * timeState.deltaT;
 				}
 			}
 			
 			// Adjust displacement to keep the clouds on their circle
-			if (lengthSquared(pIt->displacement) > 1e-2) {
-				dvec2 world = pIt->position + pIt->displacement;
+			if (lengthSquared(displacement) > 1e-2) {
+				dvec2 world = pIt->home + displacement;
 				dvec2 worldOnCircle = _config.origin + _config.radius * normalize(world - _config.origin);
-				pIt->displacement = worldOnCircle - pIt->position;
+				pIt->position = worldOnCircle;
 				
 				pIt->angle = M_PI_2 + atan2(worldOnCircle.y, worldOnCircle.x);
 			} else {
@@ -129,7 +135,7 @@ namespace precariously {
 				radius = 0;
 			}
 			pIt->radius = lrp(0.25, pIt->radius, radius);
-			bounds = cpBBExpand(bounds, pIt->position + pIt->displacement, pIt->radius);
+			bounds = cpBBExpand(bounds, pIt->position, pIt->radius);
 		}
 
 		_bb = bounds;
@@ -290,39 +296,39 @@ namespace precariously {
 			//	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
 			//
 			
-			vec2 worldPosition = vec2(particle->position + particle->displacement);
+			vec2 position = vec2(particle->position);
 			ci::ColorA pc = particle->color;
 			ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(particle->additivity)));
 			vec2 atlasOffset = AtlasOffsets[particle->atlasIdx];
 			
 			// GL_TRIANGLE
-			vertex->position = worldPosition + shape[0];
+			vertex->position = position + shape[0];
 			vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
 			vertex->color = additiveColor;
 			++vertex;
 
-			vertex->position = worldPosition + shape[1];
+			vertex->position = position + shape[1];
 			vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
 			vertex->color = additiveColor;
 			++vertex;
 
-			vertex->position = worldPosition + shape[2];
+			vertex->position = position + shape[2];
 			vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
 			vertex->color = additiveColor;
 			++vertex;
 			
 			// GL_TRIANGLE
-			vertex->position = worldPosition + shape[0];
+			vertex->position = position + shape[0];
 			vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
 			vertex->color = additiveColor;
 			++vertex;
 			
-			vertex->position = worldPosition + shape[2];
+			vertex->position = position + shape[2];
 			vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
 			vertex->color = additiveColor;
 			++vertex;
 			
-			vertex->position = worldPosition + shape[3];
+			vertex->position = position + shape[3];
 			vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
 			vertex->color = additiveColor;
 			++vertex;

@@ -70,9 +70,11 @@ namespace particles {
 	
 	
 	struct particle_state {
+		dvec2		home;				// initial position of particle, emission point or "default" location
 		dvec2		position;			// base position in world coordinates
-		dvec2		displacement;		// if non-zero, the offset from base position in world coordinates
+		dvec2		velocity;			// velocity of particle in world space
 		ci::ColorA	color;				// color of particle
+		double		damping;			// damping of particle's velocity per timestep. 0 is no dsamping, 1 is completely zero velocity
 		double		radius;				// particle horizontal radius
 		double		xScale;
 		double		yScale;
@@ -82,9 +84,11 @@ namespace particles {
 		size_t		atlasIdx;			// index into the texture atlas
 		
 		particle_state():
+		home(0,0),
 		position(0,0),
-		displacement(0,0),
+		velocity(0,0),
 		color(1,1,1,1),
+		damping(0),
 		radius(0),
 		xScale(1),
 		yScale(1),
