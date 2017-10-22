@@ -64,7 +64,7 @@ namespace precariously {
 		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		void update(const core::time_state &timeState) override;
 
-		bool rotatesParticles() const override { return false; }
+		bool rotatesParticles() const override { return true; }
 		size_t getFirstActive() const override { return 0; };
 		size_t getActiveCount() const override { return _storage.size(); }
 		cpBB getBB() const override { return _bb; }
@@ -112,14 +112,27 @@ namespace precariously {
 		CloudLayerParticleSystemDrawComponent(config c);
 		
 		// ParticleSystemDrawComponent
+		void setSimulation(const particles::ParticleSimulationRef simulation) override;
 		void draw(const core::render_state &renderState) override;
 		int getLayer() const override;
 
 	private:
 		
+		void updateParticles();
+		
+		struct particle_vertex {
+			vec2 position;
+			vec2 texCoord;
+			ci::ColorA color;
+			
+			particle_vertex(){}
+		};
+		
 		config _config;
 		gl::GlslProgRef _shader;
-		gl::BatchRef _batch;
+		vector<particle_vertex> _particles;
+		gl::VboRef _particlesVbo;
+		gl::BatchRef _particlesBatch;
 		
 	};
 	

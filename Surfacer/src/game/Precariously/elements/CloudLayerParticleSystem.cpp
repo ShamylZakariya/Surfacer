@@ -115,9 +115,9 @@ namespace precariously {
 				dvec2 worldOnCircle = _config.origin + _config.radius * normalize(world - _config.origin);
 				pIt->displacement = worldOnCircle - pIt->position;
 				
-				pIt->angle = atan2(worldOnCircle.y, worldOnCircle.x);
+				pIt->angle = M_PI_2 + atan2(worldOnCircle.y, worldOnCircle.x);
 			} else {
-				pIt->angle = a;
+				pIt->angle = M_PI_2 + a;
 			}
 			
 
@@ -145,9 +145,10 @@ namespace precariously {
 #pragma mark - CloudLayerParticleSystemDrawComponent
 	/*
 	 config _config;
-	 gl::Texture2dRef _textureAtlas;
 	 gl::GlslProgRef _shader;
-	 gl::BatchRef _batch;
+	 vector<particle_vertex> _particles;
+	 gl::VboRef _particlesVbo;
+	 gl::BatchRef _particlesBatch;
 	 */
 	
 	CloudLayerParticleSystemDrawComponent::config CloudLayerParticleSystemDrawComponent::config::parse(const core::util::xml::XmlMultiTree &node) {
@@ -172,68 +173,167 @@ namespace precariously {
 	{
 		auto vsh = CI_GLSL(150,
 						   uniform mat4 ciModelViewProjection;
-						   
+
 						   in vec4 ciPosition;
 						   in vec2 ciTexCoord0;
-						   
-						   out vec2 TexCoord0;
-						   
+						   in vec4 ciColor;
+
+						   out vec2 TexCoord;
+						   out vec4 Color;
+
 						   void main(void){
 							   gl_Position = ciModelViewProjection * ciPosition;
-							   TexCoord0 = ciTexCoord0;
+							   TexCoord = ciTexCoord0;
+							   Color = ciColor;
 						   }
 						   );
-		
+
 		auto fsh = CI_GLSL(150,
-						   uniform vec4 uColor;
 						   uniform sampler2D uTex0;
 
-						   in vec2 TexCoord0;
-						   
+						   in vec2 TexCoord;
+						   in vec4 Color;
+
 						   out vec4 oColor;
-						   
+
 						   void main(void) {
 							   // controlled-additive-blending requires premultiplied alpha
-							   vec4 texColor = texture( uTex0, TexCoord0 );
-//							   texColor.rgb *= texColor.a;
-
-							   oColor = texColor * uColor;
+							   // but our texture appears to already be premultiplied after load
+							   vec4 texColor = texture( uTex0, TexCoord );
+							   oColor = texColor * Color;
 						   }
 						   );
-		
+
 		_shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
-		_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)).texCoords(vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,0)), _shader);
 	}
 	
-	void CloudLayerParticleSystemDrawComponent::draw(const render_state &renderState) {
+	void CloudLayerParticleSystemDrawComponent::setSimulation(const ParticleSimulationRef simulation) {
+		ParticleSystemDrawComponent::setSimulation(simulation);
+		auto sim = getSimulation<CloudLayerParticleSimulation>();
 		
-		dmat4 MM;
+		// now build our GPU backing. Note, GL_QUADS is deprecated so we need GL_TRIANGLES, which requires 6 vertices to make a quad
+		size_t count = sim->getActiveCount();
+		_particles.resize(count * 6, particle_vertex());
+		
+		updateParticles();
+		
+		// create VBO GPU-side which we can stream to
+		_particlesVbo = gl::Vbo::create( GL_ARRAY_BUFFER, _particles, GL_STREAM_DRAW );
 
-		_config.textureAtlas->bind(0);
-		_shader->uniform("uTex0", 0);
+		geom::BufferLayout particleLayout;
+		particleLayout.append( geom::Attrib::POSITION, 2, sizeof( particle_vertex ), offsetof( particle_vertex, position ) );
+		particleLayout.append( geom::Attrib::TEX_COORD_0, 2, sizeof( particle_vertex ), offsetof( particle_vertex, texCoord ) );
+		particleLayout.append( geom::Attrib::COLOR, 4, sizeof( particle_vertex ), offsetof( particle_vertex, color ) );
+
+		// pair our layout with vbo.
+		auto mesh = gl::VboMesh::create( static_cast<uint32_t>(_particles.size()), GL_TRIANGLES, { { particleLayout, _particlesVbo } } );
+		_particlesBatch = gl::Batch::create( mesh, _shader );
+	}
+
+	
+	void CloudLayerParticleSystemDrawComponent::draw(const render_state &renderState) {
+		updateParticles();
 		
-		for (auto &ps : getParticleSimulation()->getStorage()) {
-			
-			// controlled-additive blending
-			ci::ColorA c = ps.color;
-			c.r *= c.a;
-			c.g *= c.a;
-			c.b *= c.a;
-			c.a *= 1 - ps.additivity;
-			_shader->uniform("uColor", c);
-			
-			gl::pushModelMatrix();
-			
-			mat4WithPositionAndRotationAndScale(MM, ps.position + ps.displacement, ps.angle, ps.radius);
-			gl::multModelMatrix(MM);
-			_batch->draw();
-			
-			gl::popModelMatrix();
-		}
+		gl::ScopedTextureBind tex(_config.textureAtlas, 0);
+		gl::ScopedBlendPremult blender;
+
+		_particlesBatch->draw();
 	}
 
 	int CloudLayerParticleSystemDrawComponent::getLayer() const {
 		return DrawLayers::EFFECTS;
+	}
+	
+	void CloudLayerParticleSystemDrawComponent::updateParticles() {
+
+		// walk the simulation particle state and write to our vertices
+		ParticleSimulationRef sim = getSimulation();
+		const bool Rotates = sim->rotatesParticles();
+		
+		const ParticleAtlasType::Type AtlasType = _config.atlasType;
+		const vec2* AtlasOffsets = ParticleAtlasType::AtlasOffsets(AtlasType);
+		const float AtlasScaling = ParticleAtlasType::AtlasScaling(AtlasType);
+
+		vec2 shape[4];
+		mat2 rotator;
+		auto vertex = _particles.begin();
+		
+		for (auto particle = sim->getStorage().begin(), end = sim->getStorage().end(); particle != end; ++particle) {
+			const float Radius = particle->radius,
+				XScale = Radius * particle->xScale,
+				YScale = Radius * particle->yScale;
+			
+			// TODO: Fast path for when particle Radius == 0 - just pack everything into particle->position
+			
+			shape[0].x = -XScale;
+			shape[0].y = +YScale;
+			
+			shape[1].x = +XScale;
+			shape[1].y = +YScale;
+			
+			shape[2].x = +XScale;
+			shape[2].y = -YScale;
+			
+			shape[3].x = -XScale;
+			shape[3].y = -YScale;
+			
+			if (Rotates) {
+				mat2WithRotation(rotator, static_cast<float>(particle->angle));
+				shape[0] = rotator * shape[0];
+				shape[1] = rotator * shape[1];
+				shape[2] = rotator * shape[2];
+				shape[3] = rotator * shape[3];
+			}
+			
+			//
+			//	For each vertex, assign position, color and texture coordinate
+			//	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
+			//
+			
+			vec2 worldPosition = vec2(particle->position + particle->displacement);
+			ci::ColorA pc = particle->color;
+			ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(particle->additivity)));
+			vec2 atlasOffset = AtlasOffsets[particle->atlasIdx];
+			
+			// GL_TRIANGLE
+			vertex->position = worldPosition + shape[0];
+			vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
+			vertex->color = additiveColor;
+			++vertex;
+
+			vertex->position = worldPosition + shape[1];
+			vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
+			vertex->color = additiveColor;
+			++vertex;
+
+			vertex->position = worldPosition + shape[2];
+			vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
+			vertex->color = additiveColor;
+			++vertex;
+			
+			// GL_TRIANGLE
+			vertex->position = worldPosition + shape[0];
+			vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
+			vertex->color = additiveColor;
+			++vertex;
+			
+			vertex->position = worldPosition + shape[2];
+			vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
+			vertex->color = additiveColor;
+			++vertex;
+			
+			vertex->position = worldPosition + shape[3];
+			vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
+			vertex->color = additiveColor;
+			++vertex;
+		}
+		
+		if (_particlesVbo) {
+			// transfer to GPU
+			void *gpuMem = _particlesVbo->mapReplace();
+			memcpy( gpuMem, _particles.data(), _particles.size() * sizeof(particle_vertex) );
+			_particlesVbo->unmap();
+		}
 	}
 
 #pragma mark - CloudLayerParticleSystem

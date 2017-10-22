@@ -17,6 +17,12 @@ namespace particles {
 	SMART_PTR(ParticleSystem);
 	SMART_PTR(ParticleSystemDrawComponent);
 	
+#pragma mark -
+		
+	const extern vec2 TexCoords[4];
+		
+#pragma mark -
+	
 	/**
 	 particle Atlas Types
 	 
@@ -55,6 +61,9 @@ namespace particles {
 		
 		extern Type fromString(std::string typeStr);
 		extern std::string toString(Type t);
+		
+		extern const vec2* AtlasOffsets(Type atlasType);
+		extern float AtlasScaling(Type atlasType);
 		
 	}
 	
@@ -169,9 +178,12 @@ namespace particles {
 
 		// ParticleSystemDrawComponent
 		const config &getConfig() const { return _config; }
-		virtual void setParticleSimulation(const ParticleSimulationRef simulation) { _simulation = simulation; }
-		ParticleSimulationRef getParticleSimulation() const { return _simulation.lock(); }
-		
+		virtual void setSimulation(const ParticleSimulationRef simulation) { _simulation = simulation; }
+		ParticleSimulationRef getSimulation() const { return _simulation.lock(); }
+
+		template<typename T>
+		shared_ptr<T> getSimulation() const { return dynamic_pointer_cast<T>(_simulation.lock()); }
+
 	private:
 		
 		ParticleSimulationWeakRef _simulation;
