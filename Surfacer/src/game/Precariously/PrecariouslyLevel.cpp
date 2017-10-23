@@ -54,10 +54,10 @@ namespace precariously {
 		class MouseBomberComponent : public core::InputComponent {
 		public:
 			
-			MouseBomberComponent(terrain::TerrainObjectRef terrain, CloudLayerParticleSimulationRef cloudLayerSimulation, dvec2 centerOfMass, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
+			MouseBomberComponent(terrain::TerrainObjectRef terrain, vector<CloudLayerParticleSimulationRef> cloudLayerSimulations, dvec2 centerOfMass, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
 			InputComponent(dispatchReceiptIndex),
 			_terrain(terrain),
-			_cloudLayerSimulation(cloudLayerSimulation),
+			_cloudLayerSimulations(cloudLayerSimulations),
 			_centerOfMass(centerOfMass),
 			_numSpokes(numSpokes),
 			_numRings(numRings),
@@ -86,8 +86,8 @@ namespace precariously {
 						auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
 						getLevel()->addGravity(gravity);
 
-						if (_cloudLayerSimulation) {
-							_cloudLayerSimulation->addGravityDisplacement(gravity);
+						for (auto &cls : _cloudLayerSimulations) {
+							cls->addGravityDisplacement(gravity);
 						}
 						
 					}
@@ -103,7 +103,7 @@ namespace precariously {
 			int _numSpokes, _numRings;
 			double _radius, _thickness, _variance;
 			terrain::TerrainObjectRef _terrain;
-			CloudLayerParticleSimulationRef _cloudLayerSimulation;
+			vector<CloudLayerParticleSimulationRef> _cloudLayerSimulations;
 			dvec2 _centerOfMass;
 			
 		};
@@ -176,17 +176,29 @@ namespace precariously {
 		loadPlanet(*planetNode);
 		
 		//
-		//	Load cloud layer
+		//	Load cloud layers
 		//
-		
-		auto cloudLayerNode = util::xml::findElement(levelNode, "cloudLayer");
+
+		auto cloudLayerNode = util::xml::findElement(levelNode, "cloudLayer", "id", "background");
 		if (cloudLayerNode) {
-			loadCloudLayer(*cloudLayerNode);
+			_backgroundCloudLayer = loadCloudLayer(*cloudLayerNode, DrawLayers::PLANET - 1);
 		}
+
+		cloudLayerNode = util::xml::findElement(levelNode, "cloudLayer", "id", "foreground");
+		if (cloudLayerNode) {
+			_foregroundCloudLayer = loadCloudLayer(*cloudLayerNode, DrawLayers::EFFECTS);
+		}
+
 		
 		if (true) {
 			
-			CloudLayerParticleSimulationRef cls = _cloudLayer ? _cloudLayer->getSimulation<CloudLayerParticleSimulation>() : nullptr;
+			vector<CloudLayerParticleSimulationRef> cls;
+			if (_foregroundCloudLayer) {
+				cls.push_back(_foregroundCloudLayer->getSimulation<CloudLayerParticleSimulation>());
+			}
+			if (_backgroundCloudLayer) {
+				cls.push_back(_backgroundCloudLayer->getSimulation<CloudLayerParticleSimulation>());
+			}
 			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, cls, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
 			
 			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c, app::KeyEvent::KEY_s },
@@ -286,10 +298,12 @@ namespace precariously {
 		}
 	}
 	
-	void PrecariouslyLevel::loadCloudLayer(XmlTree cloudLayer) {
+	CloudLayerParticleSystemRef PrecariouslyLevel::loadCloudLayer(XmlTree cloudLayer, int drawLayer) {
 		CloudLayerParticleSystem::config config = CloudLayerParticleSystem::config::parse(cloudLayer);
-		_cloudLayer = CloudLayerParticleSystem::create(config);
-		addObject(_cloudLayer);
+		config.drawConfig.drawLayer = drawLayer;
+		auto cl = CloudLayerParticleSystem::create(config);
+		addObject(cl);
+		return cl;
 	}
 	
 	void PrecariouslyLevel::cullRubble() {

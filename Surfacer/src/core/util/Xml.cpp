@@ -182,12 +182,12 @@ namespace core { namespace util { namespace xml {
 		return boost::none;
 	}
 
-	boost::optional<ci::XmlTree> findNodeWithId(const ci::XmlTree &node, string id ) {
+	boost::optional<ci::XmlTree> findElementWithId(const ci::XmlTree &node, string id ) {
 		if (node.isElement() && node.hasAttribute("id") && node.getAttribute("id").getValue() == id) {
 			return node;
 		} else {
 			for ( auto childNode : node ) {
-				auto result = findNodeWithId(childNode, id);
+				auto result = findElementWithId(childNode, id);
 				if (result) {
 					return result;
 				}
@@ -196,12 +196,12 @@ namespace core { namespace util { namespace xml {
 		return boost::none;
 	}
 
-	boost::optional<ci::XmlTree> findNode(const ci::XmlTree &node, string tagName, string attributeName, string attributeValue) {
+	boost::optional<ci::XmlTree> findElement(const ci::XmlTree &node, string tagName, string attributeName, string attributeValue) {
 		if (node.isElement() && node.getTag() == tagName && node.hasAttribute(attributeName) && node.getAttribute(attributeName).getValue() == attributeValue) {
 			return node;
 		} else {
 			for ( auto childNode : node ) {
-				auto result = findNode(childNode, tagName, attributeName, attributeValue);
+				auto result = findElement(childNode, tagName, attributeName, attributeValue);
 				if (result) {
 					return result;
 				}

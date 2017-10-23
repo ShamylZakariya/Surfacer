@@ -59,7 +59,7 @@ namespace precariously {
 		void buildGravity(XmlTree gravityNode);
 		void loadBackground(XmlTree planetNode);
 		void loadPlanet(XmlTree planetNode);
-		void loadCloudLayer(XmlTree cloudLayer);
+		CloudLayerParticleSystemRef loadCloudLayer(XmlTree cloudLayer, int drawLayer);
 		
 		void cullRubble();
 		void makeSleepersStatic();
@@ -68,7 +68,7 @@ namespace precariously {
 
 		BackgroundRef _background;
 		PlanetRef _planet;
-		CloudLayerParticleSystemRef _cloudLayer;
+		CloudLayerParticleSystemRef _foregroundCloudLayer, _backgroundCloudLayer;
 		core::RadialGravitationCalculatorRef _gravity;
 		
 	};

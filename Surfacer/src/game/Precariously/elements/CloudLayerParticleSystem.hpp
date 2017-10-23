@@ -11,6 +11,8 @@
 #include "ParticleSystem.hpp"
 #include "PerlinNoise.hpp"
 
+#include "PrecariouslyConstants.hpp"
+
 namespace precariously {
 	
 	SMART_PTR(CloudLayerParticleSimulation);
@@ -24,11 +26,13 @@ namespace precariously {
 			double minRadius;
 			double maxRadius;
 			double minRadiusNoiseValue;
+			ci::ColorA color;
 			
 			particle_template():
 			minRadius(0),
 			maxRadius(100),
-			minRadiusNoiseValue(0.5)
+			minRadiusNoiseValue(0.5),
+			color(1,1,1,1)
 			{}
 
 			static particle_template parse(const core::util::xml::XmlMultiTree &node);
@@ -101,9 +105,12 @@ namespace precariously {
 			
 			config():
 			atlasType(particles::ParticleAtlasType::None)
-			{}
+			{
+				drawLayer = DrawLayers::EFFECTS;
+			}
 			
 			config(const particles::ParticleSystemDrawComponent::config &c):
+			particles::ParticleSystemDrawComponent::config(c),
 			atlasType(particles::ParticleAtlasType::None)
 			{}
 
@@ -117,7 +124,6 @@ namespace precariously {
 		// ParticleSystemDrawComponent
 		void setSimulation(const particles::ParticleSimulationRef simulation) override;
 		void draw(const core::render_state &renderState) override;
-		int getLayer() const override;
 
 	private:
 		

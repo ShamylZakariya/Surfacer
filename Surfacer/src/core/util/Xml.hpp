@@ -64,10 +64,10 @@ namespace core { namespace util { namespace xml {
 	boost::optional<ci::XmlTree> findElement(const ci::XmlTree &node, string tag);
 
 	// find first element with a given id
-	boost::optional<ci::XmlTree> findNodeWithId(const ci::XmlTree &node, string id );
+	boost::optional<ci::XmlTree> findElementWithId(const ci::XmlTree &node, string id );
 
 	// find first node in tree of a given tag with a given attribute name/value
-	boost::optional<ci::XmlTree> findNode(const ci::XmlTree &node, string tagName, string attributeName, string attributeValue);
+	boost::optional<ci::XmlTree> findElement(const ci::XmlTree &node, string tagName, string attributeName, string attributeValue);
 
 	// read a double numeric attribute
 	template <typename T>

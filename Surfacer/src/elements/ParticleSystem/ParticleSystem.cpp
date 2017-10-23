@@ -97,7 +97,7 @@ namespace particles {
 	
 	ParticleSystemDrawComponent::config ParticleSystemDrawComponent::config::parse(const core::util::xml::XmlMultiTree &node) {
 		config c;
-		// PLACEHOLDER
+		c.drawLayer = util::xml::readNumericAttribute<int>(node, "drawLayer", c.drawLayer);
 		return c;
 	}
 	
@@ -110,6 +110,10 @@ namespace particles {
 			return s->getBB();
 		}
 		return cpBBInvalid;
+	}
+	
+	int ParticleSystemDrawComponent::getLayer() const {
+		return _config.drawLayer;
 	}
 	
 #pragma mark - ParticleSystem

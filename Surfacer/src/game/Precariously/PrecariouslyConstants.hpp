@@ -44,8 +44,8 @@ namespace precariously {
 		
 		enum Categories {
 			_TERRAIN = 1 << 0,			// 1
-			_TERRAIN_PROBE = 1 << 1,		// 2
-			_GRABBABLE = 1 << 2,			// 4
+			_TERRAIN_PROBE = 1 << 1,	// 2
+			_GRABBABLE = 1 << 2,		// 4
 			_ANCHOR = 1 << 3,			// 8
 			_PLAYER = 1 << 4,			// 16
 			_ENEMY = 1 << 5				// 32

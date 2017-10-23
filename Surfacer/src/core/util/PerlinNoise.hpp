@@ -89,10 +89,10 @@ namespace core { namespace util {
 			}
 		}
 		
-		size_t octaves( void ) const { return _octaves; }
+		size_t getOctaves( void ) const { return _octaves; }
 		
 		void setScale( double scale ) { _scale = scale; }
-		double scale( void ) const { return _scale; }
+		double getScale( void ) const { return _scale; }
 		
 		void setFalloff( double pers ) {
 			pers = saturate(pers);
@@ -102,16 +102,16 @@ namespace core { namespace util {
 			}
 		}
 		
-		double falloff( void ) const { return _persistence; }
+		double getFalloff( void ) const { return _persistence; }
 		
 		void setSeed( size_t s ) {
 			if ( !_initialized ) init();
-			_rng.seed( s );
 			_seed = static_cast<int>(s);
+			_rng.seed( _seed );
 			seedOffset();
 		}
 		
-		size_t seed( void ) {
+		size_t getSeed( void ) {
 			if ( !_initialized ) init();
 			return _seed;
 		}
@@ -121,11 +121,9 @@ namespace core { namespace util {
 		struct rng {
 			size_t _seed, _lo, _hi;
 			
-			rng( void ):
-			_seed( 4357U ),
-			_lo( 4357U ),
-			_hi( 4357U )
-			{}
+			rng( void ) {
+				seed(4357U);
+			}
 			
 			rng( const rng &c ):
 			_seed( c._seed ),

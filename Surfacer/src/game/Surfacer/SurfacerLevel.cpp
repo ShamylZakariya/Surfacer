@@ -245,7 +245,7 @@ namespace surfacer {
 			// find the corresponding prefab node, if any
 			if (enemyNode.hasAttribute("prefab_id")) {
 				string prefabId = enemyNode.getAttributeValue<string>("prefab_id");
-				auto prefabNode = util::xml::findNode(prefabsNode, "prefab", "id", prefabId);
+				auto prefabNode = util::xml::findElement(prefabsNode, "prefab", "id", prefabId);
 				if (prefabNode) {
 					XmlTree enemyPrefabNode = prefabNode->getChild(enemyNode.getTag());
 					enemyNodes.push_back(enemyPrefabNode);

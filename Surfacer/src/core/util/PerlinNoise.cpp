@@ -83,7 +83,9 @@ namespace core { namespace util {
 	_octPersistence(nullptr),
 	_p( permutation ),
 	_initialized( false )
-	{}
+	{
+		setSeed(_seed);
+	}
 	
 	PerlinNoise::PerlinNoise(const config &c):
 	_octaves(c.octaves),
@@ -94,7 +96,9 @@ namespace core { namespace util {
 	_octPersistence(nullptr),
 	_p( permutation ),
 	_initialized( false )
-	{}
+	{
+		setSeed(_seed);
+	}
 	
 	PerlinNoise::PerlinNoise( const PerlinNoise &copy ):
 	_octaves( copy._octaves ),
@@ -107,7 +111,9 @@ namespace core { namespace util {
 	_octPersistence(nullptr), // ditto
 	_p( permutation ),
 	_initialized( false )
-	{}
+	{
+		setSeed(_seed);
+	}
 	
 	PerlinNoise &
 	PerlinNoise::operator = ( const PerlinNoise &copy ) {
@@ -122,6 +128,8 @@ namespace core { namespace util {
 		delete [] _octFrequency;
 		delete [] _octPersistence;
 		_octFrequency = _octPersistence = nullptr;
+		
+		setSeed(_seed);
 		
 		return *this;
 	}

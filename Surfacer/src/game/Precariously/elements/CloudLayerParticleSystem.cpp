@@ -7,8 +7,6 @@
 
 #include "CloudLayerParticleSystem.hpp"
 
-#include "PrecariouslyConstants.hpp"
-
 #include <cinder/Rand.h>
 
 using namespace core;
@@ -21,6 +19,8 @@ namespace precariously {
 		pt.minRadius = util::xml::readNumericAttribute<double>(node, "minRadius", pt.minRadius);
 		pt.maxRadius = util::xml::readNumericAttribute<double>(node, "maxRadius", pt.maxRadius);
 		pt.minRadiusNoiseValue = util::xml::readNumericAttribute<double>(node, "minRadiusNoiseValue", pt.minRadiusNoiseValue);
+		pt.color = util::xml::readColorAttribute(node, "color", pt.color);
+
 		return pt;
 	}
 
@@ -68,7 +68,7 @@ namespace precariously {
 			pIt->atlasIdx = 0;
 			pIt->xScale = 1;
 			pIt->yScale = 1;
-			pIt->color = ci::ColorA(1,1,1,1);
+			pIt->color = _config.particle.color;
 			pIt->additivity = 0;
 			pIt->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
 			pIt->position = pIt->home;
@@ -152,7 +152,7 @@ namespace precariously {
 				double remappedNoiseVale = (noise - noiseMin) * rNoiseRange;
 				radius = particleMinRadius + remappedNoiseVale * particleRadiusDelta;
 			}
-			pIt->radius = lrp(0.25, pIt->radius, radius);
+			pIt->radius = lrp(timeState.deltaT, pIt->radius, radius);
 			
 			//
 			//	Update bounds
@@ -178,6 +178,7 @@ namespace precariously {
 				dvec2 dir = pIt->position - centerOfMass;
 				double d2 = length2(dir);
 				pIt->position += magnitude * dir / d2;
+				pIt->radius -= timeState.deltaT/d2;
 			}
 		}
 	}
@@ -204,7 +205,7 @@ namespace precariously {
 			c.textureAtlas = gl::Texture2d::create(image, fmt);
 			c.atlasType = ParticleAtlasType::fromString(node.getAttribute("atlasType", "None"));
 		}
-
+		
 		return c;
 	}
 
@@ -241,6 +242,7 @@ namespace precariously {
 							   // controlled-additive-blending requires premultiplied alpha
 							   // but our texture appears to already be premultiplied after load
 							   vec4 texColor = texture( uTex0, TexCoord );
+							   texColor.rgb *= texColor.a;
 							   oColor = texColor * Color;
 						   }
 						   );
@@ -279,10 +281,6 @@ namespace precariously {
 		gl::ScopedBlendPremult blender;
 
 		_particlesBatch->draw();
-	}
-
-	int CloudLayerParticleSystemDrawComponent::getLayer() const {
-		return DrawLayers::EFFECTS;
 	}
 	
 	void CloudLayerParticleSystemDrawComponent::updateParticles() {

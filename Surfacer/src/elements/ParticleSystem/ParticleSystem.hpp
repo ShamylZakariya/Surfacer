@@ -166,8 +166,14 @@ namespace particles {
 		struct config {
 			
 			// PLACEHOLDER
+			int drawLayer;
 			
-			config()
+			config():
+			drawLayer(0)
+			{}
+			
+			config(const config &other):
+			drawLayer(other.drawLayer)
 			{}
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);
@@ -180,10 +186,13 @@ namespace particles {
 		// DrawComponent
 		cpBB getBB() const override;
 		void draw(const core::render_state &renderState) override {};
+		int getLayer() const override;
 		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::FRUSTUM_CULLING; };
 
 		// ParticleSystemDrawComponent
 		const config &getConfig() const { return _config; }
+		config &getConfig() { return _config; }
+
 		virtual void setSimulation(const ParticleSimulationRef simulation) { _simulation = simulation; }
 		ParticleSimulationRef getSimulation() const { return _simulation.lock(); }
 
