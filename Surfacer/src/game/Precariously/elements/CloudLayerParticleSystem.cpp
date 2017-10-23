@@ -178,7 +178,7 @@ namespace precariously {
 				dvec2 dir = pIt->position - centerOfMass;
 				double d2 = length2(dir);
 				pIt->position += magnitude * dir / d2;
-				pIt->radius -= timeState.deltaT/d2;
+				pIt->radius -= _config.displacementForce * timeState.deltaT/d2;
 			}
 		}
 	}
@@ -291,79 +291,90 @@ namespace precariously {
 		const ParticleAtlasType::Type AtlasType = _config.atlasType;
 		const vec2* AtlasOffsets = ParticleAtlasType::AtlasOffsets(AtlasType);
 		const float AtlasScaling = ParticleAtlasType::AtlasScaling(AtlasType);
+		const ci::ColorA transparent(0,0,0,0);
+		const vec2 origin(0,0);
 
 		vec2 shape[4];
 		mat2 rotator;
 		auto vertex = _particles.begin();
 		
 		for (auto particle = sim->getStorage().begin(), end = sim->getStorage().end(); particle != end; ++particle) {
-			const float Radius = particle->radius,
-				XScale = Radius * particle->xScale,
-				YScale = Radius * particle->yScale;
 			
-			// TODO: Fast path for when particle Radius == 0 - just pack everything into particle->position
-			
-			shape[0].x = -XScale;
-			shape[0].y = +YScale;
-			
-			shape[1].x = +XScale;
-			shape[1].y = +YScale;
-			
-			shape[2].x = +XScale;
-			shape[2].y = -YScale;
-			
-			shape[3].x = -XScale;
-			shape[3].y = -YScale;
-			
-			if (Rotates) {
-				mat2WithRotation(rotator, static_cast<float>(particle->angle));
-				shape[0] = rotator * shape[0];
-				shape[1] = rotator * shape[1];
-				shape[2] = rotator * shape[2];
-				shape[3] = rotator * shape[3];
+			// Check if particle is visible before writing geometry
+			if (particle->radius > 1e-3 && particle->color.a >= ALPHA_EPSILON) {
+				const float Extent = particle->radius * M_SQRT2;
+				shape[0].x = -Extent;
+				shape[0].y = +Extent;
+				
+				shape[1].x = +Extent;
+				shape[1].y = +Extent;
+				
+				shape[2].x = +Extent;
+				shape[2].y = -Extent;
+				
+				shape[3].x = -Extent;
+				shape[3].y = -Extent;
+				
+				if (Rotates) {
+					mat2WithRotation(rotator, static_cast<float>(particle->angle));
+					shape[0] = rotator * shape[0];
+					shape[1] = rotator * shape[1];
+					shape[2] = rotator * shape[2];
+					shape[3] = rotator * shape[3];
+				}
+				
+				//
+				//	For each vertex, assign position, color and texture coordinate
+				//	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
+				//
+				
+				vec2 position = vec2(particle->position);
+				ci::ColorA pc = particle->color;
+				ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(particle->additivity)));
+				vec2 atlasOffset = AtlasOffsets[particle->atlasIdx];
+				
+				// GL_TRIANGLE
+				vertex->position = position + shape[0];
+				vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
+				vertex->color = additiveColor;
+				++vertex;
+				
+				vertex->position = position + shape[1];
+				vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
+				vertex->color = additiveColor;
+				++vertex;
+				
+				vertex->position = position + shape[2];
+				vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
+				vertex->color = additiveColor;
+				++vertex;
+				
+				// GL_TRIANGLE
+				vertex->position = position + shape[0];
+				vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
+				vertex->color = additiveColor;
+				++vertex;
+				
+				vertex->position = position + shape[2];
+				vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
+				vertex->color = additiveColor;
+				++vertex;
+				
+				vertex->position = position + shape[3];
+				vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
+				vertex->color = additiveColor;
+				++vertex;
+			} else {
+				//
+				// radius == 0 or alpha == 0, so this particle isn't visible:
+				// write 2 triangles which will not be rendered
+				//
+				for (int i = 0; i < 6; i++) {
+					vertex->position = origin;
+					vertex->color = transparent;
+					++vertex;
+				}
 			}
-			
-			//
-			//	For each vertex, assign position, color and texture coordinate
-			//	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
-			//
-			
-			vec2 position = vec2(particle->position);
-			ci::ColorA pc = particle->color;
-			ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(particle->additivity)));
-			vec2 atlasOffset = AtlasOffsets[particle->atlasIdx];
-			
-			// GL_TRIANGLE
-			vertex->position = position + shape[0];
-			vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
-			vertex->color = additiveColor;
-			++vertex;
-
-			vertex->position = position + shape[1];
-			vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
-			vertex->color = additiveColor;
-			++vertex;
-
-			vertex->position = position + shape[2];
-			vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
-			vertex->color = additiveColor;
-			++vertex;
-			
-			// GL_TRIANGLE
-			vertex->position = position + shape[0];
-			vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
-			vertex->color = additiveColor;
-			++vertex;
-			
-			vertex->position = position + shape[2];
-			vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
-			vertex->color = additiveColor;
-			++vertex;
-			
-			vertex->position = position + shape[3];
-			vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
-			vertex->color = additiveColor;
-			++vertex;
 		}
 		
 		if (_particlesVbo) {
