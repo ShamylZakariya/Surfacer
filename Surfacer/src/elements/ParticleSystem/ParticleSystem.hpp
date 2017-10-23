@@ -13,12 +13,13 @@
 
 namespace particles {
 	
+	using core::seconds_t;
+	
 	SMART_PTR(ParticleSimulation);
 	SMART_PTR(ParticleSystem);
 	SMART_PTR(ParticleSystemDrawComponent);
 	
-#pragma mark -
-		
+	
 	const extern vec2 TexCoords[4];
 		
 #pragma mark -
@@ -67,7 +68,7 @@ namespace particles {
 		
 	}
 	
-	
+#pragma mark - ParticleSimulation
 	
 	struct particle_state {
 		dvec2		home;				// initial position of particle, emission point or "default" location
@@ -77,12 +78,12 @@ namespace particles {
 		ci::ColorA	color;				// color of particle
 		double		damping;			// damping of particle's velocity per timestep. 0 is no dsamping, 1 is completely zero velocity
 		double		radius;				// particle horizontal radius
-		double		xScale;
-		double		yScale;
 		double		angle;				// rotational angle
 		double		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
 		size_t		idx;				// index for this particle, from 0 to N in terms of ParticleSimulation's storage
 		size_t		atlasIdx;			// index into the texture atlas
+		seconds_t	age;				// age of particle in seconds
+		seconds_t	lifespan;			// lifespan of particle in seconds
 		
 		particle_state():
 		home(0,0),
@@ -92,12 +93,12 @@ namespace particles {
 		color(1,1,1,1),
 		damping(0),
 		radius(0),
-		xScale(1),
-		yScale(1),
 		angle(0),
 		additivity(0),
 		idx(0),
-		atlasIdx(0)
+		atlasIdx(0),
+		age(0),
+		lifespan(0)
 		{}
 		
 		// the default copy-ctor and operator= seem to work fine
@@ -151,6 +152,12 @@ namespace particles {
 		// get the size of the particle state storage
 		size_t getStorageSize() const { return _storage.size(); }
 		
+		// return true iff there are active particles being simulated
+		virtual bool isActive() const { return getActiveCount() > 0; }
+		
+		// return true iff there are no active particles being simulated
+		bool isEmpty() const { return !isActive(); }
+		
 		// return a bounding box containing the entirety of the particles
 		virtual cpBB getBB() const = 0;
 		
@@ -160,12 +167,13 @@ namespace particles {
 
 	};
 	
+#pragma mark - ParticleSystemDrawComponent
+	
 	class ParticleSystemDrawComponent : public core::DrawComponent {
 	public:
 		
 		struct config {
 			
-			// PLACEHOLDER
 			int drawLayer;
 			
 			config():
@@ -205,6 +213,8 @@ namespace particles {
 		config _config;
 		
 	};
+	
+#pragma mark - ParticleSystem
 	
 	class ParticleSystem : public core::Object {
 	public:

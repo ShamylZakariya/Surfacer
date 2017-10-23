@@ -66,14 +66,14 @@ namespace precariously {
 		for (size_t i = 0, N = getStorageSize(); i < N; i++, ++pIt, a += dr) {
 			pIt->idx = i;
 			pIt->atlasIdx = 0;
-			pIt->xScale = 1;
-			pIt->yScale = 1;
 			pIt->color = _config.particle.color;
 			pIt->additivity = 0;
 			pIt->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
 			pIt->position = pIt->home;
 			pIt->velocity = dvec2(0,0);
 			pIt->damping = Rand::randFloat(0.4, 0.7);
+			pIt->age = 0;
+			pIt->lifespan = 0;
 		}
 		
 		simulate(level->getTimeState());
@@ -272,7 +272,6 @@ namespace precariously {
 		auto mesh = gl::VboMesh::create( static_cast<uint32_t>(_particles.size()), GL_TRIANGLES, { { particleLayout, _particlesVbo } } );
 		_particlesBatch = gl::Batch::create( mesh, _shader );
 	}
-
 	
 	void CloudLayerParticleSystemDrawComponent::draw(const render_state &renderState) {
 		updateParticles();
