@@ -239,11 +239,11 @@ namespace precariously {
 						   out vec4 oColor;
 
 						   void main(void) {
-							   // controlled-additive-blending requires premultiplied alpha
-							   // but our texture appears to already be premultiplied after load
-							   vec4 texColor = texture( uTex0, TexCoord );
-							   texColor.rgb *= texColor.a;
-							   oColor = texColor * Color;
+							   float alpha = round(texture( uTex0, TexCoord ).r);
+							   
+							   // NOTE: additive blending requires premultiplication
+							   oColor.rgb = Color.rgb * alpha;
+							   oColor.a = Color.a * alpha;
 						   }
 						   );
 
@@ -278,7 +278,6 @@ namespace precariously {
 		
 		gl::ScopedTextureBind tex(_config.textureAtlas, 0);
 		gl::ScopedBlendPremult blender;
-
 		_particlesBatch->draw();
 	}
 	
