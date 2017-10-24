@@ -170,8 +170,12 @@ namespace surfacer {
 		const double minDensity = 1e-3;
 		density = max(density, minDensity);
 
-		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN);
-		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR);
+		const double minSurfaceArea = 2;
+		const ci::Color terrainColor = util::xml::readColorAttribute(terrainNode, "color", Color(1,0,1));
+		const ci::Color anchorColor = util::xml::readColorAttribute(terrainNode, "anchorColor", Color(0,1,1));
+
+		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN, minSurfaceArea, terrainColor);
+		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR, minSurfaceArea, anchorColor);
 
 		//
 		//	Load terrain

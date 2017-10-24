@@ -21,13 +21,7 @@ namespace terrain { namespace detail {
 	const double RDP_CONTOUR_OPTIMIZATION_THRESHOLD = 0.125;
 	
 #pragma mark - Helpers
-	
-	static Rand colorRand(456);
-	
-	Color next_random_color() {
-		return Color(CM_HSV, colorRand.nextFloat(), 0.5 + colorRand.nextFloat(0.5), 0.5 + colorRand.nextFloat(0.5));
-	}
-	
+		
 	bool is_wound_clockwise(const PolyLine2d &contour) {
 		// http://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
 		// Sum over the edges, (x2 − x1)(y2 + y1)

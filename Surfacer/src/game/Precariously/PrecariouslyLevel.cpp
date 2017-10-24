@@ -281,9 +281,12 @@ namespace precariously {
 		density = max(density, minDensity);
 		
 		const double minSurfaceArea = 2;
+		const ci::Color terrainColor = util::xml::readColorAttribute(planetNode, "color", Color(1,0,1));
+		const ci::Color coreColor = util::xml::readColorAttribute(planetNode, "coreColor", Color(0,1,1));
 		
-		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN, minSurfaceArea);
-		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR, minSurfaceArea);
+		
+		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN, minSurfaceArea, terrainColor);
+		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR, minSurfaceArea, coreColor);
 		auto world = make_shared<terrain::World>(getSpace() ,terrainMaterial, anchorMaterial);
 		
 		_planet = Planet::create("Planet", world, planetNode, DrawLayers::PLANET);

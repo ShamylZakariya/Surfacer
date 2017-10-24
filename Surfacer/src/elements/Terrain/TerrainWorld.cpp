@@ -179,7 +179,7 @@ namespace terrain {
 
 			drawable = *it;
 			if (drawable->shouldDraw(state)) {
-				shader->uniform("Color", ColorA(drawable->getColor(), 1));
+				shader->uniform("Color", ColorA(drawable->getColor(state), 1));
 				gl::draw(drawable->getVboMesh());
 			}
 		}
@@ -808,7 +808,6 @@ namespace terrain {
 		SpaceAccessRef _space;
 		material _material;
 		string _name;
-		Color _color;
 		cpHashValue _hash;
 	 */
 
@@ -847,8 +846,6 @@ namespace terrain {
 	_surfaceArea(0)
 	{
 		_name = "StaticGroup";
-		_color = Color(0.15,0.15,0.15);
-
 		_body = cpBodyNewStatic();
 		cpBodySetUserData(_body, this);
 		_space->addBody(_body);
@@ -986,7 +983,6 @@ namespace terrain {
 	{
 		_name = str(World::nextId());
 		_hash = hash<string>{}(_name);
-		_color = detail::next_random_color();
 	}
 
 	DynamicGroup::~DynamicGroup() {
@@ -1009,11 +1005,11 @@ namespace terrain {
 		return ss.str();
 	}
 	
-	Color DynamicGroup::getColor() const {
-		if (isSleeping()) {
-			return Color(0,0,0);
+	Color DynamicGroup::getColor(const core::render_state &state) const {
+		if (state.mode == RenderMode::DEVELOPMENT && isSleeping()) {
+			return Color(0,0.5,0.5);
 		}
-		return GroupBase::getColor();
+		return GroupBase::getColor(state);
 	}
 
 	void DynamicGroup::releaseShapes() {

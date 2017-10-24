@@ -120,6 +120,7 @@ namespace terrain {
 		cpShapeFilter filter;
 		cpCollisionType collisionType;
 		double minSurfaceArea;
+		ci::Color color;
 
 		material():
 		density(1),
@@ -127,16 +128,28 @@ namespace terrain {
 		collisionShapeRadius(0),
 		filter({0,0,0}),
 		collisionType(0),
-		minSurfaceArea(0.1)
+		minSurfaceArea(0.1),
+		color(0.2,0.2,0.2)
 		{}
 
-		material(cpFloat d, cpFloat f, cpFloat csr, cpShapeFilter flt, cpCollisionType ct, double msa):
+		material(cpFloat d, cpFloat f, cpFloat csr, cpShapeFilter flt, cpCollisionType ct, double msa, ci::Color c):
 		density(d),
 		friction(f),
 		collisionShapeRadius(csr),
 		filter(flt),
 		collisionType(ct),
-		minSurfaceArea(msa)
+		minSurfaceArea(msa),
+		color(c)
+		{}
+		
+		material(const material &c):
+		density(c.density),
+		friction(c.friction),
+		collisionShapeRadius(c.collisionShapeRadius),
+		filter(c.filter),
+		collisionType(c.collisionType),
+		minSurfaceArea(c.minSurfaceArea),
+		color(c.color)
 		{}
 	};
 
@@ -330,7 +343,7 @@ namespace terrain {
 		const core::SpaceAccessRef &getSpace() const { return _space; }
 		const material &getMaterial() const { return _material; }
 		virtual string getName() const { return _name; }
-		virtual Color getColor() const { return _color; }
+		virtual Color getColor(const core::render_state &state) const { return _material.color; }
 		virtual cpHashValue getHash() const { return _hash; }
 
 		virtual cpBody* getBody() const = 0;
@@ -370,7 +383,6 @@ namespace terrain {
 		core::SpaceAccessRef _space;
 		material _material;
 		string _name;
-		Color _color;
 		cpHashValue _hash;
 
 	};
@@ -421,7 +433,7 @@ namespace terrain {
 
 		// GroupBase
 		string getName() const override;
-		Color getColor() const override;
+		Color getColor(const core::render_state &state) const override;
 		cpBody* getBody() const override { return _body; }
 		cpBB getBB() const override { return _worldBB; }
 		dmat4 getModelMatrix() const override { return _modelMatrix; }
@@ -479,7 +491,7 @@ namespace terrain {
 		virtual dvec2 getModelCentroid() const = 0;
 		virtual const TriMeshRef &getTriMesh() const = 0;
 		virtual const gl::VboMeshRef &getVboMesh() const = 0;
-		virtual Color getColor() const = 0;
+		virtual Color getColor(const core::render_state &state) const = 0;
 		virtual bool shouldDraw(const core::render_state &state) const = 0;
 
 		// get typed shared_from_this, e.g., shared_ptr<Shape> = shared_from_this_as<Shape>();
@@ -543,7 +555,7 @@ namespace terrain {
 		dvec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
-		Color getColor() const override { return Color(1,0,1); }
+		Color getColor(const core::render_state &state) const override { return Color(1,0,1); }
 		bool shouldDraw(const core::render_state &state) const override;
 
 	private:
@@ -600,7 +612,7 @@ namespace terrain {
 		dvec2 getModelCentroid() const override;
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
-		Color getColor() const override { return Color(0,0,0); }
+		Color getColor(const core::render_state &state) const override { return _material.color; }
 		bool shouldDraw(const core::render_state &state) const override { return true; }
 
 	protected:
@@ -695,7 +707,7 @@ namespace terrain {
 		const TriMeshRef &getTriMesh() const override { return _trimesh; }
 		const gl::VboMeshRef &getVboMesh() const override { return _vboMesh; }
 
-		Color getColor() const override { return getGroup()->getColor(); }
+		Color getColor(const core::render_state &state) const override { return getGroup()->getColor(state); }
 
 		bool shouldDraw(const core::render_state &state) const override { return true; }
 

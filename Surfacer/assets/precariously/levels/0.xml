@@ -7,10 +7,10 @@
 	<space damping="0.99"/>
 	<gravity type="radial" strength="2000" falloff_power="0.5" primary="true"/>
 	<background>
-		<fill spaceColor="20,30,40" atmosphereColor="60,70,80" steps="4" innerRadius="1000" outerRadius="1400"/>
+		<fill spaceColor="196,211,147" atmosphereColor="209,219,169" steps="3" innerRadius="1000" outerRadius="3000"/>
 		<!-- other stuff like clouds, stars, planets, etc -->
 	</background>
-	<planet origin="0,0" friction="1" density="1" partitionSize="250">
+	<planet origin="0,0" friction="1" density="1" partitionSize="250" color="72,95,112" coreColor="60,71,79">
 		<surface
 			radius="1000"
 			noiseOctaves="8"
@@ -19,23 +19,23 @@
 			noiseRoughness="0.03"
 		/>
 		<core
-			radius="200"
+			radius="400"
 			noiseOctaves="4"
 			noiseFalloff="0.5"
-			noiseOffset="20"
+			noiseOffset="100"
 			noiseRoughness="0.1"
 		/>
 	</planet>
 	<cloudLayer id="background">
 		<draw textureAtlas="precariously/textures/CloudTop.png" atlasType="None"/>
-		<simulation origin="0,0" radius="1070" count="500" period="300" displacementForce="40" returnForce="3">
+		<simulation origin="0,0" radius="1070" count="500" period="300" displacementForce="5" returnForce="3">
 			<generator octaves="4" falloff="0.5" seed="1"/>
-			<particle minRadius="10" maxRadius="200" minRadiusNoiseValue="0.4" color="180,185,190,255"/>
+			<particle minRadius="10" maxRadius="200" minRadiusNoiseValue="0.4" color="184,188,171,255"/>
 		</simulation>
 	</cloudLayer>
 	<cloudLayer id="foreground">
 		<draw textureAtlas="precariously/textures/CloudTop.png" atlasType="None"/>
-		<simulation origin="0,0" radius="1100" count="500" period="300" displacementForce="50" returnForce="2">
+		<simulation origin="0,0" radius="1100" count="500" period="300" displacementForce="10" returnForce="2">
 			<generator octaves="4" falloff="0.5" seed="567"/>
 			<particle minRadius="10" maxRadius="100" minRadiusNoiseValue="0.5" color="255,255,255,255"/>
 		</simulation>

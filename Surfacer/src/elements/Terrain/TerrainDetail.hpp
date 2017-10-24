@@ -26,8 +26,6 @@ namespace terrain { namespace detail {
 	
 #pragma mark - Helpers
 	
-	Color next_random_color();
-	
 	bool is_wound_clockwise(const PolyLine2d &contour);
 	
 	void wind_clockwise(PolyLine2d &contour);
