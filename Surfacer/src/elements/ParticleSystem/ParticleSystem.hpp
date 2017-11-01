@@ -72,9 +72,9 @@ namespace particles {
 	
 	struct particle_state {
 		dvec2		position;			// base position in world coordinates
+		dvec2		right;				// x-axis scaled to half horizontal particle size
+		dvec2		up;					// y-axis scaled to half vertical particle size
 		ci::ColorA	color;				// color of particle
-		double		radius;				// particle horizontal radius
-		double		angle;				// rotational angle
 		double		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
 		size_t		idx;				// index for this particle, from 0 to N in terms of ParticleSimulation's storage
 		size_t		atlasIdx;			// index into the texture atlas
@@ -83,9 +83,9 @@ namespace particles {
 		
 		particle_state():
 		position(0,0),
+		right(0.5,0),
+		up(0,0.5),
 		color(1,1,1,1),
-		radius(0),
-		angle(0),
 		additivity(0),
 		idx(0),
 		atlasIdx(0),
@@ -114,9 +114,6 @@ namespace particles {
 		void update(const core::time_state &timeState) override {}
 		
 		// ParticleSimulation
-		
-		// return true if the simulation rotates particles
-		virtual bool rotatesParticles() const = 0;
 		
 		// initialize simulation to have count particles of a given initial state
 		void initialize(size_t count, particle_state p = particle_state()) {

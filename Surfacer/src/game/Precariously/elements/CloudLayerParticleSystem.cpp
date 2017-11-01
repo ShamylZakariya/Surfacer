@@ -70,6 +70,7 @@ namespace precariously {
 			physics->position = physics->previous_position = physics->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
 			physics->damping = Rand::randFloat(0.4, 0.7);
 			physics->velocity = dvec2(0,0);
+			physics->radius = 0;
 
 			state->idx = i;
 			state->atlasIdx = 0;
@@ -145,20 +146,17 @@ namespace precariously {
 			}
 			
 			//
-			//	Update position and rotation of particle state
+			//	now update position scale and rotation
 			//
 
 			state->position = physics->position;
 
+			double angle;
 			if (lengthSquared(physics->position - physics->home) > 1e-2) {
-				state->angle = M_PI_2 + atan2(physics->position.y, physics->position.x);
+				angle = M_PI_2 + atan2(physics->position.y, physics->position.x);
 			} else {
-				state->angle = M_PI_2 + a;
+				angle = M_PI_2 + a;
 			}
-
-			//
-			// update particle radius based radial position and time
-			//
 			
 			double noise = _generator.noiseUnit(a,noiseYAxis);
 			double radius = 0;
@@ -166,13 +164,28 @@ namespace precariously {
 				double remappedNoiseVale = (noise - noiseMin) * rNoiseRange;
 				radius = particleMinRadius + remappedNoiseVale * particleRadiusDelta;
 			}
-			state->radius = lrp(timeState.deltaT, state->radius, radius);
+			physics->radius = lrp(timeState.deltaT, physics->radius, radius);
+			
+			//
+			//	Compute the rotation axes
+			//
+
+			double cosa, sina;
+			__sincos(angle, &sina, &cosa);
+			state->right = physics->radius * dvec2(cosa, sina);
+			state->up = rotateCCW(state->right);
+
+			//
+			// we're using alpha as a flag to say this particle should or should not be drawn
+			//
+			
+			state->color.a = physics->radius > 1e-2 ? 1 : 0;
 			
 			//
 			//	Update bounds
 			//
 
-			bounds = cpBBExpand(bounds, state->position, state->radius);
+			bounds = cpBBExpand(bounds, state->position, physics->radius);
 		}
 
 		_bb = bounds;
@@ -298,7 +311,6 @@ namespace precariously {
 
 		// walk the simulation particle state and write to our vertices
 		ParticleSimulationRef sim = getSimulation();
-		const bool Rotates = sim->rotatesParticles();
 		
 		const ParticleAtlasType::Type AtlasType = _config.atlasType;
 		const vec2* AtlasOffsets = ParticleAtlasType::AtlasOffsets(AtlasType);
@@ -313,66 +325,50 @@ namespace precariously {
 		for (auto state = sim->getStorage().begin(), end = sim->getStorage().end(); state != end; ++state) {
 			
 			// Check if particle is visible before writing geometry
-			if (state->radius > 1e-3 && state->color.a >= ALPHA_EPSILON) {
-				const float Extent = state->radius * M_SQRT2;
-				shape[0].x = -Extent;
-				shape[0].y = +Extent;
+			if (state->color.a >= ALPHA_EPSILON) {
 				
-				shape[1].x = +Extent;
-				shape[1].y = +Extent;
-				
-				shape[2].x = +Extent;
-				shape[2].y = -Extent;
-				
-				shape[3].x = -Extent;
-				shape[3].y = -Extent;
-				
-				if (Rotates) {
-					mat2WithRotation(rotator, static_cast<float>(state->angle));
-					shape[0] = rotator * shape[0];
-					shape[1] = rotator * shape[1];
-					shape[2] = rotator * shape[2];
-					shape[3] = rotator * shape[3];
-				}
-				
+				shape[0] = state->position - state->right + state->up;
+				shape[1] = state->position + state->right + state->up;
+				shape[2] = state->position + state->right - state->up;
+				shape[3] = state->position - state->right - state->up;
+
 				//
 				//	For each vertex, assign position, color and texture coordinate
 				//	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
 				//
 				
-				vec2 position = vec2(state->position);
 				ci::ColorA pc = state->color;
 				ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(state->additivity)));
 				vec2 atlasOffset = AtlasOffsets[state->atlasIdx];
 				
 				// GL_TRIANGLE
-				vertex->position = position + shape[0];
+				vertex->position = shape[0];
 				vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
 				vertex->color = additiveColor;
 				++vertex;
 				
-				vertex->position = position + shape[1];
+				vertex->position = shape[1];
 				vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
 				vertex->color = additiveColor;
 				++vertex;
 				
-				vertex->position = position + shape[2];
+				vertex->position = shape[2];
 				vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
 				vertex->color = additiveColor;
 				++vertex;
 				
 				// GL_TRIANGLE
-				vertex->position = position + shape[0];
+				vertex->position = shape[0];
 				vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
 				vertex->color = additiveColor;
 				++vertex;
 				
-				vertex->position = position + shape[2];
+				vertex->position = shape[2];
 				vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
 				vertex->color = additiveColor;
 				++vertex;
 				
-				vertex->position = position + shape[3];
+				vertex->position = shape[3];
 				vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
 				vertex->color = additiveColor;
 				++vertex;

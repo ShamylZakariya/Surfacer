@@ -71,7 +71,6 @@ namespace precariously {
 		void update(const core::time_state &timeState) override;
 		void initialize(const vector<particles::particle_state> &p) override;
 
-		bool rotatesParticles() const override { return true; }
 		size_t getFirstActive() const override { return 0; };
 		size_t getActiveCount() const override { return _storage.size(); }
 		cpBB getBB() const override { return _bb; }
@@ -95,6 +94,7 @@ namespace precariously {
 			dvec2 position;
 			dvec2 previous_position;
 			dvec2 velocity;
+			double radius;
 			double damping;
 		};
 		
