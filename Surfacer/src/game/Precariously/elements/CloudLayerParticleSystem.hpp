@@ -69,6 +69,7 @@ namespace precariously {
 
 		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		void update(const core::time_state &timeState) override;
+		void initialize(const vector<particles::particle_state> &p) override;
 
 		bool rotatesParticles() const override { return true; }
 		size_t getFirstActive() const override { return 0; };
@@ -89,11 +90,20 @@ namespace precariously {
 
 	private:
 		
+		struct particle_physics {
+			dvec2 home;
+			dvec2 position;
+			dvec2 previous_position;
+			dvec2 velocity;
+			double damping;
+		};
+		
 		config _config;
 		core::util::PerlinNoise _generator;
 		core::seconds_t _time;
 		cpBB _bb;
 		vector<core::RadialGravitationCalculatorRef> _displacements;
+		vector<particle_physics> _physics;
 	};
 	
 	class CloudLayerParticleSystemDrawComponent : public particles::ParticleSystemDrawComponent {

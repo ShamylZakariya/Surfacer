@@ -57,23 +57,27 @@ namespace precariously {
 		_generator.setScale(2*M_PI);
 		
 		// create store, and run simulate() once to populate
-		initialize(_config.count);
+		ParticleSimulation::initialize(_config.count);
 
 		// set some invariants and default state
 		double dr = 2 * M_PI / getActiveCount();
 		double a = 0;
-		auto pIt = _storage.begin();
-		for (size_t i = 0, N = getStorageSize(); i < N; i++, ++pIt, a += dr) {
-			pIt->idx = i;
-			pIt->atlasIdx = 0;
-			pIt->color = _config.particle.color;
-			pIt->additivity = 0;
-			pIt->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
-			pIt->position = pIt->home;
-			pIt->velocity = dvec2(0,0);
-			pIt->damping = Rand::randFloat(0.4, 0.7);
-			pIt->age = 0;
-			pIt->lifespan = 0;
+		auto state = _storage.begin();
+		auto physics = _physics.begin();
+		for (size_t i = 0, N = getStorageSize(); i < N; i++, ++state, ++physics, a += dr) {
+			
+			// set up initial physics state
+			physics->position = physics->previous_position = physics->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
+			physics->damping = Rand::randFloat(0.4, 0.7);
+			physics->velocity = dvec2(0,0);
+
+			state->idx = i;
+			state->atlasIdx = 0;
+			state->color = _config.particle.color;
+			state->additivity = 0;
+			state->position = physics->home;
+			state->age = 0;
+			state->lifespan = 0;
 		}
 		
 		simulate(level->getTimeState());
@@ -82,6 +86,11 @@ namespace precariously {
 	void CloudLayerParticleSimulation::update(const time_state &timeState) {
 		_time += timeState.deltaT;
 		simulate(timeState);
+	}
+	
+	void CloudLayerParticleSimulation::initialize(const vector<particle_state> &p) {
+		ParticleSimulation::initialize(p);
+		_physics.resize(p.size());
 	}
 	
 	void CloudLayerParticleSimulation::addGravityDisplacement(const RadialGravitationCalculatorRef &gravity) {
@@ -108,38 +117,43 @@ namespace precariously {
 		const double deltaT2 = timeState.deltaT * timeState.deltaT;
 		const dvec2 origin = _config.origin;
 		cpBB bounds = cpBBInvalid;
+		auto physics = _physics.begin();
+		auto state = _storage.begin();
+		const auto end = _storage.end();
 		
-		for (auto pIt = _storage.begin(), pEnd = _storage.end(); pIt != pEnd; ++pIt, a += dr) {
+		for (;state != end; ++state, ++physics, a += dr) {
 
 			//
 			// simplistic verlet integration
 			//
 
-			pIt->velocity = (pIt->position - pIt->previous_position) * pIt->damping;
-			pIt->previous_position = pIt->position;
+			physics->velocity = (physics->position - physics->previous_position) * physics->damping;
+			physics->previous_position = physics->position;
 			
-			dvec2 acceleration = (pIt->home - pIt->position) * returnForce;
-			pIt->position += pIt->velocity + (acceleration * deltaT2);
+			dvec2 acceleration = (physics->home - physics->position) * returnForce;
+			physics->position += physics->velocity + (acceleration * deltaT2);
 			
 			//
 			// move position back to circle
 			//
 
-			dvec2 dirToPosition = pIt->position - origin;
+			dvec2 dirToPosition = physics->position - origin;
 			double d2 = lengthSquared(dirToPosition);
 			if (d2 < cloudLayerRadius2 - 1e-1 || d2 > cloudLayerRadius2 + 1e-1) {
 				dirToPosition /= sqrt(d2);
-				pIt->position = origin + cloudLayerRadius * dirToPosition;
+				physics->position = origin + cloudLayerRadius * dirToPosition;
 			}
 			
 			//
-			//	Update rotation of particle
+			//	Update position and rotation of particle state
 			//
 
-			if (lengthSquared(pIt->position - pIt->home) > 1e-2) {
-				pIt->angle = M_PI_2 + atan2(pIt->position.y, pIt->position.x);
+			state->position = physics->position;
+
+			if (lengthSquared(physics->position - physics->home) > 1e-2) {
+				state->angle = M_PI_2 + atan2(physics->position.y, physics->position.x);
 			} else {
-				pIt->angle = M_PI_2 + a;
+				state->angle = M_PI_2 + a;
 			}
 
 			//
@@ -152,13 +166,13 @@ namespace precariously {
 				double remappedNoiseVale = (noise - noiseMin) * rNoiseRange;
 				radius = particleMinRadius + remappedNoiseVale * particleRadiusDelta;
 			}
-			pIt->radius = lrp(timeState.deltaT, pIt->radius, radius);
+			state->radius = lrp(timeState.deltaT, state->radius, radius);
 			
 			//
 			//	Update bounds
 			//
 
-			bounds = cpBBExpand(bounds, pIt->position, pIt->radius);
+			bounds = cpBBExpand(bounds, state->position, state->radius);
 		}
 
 		_bb = bounds;
@@ -174,11 +188,10 @@ namespace precariously {
 		for (const auto &g : _displacements) {
 			dvec2 centerOfMass = g->getCenterOfMass();
 			double magnitude = -1 * g->getMagnitude() * timeState.deltaT * _config.displacementForce;
-			for (auto pIt = _storage.begin(), pEnd = _storage.end(); pIt != pEnd; ++pIt) {
-				dvec2 dir = pIt->position - centerOfMass;
+			for (auto physics = _physics.begin(), end = _physics.end(); physics != end; ++physics) {
+				dvec2 dir = physics->position - centerOfMass;
 				double d2 = length2(dir);
-				pIt->position += magnitude * dir / d2;
-				pIt->radius -= _config.displacementForce * timeState.deltaT/d2;
+				physics->position += magnitude * dir / d2;
 			}
 		}
 	}
@@ -297,11 +310,11 @@ namespace precariously {
 		mat2 rotator;
 		auto vertex = _particles.begin();
 		
-		for (auto particle = sim->getStorage().begin(), end = sim->getStorage().end(); particle != end; ++particle) {
+		for (auto state = sim->getStorage().begin(), end = sim->getStorage().end(); state != end; ++state) {
 			
 			// Check if particle is visible before writing geometry
-			if (particle->radius > 1e-3 && particle->color.a >= ALPHA_EPSILON) {
-				const float Extent = particle->radius * M_SQRT2;
+			if (state->radius > 1e-3 && state->color.a >= ALPHA_EPSILON) {
+				const float Extent = state->radius * M_SQRT2;
 				shape[0].x = -Extent;
 				shape[0].y = +Extent;
 				
@@ -315,7 +328,7 @@ namespace precariously {
 				shape[3].y = -Extent;
 				
 				if (Rotates) {
-					mat2WithRotation(rotator, static_cast<float>(particle->angle));
+					mat2WithRotation(rotator, static_cast<float>(state->angle));
 					shape[0] = rotator * shape[0];
 					shape[1] = rotator * shape[1];
 					shape[2] = rotator * shape[2];
@@ -327,10 +340,10 @@ namespace precariously {
 				//	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
 				//
 				
-				vec2 position = vec2(particle->position);
-				ci::ColorA pc = particle->color;
-				ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(particle->additivity)));
-				vec2 atlasOffset = AtlasOffsets[particle->atlasIdx];
+				vec2 position = vec2(state->position);
+				ci::ColorA pc = state->color;
+				ci::ColorA additiveColor( pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * ( 1 - static_cast<float>(state->additivity)));
+				vec2 atlasOffset = AtlasOffsets[state->atlasIdx];
 				
 				// GL_TRIANGLE
 				vertex->position = position + shape[0];

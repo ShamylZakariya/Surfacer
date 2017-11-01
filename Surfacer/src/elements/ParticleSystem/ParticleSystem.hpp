@@ -71,12 +71,8 @@ namespace particles {
 #pragma mark - ParticleSimulation
 	
 	struct particle_state {
-		dvec2		home;				// initial position of particle, emission point or "default" location
 		dvec2		position;			// base position in world coordinates
-		dvec2		previous_position;  // previous_position of particle
-		dvec2		velocity;			// velocity of particle in world space
 		ci::ColorA	color;				// color of particle
-		double		damping;			// damping of particle's velocity per timestep. 0 is no dsamping, 1 is completely zero velocity
 		double		radius;				// particle horizontal radius
 		double		angle;				// rotational angle
 		double		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
@@ -86,12 +82,8 @@ namespace particles {
 		seconds_t	lifespan;			// lifespan of particle in seconds
 		
 		particle_state():
-		home(0,0),
 		position(0,0),
-		previous_position(0,0),
-		velocity(0,0),
 		color(1,1,1,1),
-		damping(0),
 		radius(0),
 		angle(0),
 		additivity(0),
@@ -117,8 +109,6 @@ namespace particles {
 		ParticleSimulation();
 		
 		// Component
-		
-		// update particle system state
 		void onReady(core::ObjectRef parent, core::LevelRef level) override {}
 		void onCleanup() override {}
 		void update(const core::time_state &timeState) override {}
@@ -128,13 +118,13 @@ namespace particles {
 		// return true if the simulation rotates particles
 		virtual bool rotatesParticles() const = 0;
 		
-		// initialize simulation to have count particles of template particle p
+		// initialize simulation to have count particles of a given initial state
 		void initialize(size_t count, particle_state p = particle_state()) {
-			_storage = vector<particle_state>(count, p);
+			initialize(vector<particle_state>(count, p));
 		}
 		
 		// initialize simulation with an example set
-		void initialize(const vector<particle_state> &p) {
+		virtual void initialize(const vector<particle_state> &p) {
 			_storage = p;
 		}
 
