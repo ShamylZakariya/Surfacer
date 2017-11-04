@@ -395,7 +395,7 @@ namespace core {
 			// objects can define a custom gravity modifier - 0 means no effect, -1 would be repulsive, etc
 			if (ObjectRef object = cpBodyGetObject(body)) {
 				if (PhysicsComponentRef physics = object->getPhysicsComponent()) {
-					magnitude *= physics->getGravityModifier();
+					magnitude *= physics->getGravityModifier(body);
 				}
 			}
 

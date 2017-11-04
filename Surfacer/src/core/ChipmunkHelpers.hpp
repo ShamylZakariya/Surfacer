@@ -283,4 +283,61 @@ cpShapeFilterReject(cpShapeFilter a, cpShapeFilter b)
 			);
 }
 
+//
+// extend std with default_delete for chipmunk types - this is for unique_ptr usage
+//
+
+namespace std
+{
+	template<>
+	class default_delete< cpShape > {
+	public:
+		void operator()(cpShape *shape) {
+			if ( shape ) {
+				if (cpShapeGetSpace(shape)) {
+					cpSpaceRemoveShape( cpShapeGetSpace(shape), shape );
+				}
+				
+				cpShapeSetUserData(shape, nullptr);
+				cpShapeFree( shape );
+			}
+		}
+	};
+	
+	template<>
+	class default_delete< cpBody > {
+	public:
+		void operator()(cpBody *body) {
+			if ( body ) {
+				if (cpBodyGetSpace(body)) {
+					cpSpaceRemoveBody(cpBodyGetSpace(body), body );
+				}
+				
+				cpBodySetUserData(body, nullptr);
+				cpBodyFree( body );
+			}
+		}
+	};
+	
+	template<>
+	class default_delete< cpConstraint > {
+	public:
+		void operator()(cpConstraint *constraint) {
+			if ( constraint ) {
+				if (cpConstraintGetSpace(constraint)) {
+					cpSpaceRemoveConstraint(cpConstraintGetSpace(constraint), constraint );
+				}
+				
+				cpConstraintSetUserData(constraint, nullptr);
+				cpConstraintFree( constraint );
+			}
+		}
+	};
+}
+
+
+typedef std::unique_ptr<cpShape> cpShapeUniquePtr;
+typedef std::unique_ptr<cpBody> cpBodyUniquePtr;
+typedef std::unique_ptr<cpConstraint> cpConstraintUniquePtr;
+
 #endif /* ChipmunkHelpers_hpp */

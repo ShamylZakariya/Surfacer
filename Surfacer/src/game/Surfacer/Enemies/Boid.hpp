@@ -67,7 +67,7 @@ namespace surfacer { namespace enemy {
 		void onCleanup() override;
 		void step(const core::time_state &time) override;
 		cpBB getBB() const override;
-		double getGravityModifier() const override { return 0; }
+		double getGravityModifier(cpBody*) const override { return 0; }
 
 	protected:
 

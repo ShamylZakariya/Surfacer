@@ -76,10 +76,9 @@ namespace particles {
 		dvec2		up;					// y-axis scaled to half vertical particle size
 		ci::ColorA	color;				// color of particle
 		double		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
-		size_t		idx;				// index for this particle, from 0 to N in terms of ParticleSimulation's storage
 		size_t		atlasIdx;			// index into the texture atlas
 		seconds_t	age;				// age of particle in seconds
-		seconds_t	lifespan;			// lifespan of particle in seconds
+		double		completion;			// degree of completion of particle, e.g., if it has a lifespan of 3 seconds and is 1.5 seconds old, completion is 0.5
 		
 		particle_state():
 		position(0,0),
@@ -87,10 +86,9 @@ namespace particles {
 		up(0,0.5),
 		color(1,1,1,1),
 		additivity(0),
-		idx(0),
 		atlasIdx(0),
 		age(0),
-		lifespan(0)
+		completion(0)
 		{}
 		
 		// the default copy-ctor and operator= seem to work fine
@@ -115,29 +113,25 @@ namespace particles {
 		
 		// ParticleSimulation
 		
-		// initialize simulation to have count particles of a given initial state
-		void initialize(size_t count, particle_state p = particle_state()) {
-			initialize(vector<particle_state>(count, p));
-		}
-		
-		// initialize simulation with an example set
-		virtual void initialize(const vector<particle_state> &p) {
-			_storage = p;
+		// set the number of particles this simulation will represent
+		virtual void setParticleCount(size_t particleCount) {
+			_state.resize(particleCount);
 		}
 
+		// get the maximum number of particles that might be drawn or simulated.
+		// note, to get the number of *active* particles, see getActiveCount()
+		size_t getParticleCount() const { return _state.size(); }
+
 		// get the storage vector; note,
-		const vector<particle_state> &getStorage() const { return _storage; }
+		const vector<particle_state> &getParticleState() const { return _state; }
 		
 		// get the offset of the first active particle - a draw method would
-		// draw particles from [getFirstActive(), (getFirstActive() + getActiveCount()) % getStorageSize())
+		// draw particles from [getFirstActive(), (getFirstActive() + getActiveCount()) % getParticleCount())
 		// this is because the storage might be used as a ring buffer
 		virtual size_t getFirstActive() const = 0;
 		
-		// get the count of active particles, this may be less than getStorage().size()
+		// get the count of active particles, this may be less than getParticleState().size()
 		virtual size_t getActiveCount() const = 0;
-
-		// get the size of the particle state storage
-		size_t getStorageSize() const { return _storage.size(); }
 		
 		// return true iff there are active particles being simulated
 		virtual bool isActive() const { return getActiveCount() > 0; }
@@ -150,7 +144,7 @@ namespace particles {
 		
 	protected:
 		
-		vector<particle_state> _storage;
+		vector<particle_state> _state;
 
 	};
 	

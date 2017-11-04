@@ -9,8 +9,6 @@
 #ifndef SvgTestScenario_hpp
 #define SvgTestScenario_hpp
 
-#include <cinder/gl/GlslProg.h>
-
 #include "Core.hpp"
 #include "Svg.hpp"
 

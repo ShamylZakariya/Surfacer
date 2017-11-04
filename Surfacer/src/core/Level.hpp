@@ -333,7 +333,7 @@ namespace core {
 
 		void addGravity(const GravitationCalculatorRef &gravityCalculator);
 		void removeGravity(const GravitationCalculatorRef &gravityCalculator);
-		const vector<GravitationCalculatorRef> getGravities() const { return _gravities; }
+		const vector<GravitationCalculatorRef> &getGravities() const { return _gravities; }
 		
 		/**
 		 get the direction and strength of gravity at a point in world space

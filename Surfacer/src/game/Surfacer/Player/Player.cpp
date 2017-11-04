@@ -588,7 +588,7 @@ namespace surfacer { namespace player {
 		if (_body) {
 			return cpBBNewForCircle(cpv(getPosition()), getConfig().height);
 		} else {
-			return cpBBZero;
+			return cpBBInvalid;
 		}
 	}
 	
@@ -960,7 +960,7 @@ namespace surfacer { namespace player {
 			return ppc->getBB();
 		}
 
-		return cpBBZero;
+		return cpBBInvalid;
 	}
 
 	void PlayerDrawComponent::draw(const render_state &renderState) {

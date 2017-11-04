@@ -12,34 +12,6 @@
 
 #include "DevComponents.hpp"
 
-namespace {
-
-	class SvgDrawComponent : public DrawComponent {
-	public:
-		SvgDrawComponent(util::svg::GroupRef doc):
-		_docRoot(doc)
-		{}
-
-		cpBB getBB() const override {
-			return _docRoot->getBB();
-		}
-
-		void draw(const core::render_state &state) override {
-			_docRoot->draw(state);
-		}
-
-		VisibilityDetermination::style getVisibilityDetermination() const override {
-			return VisibilityDetermination::FRUSTUM_CULLING;
-		}
-
-		int getLayer() const override { return 0; }
-
-	private:
-		util::svg::GroupRef _docRoot;
-	};
-
-}
-
 SvgTestScenario::SvgTestScenario() {
 }
 
@@ -125,7 +97,7 @@ void SvgTestScenario::reset() {
 void SvgTestScenario::testSimpleSvgLoad() {
 	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/eggsac.svg"), 1);
 	doc->trace();
-	getLevel()->addObject(Object::with("Hello SVG", { make_shared<SvgDrawComponent>(doc)}));
+	getLevel()->addObject(Object::with("Hello SVG", { make_shared<util::svg::SvgDrawComponent>(doc)}));
 }
 
 void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
@@ -160,7 +132,7 @@ void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
 	};
 
 
-	auto drawComponent = make_shared<SvgDrawComponent>(doc);
+	auto drawComponent = make_shared<util::svg::SvgDrawComponent>(doc);
 	vector<util::svg::GroupRef> elements = { root, green, purple, green1, green2, purple1, purple2 };
 	auto wiggleComponent = make_shared<Wiggler>(elements);
 

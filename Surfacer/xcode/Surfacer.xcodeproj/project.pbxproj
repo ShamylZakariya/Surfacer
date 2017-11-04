@@ -17,6 +17,7 @@
 		00B9955A1B128DF400A5C623 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
 		00B9955B1B128DF400A5C623 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		631171361FAB72A50098069F /* ParticleSystemTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */; };
 		632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
 		632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
 		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
@@ -143,6 +144,8 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleSystemTestScenario.cpp; sourceTree = "<group>"; };
+		631171351FAB72A50098069F /* ParticleSystemTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ParticleSystemTestScenario.hpp; sourceTree = "<group>"; };
 		632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkHelpers.cpp; sourceTree = "<group>"; };
 		632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ChipmunkHelpers.hpp; sourceTree = "<group>"; };
 		632622F01E7D9A630051ABE2 /* Core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Core.hpp; sourceTree = "<group>"; };
@@ -530,6 +533,8 @@
 				63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */,
 				63F93C2A1F86F84F00F537CA /* TerrainTestScenario.hpp */,
 				638F4DA31F8BCF53004437E8 /* TestsApp.cpp */,
+				631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */,
+				631171351FAB72A50098069F /* ParticleSystemTestScenario.hpp */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -689,6 +694,7 @@
 				638F4DD41F8BCFEA004437E8 /* TerrainTestScenario.cpp in Sources */,
 				638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */,
 				638F4DA91F8BCFCE004437E8 /* Background.cpp in Sources */,
+				631171361FAB72A50098069F /* ParticleSystemTestScenario.cpp in Sources */,
 				638F4DAB1F8BCFCE004437E8 /* TerrainDetail.cpp in Sources */,
 				638F4DB01F8BCFCE004437E8 /* Svg.cpp in Sources */,
 				638F4DB11F8BCFCE004437E8 /* ChipmunkDebugDraw.cpp in Sources */,

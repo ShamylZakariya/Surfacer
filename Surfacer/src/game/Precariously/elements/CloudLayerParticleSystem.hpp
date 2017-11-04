@@ -9,6 +9,7 @@
 #define CloudLayerParticleSystem_hpp
 
 #include "ParticleSystem.hpp"
+#include "UniversalParticleSystem.hpp"
 #include "PerlinNoise.hpp"
 
 #include "PrecariouslyConstants.hpp"
@@ -69,10 +70,10 @@ namespace precariously {
 
 		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		void update(const core::time_state &timeState) override;
-		void initialize(const vector<particles::particle_state> &p) override;
+		void setParticleCount(size_t count) override;
 
 		size_t getFirstActive() const override { return 0; };
-		size_t getActiveCount() const override { return _storage.size(); }
+		size_t getActiveCount() const override { return _state.size(); }
 		cpBB getBB() const override { return _bb; }
 		
 		//CloudLayerParticleSimulation
@@ -106,60 +107,11 @@ namespace precariously {
 		vector<particle_physics> _physics;
 	};
 	
-	class CloudLayerParticleSystemDrawComponent : public particles::ParticleSystemDrawComponent {
-	public:
-		
-		struct config : public particles::ParticleSystemDrawComponent::config {
-			ci::gl::Texture2dRef textureAtlas;
-			particles::ParticleAtlasType::Type atlasType;
-			
-			config():
-			atlasType(particles::ParticleAtlasType::None)
-			{
-				drawLayer = DrawLayers::EFFECTS;
-			}
-			
-			config(const particles::ParticleSystemDrawComponent::config &c):
-			particles::ParticleSystemDrawComponent::config(c),
-			atlasType(particles::ParticleAtlasType::None)
-			{}
-
-			static config parse(const core::util::xml::XmlMultiTree &node);
-		};
-		
-	public:
-		
-		CloudLayerParticleSystemDrawComponent(config c);
-		
-		// ParticleSystemDrawComponent
-		void setSimulation(const particles::ParticleSimulationRef simulation) override;
-		void draw(const core::render_state &renderState) override;
-
-	private:
-		
-		void updateParticles();
-		
-		struct particle_vertex {
-			vec2 position;
-			vec2 texCoord;
-			ci::ColorA color;
-			
-			particle_vertex(){}
-		};
-		
-		config _config;
-		gl::GlslProgRef _shader;
-		vector<particle_vertex> _particles;
-		gl::VboRef _particlesVbo;
-		gl::BatchRef _particlesBatch;
-		
-	};
-	
 	class CloudLayerParticleSystem : public particles::ParticleSystem {
 	public:
 		
 		struct config {
-			CloudLayerParticleSystemDrawComponent::config drawConfig;
+			particles::UniversalParticleSystemDrawComponent::config drawConfig;
 			CloudLayerParticleSimulation::config simulationConfig;
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);

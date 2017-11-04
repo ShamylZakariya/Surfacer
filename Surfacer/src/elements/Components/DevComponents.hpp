@@ -12,6 +12,7 @@
 #include "Core.hpp"
 #include "Terrain.hpp"
 
+SMART_PTR(WorldCartesianGridDrawComponent);
 class WorldCartesianGridDrawComponent : public core::DrawComponent {
 public:
 
@@ -50,6 +51,7 @@ private:
 	
 };
 
+SMART_PTR(ManualViewportControlComponent);
 class ManualViewportControlComponent : public core::InputComponent {
 public:
 
@@ -70,6 +72,7 @@ private:
 
 };
 
+SMART_PTR(TargetTrackingViewportControlComponent);
 class TargetTrackingViewportControlComponent : public core::InputComponent {
 public:
 
@@ -133,6 +136,7 @@ private:
 
 };
 
+SMART_PTR(MousePickComponent);
 class MousePickComponent : public core::InputComponent {
 public:
 
@@ -164,6 +168,7 @@ private:
 
 };
 
+SMART_PTR(MousePickDrawComponent);
 class MousePickDrawComponent : public core::DrawComponent {
 public:
 
@@ -183,6 +188,7 @@ private:
 
 };
 
+SMART_PTR(KeyboardDelegateComponent);
 class KeyboardDelegateComponent : public core::InputComponent {
 public:
 	
@@ -196,6 +202,39 @@ public:
 	
 private:
 	function<void(int keyCode)> _upHandler, _downHandler;
+};
+
+SMART_PTR(MouseDelegateComponent);
+class MouseDelegateComponent : public core::InputComponent {
+public:
+	
+	typedef function<bool(dvec2 screen, dvec2 world, const ci::app::MouseEvent &event)> MousePressHandler;
+	typedef function<bool(dvec2 screen, dvec2 world, const ci::app::MouseEvent &event)> MouseReleaseHandler;
+	typedef function<bool(dvec2 screen, dvec2 world, ivec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event)> MouseMoveHandler;
+	typedef function<bool(dvec2 screen, dvec2 world, ivec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event)> MouseDragHandler;
+	
+	static MouseDelegateComponentRef forPress(int dispatchReceiptIndex, MousePressHandler h);
+	static MouseDelegateComponentRef forRelease(int dispatchReceiptIndex, MouseReleaseHandler h);
+	static MouseDelegateComponentRef forMove(int dispatchReceiptIndex, MouseMoveHandler h);
+	static MouseDelegateComponentRef forDrag(int dispatchReceiptIndex, MouseDragHandler h);
+	
+public:
+	
+	MouseDelegateComponent(int dispatchReceiptIndex, MousePressHandler presser = MousePressHandler(), MouseReleaseHandler releaser = MouseReleaseHandler(),
+						   MouseMoveHandler mover = MouseMoveHandler(), MouseDragHandler dragger = MouseDragHandler());
+	
+	bool mouseDown( const ci::app::MouseEvent &event ) override;
+	bool mouseUp( const ci::app::MouseEvent &event ) override;
+	bool mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) override;
+	bool mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) override;
+
+private:
+	
+	MousePressHandler _pressHandler;
+	MouseReleaseHandler _releaseHandler;
+	MouseMoveHandler _moveHandler;
+	MouseDragHandler _dragHandler;
+	
 };
 
 #endif /* DevComponents_hpp */

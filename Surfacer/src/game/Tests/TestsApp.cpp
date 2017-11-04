@@ -11,6 +11,7 @@
 #include "UniversalParticleSystem.hpp"
 #include "TerrainTestScenario.hpp"
 #include "SvgTestScenario.hpp"
+#include "ParticleSystemTestScenario.hpp"
 
 namespace {
 	
@@ -20,12 +21,12 @@ namespace {
 		
 		auto dInterp = interpolator<double>({ 0, 10, 0, -10, 0 });
 		for (double i = 0; i <= 1 + 1e-3; i += 0.05) {
-			cout << "progress: " << i << " value: " << dInterp.value(i) << endl;
+			cout << "progress: " << i << " value: " << dInterp(i) << endl;
 		}
 
 		auto dvec2Interp = interpolator<dvec2>({ dvec2(0,0), dvec2(0,10), dvec2(0,0), dvec2(-10,0), dvec2(0,0) });
 		for (double i = 0; i <= 1 + 1e-3; i += 0.05) {
-			cout << "progress: " << i << " value: " << dvec2Interp.value(i) << endl;
+			cout << "progress: " << i << " value: " << dvec2Interp(i) << endl;
 		}
 
 	}
@@ -43,12 +44,11 @@ public:
 public:
 	
 	TestsApp(){
-		testInterpolators();
 	}
 	
 	virtual void setup() override {
 		App::setup();
-		//setScenario(make_shared<SvgTestScenario>());
+		setScenario(make_shared<ParticleSystemTestScenario>());
 	}
 	
 };

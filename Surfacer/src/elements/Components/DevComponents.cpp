@@ -231,7 +231,7 @@ bool ManualViewportControlComponent::mouseDown( const ci::app::MouseEvent &event
 	_mouseScreen = event.getPos();
 	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
 
-	CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld << " SPACE: " << isKeyDown(app::KeyEvent::KEY_SPACE) << " ALT: " << event.isAltDown());
+	//CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld << " SPACE: " << isKeyDown(app::KeyEvent::KEY_SPACE) << " ALT: " << event.isAltDown());
 
 	// capture alt key for re-centering
 	if ( event.isAltDown() )
@@ -509,6 +509,79 @@ void KeyboardDelegateComponent::monitoredKeyUp( int keyCode ) {
 	if (_upHandler) {
 		_upHandler(keyCode);
 	}
+}
+
+#pragma mark - MouseDelegateComponent
+/*
+ MousePressHandler _pressHandler;
+ MouseReleaseHandler _releaseHandler;
+ MouseMoveHandler _moveHandler;
+ MouseDragHandler _dragHandler;
+ */
+
+MouseDelegateComponentRef MouseDelegateComponent::forPress(int dispatchReceiptIndex, MousePressHandler h) {
+	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, h);
+}
+MouseDelegateComponentRef MouseDelegateComponent::forRelease(int dispatchReceiptIndex, MouseReleaseHandler h) {
+	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, MousePressHandler(), h, MouseMoveHandler(), MouseDragHandler());
+}
+MouseDelegateComponentRef MouseDelegateComponent::forMove(int dispatchReceiptIndex, MouseMoveHandler h) {
+	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, MousePressHandler(), MouseReleaseHandler(), h, MouseDragHandler());
+}
+MouseDelegateComponentRef MouseDelegateComponent::forDrag(int dispatchReceiptIndex, MouseDragHandler h) {
+	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, MousePressHandler(), MouseReleaseHandler(), MouseMoveHandler(), h);
+}
+
+MouseDelegateComponent::MouseDelegateComponent(int dispatchReceiptIndex, MousePressHandler presser, MouseReleaseHandler releaser, MouseMoveHandler mover, MouseDragHandler dragger):
+InputComponent(dispatchReceiptIndex),
+_pressHandler(presser),
+_releaseHandler(releaser),
+_moveHandler(mover),
+_dragHandler(dragger)
+{}
+
+bool MouseDelegateComponent::mouseDown( const ci::app::MouseEvent &event ) {
+	if (_pressHandler) {
+		dvec2 screen = event.getPos();
+		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
+
+		return _pressHandler(screen, world, event);
+	}
+	return false;
+}
+
+bool MouseDelegateComponent::mouseUp( const ci::app::MouseEvent &event ) {
+	if (_releaseHandler) {
+		dvec2 screen = event.getPos();
+		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
+		
+		return _releaseHandler(screen, world, event);
+	}
+	return false;
+}
+
+bool MouseDelegateComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
+	if (_moveHandler) {
+		dvec2 screen = event.getPos();
+		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
+		dvec2 worldDelta = getLevel()->getViewport()->screenToWorldDir(delta);
+		
+		return _moveHandler(screen, world, delta, worldDelta, event);
+	}
+	
+	return false;
+}
+
+bool MouseDelegateComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
+	if (_dragHandler) {
+		dvec2 screen = event.getPos();
+		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
+		dvec2 worldDelta = getLevel()->getViewport()->screenToWorldDir(delta);
+		
+		return _dragHandler(screen, world, delta, worldDelta, event);
+	}
+
+	return false;
 }
 
 

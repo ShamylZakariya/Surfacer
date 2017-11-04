@@ -129,7 +129,7 @@ namespace core {
 		cpShapeFilter getShapeFilter() const { return _shapeFilter; }
 		cpCollisionType getCollisionType() const { return _collisionType; }
 
-		virtual double getGravityModifier() const { return 1; }
+		virtual double getGravityModifier(cpBody *body) const { return 1; }
 
 		// get bounding box for all shapes in use
 		virtual cpBB getBB() const = 0;

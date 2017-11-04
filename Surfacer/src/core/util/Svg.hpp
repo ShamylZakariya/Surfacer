@@ -14,6 +14,7 @@
 #include <cinder/gl/VboMesh.h>
 
 #include "Common.hpp"
+#include "Object.hpp"
 #include "BlendMode.hpp"
 #include "Exception.hpp"
 #include "MathHelpers.hpp"
@@ -358,6 +359,37 @@ namespace core { namespace util { namespace svg {
 		LoadException( const std::string &w ):Exception(w){}
 		virtual ~LoadException() throw() {}
 
+	};
+	
+#pragma mark - SvgDrawComponent
+	
+	class SvgDrawComponent : public DrawComponent {
+	public:
+		SvgDrawComponent(util::svg::GroupRef doc):
+		_docRoot(doc),
+		_layer(0)
+		{}
+		
+		cpBB getBB() const override {
+			return _docRoot->getBB();
+		}
+		
+		void draw(const core::render_state &state) override {
+			_docRoot->draw(state);
+		}
+		
+		VisibilityDetermination::style getVisibilityDetermination() const override {
+			return VisibilityDetermination::FRUSTUM_CULLING;
+		}
+		
+		int getLayer() const override { return _layer; }
+		void setLayer(int layer) { _layer = layer; }
+		
+		const GroupRef &getSvg() const { return _docRoot; }
+		
+	private:
+		GroupRef _docRoot;
+		int _layer;
 	};
 
 

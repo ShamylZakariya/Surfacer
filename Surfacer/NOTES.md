@@ -4,7 +4,8 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 
 ## PRESENTLY
 
-Need to optimize rendering of clouds. write many VAOs
+UniversalParticleSystem
+	- compact() is disabled
 
 
 ## BUGS PRIORITY 0

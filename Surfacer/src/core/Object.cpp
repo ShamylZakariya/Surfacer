@@ -396,7 +396,7 @@ namespace core {
 		if (_physicsComponent) {
 			return _physicsComponent->getBB();
 		}
-		return cpBBZero;
+		return cpBBInvalid;
 	}
 
 	void Object::notifyMoved() {
