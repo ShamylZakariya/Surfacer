@@ -140,18 +140,19 @@ namespace core {
 		}
 
 		cpCollisionID visibleObjectCollector(void *obj1, void *obj2, cpCollisionID id, void *data) {
-			//DrawDispatcher *dispatcher = static_cast<DrawDispatcher*>(obj1);
 			DrawComponentRef dc = static_cast<DrawComponent*>(obj2)->shared_from_this_as<DrawComponent>();
-			DrawDispatcher::collector *collector = static_cast<DrawDispatcher::collector*>(data);
+			if (cpBBIsValid(dc->getBB())) {
+				DrawDispatcher::collector *collector = static_cast<DrawDispatcher::collector*>(data);
 
-			//
-			//	We don't want dupes in sorted vector, so filter based on whether
-			//	the object made it into the set
-			//
+				//
+				//	We don't want dupes in sorted vector, so filter based on whether
+				//	the object made it into the set
+				//
 
-			if( collector->visible.insert(dc).second )
-			{
-				collector->sorted.push_back(dc);
+				if( collector->visible.insert(dc).second )
+				{
+					collector->sorted.push_back(dc);
+				}
 			}
 
 			return id;

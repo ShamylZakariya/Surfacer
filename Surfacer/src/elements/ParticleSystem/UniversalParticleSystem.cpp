@@ -373,8 +373,14 @@ namespace particles {
 			gl::ScopedBlendPremult blender;
 			
 			_particlesBatch->draw(_batchDrawStart, _batchDrawCount);
-		} else {
-			CI_LOG_D("Not drawing anything...");
+			
+			if (renderState.mode == RenderMode::DEVELOPMENT) {
+				// draw BB
+				cpBB bb = getBB();
+				const ColorA bbColor(1,0.2,1,0.5);
+				gl::color(bbColor);
+				gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t), 1);
+			}
 		}
 	}
 	
