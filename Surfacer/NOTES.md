@@ -5,7 +5,7 @@ This is going to be done in steps; since I need to learn new Cinder APIs (primar
 ## PRESENTLY
 
 UniversalParticleSystem
-	- compact() is disabled
+	- when no particles are drawable, why is BB triggering a draw call?
 
 
 ## BUGS PRIORITY 0

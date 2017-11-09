@@ -208,7 +208,7 @@ namespace particles {
 		// Component
 		void onReady(core::ObjectRef parent, core::LevelRef level) override;
 		void onCleanup() override;
-		void update(const core::time_state &timeState) override;
+		void update(const core::time_state &time) override;
 
 		// ParticleSimulation
 		void setParticleCount(size_t count) override;
@@ -219,18 +219,18 @@ namespace particles {
 		// UniversalParticleSimulation
 		
 		// emit a single particle
-		
 		void emit(const particle_template &particle);
 		
-	private:
+	protected:
 		
-		void _compact();
+		virtual void _prepareForSimulation(const core::time_state &time);
+		virtual void _simulate(const core::time_state &time);
 		
-	private:
+	protected:
 		
 		size_t _count;
 		cpBB _bb;
-		vector<particle_template> _templates;
+		vector<particle_template> _templates, _pending;
 		core::SpaceAccessRef _spaceAccess;
 		
 	};
@@ -278,6 +278,7 @@ namespace particles {
 		vector<particle_vertex> _particles;
 		gl::VboRef _particlesVbo;
 		gl::BatchRef _particlesBatch;
+		GLsizei _batchDrawStart, _batchDrawCount;
 		
 	};
 	

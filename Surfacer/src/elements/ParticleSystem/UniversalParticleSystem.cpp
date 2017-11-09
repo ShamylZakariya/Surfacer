@@ -39,26 +39,50 @@ namespace particles {
 
 	void UniversalParticleSimulation::update(const core::time_state &time) {
 		ParticleSimulation::update(time);
-		
-		const auto &gravities = getLevel()->getGravities();
+		_prepareForSimulation(time);
+		_simulate(time);
+	}
+	
+	// ParticleSimulation
+	
+	void UniversalParticleSimulation::setParticleCount(size_t count) {
+		ParticleSimulation::setParticleCount(count);
+		_templates.resize(count);
+	}
+	
+	size_t UniversalParticleSimulation::getFirstActive() const {
+		// ALWAYS zero
+		return 0;
+	}
+
+	size_t UniversalParticleSimulation::getActiveCount() const {
+		return min(_count, _state.size());
+	}
+
+	cpBB UniversalParticleSimulation::getBB() const {
+		return _bb;
+	}
+	
+	// UniversalParticleSimulation
+	
+	void UniversalParticleSimulation::emit(const particle_template &particle) {
+		_pending.push_back(particle);
+	}
+	
+	void UniversalParticleSimulation::_prepareForSimulation(const core::time_state &time) {
+		// run a first pass where we update age and completion, then if necessary perform a compaction pass
 		size_t expiredCount = 0;
-		
-		// for each particle, compute current state and transfer to particle state
-		// for particles which are kinematic we take their cpBody position, etc. For
-		// those which aren't we do the math ourself
-		
-		cpBB bb = cpBBInvalid;
+		const size_t activeCount = getActiveCount();
 		
 		auto state = _state.begin();
-		auto end = state + getActiveCount();
+		auto end = state + activeCount;
 		auto templ = _templates.begin();
-		size_t idx = 0;
-		for (; state != end; ++state, ++templ, ++idx) {
-
+		for (; state != end; ++state, ++templ) {
+			
 			//
 			// update age and completion
 			//
-
+			
 			templ->_age += time.deltaT;
 			templ->_completion = templ->_age / templ->lifespan;
 			
@@ -67,21 +91,106 @@ namespace particles {
 				//
 				// This particle is expired. Clean it up, and note how many expired we have
 				//
-
+				
 				templ->destroy();
 				expiredCount++;
+			}
+		}
+		
+		if (expiredCount > activeCount / 2) {
+			
+			//
+			// parition templates such that expired ones are at the end; then reset _count accordingly
+			// note: We don't need to sort _particleState because it's ephemeral; we'll overwrite what's
+			// needed next pass to update()
+			//
+			
+			auto end = partition(_templates.begin(), _templates.begin() + activeCount, [](const particle_template &templ){
+				return templ._completion <= 1;
+			});
+			
+			_count = end - _templates.begin();
+			
+			CI_LOG_D("COMPACTED, went from: " << activeCount << " to " << getActiveCount() << " active particles");
+		}
+		
+		//
+		//	Process any particles that were emitted
+		//
+
+		if (!_pending.empty()) {
+		
+			for (auto &particle : _pending) {
+
+				//
+				// if a particle already lives at this point, perform any cleanup needed
+				//
 				
-				continue;
+				const size_t idx = _count % _templates.size();
+				_templates[idx].destroy();
+				
+				//
+				//	Assign template, and if it's kinematic, create chipmunk physics backing
+				//
+				
+				_templates[idx] = particle;
+				
+				if (particle.kinematics) {
+					double mass = particle.mass.getInitialValue();
+					double radius = particle.radius.getInitialValue();
+					double moment = cpMomentForCircle(mass, 0, radius, cpvzero);
+					cpBody *body = cpBodyNew(mass, moment);
+					cpShape *shape = cpCircleShapeNew(body, radius, cpvzero);
+					
+					// set up user data, etc to play well with our "engine"
+					cpBodySetUserData(body, this);
+					cpShapeSetUserData(shape, this);
+					_spaceAccess->addBody(body);
+					_spaceAccess->addShape(shape);
+					
+					// set initial state
+					cpBodySetPosition(body, cpv(particle.position));
+					cpBodySetVelocity(body, cpv(particle.velocity));
+					cpShapeSetFilter(shape, particle.kinematics.filter);
+					cpShapeSetFriction(shape, particle.kinematics.friction);
+					
+					_templates[idx]._body = body;
+					_templates[idx]._shape = shape;
+				}
+				
+				_templates[idx].prepare();
+				
+				_count++;
 			}
 			
-			const auto size = templ->radius(state->completion) * M_SQRT2;
-			const auto damping = 1-saturate(templ->damping(state->completion));
-			const auto additivity = templ->additivity(state->completion);
-			const auto mass = templ->mass(state->completion);
-			const auto color = templ->color(state->completion);
+			_pending.clear();
+		}
+		
+		// we'll re-enable in _simulate
+		for (auto &state : _state) {
+			state.active = false;
+		}
+	}
 
+	void UniversalParticleSimulation::_simulate(const core::time_state &time) {
+		
+		const auto &gravities = getLevel()->getGravities();
+		cpBB bb = cpBBInvalid;
+		
+		auto state = _state.begin();
+		auto end = state + getActiveCount();
+		auto templ = _templates.begin();
+		size_t idx = 0;
+		for (; state != end; ++state, ++templ, ++idx) {
+			
+			const auto size = templ->radius(templ->_completion) * M_SQRT2;
+			const auto damping = 1-saturate(templ->damping(templ->_completion));
+			const auto additivity = templ->additivity(templ->_completion);
+			const auto mass = templ->mass(templ->_completion);
+			const auto color = templ->color(templ->_completion);
+			
 			bool didRotate = false;
-
+			
 			if (!templ->kinematics) {
 				
 				//
@@ -94,7 +203,7 @@ namespace particles {
 					auto force = gravity->calculate(templ->position);
 					templ->velocity += mass * force.magnitude * force.dir * time.deltaT;
 				}
-
+				
 				if (damping < 1) {
 					templ->velocity *= damping;
 				}
@@ -107,14 +216,14 @@ namespace particles {
 				
 				cpShape *shape = templ->_shape;
 				cpBody *body = templ->_body;
-
+				
 				templ->position = v2(cpBodyGetPosition(body));
-			
+				
 				if (damping < 1) {
 					cpBodySetVelocity(body, cpvmult(cpBodyGetVelocity(body), damping));
 					cpBodySetAngularVelocity(body, damping * cpBodyGetAngularVelocity(body));
 				}
-			
+				
 				templ->velocity = v2(cpBodyGetVelocity(body));
 				
 				if (!templ->orientToVelocity) {
@@ -147,6 +256,7 @@ namespace particles {
 				state->up.y = size;
 			}
 			
+			state->active = true;
 			state->age = templ->_age;
 			state->completion = templ->_completion;
 			state->position = templ->position;
@@ -155,107 +265,15 @@ namespace particles {
 			
 			bb = cpBBExpand(bb, templ->position, size);
 		}
-
+		
 		//
 		// update BB and notify
 		//
-
+		
 		_bb = bb;
 		notifyMoved();
-		
-		//
-		// when we reach a fair number of expired particles, compact
-		//
-
-		if (expiredCount > getActiveCount() / 2) {
-			_compact();
-		}
-		
 	}
 	
-	// ParticleSimulation
-	
-	void UniversalParticleSimulation::setParticleCount(size_t count) {
-		ParticleSimulation::setParticleCount(count);
-		_templates.resize(count);
-	}
-	
-	size_t UniversalParticleSimulation::getFirstActive() const {
-		return 0;
-	}
-
-	size_t UniversalParticleSimulation::getActiveCount() const {
-		return min(_count, _state.size());
-	}
-
-	cpBB UniversalParticleSimulation::getBB() const {
-		return _bb;
-	}
-	
-	// UniversalParticleSimulation
-	
-	void UniversalParticleSimulation::emit(const particle_template &particle) {
-		
-		//
-		// if a particle already lives at this point, perform any cleanup needed
-		//
-		
-		const size_t idx = _count % _templates.size();
-		_templates[idx].destroy();
-
-		//
-		//	Assign template, and if it's kinematic, create chipmunk physics backing
-		//
-
-		_templates[idx] = particle;
-		
-		if (particle.kinematics) {
-			double mass = particle.mass.getInitialValue();
-			double radius = particle.radius.getInitialValue();
-			double moment = cpMomentForCircle(mass, 0, radius, cpvzero);
-			cpBody *body = cpBodyNew(mass, moment);
-			cpShape *shape = cpCircleShapeNew(body, radius, cpvzero);
-			
-			// set up user data, etc to play well with our "engine"
-			cpBodySetUserData(body, this);
-			cpShapeSetUserData(shape, this);
-			_spaceAccess->addBody(body);
-			_spaceAccess->addShape(shape);
-			
-			// set initial state
-			cpBodySetPosition(body, cpv(particle.position));
-			cpBodySetVelocity(body, cpv(particle.velocity));
-			cpShapeSetFilter(shape, particle.kinematics.filter);
-			cpShapeSetFriction(shape, particle.kinematics.friction);
-			
-			_templates[idx]._body = body;
-			_templates[idx]._shape = shape;
-		}
-		
-		_templates[idx].prepare();
-		
-		_count++;
-	}
-	
-	void UniversalParticleSimulation::_compact() {
-		
-		size_t startingActiveCount = getActiveCount();
-
-		//
-		// parition templates such that expired ones are at the end; then reset _count accordingly
-		// note: We don't need to sort _particleState because it's ephemeral; we'll overwrite what's
-		// needed next pass to update()
-		//
-		
-		auto end = partition(_templates.begin(), _templates.begin() + startingActiveCount, [](const particle_template &templ){
-			return templ._completion <= 1;
-		});
-		
-		_count = end - _templates.begin();
-		
-		CI_LOG_D("COMPACTED, went from: " << startingActiveCount << " to " << getActiveCount() << " active particles");
-	}
-
 #pragma mark - UniversalParticleSystemDrawComponent
 	
 	/*
@@ -264,6 +282,7 @@ namespace particles {
 	 vector<particle_vertex> _particles;
 	 gl::VboRef _particlesVbo;
 	 gl::BatchRef _particlesBatch;
+	 GLsizei _batchDrawStart, _batchDrawCount;
 	 */
 	
 	UniversalParticleSystemDrawComponent::config UniversalParticleSystemDrawComponent::config::parse(const util::xml::XmlMultiTree &node) {
@@ -284,7 +303,9 @@ namespace particles {
 	
 	UniversalParticleSystemDrawComponent::UniversalParticleSystemDrawComponent(config c):
 	ParticleSystemDrawComponent(c),
-	_config(c)
+	_config(c),
+	_batchDrawStart(0),
+	_batchDrawCount(0)
 	{
 		auto vsh = CI_GLSL(150,
 						   uniform mat4 ciModelViewProjection;
@@ -351,9 +372,9 @@ namespace particles {
 			gl::ScopedTextureBind tex(_config.textureAtlas, 0);
 			gl::ScopedBlendPremult blender;
 			
-			GLsizei start = static_cast<GLsizei>(sim->getFirstActive());
-			GLsizei count = static_cast<GLsizei>(sim->getActiveCount()) * 6; // 6 vertices per particle!
-			_particlesBatch->draw(start, count);
+			_particlesBatch->draw(_batchDrawStart, _batchDrawCount);
+		} else {
+			CI_LOG_D("Not drawing anything...");
 		}
 	}
 	
@@ -368,15 +389,16 @@ namespace particles {
 		
 		vec2 shape[4];
 		mat2 rotator;
+		const size_t activeCount = sim->getActiveCount();
 		auto vertex = _particles.begin();
 		auto stateBegin = sim->getParticleState().begin();
-		auto stateEnd = stateBegin + sim->getActiveCount();
-		size_t written = 0;
+		auto stateEnd = stateBegin + activeCount;
+		int verticesWritten = 0;
 		
 		for (auto state = stateBegin; state != stateEnd; ++state) {
 			
-			// Check if particle is visible before writing geometry
-			if (state->completion <= 1 && state->color.a >= ALPHA_EPSILON) {
+			// Check if particle is active && visible before writing geometry
+			if (state->active && state->color.a >= ALPHA_EPSILON) {
 				
 				shape[0] = state->position - state->right + state->up;
 				shape[1] = state->position + state->right + state->up;
@@ -424,11 +446,11 @@ namespace particles {
 				vertex->color = additiveColor;
 				++vertex;
 				
-				++written;
+				verticesWritten += 6;
 
 			} else {
 				//
-				// radius == 0 or alpha == 0, so this particle isn't visible:
+				// active == false or alpha == 0, so this particle isn't visible:
 				// write 2 triangles which will not be rendered
 				//
 				for (int i = 0; i < 6; i++) {
@@ -439,10 +461,15 @@ namespace particles {
 			}
 		}
 		
-		if (_particlesVbo && written > 0) {
+		if (_particlesVbo && verticesWritten > 0) {
+			
+			// TODO: Only submit written * 6 particles...
+			
 			// transfer to GPU
+			_batchDrawStart = 0;
+			_batchDrawCount = static_cast<GLsizei>(activeCount) * 6;
 			void *gpuMem = _particlesVbo->mapReplace();
-			memcpy( gpuMem, _particles.data(), _particles.size() * sizeof(particle_vertex) );
+			memcpy( gpuMem, _particles.data(), _batchDrawCount * sizeof(particle_vertex) );
 			_particlesVbo->unmap();
 			
 			return true;

@@ -71,6 +71,7 @@ namespace particles {
 #pragma mark - ParticleSimulation
 	
 	struct particle_state {
+		bool		active;				// if true particle is active and should be rendered
 		dvec2		position;			// base position in world coordinates
 		dvec2		right;				// x-axis scaled to half horizontal particle size
 		dvec2		up;					// y-axis scaled to half vertical particle size
@@ -81,6 +82,7 @@ namespace particles {
 		double		completion;			// degree of completion of particle, e.g., if it has a lifespan of 3 seconds and is 1.5 seconds old, completion is 0.5
 		
 		particle_state():
+		active(false),
 		position(0,0),
 		right(0.5,0),
 		up(0,0.5),

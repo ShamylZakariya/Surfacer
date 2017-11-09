@@ -78,6 +78,7 @@ namespace precariously {
 			state->position = physics->home;
 			state->age = 0;
 			state->completion = 0;
+			state->active = true; // always active
 		}
 		
 		simulate(level->getTimeState());
