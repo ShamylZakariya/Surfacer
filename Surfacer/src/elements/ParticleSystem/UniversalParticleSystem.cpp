@@ -257,6 +257,7 @@ namespace particles {
 			}
 			
 			state->active = true;
+			state->atlasIdx = templ->atlasIdx;
 			state->age = templ->_age;
 			state->completion = templ->_completion;
 			state->position = templ->position;
