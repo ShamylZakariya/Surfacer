@@ -35,6 +35,12 @@ public:
 	}
 
 	int getLayer() const override { return -1; }
+	
+	void setFillColor(ci::ColorA fillColor) { _fillColor = fillColor; }
+	ci::ColorA getFillColor() const { return _fillColor; }
+
+	void setGridColor(ci::ColorA color) { _gridColor = color; }
+	ci::ColorA getGridColor() const { return _gridColor; }
 
 protected:
 
@@ -48,6 +54,7 @@ private:
 	double _periodStep;
 	gl::GlslProgRef _shader;
 	gl::BatchRef _batch;
+	ci::ColorA _fillColor, _gridColor;
 	
 };
 
