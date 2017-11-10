@@ -28,7 +28,9 @@ shared_ptr<WorldCartesianGridDrawComponent> WorldCartesianGridDrawComponent::cre
 WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef tex, double basePeriod, double periodStep):
 _texture(tex),
 _basePeriod(basePeriod),
-_periodStep(periodStep)
+_periodStep(periodStep),
+_fillColor(0,0,0,0),
+_gridColor(1,1,1,1)
 {
 	_texture->setWrap(GL_REPEAT, GL_REPEAT);
 	_texture->setMagFilter(GL_NEAREST);
@@ -55,6 +57,7 @@ _periodStep(periodStep)
 					   uniform float BetaPeriod;
 					   uniform float BetaPeriodTexelSize;
 					   uniform float BetaPeriodAlpha;
+					   uniform vec4 BackgroundColor;
 					   uniform vec4 Color;
 					   uniform vec4 AxisColor;
 					   uniform sampler2D Tex0;
@@ -96,8 +99,9 @@ _periodStep(periodStep)
 
 						   alphaValue.a *= AlphaPeriodAlpha;
 						   betaValue.a *= BetaPeriodAlpha;
-
-						   oColor = alphaValue + betaValue;
+						   vec4 gridColor = alphaValue + betaValue;
+						   
+						   oColor = mix(BackgroundColor, gridColor, gridColor.a);
 					   }
 					   );
 
@@ -185,10 +189,11 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	_shader->uniform("BetaPeriod", static_cast<float>(betaPeriod));
 	_shader->uniform("BetaPeriodTexelSize", static_cast<float>(betaPeriodTexelSize));
 	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
-	_shader->uniform("Color", ColorA(1,1,1,0.5));
+	_shader->uniform("BackgroundColor", _fillColor);
+	_shader->uniform("Color", _gridColor * ci::ColorA(1,1,1,0.3));
 
-	// TODO: Turn this back to red when I fix haloing
-	_shader->uniform("AxisColor", ColorA(1,1,1,1));
+	// TODO: Turn this back to red or a separate color when I fix haloing
+	_shader->uniform("AxisColor", _gridColor);
 }
 
 void WorldCartesianGridDrawComponent::onViewportMotion(const Viewport &vp) {
