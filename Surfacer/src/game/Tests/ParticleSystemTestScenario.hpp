@@ -10,6 +10,8 @@
 
 #include "Core.hpp"
 #include "Svg.hpp"
+
+#include "Terrain.hpp"
 #include "UniversalParticleSystem.hpp"
 
 
@@ -38,13 +40,14 @@ public:
 	
 protected:
 
-	void buildPs0();
-	void testPs0SingleEmission(dvec2 world, dvec2 vel);
+	void buildExplosionPs();
+	void emitSmokeParticle(dvec2 world, dvec2 vel);
+	void emitSparkParticle(dvec2 world, dvec2 vel);
 	
 private:
-	
-	UniversalParticleSystemRef _ps0;
-	UniversalParticleSimulation::particle_template _smoke;
+
+	UniversalParticleSystemRef _explosionPs;
+	UniversalParticleSimulation::particle_template _smoke, _spark;
 	
 };
 
