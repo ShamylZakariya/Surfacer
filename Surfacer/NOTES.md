@@ -1,11 +1,10 @@
 # Precariously Assured Destruction
-
-This is going to be done in steps; since I need to learn new Cinder APIs (primarily the new vector/matrix/etc stuff), and I need to learn the modern OpenGL stuff.
+https://www.wikiwand.com/en/Kessler_syndrome
+When satellite debris gets out of hand
 
 ## PRESENTLY
 
 UniversalParticleSystem
-	- when no particles are drawable, why is BB triggering a draw call?
 
 
 ## BUGS PRIORITY 0
