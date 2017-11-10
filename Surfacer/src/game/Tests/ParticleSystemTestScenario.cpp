@@ -15,10 +15,10 @@
 
 namespace {
 	
-	const double COLLISION_SHAPE_RADIUS = 0;
-	const double MIN_SURFACE_AREA = 2;
-	const ci::Color TERRAIN_COLOR(0.3,0.3,0.3);
-	const ci::Color ANCHOR_COLOR(0,0,0);
+	const double CollisionShapeRadius = 0;
+	const double MinSurfaceArea = 2;
+	const ci::Color TerrainColor(0.3,0.3,0.3);
+	const ci::Color AnchorColor(0,0,0);
 	
 	namespace CollisionType {
 		
@@ -58,8 +58,8 @@ namespace {
 		};
 	}
 	
-	const terrain::material TerrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
-	const terrain::material AnchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
+	const terrain::material TerrainMaterial(1, 0.5, CollisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MinSurfaceArea, TerrainColor);
+	const terrain::material AnchorMaterial(1, 1, CollisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MinSurfaceArea, AnchorColor);
 	
 	
 	PolyLine2d rect(float left, float bottom, float right, float top) {
@@ -132,7 +132,8 @@ void ParticleSystemTestScenario::setup() {
 	
 	auto presser = MouseDelegateComponent::forPress(0, [this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
 //		emitSmokeParticle(world, dvec2(0,0));
-		emitSparkParticle(world, dvec2(5,10));
+//		emitSparkParticle(world, dvec2(5,10));
+		emitRubbleParticle(world, dvec2(25,50));
 		return true;
 	});
 
@@ -188,9 +189,6 @@ bool ParticleSystemTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 	if (event.getChar() == 'r') {
 		reset();
 		return true;
-	} else if (event.getCode() == ci::app::KeyEvent::KEY_SPACE) {
-		
-		return true;
 	} else if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
 		setRenderMode( RenderMode::mode( (int(getRenderMode()) + 1) % RenderMode::COUNT ));
 	}
@@ -217,13 +215,13 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	
 	auto level = getLevel();
 	level->addObject(_explosionPs);
-	level->addGravity(DirectionalGravitationCalculator::create(dvec2(0,-1), 9.8));
+	level->addGravity(DirectionalGravitationCalculator::create(dvec2(0,-1), 9.8 * 10));
 
 	// build a "smoke" particle template
 	_smoke.atlasIdx = 0;
 	_smoke.lifespan = 3;
 	_smoke.radius = { 0.0, 10.0, 0.0 };
-	_smoke.damping = { 0.0, 0.1 };
+	_smoke.damping = { 0.0, 0.02 };
 	_smoke.additivity = { 0.0 };
 	_smoke.mass = { -1.0, 0.0 };
 	_smoke.color = { ci::ColorA(1,1,1,0), ci::ColorA(1,1,1,1) };
@@ -232,11 +230,21 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	_spark.atlasIdx = 1;
 	_spark.lifespan = 2;
 	_spark.radius = { 0.0, 2.0, 0.0 };
-	_spark.damping = { 0.0, 0.1 };
+	_spark.damping = { 0.0, 0.02 };
 	_spark.additivity = { 1.0 };
 	_spark.mass = { -1.0, +10.0 };
 	_spark.orientToVelocity = true;
 	_spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
+	
+	// build a "rubble" particle template
+	_rubble.atlasIdx = 2;
+	_rubble.lifespan = 10;
+	_rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
+	_rubble.damping = 0.02;
+	_rubble.additivity = 0.0;
+	_rubble.mass = 10.0;
+	_rubble.color = TerrainColor;
+	_rubble.kinematics = particles::UniversalParticleSimulation::particle_kinematics_template(1, ShapeFilters::TERRAIN);
 }
 
 void ParticleSystemTestScenario::emitSmokeParticle(dvec2 world, dvec2 vel) {
@@ -251,4 +259,11 @@ void ParticleSystemTestScenario::emitSparkParticle(dvec2 world, dvec2 vel) {
 	_spark.position = world;
 	_spark.velocity = vel;
 	sim->emit(_spark);
+}
+
+void ParticleSystemTestScenario::emitRubbleParticle(dvec2 world, dvec2 vel) {
+	UniversalParticleSimulationRef sim = _explosionPs->getComponent<UniversalParticleSimulation>();
+	_rubble.position = world;
+	_rubble.velocity = vel;
+	sim->emit(_rubble);
 }

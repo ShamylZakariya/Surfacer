@@ -58,6 +58,12 @@ namespace particles {
 			return *this;
 		}
 		
+		interpolator &operator = (const T &value) {
+			_values.clear();
+			_values.push_back(value);
+			return *this;
+		}
+		
 		// get the value equivalent to *this(0)
 		T getInitialValue() const {
 			return _values.front();

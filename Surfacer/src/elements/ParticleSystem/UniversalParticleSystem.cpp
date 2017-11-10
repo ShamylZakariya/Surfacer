@@ -12,6 +12,12 @@
 using namespace core;
 namespace particles {
 	
+	namespace {
+		
+		double MinKinematicParticleRadius = 0.05;
+		
+	}
+	
 #pragma mark - UniversalParticleSimulation
 
 	/*
@@ -137,7 +143,7 @@ namespace particles {
 				
 				if (particle.kinematics) {
 					double mass = particle.mass.getInitialValue();
-					double radius = particle.radius.getInitialValue();
+					double radius = max(particle.radius.getInitialValue(), MinKinematicParticleRadius);
 					double moment = cpMomentForCircle(mass, 0, radius, cpvzero);
 					cpBody *body = cpBodyNew(mass, moment);
 					cpShape *shape = cpCircleShapeNew(body, radius, cpvzero);
@@ -156,6 +162,8 @@ namespace particles {
 					
 					_templates[idx]._body = body;
 					_templates[idx]._shape = shape;
+					_templates[idx].position = particle.position;
+					_templates[idx].velocity = particle.velocity;
 				}
 				
 				_templates[idx].prepare();
@@ -167,6 +175,7 @@ namespace particles {
 		}
 		
 		// we'll re-enable in _simulate
+		// TODO: Consider a more graceful handling of this, since re-enablement below is awkward
 		for (auto &state : _state) {
 			state.active = false;
 		}
@@ -183,7 +192,16 @@ namespace particles {
 		size_t idx = 0;
 		for (; state != end; ++state, ++templ, ++idx) {
 			
-			const auto size = templ->radius(templ->_completion) * M_SQRT2;
+			// _prepareForSimulation deactivates all particles
+			// and requires _simulate to re-activate any which should be active
+
+			state->active = templ->_completion <= 1;
+			if (!state->active) {
+				continue;
+			}
+
+			const auto radius = templ->radius(templ->_completion);
+			const auto size = radius * M_SQRT2;
 			const auto damping = 1-saturate(templ->damping(templ->_completion));
 			const auto additivity = templ->additivity(templ->_completion);
 			const auto mass = templ->mass(templ->_completion);
@@ -207,6 +225,7 @@ namespace particles {
 				if (damping < 1) {
 					templ->velocity *= damping;
 				}
+				
 				
 			} else {
 				
@@ -235,7 +254,7 @@ namespace particles {
 				
 				// now update chipmunk's representation
 				cpBodySetMass(body, max(mass, 0.0));
-				cpCircleShapeSetRadius(shape, size);
+				cpCircleShapeSetRadius(shape, max(radius,MinKinematicParticleRadius));
 			}
 			
 			if (templ->orientToVelocity) {
@@ -256,7 +275,6 @@ namespace particles {
 				state->up.y = size;
 			}
 			
-			state->active = true;
 			state->atlasIdx = templ->atlasIdx;
 			state->age = templ->_age;
 			state->completion = templ->_completion;
@@ -469,8 +487,6 @@ namespace particles {
 		}
 		
 		if (_particlesVbo && verticesWritten > 0) {
-			
-			// TODO: Only submit written * 6 particles...
 			
 			// transfer to GPU
 			_batchDrawStart = 0;

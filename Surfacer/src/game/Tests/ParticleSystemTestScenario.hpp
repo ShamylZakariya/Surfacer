@@ -43,11 +43,12 @@ protected:
 	void buildExplosionPs();
 	void emitSmokeParticle(dvec2 world, dvec2 vel);
 	void emitSparkParticle(dvec2 world, dvec2 vel);
+	void emitRubbleParticle(dvec2 world, dvec2 vel);
 	
 private:
 
 	UniversalParticleSystemRef _explosionPs;
-	UniversalParticleSimulation::particle_template _smoke, _spark;
+	UniversalParticleSimulation::particle_template _smoke, _spark, _rubble;
 	
 };
 
