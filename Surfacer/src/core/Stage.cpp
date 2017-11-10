@@ -1,12 +1,12 @@
 //
-//  Level.cpp
+//  Stage.cpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 3/27/17.
 //
 //
 
-#include "Level.hpp"
+#include "Stage.hpp"
 
 #include <cinder/CinderAssert.h>
 
@@ -97,9 +97,9 @@ namespace core {
 
 #pragma mark - SpaceAccess
 
-	SpaceAccess::SpaceAccess(cpSpace *space, Level *level):
+	SpaceAccess::SpaceAccess(cpSpace *space, Stage *stage):
 	_space(space),
-	_level(level)
+	_stage(stage)
 	{}
 
 	void SpaceAccess::addBody(cpBody *body) {
@@ -118,7 +118,7 @@ namespace core {
 	}
 
 	GravitationCalculator::force SpaceAccess::getGravity(const dvec2 &world) {
-		return _level->getGravitation(world);
+		return _stage->getGravitation(world);
 	}
 
 
@@ -383,14 +383,14 @@ namespace core {
 	}
 
 	
-#pragma mark - Level
+#pragma mark - Stage
 
 	namespace {
 
 		void gravitationCalculatorVelocityFunc(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt) {
 			cpSpace *space = cpBodyGetSpace(body);
-			Level *level = static_cast<Level*>(cpSpaceGetUserData(space));
-			auto g = level->getGravitation(v2(cpBodyGetPosition(body)));
+			Stage *stage = static_cast<Stage*>(cpSpaceGetUserData(space));
+			auto g = stage->getGravitation(v2(cpBodyGetPosition(body)));
 			auto magnitude = g.magnitude;
 
 			// objects can define a custom gravity modifier - 0 means no effect, -1 would be repulsive, etc
@@ -425,7 +425,7 @@ namespace core {
 	 map<collision_type_pair, vector<pair<ObjectRef, ObjectRef>>> _syntheticContacts;
 	 */
 
-	Level::Level(string name):
+	Stage::Stage(string name):
 	_space(cpSpaceNew()),
 	_ready(false),
 	_paused(false),
@@ -444,13 +444,13 @@ namespace core {
 		setCpBodyVelocityUpdateFunc(gravitationCalculatorVelocityFunc);
 
 		_spaceAccess = SpaceAccessRef(new SpaceAccess(_space, this));
-		_spaceAccess->bodyWasAddedToSpace.connect(this, &Level::onBodyAddedToSpace);
-		_spaceAccess->shapeWasAddedToSpace.connect(this, &Level::onShapeAddedToSpace);
-		_spaceAccess->constraintWasAddedToSpace.connect(this, &Level::onConstraintAddedToSpace);
+		_spaceAccess->bodyWasAddedToSpace.connect(this, &Stage::onBodyAddedToSpace);
+		_spaceAccess->shapeWasAddedToSpace.connect(this, &Stage::onShapeAddedToSpace);
+		_spaceAccess->constraintWasAddedToSpace.connect(this, &Stage::onConstraintAddedToSpace);
 		
 	}
 
-	Level::~Level() {
+	Stage::~Stage() {
 		// these all have to be freed before we can free the space
 		_objects.clear();
 		_objectsById.clear();
@@ -459,21 +459,21 @@ namespace core {
 		cpSpaceFree(_space);
 	}
 
-	void Level::setPaused(bool paused) {
+	void Stage::setPaused(bool paused) {
 		if (paused != isPaused()) {
 			_paused = isPaused();
 			if (isPaused()) {
-				signals.onLevelPaused(shared_from_this_as<Level>());
+				signals.onStagePaused(shared_from_this_as<Stage>());
 			} else {
-				signals.onLevelUnpaused(shared_from_this_as<Level>());
+				signals.onStageUnpaused(shared_from_this_as<Stage>());
 			}
 		}
 	}
 
-	void Level::resize( ivec2 newSize )
+	void Stage::resize( ivec2 newSize )
 	{}
 
-	void Level::step( const time_state &time ) {
+	void Stage::step( const time_state &time ) {
 		if (!_ready) {
 			onReady();
 		}
@@ -505,7 +505,7 @@ namespace core {
 		}
 	}
 
-	void Level::update( const time_state &time ) {
+	void Stage::update( const time_state &time ) {
 		if (!_paused) {
 			_time = time;
 		}
@@ -559,11 +559,11 @@ namespace core {
 		}
 	}
 
-	void Level::draw( const render_state &state ) {
+	void Stage::draw( const render_state &state ) {
 		//
-		//	This may look odd, but Level is responsible for Pausing, not the owner Scenario. This means that
-		//	when the game is paused, the level is responsible for sending a mock 'paused' time object that reflects
-		//	the time when the game was paused. I can't do this at the Scenario level because Scenario may have UI
+		//	This may look odd, but Stage is responsible for Pausing, not the owner Scenario. This means that
+		//	when the game is paused, the stage is responsible for sending a mock 'paused' time object that reflects
+		//	the time when the game was paused. I can't do this at the Scenario stage because Scenario may have UI
 		//	which needs correct time updates.
 		//
 
@@ -574,14 +574,14 @@ namespace core {
 		_drawDispatcher->draw( localState );
 	}
 
-	void Level::drawScreen( const render_state &state ) {
+	void Stage::drawScreen( const render_state &state ) {
 		for (const auto &dc : _drawDispatcher->all()) {
 			dc->drawScreen(state);
 		}
 	}
 
-	void Level::addObject(ObjectRef obj) {
-		CI_ASSERT_MSG(!obj->getLevel(), "Can't add a Object that already has been added to this or another Level");
+	void Stage::addObject(ObjectRef obj) {
+		CI_ASSERT_MSG(!obj->getStage(), "Can't add a Object that already has been added to this or another Stage");
 
 		size_t id = obj->getId();
 
@@ -592,16 +592,16 @@ namespace core {
 			_drawDispatcher->add(id, dc);
 		}
 
-		obj->onAddedToLevel(shared_from_this_as<Level>());
+		obj->onAddedToStage(shared_from_this_as<Stage>());
 
 		if (_ready) {
-			obj->onReady(shared_from_this_as<Level>());
+			obj->onReady(shared_from_this_as<Stage>());
 		}
 
 	}
 
-	void Level::removeObject(ObjectRef obj) {
-		CI_ASSERT_MSG(obj->getLevel().get() == this, "Can't remove a Object which isn't a child of this Level");
+	void Stage::removeObject(ObjectRef obj) {
+		CI_ASSERT_MSG(obj->getStage().get() == this, "Can't remove a Object which isn't a child of this Stage");
 
 		size_t id = obj->getId();
 
@@ -609,10 +609,10 @@ namespace core {
 		_objectsById.erase(id);
 		_drawDispatcher->remove(id);
 
-		obj->onRemovedFromLevel();
+		obj->onRemovedFromStage();
 	}
 
-	ObjectRef Level::getObjectById(size_t id) const {
+	ObjectRef Stage::getObjectById(size_t id) const {
 		auto pos = _objectsById.find(id);
 		if (pos != _objectsById.end()) {
 			return pos->second;
@@ -621,7 +621,7 @@ namespace core {
 		}
 	}
 
-	vector<ObjectRef> Level::getObjectsByName(string name) const {
+	vector<ObjectRef> Stage::getObjectsByName(string name) const {
 
 		vector<ObjectRef> result;
 		copy_if(_objects.begin(), _objects.end(), back_inserter(result),[&name](const ObjectRef &object) -> bool {
@@ -631,24 +631,24 @@ namespace core {
 		return result;
 	}
 
-	ViewportRef Level::getViewport() const {
+	ViewportRef Stage::getViewport() const {
 		return getScenario()->getViewport();
 	}
 
-	ViewportControllerRef Level::getViewportController() const {
+	ViewportControllerRef Stage::getViewportController() const {
 		return getScenario()->getViewportController();
 	}
 	
-	void Level::addGravity(const GravitationCalculatorRef &gravityCalculator) {
+	void Stage::addGravity(const GravitationCalculatorRef &gravityCalculator) {
 		removeGravity(gravityCalculator);
 		_gravities.push_back(gravityCalculator);
 	}
 
-	void Level::removeGravity(const GravitationCalculatorRef &gravityCalculator) {
+	void Stage::removeGravity(const GravitationCalculatorRef &gravityCalculator) {
 		_gravities.erase(remove(_gravities.begin(), _gravities.end(), gravityCalculator), _gravities.end());
 	}
 
-	GravitationCalculator::force Level::getGravitation(dvec2 world) const {
+	GravitationCalculator::force Stage::getGravitation(dvec2 world) const {
 		
 		if (!_gravities.empty()) {
 			dvec2 gravity(0,0);
@@ -669,17 +669,17 @@ namespace core {
 
 	namespace detail {
 
-		cpBool Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
-			Level *level = static_cast<Level*>(data);
+		cpBool Stage_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Stage *stage = static_cast<Stage*>(data);
 
 			cpShape *a = nullptr, *b = nullptr;
 			cpArbiterGetShapes(arb, &a, &b);
 
 			// if any handlers are defined for this pairing, dispatch
 			cpBool accept = cpTrue;
-			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
-			auto pos = level->_collisionBeginHandlers.find(ctp);
-			if (pos != level->_collisionBeginHandlers.end()) {
+			const Stage::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = stage->_collisionBeginHandlers.find(ctp);
+			if (pos != stage->_collisionBeginHandlers.end()) {
 				ObjectRef ga = cpShapeGetObject(a);
 				ObjectRef gb = cpShapeGetObject(b);
 				for (const auto &cb : pos->second) {
@@ -689,24 +689,24 @@ namespace core {
 				}
 			}
 
-			if (!level->onCollisionBegin(arb)) {
+			if (!stage->onCollisionBegin(arb)) {
 				accept = cpFalse;
 			}
 
 			return accept;
 		}
 
-		cpBool Level_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
-			Level *level = static_cast<Level*>(data);
+		cpBool Stage_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Stage *stage = static_cast<Stage*>(data);
 
 			cpShape *a = nullptr, *b = nullptr;
 			cpArbiterGetShapes(arb, &a, &b);
 
 			// if any handlers are defined for this pairing, dispatch
 			cpBool accept = cpTrue;
-			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
-			auto pos = level->_collisionPreSolveHandlers.find(ctp);
-			if (pos != level->_collisionPreSolveHandlers.end()) {
+			const Stage::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = stage->_collisionPreSolveHandlers.find(ctp);
+			if (pos != stage->_collisionPreSolveHandlers.end()) {
 				ObjectRef ga = cpShapeGetObject(a);
 				ObjectRef gb = cpShapeGetObject(b);
 				for (const auto &cb : pos->second) {
@@ -716,28 +716,28 @@ namespace core {
 				}
 			}
 
-			if (!level->onCollisionPreSolve(arb)) {
+			if (!stage->onCollisionPreSolve(arb)) {
 				accept = cpFalse;
 			}
 
 			return accept;
 		}
 
-		void Level_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
-			Level *level = static_cast<Level*>(data);
+		void Stage_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Stage *stage = static_cast<Stage*>(data);
 
 			cpShape *a = nullptr, *b = nullptr;
 			cpArbiterGetShapes(arb, &a, &b);
 
 			// if any handlers are defined for this pairing, dispatch
-			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			const Stage::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
 			ObjectRef ga = cpShapeGetObject(a);
 			ObjectRef gb = cpShapeGetObject(b);
 
 			// dispatch to post solve handlers
 			{
-				auto pos = level->_collisionPostSolveHandlers.find(ctp);
-				if (pos != level->_collisionPostSolveHandlers.end()) {
+				auto pos = stage->_collisionPostSolveHandlers.find(ctp);
+				if (pos != stage->_collisionPostSolveHandlers.end()) {
 					for (const auto &cb : pos->second) {
 						cb(ctp, ga, gb, arb);
 					}
@@ -746,27 +746,27 @@ namespace core {
 
 			// dispatch to generic contact handlers
 			{
-				auto pos = level->_contactHandlers.find(ctp);
-				if (pos != level->_contactHandlers.end()) {
+				auto pos = stage->_contactHandlers.find(ctp);
+				if (pos != stage->_contactHandlers.end()) {
 					for (const auto &cb : pos->second) {
 						cb(ctp, ga, gb);
 					}
 				}
 			}
 
-			level->onCollisionPostSolve(arb);
+			stage->onCollisionPostSolve(arb);
 		}
 
-		void Level_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
-			Level *level = static_cast<Level*>(data);
+		void Stage_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data) {
+			Stage *stage = static_cast<Stage*>(data);
 
 			cpShape *a = nullptr, *b = nullptr;
 			cpArbiterGetShapes(arb, &a, &b);
 
 			// if any handlers are defined for this pairing, dispatch
-			const Level::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
-			auto pos = level->_collisionSeparateHandlers.find(ctp);
-			if (pos != level->_collisionSeparateHandlers.end()) {
+			const Stage::collision_type_pair ctp(cpShapeGetCollisionType(a),cpShapeGetCollisionType(b));
+			auto pos = stage->_collisionSeparateHandlers.find(ctp);
+			if (pos != stage->_collisionSeparateHandlers.end()) {
 				ObjectRef ga = cpShapeGetObject(a);
 				ObjectRef gb = cpShapeGetObject(b);
 				for (const auto &cb : pos->second) {
@@ -774,56 +774,56 @@ namespace core {
 				}
 			}
 
-			level->onCollisionSeparate(arb);
+			stage->onCollisionSeparate(arb);
 		}
 
 	}
 
-	Level::collision_type_pair Level::addCollisionMonitor(cpCollisionType a, cpCollisionType b) {
+	Stage::collision_type_pair Stage::addCollisionMonitor(cpCollisionType a, cpCollisionType b) {
 		collision_type_pair ctp(a,b);
 		if (_monitoredCollisions.insert(ctp).second) {
 			cpSpace * space = getSpace()->getSpace();
 			cpCollisionHandler *handler = cpSpaceAddCollisionHandler(space, a, b);
 			handler->userData = this;
-			handler->beginFunc = detail::Level_collisionBeginHandler;
-			handler->preSolveFunc = detail::Level_collisionPreSolveHandler;
-			handler->postSolveFunc = detail::Level_collisionPostSolveHandler;
-			handler->separateFunc = detail::Level_collisionSeparateHandler;
+			handler->beginFunc = detail::Stage_collisionBeginHandler;
+			handler->preSolveFunc = detail::Stage_collisionPreSolveHandler;
+			handler->postSolveFunc = detail::Stage_collisionPostSolveHandler;
+			handler->separateFunc = detail::Stage_collisionSeparateHandler;
 		}
 		return ctp;
 	}
 
-	void Level::addCollisionBeginHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
+	void Stage::addCollisionBeginHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
 		const auto ctp = addCollisionMonitor(a,b);
 		_collisionBeginHandlers[ctp].push_back(cb);
 	}
 
-	void Level::addCollisionPreSolveHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
+	void Stage::addCollisionPreSolveHandler(cpCollisionType a, cpCollisionType b, EarlyCollisionCallback cb) {
 		const auto ctp = addCollisionMonitor(a,b);
 		_collisionPreSolveHandlers[ctp].push_back(cb);
 	}
 
-	void Level::addCollisionPostSolveHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
+	void Stage::addCollisionPostSolveHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
 		const auto ctp = addCollisionMonitor(a,b);
 		_collisionPostSolveHandlers[ctp].push_back(cb);
 	}
 
-	void Level::addCollisionSeparateHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
+	void Stage::addCollisionSeparateHandler(cpCollisionType a, cpCollisionType b, LateCollisionCallback cb) {
 		const auto ctp = addCollisionMonitor(a,b);
 		_collisionSeparateHandlers[ctp].push_back(cb);
 	}
 
-	void Level::addContactHandler(cpCollisionType a, cpCollisionType b, ContactCallback cb) {
+	void Stage::addContactHandler(cpCollisionType a, cpCollisionType b, ContactCallback cb) {
 		const auto ctp = addCollisionMonitor(a,b);
 		_contactHandlers[ctp].push_back(cb);
 	}
 	
-	void Level::registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb) {
+	void Stage::registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb) {
 		collision_type_pair ctp(a, b);
 		_syntheticContacts[ctp].push_back(std::make_pair(ga, gb));
 	}
 	
-	Level::query_nearest_result Level::queryNearest(dvec2 point, cpShapeFilter filter, double maxDistance) {
+	Stage::query_nearest_result Stage::queryNearest(dvec2 point, cpShapeFilter filter, double maxDistance) {
 		query_nearest_result result;
 		
 		cpPointQueryInfo pointQueryInfo;
@@ -839,7 +839,7 @@ namespace core {
 		return result;
 	}
 	
-	Level::query_segment_result Level::querySegment(dvec2 a, dvec2 b, double radius, cpShapeFilter filter) {
+	Stage::query_segment_result Stage::querySegment(dvec2 a, dvec2 b, double radius, cpShapeFilter filter) {
 		query_segment_result result;
 		cpSegmentQueryInfo info;
 		cpShape *shape = cpSpaceSegmentQueryFirst(_space, cpv(a), cpv(b), radius, filter, &info);
@@ -853,48 +853,48 @@ namespace core {
 		return result;
 	}
 
-	void Level::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
+	void Stage::setCpBodyVelocityUpdateFunc(cpBodyVelocityFunc f) {
 		_bodyVelocityFunc = f ? f : cpBodyUpdateVelocity;
 
 		// update every body in sim
 		cpSpaceEachBody(_space, [](cpBody *body, void *data){
-			auto l = static_cast<Level*>(data);
+			auto l = static_cast<Stage*>(data);
 			cpBodySetVelocityUpdateFunc(body, l->_bodyVelocityFunc);
 		}, this);
 	}
 
-	void Level::addedToScenario(ScenarioRef scenario) {
+	void Stage::addedToScenario(ScenarioRef scenario) {
 		_scenario = scenario;
 	}
 
-	void Level::removeFromScenario() {
+	void Stage::removeFromScenario() {
 		_scenario.reset();
 	}
 
-	void Level::onReady() {
-		CI_ASSERT_MSG(!_ready, "Can't call onReady() on Level that is already ready");
+	void Stage::onReady() {
+		CI_ASSERT_MSG(!_ready, "Can't call onReady() on Stage that is already ready");
 
-		const auto self = shared_from_this_as<Level>();
+		const auto self = shared_from_this_as<Stage>();
 		for (auto &obj : _objects) {
 			obj->onReady(self);
 		}
 		_ready = true;
 	}
 
-	void Level::onBodyAddedToSpace(cpBody *body) {
+	void Stage::onBodyAddedToSpace(cpBody *body) {
 		//CI_LOG_D("onBodyAddedToSpace body: " << body);
 		cpBodySetVelocityUpdateFunc(body, getCpBodyVelocityUpdateFunc());
 	}
 
-	void Level::onShapeAddedToSpace(cpShape *shape) {
+	void Stage::onShapeAddedToSpace(cpShape *shape) {
 		//CI_LOG_D("onShapeAddedToSpace shape: " << shape);
 	}
 
-	void Level::onConstraintAddedToSpace(cpConstraint *constraint) {
+	void Stage::onConstraintAddedToSpace(cpConstraint *constraint) {
 		//CI_LOG_D("onConstraintAddedToSpace constraint: " << constraint);
 	}
 
-	void Level::dispatchSyntheticContacts() {
+	void Stage::dispatchSyntheticContacts() {
 		for (auto &group : _syntheticContacts) {
 			const auto ctp = group.first;
 			const auto pos = _contactHandlers.find(ctp);

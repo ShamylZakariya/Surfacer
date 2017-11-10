@@ -212,7 +212,7 @@ namespace particles {
 		UniversalParticleSimulation();
 		
 		// Component
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void onCleanup() override;
 		void update(const core::time_state &time) override;
 

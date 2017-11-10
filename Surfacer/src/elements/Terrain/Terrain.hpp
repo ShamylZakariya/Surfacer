@@ -28,7 +28,7 @@ namespace terrain {
 		TerrainObject(string name, WorldRef world, int drawLayer);
 		virtual ~TerrainObject();
 
-		void onReady(core::LevelRef level) override;
+		void onReady(core::StageRef stage) override;
 		void onCleanup() override;
 		void step(const core::time_state &timeState) override;
 		void update(const core::time_state &timeState) override;
@@ -48,7 +48,7 @@ namespace terrain {
 		TerrainDrawComponent(int drawLayer):_drawLayer(drawLayer){}
 		virtual ~TerrainDrawComponent(){}
 
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		cpBB getBB() const override { return cpBBInfinity; }
 		void draw(const core::render_state &renderState) override;
 		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::ALWAYS_DRAW; }
@@ -71,7 +71,7 @@ namespace terrain {
 		TerrainPhysicsComponent(){}
 		virtual ~TerrainPhysicsComponent(){}
 
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		cpBB getBB() const override;
 		vector<cpBody*> getBodies() const override;
 
@@ -110,7 +110,7 @@ namespace terrain {
 		
 		MouseCutterDrawComponent(ColorA color = ColorA(1,1,1,0.5));
 		
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		cpBB getBB() const override { return cpBBInfinity; }
 		void draw(const core::render_state &renderState) override;
 		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::ALWAYS_DRAW; }

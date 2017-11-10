@@ -27,10 +27,10 @@
 #include "Viewport.hpp"
 #include "ViewportController.hpp"
 
-// higher level stuff
+// higher stage stuff
 
 #include "Object.hpp"
-#include "Level.hpp"
+#include "Stage.hpp"
 #include "Scenario.hpp"
 
 #endif /* Core_h */

@@ -37,7 +37,7 @@ namespace surfacer { namespace enemy {
 		config getConfig() const { return _config; }
 
 		// DrawComponent
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
 		void draw(const core::render_state &renderState) override;
 		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::FRUSTUM_CULLING; }
@@ -98,7 +98,7 @@ namespace surfacer { namespace enemy {
 		void detach();
 
 		// PhysicsComponent
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void onCleanup() override;
 		void step(const core::time_state &time) override;
 		cpBB getBB() const override;

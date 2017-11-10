@@ -20,7 +20,7 @@ SvgTestScenario::~SvgTestScenario() {
 }
 
 void SvgTestScenario::setup() {
-	setLevel(make_shared<Level>("Hello Svg"));
+	setStage(make_shared<Stage>("Hello Svg"));
 
 	auto cameraController = Object::with("ViewportControlComponent", {
 		make_shared<ManualViewportControlComponent>(getViewportController())
@@ -28,15 +28,15 @@ void SvgTestScenario::setup() {
 
 	auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create(1) });
 
-	getLevel()->addObject(grid);
-	getLevel()->addObject(cameraController);
+	getStage()->addObject(grid);
+	getStage()->addObject(cameraController);
 
 	testSimpleSvgLoad();
 	//testSimpleSvgGroupOriginTransforms();
 }
 
 void SvgTestScenario::cleanup() {
-	setLevel(nullptr);
+	setStage(nullptr);
 }
 
 void SvgTestScenario::resize( ivec2 size ) {
@@ -97,7 +97,7 @@ void SvgTestScenario::reset() {
 void SvgTestScenario::testSimpleSvgLoad() {
 	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/eggsac.svg"), 1);
 	doc->trace();
-	getLevel()->addObject(Object::with("Hello SVG", { make_shared<util::svg::SvgDrawComponent>(doc)}));
+	getStage()->addObject(Object::with("Hello SVG", { make_shared<util::svg::SvgDrawComponent>(doc)}));
 }
 
 void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
@@ -137,5 +137,5 @@ void SvgTestScenario::testSimpleSvgGroupOriginTransforms() {
 	auto wiggleComponent = make_shared<Wiggler>(elements);
 
 	auto obj = Object::with("Hello SVG", { drawComponent, wiggleComponent });
-	getLevel()->addObject(obj);
+	getStage()->addObject(obj);
 }

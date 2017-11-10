@@ -55,7 +55,7 @@ namespace precariously {
 		virtual ~Planet();
 		
 		// Object
-		void onReady(core::LevelRef level) override;
+		void onReady(core::StageRef stage) override;
 		
 		// Planet
 		dvec2 getOrigin() const { return _origin; }

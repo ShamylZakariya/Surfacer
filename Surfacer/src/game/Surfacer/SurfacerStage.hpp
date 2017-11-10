@@ -1,13 +1,13 @@
 //
-//  GameLevel.hpp
+//  GameStage.hpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 4/13/17.
 //
 //
 
-#ifndef GameLevel_hpp
-#define GameLevel_hpp
+#ifndef GameStage_hpp
+#define GameStage_hpp
 
 #include <cinder/Xml.h>
 
@@ -18,7 +18,7 @@
 
 namespace surfacer {
 
-	SMART_PTR(SurfacerLevel);
+	SMART_PTR(SurfacerStage);
 
 #pragma mark - Constants
 
@@ -79,25 +79,25 @@ namespace surfacer {
 	}
 
 
-#pragma mark - GameLevel
+#pragma mark - GameStage
 
-	class SurfacerLevel : public core::Level {
+	class SurfacerStage : public core::Stage {
 	public:
-		SurfacerLevel();
-		virtual ~SurfacerLevel();
+		SurfacerStage();
+		virtual ~SurfacerStage();
 
 		//
-		//	Level
+		//	Stage
 		//
 
 		void addObject(core::ObjectRef obj) override;
 		void removeObject(core::ObjectRef obj) override;
 
 		//
-		//	GameLevel
+		//	GameStage
 		//
 
-		void load(ci::DataSourceRef levelXmlData);
+		void load(ci::DataSourceRef stageXmlData);
 		terrain::TerrainObjectRef getTerrain() const { return _terrain; }
 		player::PlayerRef getPlayer() const { return _player; }
 		const set<core::EntityRef> &getEnemies() const { return _enemies; }
@@ -105,14 +105,14 @@ namespace surfacer {
 
 	protected:
 
-		// Level
+		// Stage
 		void onReady() override;
 		bool onCollisionBegin(cpArbiter *arb) override;
 		bool onCollisionPreSolve(cpArbiter *arb) override;
 		void onCollisionPostSolve(cpArbiter *arb) override;
 		void onCollisionSeparate(cpArbiter *arb) override;
 
-		// GameLevel
+		// GameStage
 		void applySpaceAttributes(XmlTree spaceNode);
 		void buildGravity(XmlTree gravityNode);
 		void loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData);
@@ -135,4 +135,4 @@ namespace surfacer {
 	
 } // namespace surfacer
 
-#endif /* GameLevel_hpp */
+#endif /* GameStage_hpp */

@@ -15,7 +15,7 @@
 
 #include "Core.hpp"
 #include "Entity.hpp"
-#include "SurfacerLevel.hpp"
+#include "SurfacerStage.hpp"
 #include "Xml.hpp"
 
 namespace surfacer { namespace enemy {
@@ -63,7 +63,7 @@ namespace surfacer { namespace enemy {
 		void setFacingDirection(dvec2 dir);
 		dvec2 getFacingDirection() const { return _facingDirection; }
 
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void onCleanup() override;
 		void step(const core::time_state &time) override;
 		cpBB getBB() const override;
@@ -109,7 +109,7 @@ namespace surfacer { namespace enemy {
 		void onDeath() override;
 
 		// Object
-		void onReady(core::LevelRef level) override;
+		void onReady(core::StageRef stage) override;
 		void onCleanup() override;
 
 	private:
@@ -132,7 +132,7 @@ namespace surfacer { namespace enemy {
 		BoidFlockDrawComponent(config c);
 		virtual ~BoidFlockDrawComponent();
 
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
 		void update(const core::time_state &time) override;
 		void draw(const core::render_state &renderState) override;
@@ -220,7 +220,7 @@ namespace surfacer { namespace enemy {
 		// signal fired when all boids in the flock are gone
 		core::signals::signal< void(BoidFlockControllerRef) > onFlockDidFinish;
 
-		// signal fired when a boid in the flock is killed right before it's removed from the level
+		// signal fired when a boid in the flock is killed right before it's removed from the stage
 		core::signals::signal< void(BoidFlockControllerRef, BoidRef) > onBoidFinished;
 
 	public:
@@ -262,7 +262,7 @@ namespace surfacer { namespace enemy {
 		/**
 		 Set the targets this Boid flock will pursue.
 		 Internally, the targets are held as weak_ptr<> and the flock will pursue the first which is
-		 live, is in the level, and has a PhysicsRepresentation to query for position.
+		 live, is in the stage, and has a PhysicsRepresentation to query for position.
 		 */
 		void setTargets(vector<core::ObjectRef> targets);
 
@@ -289,7 +289,7 @@ namespace surfacer { namespace enemy {
 		cpBB getFlockBB() const { return _flockBB; }
 
 		// Component
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void update(const core::time_state &time) override;
 
 	protected:
@@ -331,7 +331,7 @@ namespace surfacer { namespace enemy {
 	 BoidFlock is a Object which acts as a controller for a flock of boids.
 	 Generally speaking, since BoidFlock is just a Object and not an Entity, it's not
 	 a thing which can be drawn or have health or be shot. Rather, an "owner" Entity, say
-	 the Eggsac, creates a BoidFlock and adds it to the Level.
+	 the Eggsac, creates a BoidFlock and adds it to the Stage.
 	 */
 	class BoidFlock : public core::Object {
 	public:

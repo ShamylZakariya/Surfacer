@@ -53,7 +53,7 @@ namespace precariously {
 	_time(0)
 	{}
 
-	void CloudLayerParticleSimulation::onReady(ObjectRef parent, LevelRef level) {
+	void CloudLayerParticleSimulation::onReady(ObjectRef parent, StageRef stage) {
 		_generator.setScale(2*M_PI);
 		
 		// create store, and run simulate() once to populate
@@ -81,7 +81,7 @@ namespace precariously {
 			state->active = true; // always active
 		}
 		
-		simulate(level->getTimeState());
+		simulate(stage->getTimeState());
 	}
 	
 	void CloudLayerParticleSimulation::update(const time_state &timeState) {

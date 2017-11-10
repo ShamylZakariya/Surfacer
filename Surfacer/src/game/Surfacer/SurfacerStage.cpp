@@ -1,12 +1,12 @@
 //
-//  GameLevel.cpp
+//  GameStage.cpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 4/13/17.
 //
 //
 
-#include "SurfacerLevel.hpp"
+#include "SurfacerStage.hpp"
 
 #include "DevComponents.hpp"
 #include "Eggsac.hpp"
@@ -33,18 +33,18 @@ namespace surfacer {
 	 set<EntityRef> _enemies;
 	 */
 
-	SurfacerLevel::SurfacerLevel():
-	Level("Unnamed") {}
+	SurfacerStage::SurfacerStage():
+	Stage("Unnamed") {}
 
-	SurfacerLevel::~SurfacerLevel()
+	SurfacerStage::~SurfacerStage()
 	{}
 
-	void SurfacerLevel::addObject(ObjectRef obj) {
-		Level::addObject(obj);
+	void SurfacerStage::addObject(ObjectRef obj) {
+		Stage::addObject(obj);
 	}
 
-	void SurfacerLevel::removeObject(ObjectRef obj) {
-		Level::removeObject(obj);
+	void SurfacerStage::removeObject(ObjectRef obj) {
+		Stage::removeObject(obj);
 
 		// if this obj was an Enemy, remove it from our store
 		if (EntityRef entity = dynamic_pointer_cast<Entity>(obj)) {
@@ -57,23 +57,23 @@ namespace surfacer {
 		}
 	}
 
-	void SurfacerLevel::load(ci::DataSourceRef levelXmlData) {
+	void SurfacerStage::load(ci::DataSourceRef stageXmlData) {
 
-		auto root = XmlTree(levelXmlData);
+		auto root = XmlTree(stageXmlData);
 		auto prefabsNode = root.getChild("prefabs");
-		auto levelNode = root.getChild("level");
+		auto stageNode = root.getChild("stage");
 
-		setName(levelNode.getAttribute("name").getValue());
+		setName(stageNode.getAttribute("name").getValue());
 
 		//
-		//	Load some basic level properties
+		//	Load some basic stage properties
 		//
 
-		auto spaceNode = util::xml::findElement(levelNode, "space");
-		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <level> definition");
+		auto spaceNode = util::xml::findElement(stageNode, "space");
+		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <stage> definition");
 		applySpaceAttributes(*spaceNode);
 		
-		for (const auto &childNode : levelNode.getChildren()) {
+		for (const auto &childNode : stageNode.getChildren()) {
 			if (childNode->getTag() == "gravity") {
 				buildGravity(*childNode);
 			}
@@ -83,8 +83,8 @@ namespace surfacer {
 		//	Load terrain
 		//
 
-		auto terrainNode = util::xml::findElement(levelNode, "terrain");
-		CI_ASSERT_MSG(terrainNode, "Expect a <terrain> node in <level> definition");
+		auto terrainNode = util::xml::findElement(stageNode, "terrain");
+		CI_ASSERT_MSG(terrainNode, "Expect a <terrain> node in <stage> definition");
 		string terrainSvgPath = terrainNode->getAttribute("path").getValue();
 		loadTerrain(*terrainNode, app::loadAsset(terrainSvgPath));
 
@@ -92,7 +92,7 @@ namespace surfacer {
 		//	Load the player
 		//
 
-		if (auto playerNode = util::xml::findElement(levelNode, "player")) {
+		if (auto playerNode = util::xml::findElement(stageNode, "player")) {
 			terrain::ElementRef playerElement = _terrain->getWorld()->getElementById("player");
 			ci::DataSourceRef playerXmlData = app::loadAsset(playerNode->getAttribute("path").getValue());
 			loadPlayer(*playerNode, playerXmlData, playerElement);
@@ -102,38 +102,38 @@ namespace surfacer {
 		//	Load enemies
 		//
 
-		if (auto enemiesNode = util::xml::findElement(levelNode, "enemies")) {
+		if (auto enemiesNode = util::xml::findElement(stageNode, "enemies")) {
 			loadEnemies(*enemiesNode, prefabsNode);
 		}
 	}
 
-	void SurfacerLevel::onReady() {
-		Level::onReady();
+	void SurfacerStage::onReady() {
+		Stage::onReady();
 
-		addContactHandler(CollisionType::ENEMY, CollisionType::PLAYER, [this](const Level::collision_type_pair &ctp, const ObjectRef &enemy, const ObjectRef &player){
+		addContactHandler(CollisionType::ENEMY, CollisionType::PLAYER, [this](const Stage::collision_type_pair &ctp, const ObjectRef &enemy, const ObjectRef &player){
 			this->onPlayerEnemyContact(dynamic_pointer_cast<Entity>(enemy));
 		});
 
-		addContactHandler(CollisionType::WEAPON, CollisionType::ENEMY, [this](const Level::collision_type_pair &ctp, const ObjectRef &weapon, const ObjectRef &enemy){
+		addContactHandler(CollisionType::WEAPON, CollisionType::ENEMY, [this](const Stage::collision_type_pair &ctp, const ObjectRef &weapon, const ObjectRef &enemy){
 			this->onPlayerShotEnemy(weapon, dynamic_pointer_cast<Entity>(enemy));
 		});
 	}
 
-	bool SurfacerLevel::onCollisionBegin(cpArbiter *arb) {
+	bool SurfacerStage::onCollisionBegin(cpArbiter *arb) {
 		return true;
 	}
 
-	bool SurfacerLevel::onCollisionPreSolve(cpArbiter *arb) {
+	bool SurfacerStage::onCollisionPreSolve(cpArbiter *arb) {
 		return true;
 	}
 
-	void SurfacerLevel::onCollisionPostSolve(cpArbiter *arb) {
+	void SurfacerStage::onCollisionPostSolve(cpArbiter *arb) {
 	}
 
-	void SurfacerLevel::onCollisionSeparate(cpArbiter *arb) {
+	void SurfacerStage::onCollisionSeparate(cpArbiter *arb) {
 	}
 
-	void SurfacerLevel::applySpaceAttributes(XmlTree spaceNode) {
+	void SurfacerStage::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
 			double damping = util::xml::readNumericAttribute<double>(spaceNode, "damping", 0.95);
 			damping = clamp(damping, 0.0, 1.0);
@@ -141,7 +141,7 @@ namespace surfacer {
 		}
 	}
 
-	void SurfacerLevel::buildGravity(XmlTree gravityNode) {
+	void SurfacerStage::buildGravity(XmlTree gravityNode) {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
 			dvec2 origin = util::xml::readPointAttribute(gravityNode, "origin", dvec2(0,0));
@@ -160,7 +160,7 @@ namespace surfacer {
 		}
 	}
 
-	void SurfacerLevel::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
+	void SurfacerStage::loadTerrain(XmlTree terrainNode, ci::DataSourceRef svgData) {
 
 		double friction = util::xml::readNumericAttribute<double>(terrainNode, "friction", 1);
 		double density = util::xml::readNumericAttribute<double>(terrainNode, "density", 1);
@@ -210,7 +210,7 @@ namespace surfacer {
 		}
 	}
 
-	void SurfacerLevel::loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement) {
+	void SurfacerStage::loadPlayer(XmlTree playerNode, ci::DataSourceRef playerXmlData, terrain::ElementRef playerElement) {
 		string name = playerNode.getAttributeValue<string>("name");
 		_player = player::Player::create(name, playerXmlData, playerElement->getPosition());
 		addObject(_player);
@@ -229,7 +229,7 @@ namespace surfacer {
 		}
 	}
 	
-	void SurfacerLevel::loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode) {
+	void SurfacerStage::loadEnemies(XmlTree enemiesNode, XmlTree prefabsNode) {
 		for (auto enemyNode : enemiesNode) {
 
 			// load position from our terrain's elements, or from the node itself ("x", "y" attributes)
@@ -271,7 +271,7 @@ namespace surfacer {
 		}
 	}
 
-	EntityRef SurfacerLevel::classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree prefabNode) {
+	EntityRef SurfacerStage::classload(string tag, string name, dvec2 position, util::xml::XmlMultiTree prefabNode) {
 		// I'm not going to build a classloader any more
 		if (tag == "eggsac") {
 			return enemy::Eggsac::create(name, position, prefabNode);
@@ -280,12 +280,12 @@ namespace surfacer {
 		return nullptr;
 	}
 
-	void SurfacerLevel::onPlayerEnemyContact(const EntityRef &enemy) {
+	void SurfacerStage::onPlayerEnemyContact(const EntityRef &enemy) {
 		HealthComponentRef health = _player->getHealthComponent();
 		// TODO: Define contact damage for enemy touching player
 	}
 
-	void SurfacerLevel::onPlayerShotEnemy(const ObjectRef &weapon, const EntityRef &enemy) {
+	void SurfacerStage::onPlayerShotEnemy(const ObjectRef &weapon, const EntityRef &enemy) {
 		player::ProjectileRef projectile = weapon->getComponent<player::Projectile>();
 		HealthComponentRef health = enemy->getHealthComponent();
 

@@ -68,7 +68,7 @@ namespace precariously {
 		
 		CloudLayerParticleSimulation(const config &c);
 
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void update(const core::time_state &timeState) override;
 		void setParticleCount(size_t count) override;
 

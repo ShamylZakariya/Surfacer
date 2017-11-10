@@ -3,7 +3,7 @@
 <prefabs>
 </prefabs>
 
-<level name="Hello Precariously Level 0">
+<stage name="Hello Precariously Level 0">
 	<space damping="0.99"/>
 	<gravity type="radial" strength="2000" falloff_power="0.5" primary="true"/>
 	<background>
@@ -40,4 +40,4 @@
 			<particle minRadius="10" maxRadius="100" minRadiusNoiseValue="0.5" color="255,255,255,255"/>
 		</simulation>
 	</cloudLayer>
-</level>
+</stage>

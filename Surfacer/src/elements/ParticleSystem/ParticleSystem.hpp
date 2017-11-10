@@ -109,7 +109,7 @@ namespace particles {
 		ParticleSimulation();
 		
 		// Component
-		void onReady(core::ObjectRef parent, core::LevelRef level) override {}
+		void onReady(core::ObjectRef parent, core::StageRef stage) override {}
 		void onCleanup() override {}
 		void update(const core::time_state &timeState) override {}
 		
@@ -205,7 +205,7 @@ namespace particles {
 		ParticleSystem(std::string name);
 		
 		// Object
-		void onReady(core::LevelRef level) override;
+		void onReady(core::StageRef stage) override;
 		void addComponent(core::ComponentRef component) override;
 		
 		// ParticleSystem

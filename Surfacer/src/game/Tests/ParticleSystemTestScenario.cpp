@@ -82,16 +82,16 @@ ParticleSystemTestScenario::~ParticleSystemTestScenario() {
 }
 
 void ParticleSystemTestScenario::setup() {
-	setLevel(make_shared<Level>("Particle System Tests"));
+	setStage(make_shared<Stage>("Particle System Tests"));
 	
-	getLevel()->addObject(Object::with("ViewportControlComponent", {
+	getStage()->addObject(Object::with("ViewportControlComponent", {
 		make_shared<ManualViewportControlComponent>(getViewportController())
 	}));
 	
 	auto grid = WorldCartesianGridDrawComponent::create(1);
 	grid->setFillColor(ColorA(209/255.0,219/255.0,169/255.0, 1.0));
 	grid->setGridColor(ColorA(0.3, 0.3, 0.3, 1.0));
-	getLevel()->addObject(Object::with("Grid", { grid }));
+	getStage()->addObject(Object::with("Grid", { grid }));
 
 	
 	//
@@ -100,7 +100,7 @@ void ParticleSystemTestScenario::setup() {
 	
 	auto doc = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/eggsac.svg"));
 	doc->setPosition(dvec2(0,300));
-	getLevel()->addObject(Object::with("Eggsac", { make_shared<util::svg::SvgDrawComponent>(doc)}));
+	getStage()->addObject(Object::with("Eggsac", { make_shared<util::svg::SvgDrawComponent>(doc)}));
 	
 	//
 	//	Build some terrain
@@ -116,11 +116,11 @@ void ParticleSystemTestScenario::setup() {
 		terrain::Anchor::fromContour(rect(-5,5,5,15))
 	};
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(), TerrainMaterial, AnchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(), TerrainMaterial, AnchorMaterial);
 	world->build(shapes, anchors);
 
 	auto terrain = terrain::TerrainObject::create("Terrain", world, DrawLayers::TERRAIN);
-	getLevel()->addObject(terrain);
+	getStage()->addObject(terrain);
 
 	
 	
@@ -143,11 +143,11 @@ void ParticleSystemTestScenario::setup() {
 	});
 
 	
-	getLevel()->addObject(Object::with("Mouse Handling", { presser, dragger }));
+	getStage()->addObject(Object::with("Mouse Handling", { presser, dragger }));
 }
 
 void ParticleSystemTestScenario::cleanup() {
-	setLevel(nullptr);
+	setStage(nullptr);
 }
 
 void ParticleSystemTestScenario::resize( ivec2 size ) {
@@ -213,9 +213,9 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	
 	_explosionPs = UniversalParticleSystem::create("_explosionPs", config);
 	
-	auto level = getLevel();
-	level->addObject(_explosionPs);
-	level->addGravity(DirectionalGravitationCalculator::create(dvec2(0,-1), 9.8 * 10));
+	auto stage = getStage();
+	stage->addObject(_explosionPs);
+	stage->addGravity(DirectionalGravitationCalculator::create(dvec2(0,-1), 9.8 * 10));
 
 	// build a "smoke" particle template
 	_smoke.atlasIdx = 0;

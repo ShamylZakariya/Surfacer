@@ -22,7 +22,7 @@ public:
 
 	WorldCartesianGridDrawComponent(gl::TextureRef tex, double basePeriod, double periodStep);
 
-	void onReady(core::ObjectRef parent, core::LevelRef level) override;
+	void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
 	cpBB getBB() const override {
 		return cpBBInfinity;
@@ -151,7 +151,7 @@ public:
 
 	virtual ~MousePickComponent();
 
-	void onReady(core::ObjectRef parent, core::LevelRef level) override;
+	void onReady(core::ObjectRef parent, core::StageRef stage) override;
 	void step(const core::time_state &time) override;
 	bool mouseDown( const ci::app::MouseEvent &event ) override;
 	bool mouseUp( const ci::app::MouseEvent &event ) override;
@@ -181,7 +181,7 @@ public:
 
 	MousePickDrawComponent(ColorA color = ColorA(1,1,1,0.5), float radius=4);
 
-	void onReady(core::ObjectRef parent, core::LevelRef level) override;
+	void onReady(core::ObjectRef parent, core::StageRef stage) override;
 	cpBB getBB() const override { return cpBBInfinity; }
 	void draw(const core::render_state &renderState) override;
 	core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::ALWAYS_DRAW; }

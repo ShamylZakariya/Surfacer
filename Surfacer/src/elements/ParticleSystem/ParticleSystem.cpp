@@ -122,9 +122,9 @@ namespace particles {
 	Object(name)
 	{}
 	
-	void ParticleSystem::onReady(LevelRef level) {
+	void ParticleSystem::onReady(StageRef stage) {
 		CI_ASSERT_MSG(_simulation, "Expect a ParticleSimulation to be among installed components at time of onReady()");
-		Object::onReady(level);
+		Object::onReady(stage);
 		for (auto dc : getDrawComponents()) {
 			if (ParticleSystemDrawComponentRef psdc = dynamic_pointer_cast<ParticleSystemDrawComponent>(dc)) {
 				psdc->setSimulation(_simulation);

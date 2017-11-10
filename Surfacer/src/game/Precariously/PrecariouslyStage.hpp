@@ -1,13 +1,13 @@
 //
-//  GameLevel.hpp
+//  GameStage.hpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 4/13/17.
 //
 //
 
-#ifndef PrecariouslyLevel_hpp
-#define PrecariouslyLevel_hpp
+#ifndef PrecariouslyStage_hpp
+#define PrecariouslyStage_hpp
 
 #include <cinder/Xml.h>
 
@@ -19,34 +19,34 @@
 
 namespace precariously {
 
-	SMART_PTR(PrecariouslyLevel);
+	SMART_PTR(PrecariouslyStage);
 
-#pragma mark - PrecariouslyLevel
+#pragma mark - PrecariouslyStage
 
-	class PrecariouslyLevel : public core::Level {
+	class PrecariouslyStage : public core::Stage {
 	public:
-		PrecariouslyLevel();
-		virtual ~PrecariouslyLevel();
+		PrecariouslyStage();
+		virtual ~PrecariouslyStage();
 
 		//
-		//	Level
+		//	Stage
 		//
 
 		void addObject(core::ObjectRef obj) override;
 		void removeObject(core::ObjectRef obj) override;
 
 		//
-		//	PrecariouslyLevel
+		//	PrecariouslyStage
 		//
 
-		void load(ci::DataSourceRef levelXmlData);
+		void load(ci::DataSourceRef stageXmlData);
 		BackgroundRef getBackground() const { return _background; }
 		PlanetRef getPlanet() const { return _planet; }
 
 
 	protected:
 
-		// Level
+		// Stage
 		void onReady() override;
 		void update( const core::time_state &time ) override;
 		bool onCollisionBegin(cpArbiter *arb) override;
@@ -54,7 +54,7 @@ namespace precariously {
 		void onCollisionPostSolve(cpArbiter *arb) override;
 		void onCollisionSeparate(cpArbiter *arb) override;
 
-		// PrecariouslyLevel
+		// PrecariouslyStage
 		void applySpaceAttributes(XmlTree spaceNode);
 		void buildGravity(XmlTree gravityNode);
 		void loadBackground(XmlTree planetNode);
@@ -75,4 +75,4 @@ namespace precariously {
 	
 } // namespace surfacer
 
-#endif /* PrecariouslyLevel_hpp */
+#endif /* PrecariouslyStage_hpp */

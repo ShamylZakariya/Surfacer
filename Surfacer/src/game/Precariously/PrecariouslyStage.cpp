@@ -1,12 +1,12 @@
 //
-//  GameLevel.cpp
+//  GameStage.cpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 4/13/17.
 //
 //
 
-#include "PrecariouslyLevel.hpp"
+#include "PrecariouslyStage.hpp"
 
 #include "PrecariouslyConstants.hpp"
 #include "DevComponents.hpp"
@@ -69,7 +69,7 @@ namespace precariously {
 			bool mouseDown( const ci::app::MouseEvent &event ) override {
 				if (event.isMetaDown()) {
 					dvec2 mouseScreen = event.getPos();
-					dvec2 mouseWorld = getLevel()->getViewport()->screenToWorld(mouseScreen);
+					dvec2 mouseWorld = getStage()->getViewport()->screenToWorld(mouseScreen);
 					
 					
 					// create a radial crack and cut the world with it. note, to reduce tiny fragments
@@ -80,11 +80,11 @@ namespace precariously {
 					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
 					
 					// get the closest point on terrain surface and use that to place explosive charge
-					if (auto r = getLevel()->queryNearest(mouseWorld, ShapeFilters::TERRAIN_PROBE)) {
+					if (auto r = getStage()->queryNearest(mouseWorld, ShapeFilters::TERRAIN_PROBE)) {
 					
 						dvec2 origin = mouseWorld + _radius * normalize(_centerOfMass - r.point);
 						auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
-						getLevel()->addGravity(gravity);
+						getStage()->addGravity(gravity);
 
 						for (auto &cls : _cloudLayerSimulations) {
 							cls->addGravityDisplacement(gravity);
@@ -119,41 +119,41 @@ namespace precariously {
 	 core::RadialGravitationCalculatorRef _gravity;
 	 */
 	
-	PrecariouslyLevel::PrecariouslyLevel():
-	Level("Unnamed") {}
+	PrecariouslyStage::PrecariouslyStage():
+	Stage("Unnamed") {}
 	
-	PrecariouslyLevel::~PrecariouslyLevel()
+	PrecariouslyStage::~PrecariouslyStage()
 	{}
 	
-	void PrecariouslyLevel::addObject(ObjectRef obj) {
-		Level::addObject(obj);
+	void PrecariouslyStage::addObject(ObjectRef obj) {
+		Stage::addObject(obj);
 	}
 	
-	void PrecariouslyLevel::removeObject(ObjectRef obj) {
-		Level::removeObject(obj);
+	void PrecariouslyStage::removeObject(ObjectRef obj) {
+		Stage::removeObject(obj);
 	}
 	
-	void PrecariouslyLevel::load(ci::DataSourceRef levelXmlData) {
+	void PrecariouslyStage::load(ci::DataSourceRef stageXmlData) {
 		
-		auto root = XmlTree(levelXmlData);
+		auto root = XmlTree(stageXmlData);
 		auto prefabsNode = root.getChild("prefabs");
-		auto levelNode = root.getChild("level");
+		auto stageNode = root.getChild("stage");
 		
-		setName(levelNode.getAttribute("name").getValue());
+		setName(stageNode.getAttribute("name").getValue());
 		
 		//
-		//	Load some basic level properties
+		//	Load some basic stage properties
 		//
 		
-		auto spaceNode = util::xml::findElement(levelNode, "space");
-		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <level> definition");
+		auto spaceNode = util::xml::findElement(stageNode, "space");
+		CI_ASSERT_MSG(spaceNode, "Expect a <space> node in <stage> definition");
 		applySpaceAttributes(*spaceNode);
 		
 		//
 		//	Apply gravity
 		//
 		
-		for (const auto &childNode : levelNode.getChildren()) {
+		for (const auto &childNode : stageNode.getChildren()) {
 			if (childNode->getTag() == "gravity") {
 				buildGravity(*childNode);
 			}
@@ -163,28 +163,28 @@ namespace precariously {
 		//	Load background
 		//
 		
-		auto backgroundNode = util::xml::findElement(levelNode, "background");
-		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in level XML");
+		auto backgroundNode = util::xml::findElement(stageNode, "background");
+		CI_ASSERT_MSG(backgroundNode, "Expect <background> node in stage XML");
 		loadBackground(*backgroundNode);
 		
 		//
 		//	Load Planet
 		//
 		
-		auto planetNode = util::xml::findElement(levelNode, "planet");
-		CI_ASSERT_MSG(planetNode, "Expect <planet> node in level XML");
+		auto planetNode = util::xml::findElement(stageNode, "planet");
+		CI_ASSERT_MSG(planetNode, "Expect <planet> node in stage XML");
 		loadPlanet(*planetNode);
 		
 		//
 		//	Load cloud layers
 		//
 
-		auto cloudLayerNode = util::xml::findElement(levelNode, "cloudLayer", "id", "background");
+		auto cloudLayerNode = util::xml::findElement(stageNode, "cloudLayer", "id", "background");
 		if (cloudLayerNode) {
 			_backgroundCloudLayer = loadCloudLayer(*cloudLayerNode, DrawLayers::PLANET - 1);
 		}
 
-		cloudLayerNode = util::xml::findElement(levelNode, "cloudLayer", "id", "foreground");
+		cloudLayerNode = util::xml::findElement(stageNode, "cloudLayer", "id", "foreground");
 		if (cloudLayerNode) {
 			_foregroundCloudLayer = loadCloudLayer(*cloudLayerNode, DrawLayers::EFFECTS);
 		}
@@ -217,29 +217,29 @@ namespace precariously {
 		
 	}
 	
-	void PrecariouslyLevel::onReady() {
-		Level::onReady();
+	void PrecariouslyStage::onReady() {
+		Stage::onReady();
 	}
 	
-	void PrecariouslyLevel::update( const core::time_state &time ) {
-		Level::update(time);
+	void PrecariouslyStage::update( const core::time_state &time ) {
+		Stage::update(time);
 	}
 	
-	bool PrecariouslyLevel::onCollisionBegin(cpArbiter *arb) {
+	bool PrecariouslyStage::onCollisionBegin(cpArbiter *arb) {
 		return true;
 	}
 	
-	bool PrecariouslyLevel::onCollisionPreSolve(cpArbiter *arb) {
+	bool PrecariouslyStage::onCollisionPreSolve(cpArbiter *arb) {
 		return true;
 	}
 	
-	void PrecariouslyLevel::onCollisionPostSolve(cpArbiter *arb) {
+	void PrecariouslyStage::onCollisionPostSolve(cpArbiter *arb) {
 	}
 	
-	void PrecariouslyLevel::onCollisionSeparate(cpArbiter *arb) {
+	void PrecariouslyStage::onCollisionSeparate(cpArbiter *arb) {
 	}
 	
-	void PrecariouslyLevel::applySpaceAttributes(XmlTree spaceNode) {
+	void PrecariouslyStage::applySpaceAttributes(XmlTree spaceNode) {
 		if (spaceNode.hasAttribute("damping")) {
 			double damping = util::xml::readNumericAttribute<double>(spaceNode, "damping", 0.95);
 			damping = clamp(damping, 0.0, 1.0);
@@ -247,7 +247,7 @@ namespace precariously {
 		}
 	}
 	
-	void PrecariouslyLevel::buildGravity(XmlTree gravityNode) {
+	void PrecariouslyStage::buildGravity(XmlTree gravityNode) {
 		string type = gravityNode.getAttribute("type").getValue();
 		if (type == "radial") {
 			dvec2 origin = util::xml::readPointAttribute(gravityNode, "origin", dvec2(0,0));
@@ -267,12 +267,12 @@ namespace precariously {
 		}
 	}
 	
-	void PrecariouslyLevel::loadBackground(XmlTree backgroundNode) {
+	void PrecariouslyStage::loadBackground(XmlTree backgroundNode) {
 		_background = Background::create(backgroundNode);
 		addObject(_background);
 	}
 	
-	void PrecariouslyLevel::loadPlanet(XmlTree planetNode) {
+	void PrecariouslyStage::loadPlanet(XmlTree planetNode) {
 		double friction = util::xml::readNumericAttribute<double>(planetNode, "friction", 1);
 		double density = util::xml::readNumericAttribute<double>(planetNode, "density", 1);
 		double collisionShapeRadius = 0.1;
@@ -301,7 +301,7 @@ namespace precariously {
 		}
 	}
 	
-	CloudLayerParticleSystemRef PrecariouslyLevel::loadCloudLayer(XmlTree cloudLayer, int drawLayer) {
+	CloudLayerParticleSystemRef PrecariouslyStage::loadCloudLayer(XmlTree cloudLayer, int drawLayer) {
 		CloudLayerParticleSystem::config config = CloudLayerParticleSystem::config::parse(cloudLayer);
 		config.drawConfig.drawLayer = drawLayer;
 		auto cl = CloudLayerParticleSystem::create(config);
@@ -309,12 +309,12 @@ namespace precariously {
 		return cl;
 	}
 	
-	void PrecariouslyLevel::cullRubble() {
+	void PrecariouslyStage::cullRubble() {
 		size_t count = _planet->getWorld()->cullDynamicGroups(128, 0.75);
 		CI_LOG_D("Culled " << count << " bits of rubble");
 	}
 	
-	void PrecariouslyLevel::makeSleepersStatic() {
+	void PrecariouslyStage::makeSleepersStatic() {
 		size_t count = _planet->getWorld()->makeSleepingDynamicGroupsStatic(5, 0.75);
 		CI_LOG_D("Static'd " << count << " bits of sleeping rubble");
 	}

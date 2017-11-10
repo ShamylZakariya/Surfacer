@@ -641,10 +641,10 @@ namespace terrain {
 
 	void World::notifyCollisionShapesWillBeDestoyed(vector<cpShape*> shapes) {
 		if (ObjectRef object = getObject()) {
-			if (LevelRef level = object->getLevel()) {
+			if (StageRef stage = object->getStage()) {
 				PhysicsComponentRef physics = object->getPhysicsComponent();
 				for (auto shape : shapes) {
-					level->signals.onShapeWillBeDestroyed(physics, shape);
+					stage->signals.onShapeWillBeDestroyed(physics, shape);
 				}
 			}
 		}
@@ -652,9 +652,9 @@ namespace terrain {
 
 	void World::notifyBodyWillBeDestoyed(cpBody *body) {
 		if (ObjectRef object = getObject()) {
-			if (LevelRef level = object->getLevel()) {
+			if (StageRef stage = object->getStage()) {
 				PhysicsComponentRef physics = object->getPhysicsComponent();
-				level->signals.onBodyWillBeDestroyed(physics, body);
+				stage->signals.onBodyWillBeDestroyed(physics, body);
 			}
 		}
 	}

@@ -17,7 +17,7 @@
 
 namespace core {
 
-	SMART_PTR(Level)
+	SMART_PTR(Stage)
 	SMART_PTR(Scenario)
 
 	class Scenario : public InputListener, public signals::receiver, public enable_shared_from_this<Scenario> {
@@ -70,8 +70,8 @@ namespace core {
 		 */
 		void screenshot( const ci::fs::path &folderPath, const std::string &namingPrefix, const std::string format = "png" );
 
-		void setLevel(LevelRef level);
-		LevelRef getLevel() const { return _level; }
+		void setStage(StageRef stage);
+		StageRef getStage() const { return _stage; }
 
 	public:
 
@@ -125,7 +125,7 @@ namespace core {
 		ViewportControllerRef _viewportController;
 		time_state _time, _stepTime;
 		render_state _renderState, _screenRenderState;
-		LevelRef _level;
+		StageRef _stage;
 		int _width, _height;
 		
 	};

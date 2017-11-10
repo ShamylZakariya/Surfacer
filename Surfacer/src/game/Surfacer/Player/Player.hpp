@@ -77,7 +77,7 @@ namespace surfacer { namespace player {
 
 	protected:
 
-		// call this to compute contacts between projectile and scene and notify level
+		// call this to compute contacts between projectile and scene and notify stage
 		// note this is only critical for projectiles with synthetic collisions (e.g., lasers)
 		// not for a rock or some other thing which can be added to the game space
 		void processContacts();
@@ -188,7 +188,7 @@ namespace surfacer { namespace player {
 		void fire(dvec2 origin, dvec2 dir) override;
 
 		// Component
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void update(const core::time_state &time) override;
 
 	protected:
@@ -211,7 +211,7 @@ namespace surfacer { namespace player {
 		virtual ~BeamProjectileDrawComponent();
 
 		// Component
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
 		// DrawComponent
 		cpBB getBB() const override;
@@ -247,7 +247,7 @@ namespace surfacer { namespace player {
 		void setShooting(bool shooting);
 		bool isShooting() const { return _shooting; }
 
-		// get the current charge level [0,1]
+		// get the current charge stage [0,1]
 		double getCharge() const { return _charge; }
 
 		// origin of gun beam in world space
@@ -303,7 +303,7 @@ namespace surfacer { namespace player {
 		virtual ~PlayerPhysicsComponent();
 
 		// PhysicsComponent
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
 		// PlayerPhysicsComponent
 		const config& getConfig()const { return _config; }
@@ -316,7 +316,7 @@ namespace surfacer { namespace player {
 		virtual cpBody *getFootBody() const = 0;
 		virtual cpShape *getBodyShape() const = 0;
 		virtual cpShape *getFootShape() const = 0;
-		virtual double getJetpackFuelLevel() const = 0;
+		virtual double getJetpackFuelStage() const = 0;
 		virtual double getJetpackFuelMax() const = 0;
 		virtual dvec2 getJetpackThrustDirection() const = 0;
 
@@ -351,7 +351,7 @@ namespace surfacer { namespace player {
 
 		// PhysicsComponent
 		cpBB getBB() const override;
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 		void step(const core::time_state &timeState) override;
 
 		// PlayerPhysicsComponent
@@ -363,7 +363,7 @@ namespace surfacer { namespace player {
 		cpBody *getFootBody() const override;
 		cpShape *getBodyShape() const override;
 		cpShape *getFootShape() const override;
-		double getJetpackFuelLevel() const override;
+		double getJetpackFuelStage() const override;
 		double getJetpackFuelMax() const override;
 		dvec2 getJetpackThrustDirection() const override;
 
@@ -389,7 +389,7 @@ namespace surfacer { namespace player {
 		cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
 		cpConstraint *_wheelMotor, *_orientationConstraint;
 		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
-		double _jetpackFuelLevel, _jetpackFuelMax, _lean;
+		double _jetpackFuelStage, _jetpackFuelMax, _lean;
 		dvec2 _up, _groundNormal, _jetpackForceDir;
 		PlayerInputComponentWeakRef _input;
 	};
@@ -427,7 +427,7 @@ namespace surfacer { namespace player {
 		virtual ~PlayerDrawComponent();
 
 		// DrawComponent
-		void onReady(core::ObjectRef parent, core::LevelRef level) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
 		cpBB getBB() const override;
 		void draw(const core::render_state &renderState) override;

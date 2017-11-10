@@ -8,7 +8,7 @@
 
 #include "Eggsac.hpp"
 
-#include "SurfacerLevel.hpp"
+#include "SurfacerStage.hpp"
 #include "Xml.hpp"
 #include "ChipmunkDebugDraw.hpp"
 
@@ -26,8 +26,8 @@ namespace surfacer { namespace enemy {
 	}
 
 	// DrawComponent
-	void EggsacDrawComponent::onReady(ObjectRef parent, LevelRef level) {
-		DrawComponent::onReady(parent, level);
+	void EggsacDrawComponent::onReady(ObjectRef parent, StageRef stage) {
+		DrawComponent::onReady(parent, stage);
 		_physics = getSibling<EggsacPhysicsComponent>();
 	}
 
@@ -142,12 +142,12 @@ namespace surfacer { namespace enemy {
 		}
 	}
 
-	void EggsacPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
-		PhysicsComponent::onReady(parent,level);
+	void EggsacPhysicsComponent::onReady(ObjectRef parent, StageRef stage) {
+		PhysicsComponent::onReady(parent,stage);
 
 		// register to be notified when bodies/shapes are destroyed. We need to know so we can detach our spring/gear
-		level->signals.onBodyWillBeDestroyed.connect(this, &EggsacPhysicsComponent::onBodyWillBeDestroyed);
-		level->signals.onShapeWillBeDestroyed.connect(this, &EggsacPhysicsComponent::onShapeWillBeDestroyed);
+		stage->signals.onBodyWillBeDestroyed.connect(this, &EggsacPhysicsComponent::onBodyWillBeDestroyed);
+		stage->signals.onShapeWillBeDestroyed.connect(this, &EggsacPhysicsComponent::onShapeWillBeDestroyed);
 
 		dvec2 position = _config.suggestedAttachmentPosition;
 
@@ -263,7 +263,7 @@ namespace surfacer { namespace enemy {
 			string flockName = parent->getName() + "_BoidFlock";
 			flock = BoidFlock::create(flockName, _config.flock);
 
-			getLevel()->addObject(flock);
+			getStage()->addObject(flock);
 
 			//
 			//	add self to end of targets list so the flock will target the eggsac if nothing else is viable,

@@ -34,9 +34,9 @@ namespace particles {
 	{}
 	
 	// Component
-	void UniversalParticleSimulation::onReady(core::ObjectRef parent, core::LevelRef level) {
-		ParticleSimulation::onReady(parent, level);
-		_spaceAccess = level->getSpace();
+	void UniversalParticleSimulation::onReady(core::ObjectRef parent, core::StageRef stage) {
+		ParticleSimulation::onReady(parent, stage);
+		_spaceAccess = stage->getSpace();
 	}
 
 	void UniversalParticleSimulation::onCleanup() {
@@ -183,7 +183,7 @@ namespace particles {
 
 	void UniversalParticleSimulation::_simulate(const core::time_state &time) {
 		
-		const auto &gravities = getLevel()->getGravities();
+		const auto &gravities = getStage()->getGravities();
 		cpBB bb = cpBBInvalid;
 		
 		auto state = _state.begin();

@@ -143,7 +143,7 @@ void TerrainTestScenario::setup() {
 	// go debug for rendering
 	setRenderMode(RenderMode::DEVELOPMENT);
 	
-	setLevel(make_shared<Level>("Terrain Test Level"));
+	setStage(make_shared<Stage>("Terrain Test Stage"));
 	
 	//auto world = testDistantTerrain();
 	//auto world = testBasicTerrain();
@@ -157,7 +157,7 @@ void TerrainTestScenario::setup() {
 	auto world = testComplexSvgLoad();
 	
 	_terrain = terrain::TerrainObject::create("Terrain", world, DrawLayers::TERRAIN);
-	getLevel()->addObject(_terrain);
+	getStage()->addObject(_terrain);
 	
 	auto dragger = Object::with("Dragger", {
 		make_shared<MousePickComponent>(ShapeFilters::GRABBABLE),
@@ -175,15 +175,15 @@ void TerrainTestScenario::setup() {
 	
 	auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create() });
 	
-	getLevel()->addObject(dragger);
-	getLevel()->addObject(cutter);
-	getLevel()->addObject(grid);
-	getLevel()->addObject(cameraController);
+	getStage()->addObject(dragger);
+	getStage()->addObject(cutter);
+	getStage()->addObject(grid);
+	getStage()->addObject(cameraController);
 }
 
 void TerrainTestScenario::cleanup() {
 	_terrain.reset();
-	setLevel(nullptr);
+	setStage(nullptr);
 }
 
 void TerrainTestScenario::resize( ivec2 size ){}
@@ -238,7 +238,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
 	
 	return world;
@@ -246,7 +246,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 
 terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 	
-	cpSpaceSetDamping(getLevel()->getSpace()->getSpace(), 0.5);
+	cpSpaceSetDamping(getStage()->getSpace()->getSpace(), 0.5);
 	
 	getViewportController()->setLook(vec2(0,0));
 	
@@ -263,7 +263,7 @@ terrain::WorldRef TerrainTestScenario::testBasicTerrain() {
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(), terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(), terrainMaterial, anchorMaterial);
 	world->build(shapes);
 	return world;
 }
@@ -294,7 +294,7 @@ terrain::WorldRef TerrainTestScenario::testComplexTerrain() {
 	terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes);
 	
 	return world;
@@ -317,7 +317,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleAnchors() {
 	
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	
 	world->build(shapes, anchors);
 	return world;
@@ -356,7 +356,7 @@ terrain::WorldRef TerrainTestScenario::testComplexAnchors() {
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors);
 	
 	return world;
@@ -393,7 +393,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
 	const auto terrainMaterial = terrain::material(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes);
 	
 	return world;
@@ -432,7 +432,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
 	
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
 	
 	return world;
@@ -452,7 +452,7 @@ terrain::WorldRef TerrainTestScenario::testSimpleSvgLoad() {
 	// construct
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(shapes, anchors, elements);
 	
 	return world;
@@ -472,7 +472,7 @@ terrain::WorldRef TerrainTestScenario::testComplexSvgLoad() {
 	// construct
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors, elements);
 	
 	return world;
@@ -512,7 +512,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
 	const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
 	const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 	
-	auto world = make_shared<terrain::World>(getLevel()->getSpace(),terrainMaterial, anchorMaterial);
+	auto world = make_shared<terrain::World>(getStage()->getSpace(),terrainMaterial, anchorMaterial);
 	world->build(partitionedShapes, anchors);
 	
 	

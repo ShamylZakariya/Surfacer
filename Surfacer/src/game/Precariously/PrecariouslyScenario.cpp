@@ -1,14 +1,14 @@
 //
-//  SurfacerLevelScenario.cpp
+//  SurfacerScenario.cpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 10/5/17.
 //
 
-#include "SurfacerLevelScenario.hpp"
+#include "PrecariouslyScenario.hpp"
 
 #include "App.hpp"
-#include "SurfacerLevel.hpp"
+#include "PrecariouslyStage.hpp"
 #include "Strings.hpp"
 #include "Terrain.hpp"
 
@@ -16,70 +16,60 @@
 
 
 using namespace core;
-namespace surfacer {
+namespace precariously {
 	
-	SurfacerLevelScenario::SurfacerLevelScenario(string levelXmlFile):
-	_levelXmlFile(levelXmlFile)
+	PrecariouslyScenario::PrecariouslyScenario(string stageXmlFile):
+	_stageXmlFile(stageXmlFile)
 	{}
 	
-	SurfacerLevelScenario::~SurfacerLevelScenario() {
-		
+	PrecariouslyScenario::~PrecariouslyScenario() {	
 	}
 	
-	void SurfacerLevelScenario::setup() {
-		surfacer::SurfacerLevelRef level = make_shared<surfacer::SurfacerLevel>();
-		setLevel(level);
+	void PrecariouslyScenario::setup() {
+		PrecariouslyStageRef stage = make_shared<PrecariouslyStage>();
+		setStage(stage);
 		
-		level->load(app::loadAsset(_levelXmlFile));
-		auto terrain = level->getTerrain();
-		auto player = level->getPlayer();
+		stage->load(app::loadAsset(_stageXmlFile));
+		auto planet = stage->getPlanet();
 		
-		if (!player) {
+		if (true) {
 			
 			// build camera controller, dragger, and cutter, with input dispatch indices 0,1,2 meaning CC gets input first
 			
 			auto cc = Object::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController(), 0)});
-			getLevel()->addObject(cc);
+			getStage()->addObject(cc);
 			
 			auto dragger = Object::with("Dragger", {
-				make_shared<MousePickComponent>(surfacer::ShapeFilters::GRABBABLE, 1),
+				make_shared<MousePickComponent>(ShapeFilters::GRABBABLE, 1),
 				make_shared<MousePickDrawComponent>()
 			});
-			getLevel()->addObject(dragger);
+			getStage()->addObject(dragger);
 			
-			if (terrain) {
+			if (planet) {
 				auto cutter = Object::with("Cutter", {
-					make_shared<terrain::MouseCutterComponent>(terrain, 4, 2),
+					make_shared<terrain::MouseCutterComponent>(planet, 4, 2),
 					make_shared<terrain::MouseCutterDrawComponent>()
 				});
-				getLevel()->addObject(cutter);
+				getStage()->addObject(cutter);
 			}
 			
 		}
+	}
+	
+	void PrecariouslyScenario::cleanup() {
+		setStage(nullptr);
+	}
+	
+	void PrecariouslyScenario::resize( ivec2 size ) {
+	}
+	
+	void PrecariouslyScenario::step( const time_state &time ) {
+	}
+	
+	void PrecariouslyScenario::update( const time_state &time ) {
+	}
 		
-		auto grid = Object::with("Grid", { WorldCartesianGridDrawComponent::create() });
-		getLevel()->addObject(grid);
-		
-	}
-	
-	void SurfacerLevelScenario::cleanup() {
-		setLevel(nullptr);
-	}
-	
-	void SurfacerLevelScenario::resize( ivec2 size ) {
-	}
-	
-	void SurfacerLevelScenario::step( const time_state &time ) {
-	}
-	
-	void SurfacerLevelScenario::update( const time_state &time ) {
-	}
-	
-	void SurfacerLevelScenario::clear( const render_state &state ) {
-		gl::clear( Color( 0.2, 0.2, 0.2 ) );
-	}
-	
-	void SurfacerLevelScenario::drawScreen( const render_state &state ) {
+	void PrecariouslyScenario::drawScreen( const render_state &state ) {
 		
 		//
 		// NOTE: we're in screen space, with coordinate system origin at top left
@@ -98,7 +88,7 @@ namespace surfacer {
 		gl::drawString(ss.str(), vec2(10,40), Color(1,1,1));
 	}
 	
-	bool SurfacerLevelScenario::keyDown( const ci::app::KeyEvent &event ) {
+	bool PrecariouslyScenario::keyDown( const ci::app::KeyEvent &event ) {
 		if (event.getChar() == 'r') {
 			reset();
 			return true;
@@ -108,8 +98,7 @@ namespace surfacer {
 		return false;
 	}
 	
-	
-	void SurfacerLevelScenario::reset() {
+	void PrecariouslyScenario::reset() {
 		cleanup();
 		setup();
 	}

@@ -57,8 +57,8 @@ namespace surfacer { namespace enemy {
 		_facingDirection = dir;
 	}
 
-	void BoidPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
-		PhysicsComponent::onReady(parent, level);
+	void BoidPhysicsComponent::onReady(ObjectRef parent, StageRef stage) {
+		PhysicsComponent::onReady(parent, stage);
 
 		//
 		//	A Boid's physics is just a circle
@@ -204,8 +204,8 @@ namespace surfacer { namespace enemy {
 		Entity::onDeath();
 	}
 
-	void Boid::onReady(LevelRef level) {
-		Object::onReady(level);
+	void Boid::onReady(StageRef stage) {
+		Object::onReady(stage);
 	}
 
 	void Boid::onCleanup() {
@@ -233,8 +233,8 @@ namespace surfacer { namespace enemy {
 	BoidFlockDrawComponent::~BoidFlockDrawComponent()
 	{}
 
-	void BoidFlockDrawComponent::onReady(ObjectRef parent, LevelRef level) {
-		DrawComponent::onReady(parent, level);
+	void BoidFlockDrawComponent::onReady(ObjectRef parent, StageRef stage) {
+		DrawComponent::onReady(parent, stage);
 		_flockController = getSibling<BoidFlockController>();
 
 		auto circle = geom::Circle().center(vec2(0)).radius(1).subdivisions(3);
@@ -327,7 +327,7 @@ namespace surfacer { namespace enemy {
 
 		_lastSpawnOrigin = origin;
 		auto self = shared_from_this_as<BoidFlockController>();
-		auto level = getLevel();
+		auto stage = getStage();
 
 		for (size_t i = 0; i < count; i++) {
 			const auto position = origin + dvec2(_rng.nextVec2()) * _config.boid.physics.radius;
@@ -338,7 +338,7 @@ namespace surfacer { namespace enemy {
 			_flock.push_back(b);
 			_flockPhysicsComponents.push_back(b->getBoidPhysicsComponent().get());
 
-			level->addObject(b);
+			stage->addObject(b);
 		}
 	}
 
@@ -361,12 +361,12 @@ namespace surfacer { namespace enemy {
 		_targets.clear();
 	}
 
-	void BoidFlockController::onReady(ObjectRef parent, LevelRef level) {
-		_space = level->getSpace()->getSpace();
-		Component::onReady(parent, level);
+	void BoidFlockController::onReady(ObjectRef parent, StageRef stage) {
+		_space = stage->getSpace()->getSpace();
+		Component::onReady(parent, stage);
 
 		for (auto targetId : _config.target_ids) {
-			auto objs = level->getObjectsByName(targetId);
+			auto objs = stage->getObjectsByName(targetId);
 			for (auto obj : objs) {
 				_targets.push_back(obj);
 			}

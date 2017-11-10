@@ -18,7 +18,7 @@
 namespace core {
 
 	SMART_PTR(Object);
-	SMART_PTR(Level);
+	SMART_PTR(Stage);
 	SMART_PTR(SpaceAccess);
 
 #pragma mark - IChipmunkUserData
@@ -68,7 +68,7 @@ namespace core {
 			return static_pointer_cast<T>(shared_from_this());
 		}
 
-		LevelRef getLevel() const;
+		StageRef getStage() const;
 
 		template<typename T>
 		shared_ptr<T> getObjectAs() {
@@ -78,8 +78,8 @@ namespace core {
 		template<typename T>
 		shared_ptr<T> getSibling() const;
 
-		// called when the owning Object has been added to a level
-		virtual void onReady(ObjectRef parent, LevelRef level){}
+		// called when the owning Object has been added to a stage
+		virtual void onReady(ObjectRef parent, StageRef stage){}
 		virtual void onCleanup(){}
 		virtual void step(const time_state &timeState){}
 		virtual void update(const time_state &timeState){}
@@ -89,7 +89,7 @@ namespace core {
 
 		// called on Components immediately after being added to a Object
 		// a component at this point can access its Object owne, but does not
-		// necessarily have access to its neighbors, or to a Level. Wait for onReady
+		// necessarily have access to its neighbors, or to a Stage. Wait for onReady
 		// for these types of actions.
 		virtual void attachedToObject(ObjectRef object) {
 			_object = object;
@@ -117,7 +117,7 @@ namespace core {
 		PhysicsComponent():_space(nullptr){}
 		virtual ~PhysicsComponent();
 
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, StageRef stage) override;
 		void onCleanup() override;
 
 		const SpaceAccessRef &getSpace() const { return _space; }
@@ -229,7 +229,7 @@ namespace core {
 		virtual BatchDrawDelegateRef getBatchDrawDelegate() const { return nullptr; }
 
 		// Component
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, StageRef stage) override;
 
 	};
 
@@ -243,7 +243,7 @@ namespace core {
 
 		virtual ~InputComponent(){}
 
-		void onReady(ObjectRef parent, LevelRef level) override;
+		void onReady(ObjectRef parent, StageRef stage) override;
 		bool isListening() const override;
 
 		void monitorKey( int keyCode );
@@ -282,9 +282,9 @@ namespace core {
 
 	/**
 	 Object
-	 An Object is a thing added to a Level. An object generally is a composite of components, and can be anything -
+	 An Object is a thing added to a Stage. An object generally is a composite of components, and can be anything -
 	 it could be the terrain for a game, it could be a power up, it could be an enemy, or it could be a controller
-	 dispatching high level changes to the game state based on player progress.
+	 dispatching high stage changes to the game state based on player progress.
 	 
 	 A common use is to create an object and add custom DrawComponent and PhysicsComponent implementations.
 	 
@@ -298,7 +298,7 @@ namespace core {
 
 		/**
 		 Create a non-specialized vanilla Object with some components. This is handy for if you
-		 have a simple set of component which needs to be added to a Level but not be on a complex thing.
+		 have a simple set of component which needs to be added to a Stage but not be on a complex thing.
 		 */
 		static ObjectRef with(string name, const initializer_list<ComponentRef> &components) {
 			auto obj = make_shared<Object>(name);
@@ -311,7 +311,7 @@ namespace core {
 		
 		/**
 		 Create a non-specialized vanilla Object with some components. This is handy for if you
-		 have a simple set of component which needs to be added to a Level but not be on a complex thing.
+		 have a simple set of component which needs to be added to a Stage but not be on a complex thing.
 		 */
 		template <typename T>
 		static shared_ptr<T> create(string name, const initializer_list<ComponentRef> &components) {
@@ -325,7 +325,7 @@ namespace core {
 		
 		/**
 		 Create a non-specialized vanilla Object with a single component. This is handy for if you
-		 have a simple component which needs to be added to a Level.
+		 have a simple component which needs to be added to a Stage.
 		 */
 		static ObjectRef with(string name, ComponentRef component) {
 			auto obj = make_shared<Object>(name);
@@ -377,7 +377,7 @@ namespace core {
 		// remove a component from this object
 		virtual void removeComponent(ComponentRef component);
 
-		// flag this object as "finished" - it will be removed from the Level at the next timestep
+		// flag this object as "finished" - it will be removed from the Stage at the next timestep
 		// and if nobody is holding any strong references, it will then be deallocated.
 		// if secondsFromNow is > 0, the removal will be queued to happen at least that many seconds
 		// in the future.
@@ -386,7 +386,7 @@ namespace core {
 		// returns true if setFinished(true) has been called.
 		virtual bool isFinished() const { return _finished; }
 
-		// returns true after this object has been added to the Level
+		// returns true after this object has been added to the Stage
 		// and onReady() has been called, during which all components are attached and have onReady called on them.
 		bool isReady() const { return _ready; }
 
@@ -408,16 +408,16 @@ namespace core {
 		// get the PhysicsComponent attached to this Object
 		PhysicsComponentRef getPhysicsComponent() const { return _physicsComponent; }
 
-		// get the level this Object is in, or null if it hasn't been added
-		LevelRef getLevel() const { return _level.lock(); }
+		// get the stage this Object is in, or null if it hasn't been added
+		StageRef getStage() const { return _stage.lock(); }
 
-		// called after an Object is added to a Level. Subclasses must call inherited
-		virtual void onReady(LevelRef level);
+		// called after an Object is added to a Stage. Subclasses must call inherited
+		virtual void onReady(StageRef stage);
 
 		// called when setFinished is passed a time delay. secondsLeft will count to zero, and amountFinished will ramp from 0->1
 		virtual void onFinishing(seconds_t secondsLeft, double amountFinished){}
 
-		// called after a Object is removed from a Level (directly, or by calling setFinished(true)
+		// called after a Object is removed from a Stage (directly, or by calling setFinished(true)
 		virtual void onCleanup();
 
 		virtual void step(const time_state &timeState);
@@ -428,11 +428,11 @@ namespace core {
 
 	protected:
 
-		friend class Level;
+		friend class Stage;
 		friend class Component;
 
-		virtual void onAddedToLevel(LevelRef level) { _level = level; }
-		virtual void onRemovedFromLevel() {
+		virtual void onAddedToStage(StageRef stage) { _stage = stage; }
+		virtual void onRemovedFromStage() {
 			onCleanup();
 		}
 
@@ -449,7 +449,7 @@ namespace core {
 		set<ComponentRef> _components;
 		set<DrawComponentRef> _drawComponents;
 		PhysicsComponentRef _physicsComponent;
-		LevelWeakRef _level;
+		StageWeakRef _stage;
 
 	};
 

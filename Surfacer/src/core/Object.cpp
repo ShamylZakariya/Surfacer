@@ -10,7 +10,7 @@
 
 #include <cinder/CinderAssert.h>
 
-#include "Level.hpp"
+#include "Stage.hpp"
 
 namespace core {
 
@@ -39,8 +39,8 @@ namespace core {
 
 #pragma mark - Component	
 
-	LevelRef Component::getLevel() const {
-		return getObject()->getLevel();
+	StageRef Component::getStage() const {
+		return getObject()->getStage();
 	}
 
 	void Component::notifyMoved() {
@@ -53,9 +53,9 @@ namespace core {
 		return getObject()->getBB();
 	}
 	
-	void DrawComponent::onReady(ObjectRef parent, LevelRef level) {
-		Component::onReady(parent, level);
-		level->getDrawDispatcher()->moved(this);
+	void DrawComponent::onReady(ObjectRef parent, StageRef stage) {
+		Component::onReady(parent, stage);
+		stage->getDrawDispatcher()->moved(this);
 	}
 
 #pragma mark - InputComponent
@@ -74,8 +74,8 @@ namespace core {
 	_attached(false)
 	{}
 
-	void InputComponent::onReady(ObjectRef parent, LevelRef level) {
-		Component::onReady(parent, level);
+	void InputComponent::onReady(ObjectRef parent, StageRef stage) {
+		Component::onReady(parent, stage);
 		setListening(true);
 		_attached = true;
 	}
@@ -149,28 +149,28 @@ namespace core {
 	PhysicsComponent::~PhysicsComponent() {
 	}
 
-	void PhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
-		Component::onReady(parent, level);
-		_space = level->getSpace();
+	void PhysicsComponent::onReady(ObjectRef parent, StageRef stage) {
+		Component::onReady(parent, stage);
+		_space = stage->getSpace();
 	}
 
 	void PhysicsComponent::onCleanup() {
 
-		if (LevelRef level = getLevel()) {
+		if (StageRef stage = getStage()) {
 			auto self = shared_from_this_as<PhysicsComponent>();
 			for( cpConstraint *c : getConstraints() )
 			{
-				level->signals.onConstraintWillBeDestroyed(self, c);
+				stage->signals.onConstraintWillBeDestroyed(self, c);
 			}
 
 			for( cpShape *s : getShapes() )
 			{
-				level->signals.onShapeWillBeDestroyed(self, s);
+				stage->signals.onShapeWillBeDestroyed(self, s);
 			}
 
 			for( cpBody *b : getBodies() )
 			{
-				level->signals.onBodyWillBeDestroyed(self, b);
+				stage->signals.onBodyWillBeDestroyed(self, b);
 			}
 		}
 
@@ -219,19 +219,19 @@ namespace core {
 	}
 
 	void PhysicsComponent::onBodyWillBeDestroyed(cpBody* body) {
-		if (LevelRef l = getLevel()) {
+		if (StageRef l = getStage()) {
 			l->signals.onBodyWillBeDestroyed(shared_from_this_as<PhysicsComponent>(), body);
 		}
 	}
 
 	void PhysicsComponent::onShapeWillBeDestroyed(cpShape* shape) {
-		if (LevelRef l = getLevel()) {
+		if (StageRef l = getStage()) {
 			l->signals.onShapeWillBeDestroyed(shared_from_this_as<PhysicsComponent>(), shape);
 		}
 	}
 
 	void PhysicsComponent::onConstraintWillBeDestroyed(cpConstraint* constraint) {
-		if (LevelRef l = getLevel()) {
+		if (StageRef l = getStage()) {
 			l->signals.onConstraintWillBeDestroyed(shared_from_this_as<PhysicsComponent>(), constraint);
 		}
 	}
@@ -262,7 +262,7 @@ namespace core {
 	 set<ComponentRef> _components;
 	 set<DrawComponentRef> _drawComponents;
 	 PhysicsComponentRef _physicsComponent;
-	 LevelWeakRef _level;
+	 StageWeakRef _stage;
 	 */
 
 	size_t Object::_idCounter = 0;
@@ -302,7 +302,7 @@ namespace core {
 		if (_ready) {
 			const auto self = shared_from_this();
 			component->attachedToObject(self);
-			component->onReady(self,getLevel());
+			component->onReady(self,getStage());
 		}
 	}
 
@@ -339,14 +339,14 @@ namespace core {
 	}
 
 
-	void Object::onReady(LevelRef level){
+	void Object::onReady(StageRef stage){
 		if (!_ready) {
 			const auto self = shared_from_this();
 			for (auto &component : _components) {
 				component->attachedToObject(self);
 			}
 			for (auto &component : _components) {
-				component->onReady(self, level);
+				component->onReady(self, stage);
 			}
 			_ready = true;
 		}
@@ -357,7 +357,7 @@ namespace core {
 			component->onCleanup();
 		}
 
-		_level.reset();
+		_stage.reset();
 		_finished = false;
 		_ready = false;
 	}
@@ -400,7 +400,7 @@ namespace core {
 	}
 
 	void Object::notifyMoved() {
-		const auto &dispatcher = getLevel()->getDrawDispatcher();
+		const auto &dispatcher = getStage()->getDrawDispatcher();
 		for (const auto &dc : _drawComponents) {
 			dispatcher->moved(dc.get());
 		}

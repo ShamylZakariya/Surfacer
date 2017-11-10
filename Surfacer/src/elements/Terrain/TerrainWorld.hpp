@@ -39,7 +39,7 @@ namespace terrain {
 	 poly_edge represents an edge in a PolyLine2d. It is not meant to represent the specific vertices in
 	 a coordinate system but rather it is meant to make it easy to determine if two PolyShapes share an edge.
 	 As such the coordinates a and b are integers, representing the world space coords of the PolyShape outer
-	 contour at a given level of precision.
+	 contour at a given stage of precision.
 	 */
 	struct poly_edge {
 		ivec2 a, b;
@@ -223,7 +223,7 @@ namespace terrain {
 
 		/**
 		 Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.
-		 The purpose of this is simple: You might have a large level. You want to divide the geometry of the level into manageable
+		 The purpose of this is simple: You might have a large stage. You want to divide the geometry of the stage into manageable
 		 chunks for visibility culling and collision/physics performance.
 		 */
 		static vector<ShapeRef> partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize);
@@ -293,7 +293,7 @@ namespace terrain {
 		size_t makeSleepingDynamicGroupsStatic(core::seconds_t minSleepTime, double portion = 1, const DynamicGroupVisitor &test = DynamicGroupVisitor());
 
 		/**
-		 Get the Object which wraps this World for use in a Level
+		 Get the Object which wraps this World for use in a Stage
 		 */
 		core::ObjectRef getObject() const;
 
@@ -523,7 +523,7 @@ namespace terrain {
 
 	/**
 	 @class Element
-	 An element is a shape specified in the <g id="elements">...</g> section of a level SVG file.
+	 An element is a shape specified in the <g id="elements">...</g> section of a stage SVG file.
 	 Each element represents simply a shape in world space with an associated ID. Elements can be used
 	 as location markers for enemy spawn points, or possibly as trigger geometry.
 	 */

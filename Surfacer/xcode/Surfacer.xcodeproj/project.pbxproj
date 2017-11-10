@@ -48,7 +48,7 @@
 		638F4DBB1F8BCFCE004437E8 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
 		638F4DBC1F8BCFCE004437E8 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
 		638F4DBD1F8BCFCE004437E8 /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
-		638F4DBE1F8BCFCE004437E8 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
+		638F4DBE1F8BCFCE004437E8 /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
 		638F4DBF1F8BCFCE004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
 		638F4DC01F8BCFCE004437E8 /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C081F8681E100F537CA /* Entity.cpp */; };
 		638F4DC11F8BCFCE004437E8 /* App.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C061F86804900F537CA /* App.cpp */; };
@@ -68,7 +68,7 @@
 		638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4DA31F8BCF53004437E8 /* TestsApp.cpp */; };
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
-		63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
+		63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
 		63E29EF21F97A4C300CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */; };
 		63E29EF31F97A4C300CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */; };
 		63E29EF41F97A4C300CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */; };
@@ -78,11 +78,11 @@
 		63E29EFD1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* UniversalParticleSystem.cpp */; };
 		63F93C071F86804900F537CA /* App.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C061F86804900F537CA /* App.cpp */; };
 		63F93C0A1F8681E100F537CA /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C081F8681E100F537CA /* Entity.cpp */; };
-		63F93C171F8687F700F537CA /* SurfacerLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C0E1F86877D00F537CA /* SurfacerLevel.cpp */; };
+		63F93C171F8687F700F537CA /* SurfacerStage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C0E1F86877D00F537CA /* SurfacerStage.cpp */; };
 		63F93C181F8687F700F537CA /* Eggsac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C101F86877D00F537CA /* Eggsac.cpp */; };
 		63F93C191F8687F700F537CA /* Boid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C111F86877D00F537CA /* Boid.cpp */; };
 		63F93C1A1F8687F700F537CA /* Player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C151F86877D00F537CA /* Player.cpp */; };
-		63F93C271F86F74300F537CA /* SurfacerLevelScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C251F86F74300F537CA /* SurfacerLevelScenario.cpp */; };
+		63F93C271F86F74300F537CA /* SurfacerScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C251F86F74300F537CA /* SurfacerScenario.cpp */; };
 		63F93C2D1F86F88300F537CA /* DevComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C231F86F70D00F537CA /* DevComponents.cpp */; };
 		63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C201F86F6C000F537CA /* Terrain.cpp */; };
 		63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C211F86F6C000F537CA /* TerrainWorld.cpp */; };
@@ -105,7 +105,7 @@
 		63F93C551F8714B200F537CA /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
 		63F93C561F8714B200F537CA /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
 		63F93C571F8714B200F537CA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
-		63F93C581F8714B200F537CA /* Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Level.cpp */; };
+		63F93C581F8714B200F537CA /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
 		63F93C591F8714B200F537CA /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C081F8681E100F537CA /* Entity.cpp */; };
 		63F93C5A1F8714B200F537CA /* App.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C061F86804900F537CA /* App.cpp */; };
 		63F93C5E1F8714B200F537CA /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720219952D00008149E2 /* AVFoundation.framework */; };
@@ -121,8 +121,8 @@
 		63F93C681F8714B200F537CA /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
 		63F93C6F1F87167100F537CA /* SurfacerApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C6E1F87167100F537CA /* SurfacerApp.cpp */; };
 		63F93C771F87188600F537CA /* PrecariouslyApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C741F87185A00F537CA /* PrecariouslyApp.cpp */; };
-		63F93C781F87188600F537CA /* PrecariouslyLevelScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C751F87185A00F537CA /* PrecariouslyLevelScenario.cpp */; };
-		63F93C791F87188600F537CA /* PrecariouslyLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C761F87185A00F537CA /* PrecariouslyLevel.cpp */; };
+		63F93C781F87188600F537CA /* PrecariouslyScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C751F87185A00F537CA /* PrecariouslyScenario.cpp */; };
+		63F93C791F87188600F537CA /* PrecariouslyStage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C761F87185A00F537CA /* PrecariouslyStage.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		C268CB28315B4D8CA1F329A4 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 25DBEB1187074B2580185053 /* CinderApp.icns */; };
 /* End PBXBuildFile section */
@@ -185,8 +185,8 @@
 		63BFD8141E89565600D821E4 /* Object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
 		63BFD8151E89565600D821E4 /* Object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Object.hpp; sourceTree = "<group>"; };
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
-		63BFD8181E89ED2A00D821E4 /* Level.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Level.cpp; sourceTree = "<group>"; };
-		63BFD8191E89ED2A00D821E4 /* Level.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Level.hpp; sourceTree = "<group>"; };
+		63BFD8181E89ED2A00D821E4 /* Stage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Stage.cpp; sourceTree = "<group>"; };
+		63BFD8191E89ED2A00D821E4 /* Stage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Stage.hpp; sourceTree = "<group>"; };
 		63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleSystem.cpp; sourceTree = "<group>"; };
 		63E29EF11F97A4C300CAF39E /* ParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ParticleSystem.hpp; sourceTree = "<group>"; };
 		63E29EF51F97A87300CAF39E /* CloudLayerParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CloudLayerParticleSystem.cpp; sourceTree = "<group>"; };
@@ -197,8 +197,8 @@
 		63F93C061F86804900F537CA /* App.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = App.cpp; sourceTree = "<group>"; };
 		63F93C081F8681E100F537CA /* Entity.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Entity.cpp; sourceTree = "<group>"; };
 		63F93C091F8681E100F537CA /* Entity.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Entity.hpp; sourceTree = "<group>"; };
-		63F93C0D1F86877D00F537CA /* SurfacerLevel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SurfacerLevel.hpp; sourceTree = "<group>"; };
-		63F93C0E1F86877D00F537CA /* SurfacerLevel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SurfacerLevel.cpp; sourceTree = "<group>"; };
+		63F93C0D1F86877D00F537CA /* SurfacerStage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SurfacerStage.hpp; sourceTree = "<group>"; };
+		63F93C0E1F86877D00F537CA /* SurfacerStage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SurfacerStage.cpp; sourceTree = "<group>"; };
 		63F93C101F86877D00F537CA /* Eggsac.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Eggsac.cpp; sourceTree = "<group>"; };
 		63F93C111F86877D00F537CA /* Boid.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Boid.cpp; sourceTree = "<group>"; };
 		63F93C121F86877D00F537CA /* Eggsac.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Eggsac.hpp; sourceTree = "<group>"; };
@@ -212,8 +212,8 @@
 		63F93C211F86F6C000F537CA /* TerrainWorld.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainWorld.cpp; sourceTree = "<group>"; };
 		63F93C231F86F70D00F537CA /* DevComponents.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DevComponents.cpp; sourceTree = "<group>"; };
 		63F93C241F86F70D00F537CA /* DevComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DevComponents.hpp; sourceTree = "<group>"; };
-		63F93C251F86F74300F537CA /* SurfacerLevelScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SurfacerLevelScenario.cpp; sourceTree = "<group>"; };
-		63F93C261F86F74300F537CA /* SurfacerLevelScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SurfacerLevelScenario.hpp; sourceTree = "<group>"; };
+		63F93C251F86F74300F537CA /* SurfacerScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SurfacerScenario.cpp; sourceTree = "<group>"; };
+		63F93C261F86F74300F537CA /* SurfacerScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SurfacerScenario.hpp; sourceTree = "<group>"; };
 		63F93C291F86F84F00F537CA /* SvgTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SvgTestScenario.hpp; sourceTree = "<group>"; };
 		63F93C2A1F86F84F00F537CA /* TerrainTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainTestScenario.hpp; sourceTree = "<group>"; };
 		63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainTestScenario.cpp; sourceTree = "<group>"; };
@@ -229,11 +229,11 @@
 		63F93C3B1F86F96A00F537CA /* Svg.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Svg.hpp; sourceTree = "<group>"; };
 		63F93C6C1F8714B200F537CA /* Precariously.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Precariously.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		63F93C6E1F87167100F537CA /* SurfacerApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SurfacerApp.cpp; sourceTree = "<group>"; };
-		63F93C721F87185A00F537CA /* PrecariouslyLevelScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyLevelScenario.hpp; sourceTree = "<group>"; };
-		63F93C731F87185A00F537CA /* PrecariouslyLevel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyLevel.hpp; sourceTree = "<group>"; };
+		63F93C721F87185A00F537CA /* PrecariouslyScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyScenario.hpp; sourceTree = "<group>"; };
+		63F93C731F87185A00F537CA /* PrecariouslyStage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PrecariouslyStage.hpp; sourceTree = "<group>"; };
 		63F93C741F87185A00F537CA /* PrecariouslyApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyApp.cpp; sourceTree = "<group>"; };
-		63F93C751F87185A00F537CA /* PrecariouslyLevelScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyLevelScenario.cpp; sourceTree = "<group>"; };
-		63F93C761F87185A00F537CA /* PrecariouslyLevel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyLevel.cpp; sourceTree = "<group>"; };
+		63F93C751F87185A00F537CA /* PrecariouslyScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyScenario.cpp; sourceTree = "<group>"; };
+		63F93C761F87185A00F537CA /* PrecariouslyStage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PrecariouslyStage.cpp; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Surfacer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Surfacer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B91D377257F74A9D8692D6AD /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -402,8 +402,8 @@
 				632622F21E7D9A630051ABE2 /* Exception.hpp */,
 				632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */,
 				632622F41E7D9A630051ABE2 /* InputDispatcher.hpp */,
-				63BFD8181E89ED2A00D821E4 /* Level.cpp */,
-				63BFD8191E89ED2A00D821E4 /* Level.hpp */,
+				63BFD8181E89ED2A00D821E4 /* Stage.cpp */,
+				63BFD8191E89ED2A00D821E4 /* Stage.hpp */,
 				632622F51E7D9A630051ABE2 /* LineSegment.hpp */,
 				632622F61E7D9A630051ABE2 /* MathHelpers.hpp */,
 				63BFD8141E89565600D821E4 /* Object.cpp */,
@@ -465,10 +465,10 @@
 				63F93C6E1F87167100F537CA /* SurfacerApp.cpp */,
 				63F93C0F1F86877D00F537CA /* Enemies */,
 				63F93C141F86877D00F537CA /* Player */,
-				63F93C0E1F86877D00F537CA /* SurfacerLevel.cpp */,
-				63F93C0D1F86877D00F537CA /* SurfacerLevel.hpp */,
-				63F93C251F86F74300F537CA /* SurfacerLevelScenario.cpp */,
-				63F93C261F86F74300F537CA /* SurfacerLevelScenario.hpp */,
+				63F93C0E1F86877D00F537CA /* SurfacerStage.cpp */,
+				63F93C0D1F86877D00F537CA /* SurfacerStage.hpp */,
+				63F93C251F86F74300F537CA /* SurfacerScenario.cpp */,
+				63F93C261F86F74300F537CA /* SurfacerScenario.hpp */,
 			);
 			path = Surfacer;
 			sourceTree = "<group>";
@@ -564,10 +564,10 @@
 				63F93C741F87185A00F537CA /* PrecariouslyApp.cpp */,
 				638F4D9E1F897F60004437E8 /* PrecariouslyConstants.cpp */,
 				638F4D9F1F897F60004437E8 /* PrecariouslyConstants.hpp */,
-				63F93C761F87185A00F537CA /* PrecariouslyLevel.cpp */,
-				63F93C731F87185A00F537CA /* PrecariouslyLevel.hpp */,
-				63F93C751F87185A00F537CA /* PrecariouslyLevelScenario.cpp */,
-				63F93C721F87185A00F537CA /* PrecariouslyLevelScenario.hpp */,
+				63F93C761F87185A00F537CA /* PrecariouslyStage.cpp */,
+				63F93C731F87185A00F537CA /* PrecariouslyStage.hpp */,
+				63F93C751F87185A00F537CA /* PrecariouslyScenario.cpp */,
+				63F93C721F87185A00F537CA /* PrecariouslyScenario.hpp */,
 			);
 			path = Precariously;
 			sourceTree = "<group>";
@@ -711,7 +711,7 @@
 				638F4DBB1F8BCFCE004437E8 /* InputDispatcher.cpp in Sources */,
 				638F4DBC1F8BCFCE004437E8 /* Scenario.cpp in Sources */,
 				638F4DBD1F8BCFCE004437E8 /* BlendMode.cpp in Sources */,
-				638F4DBE1F8BCFCE004437E8 /* Level.cpp in Sources */,
+				638F4DBE1F8BCFCE004437E8 /* Stage.cpp in Sources */,
 				63E29EF41F97A4C300CAF39E /* ParticleSystem.cpp in Sources */,
 				638F4DBF1F8BCFCE004437E8 /* PerlinNoise.cpp in Sources */,
 				638F4DC01F8BCFCE004437E8 /* Entity.cpp in Sources */,
@@ -728,8 +728,8 @@
 				638F4D991F895CE5004437E8 /* TerrainDetail.cpp in Sources */,
 				638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */,
 				63F93C771F87188600F537CA /* PrecariouslyApp.cpp in Sources */,
-				63F93C781F87188600F537CA /* PrecariouslyLevelScenario.cpp in Sources */,
-				63F93C791F87188600F537CA /* PrecariouslyLevel.cpp in Sources */,
+				63F93C781F87188600F537CA /* PrecariouslyScenario.cpp in Sources */,
+				63F93C791F87188600F537CA /* PrecariouslyStage.cpp in Sources */,
 				63F93C441F8714B200F537CA /* Svg.cpp in Sources */,
 				63F93C451F8714B200F537CA /* ChipmunkDebugDraw.cpp in Sources */,
 				63F93C461F8714B200F537CA /* SvgParsing.cpp in Sources */,
@@ -747,7 +747,7 @@
 				63F93C551F8714B200F537CA /* InputDispatcher.cpp in Sources */,
 				63F93C561F8714B200F537CA /* Scenario.cpp in Sources */,
 				63F93C571F8714B200F537CA /* BlendMode.cpp in Sources */,
-				63F93C581F8714B200F537CA /* Level.cpp in Sources */,
+				63F93C581F8714B200F537CA /* Stage.cpp in Sources */,
 				638F4D951F87D7BC004437E8 /* PerlinNoise.cpp in Sources */,
 				63F93C591F8714B200F537CA /* Entity.cpp in Sources */,
 				63F93C5A1F8714B200F537CA /* App.cpp in Sources */,
@@ -767,7 +767,7 @@
 				63F93C2D1F86F88300F537CA /* DevComponents.cpp in Sources */,
 				63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */,
 				63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */,
-				63F93C171F8687F700F537CA /* SurfacerLevel.cpp in Sources */,
+				63F93C171F8687F700F537CA /* SurfacerStage.cpp in Sources */,
 				63E29EFB1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */,
 				63F93C181F8687F700F537CA /* Eggsac.cpp in Sources */,
 				63F93C191F8687F700F537CA /* Boid.cpp in Sources */,
@@ -782,10 +782,10 @@
 				638F4D961F87D7BC004437E8 /* PerlinNoise.cpp in Sources */,
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
 				639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */,
-				63BFD81A1E89ED2A00D821E4 /* Level.cpp in Sources */,
+				63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */,
 				63F93C0A1F8681E100F537CA /* Entity.cpp in Sources */,
 				63F93C071F86804900F537CA /* App.cpp in Sources */,
-				63F93C271F86F74300F537CA /* SurfacerLevelScenario.cpp in Sources */,
+				63F93C271F86F74300F537CA /* SurfacerScenario.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

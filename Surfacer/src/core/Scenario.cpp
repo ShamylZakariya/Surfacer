@@ -10,7 +10,7 @@
 
 #include <cinder/gl/gl.h>
 
-#include "Level.hpp"
+#include "Stage.hpp"
 #include "Strings.hpp"
 
 using namespace ci;
@@ -43,7 +43,7 @@ namespace core {
 		ViewportControllerRef _viewportController;
 		time_state _time, _stepTime;
 		render_state _renderState, _screenRenderState;
-		LevelRef _level;
+		StageRef _stage;
 		int _width, _height;
 	 */
 
@@ -68,7 +68,7 @@ namespace core {
 	{}
 
 	bool Scenario::isListening() const {
-		return InputListener::isListening() && getLevel();
+		return InputListener::isListening() && getStage();
 	}
 
 	void Scenario::resize( ivec2 size )
@@ -113,13 +113,13 @@ namespace core {
 		writeImage( fullPath.string(), s, ImageTarget::Options(), format );
 	}
 
-	void Scenario::setLevel(LevelRef level) {
-		if (_level) {
-			_level->removeFromScenario();
+	void Scenario::setStage(StageRef stage) {
+		if (_stage) {
+			_stage->removeFromScenario();
 		}
-		_level = level;
-		if (_level) {
-			_level->addedToScenario(shared_from_this());
+		_stage = stage;
+		if (_stage) {
+			_stage->addedToScenario(shared_from_this());
 		}
 	}
 
@@ -142,8 +142,8 @@ namespace core {
 		_viewport->setSize(size.x, size.y);
 		_screenViewport->setSize(size.x, size.y);
 
-		if (_level) {
-			_level->resize(size);
+		if (_stage) {
+			_stage->resize(size);
 		}
 
 		resize(size);
@@ -158,8 +158,8 @@ namespace core {
 
 		step( _stepTime );
 
-		if (_level) {
-			_level->step(_stepTime);
+		if (_stage) {
+			_stage->step(_stepTime);
 		}
 	}
 
@@ -169,8 +169,8 @@ namespace core {
 
 		update( _time );
 
-		if (_level) {
-			_level->update(_time);
+		if (_stage) {
+			_stage->update(_time);
 		}
 
 		_viewportController->update(_time);
@@ -185,12 +185,12 @@ namespace core {
 
 		clear(_renderState);
 
-		if (_level) {
+		if (_stage) {
 			gl::ScopedMatrices sm;
 			gl::setMatricesWindow(_width, _height, false);
 			_viewport->set();
 
-			_level->draw(_renderState);
+			_stage->draw(_renderState);
 			draw( _renderState );
 		}
 
@@ -199,22 +199,22 @@ namespace core {
 
 		drawScreen(_screenRenderState);
 
-		if (_level) {
-			_level->drawScreen(_screenRenderState);
+		if (_stage) {
+			_stage->drawScreen(_screenRenderState);
 		}
 	}
 
 	void Scenario::onViewportMoved(const Viewport &vp) {
-		// forward Viewport::onMotion to Level::signals.onViewportMotion
-		if (_level) {
-			_level->signals.onViewportMotion(vp);
+		// forward Viewport::onMotion to Stage::signals.onViewportMotion
+		if (_stage) {
+			_stage->signals.onViewportMotion(vp);
 		}
 	}
 
 	void Scenario::onViewportBoundsChanged(const Viewport &vp) {
-		// forward Viewport::onBoundsChanged to Level::signals.onViewportBoundsChanged
-		if (_level) {
-			_level->signals.onViewportBoundsChanged(vp);
+		// forward Viewport::onBoundsChanged to Stage::signals.onViewportBoundsChanged
+		if (_stage) {
+			_stage->signals.onViewportBoundsChanged(vp);
 		}
 	}
 

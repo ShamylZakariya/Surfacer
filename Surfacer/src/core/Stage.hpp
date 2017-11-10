@@ -1,13 +1,13 @@
 //
-//  Level.hpp
+//  Stage.hpp
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 3/27/17.
 //
 //
 
-#ifndef Level_hpp
-#define Level_hpp
+#ifndef Stage_hpp
+#define Stage_hpp
 
 #include "Common.hpp"
 #include "Object.hpp"
@@ -19,7 +19,7 @@
 namespace core {
 
 	SMART_PTR(Scenario);
-	SMART_PTR(Level);
+	SMART_PTR(Stage);
 	SMART_PTR(DrawDispatcher);
 	SMART_PTR(SpaceAccess);
 	SMART_PTR(GravitationCalculator);
@@ -147,11 +147,11 @@ namespace core {
 		cpSpace *getSpace() const { return _space; }
 
 	private:
-		friend class Level;
-		SpaceAccess(cpSpace *space, Level *level);
+		friend class Stage;
+		SpaceAccess(cpSpace *space, Stage *stage);
 
 		cpSpace *_space;
-		Level *_level;
+		Stage *_stage;
 	};
 
 
@@ -211,32 +211,36 @@ namespace core {
 
 	};
 
-#pragma mark - Level
+#pragma mark - Stage
 
 	namespace detail {
-		extern cpBool Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
-		extern cpBool Level_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
-		extern void Level_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
-		extern void Level_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern cpBool Stage_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern cpBool Stage_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern void Stage_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		extern void Stage_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
 	}
 
 
-	class Level : public enable_shared_from_this<Level>, public core::signals::receiver {
+	/**
+	 Stage is the root "container" for GameObject instances.
+	 Every Scenario has 
+	 */
+	class Stage : public enable_shared_from_this<Stage>, public core::signals::receiver {
 	public:
 
 		/**
-			Define signals for elements in the Level to bind to.
+			Define signals for elements in the Stage to bind to.
 			Any object can define its own signals and be bound to directly, but for clarity, I'd like
-			important signals to be routed through Level::signals. Viewport gets a pass for declaring 
+			important signals to be routed through Stage::signals. Viewport gets a pass for declaring 
 			signals directly, because it's fairly low in the stack. Otherwise, signals should be defined
-			here and objects that want to fire a signal should do so through their Level.
+			here and objects that want to fire a signal should do so through their Stage.
 		 */
 		struct signals_ {
 			signals::signal< void( const Viewport & ) > onViewportMotion;
 			signals::signal< void( const Viewport & ) > onViewportBoundsChanged;
 
-			signals::signal< void(const LevelRef &) > onLevelPaused;
-			signals::signal< void(const LevelRef &) > onLevelUnpaused;
+			signals::signal< void(const StageRef &) > onStagePaused;
+			signals::signal< void(const StageRef &) > onStageUnpaused;
 
 			signals::signal< void(const PhysicsComponentRef &, cpBody*) > onBodyWillBeDestroyed;
 			signals::signal< void(const PhysicsComponentRef &, cpShape*) > onShapeWillBeDestroyed;
@@ -247,12 +251,12 @@ namespace core {
 
 	public:
 
-		static LevelRef getLevelFromSpace(cpSpace *space) {
-			return static_cast<Level*>(cpSpaceGetUserData(space))->shared_from_this_as<Level>();
+		static StageRef getStageFromSpace(cpSpace *space) {
+			return static_cast<Stage*>(cpSpaceGetUserData(space))->shared_from_this_as<Stage>();
 		}
 
-		inline static Level* getLevelPtrFromSpace(cpSpace *space) {
-			return static_cast<Level*>(cpSpaceGetUserData(space));
+		inline static Stage* getStagePtrFromSpace(cpSpace *space) {
+			return static_cast<Stage*>(cpSpaceGetUserData(space));
 		}
 
 		struct collision_type_pair {
@@ -292,8 +296,8 @@ namespace core {
 
 	public:
 
-		Level(string name);
-		virtual ~Level();
+		Stage(string name);
+		virtual ~Stage();
 
 		// get typed shared_from_this, e.g., shared_ptr<Foo> = shared_from_this_as<Foo>();
 		template<typename T>
@@ -357,7 +361,7 @@ namespace core {
 
 		/**
 		 Some contacts can't be dispatched via chipmunk's collision system (e.g., synthetic contacts like WEAPON -> ENEMY.
-		 It becomes the responsibility of such mechanisms to dispatch their contacts to Level directly, here.
+		 It becomes the responsibility of such mechanisms to dispatch their contacts to Stage directly, here.
 		 */
 		virtual void registerContactBetweenObjects(cpCollisionType a, const ObjectRef &ga, cpCollisionType b, const ObjectRef &gb);
 		
@@ -403,10 +407,10 @@ namespace core {
 	protected:
 
 		// friend functions for chipmunk collision dispatch - these will call onCollision* methods below
-		friend cpBool detail::Level_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
-		friend cpBool detail::Level_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
-		friend void detail::Level_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
-		friend void detail::Level_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend cpBool detail::Stage_collisionBeginHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend cpBool detail::Stage_collisionPreSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend void detail::Stage_collisionPostSolveHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
+		friend void detail::Stage_collisionSeparateHandler(cpArbiter *arb, struct cpSpace *space, cpDataPointer data);
 
 		// collision dispatchers, called after CollisionCallbacks
 		virtual bool onCollisionBegin(cpArbiter *arb) { return true; }
@@ -453,4 +457,4 @@ namespace core {
 
 }
 
-#endif /* Level_hpp */
+#endif /* Stage_hpp */

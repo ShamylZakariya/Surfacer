@@ -99,8 +99,8 @@ namespace precariously {
 	Planet::~Planet()
 	{}
 	
-	void Planet::onReady(core::LevelRef level) {
-		TerrainObject::onReady(level);
+	void Planet::onReady(core::StageRef stage) {
+		TerrainObject::onReady(stage);
 	}
 	
 #pragma mark - CrackGeometry

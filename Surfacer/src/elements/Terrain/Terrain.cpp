@@ -25,8 +25,8 @@ namespace terrain {
 	TerrainObject::~TerrainObject()
 	{}
 
-	void TerrainObject::onReady(LevelRef level) {
-		Object::onReady(level);
+	void TerrainObject::onReady(StageRef stage) {
+		Object::onReady(stage);
 		_world->setObject(shared_from_this());
 	}
 
@@ -49,7 +49,7 @@ namespace terrain {
 	 int _drawLayer;
 	 */
 	
-	void TerrainDrawComponent::onReady(ObjectRef parent, LevelRef level) {
+	void TerrainDrawComponent::onReady(ObjectRef parent, StageRef stage) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
 	}
 
@@ -59,7 +59,7 @@ namespace terrain {
 
 #pragma mark - TerrainPhysicsComponent
 
-	void TerrainPhysicsComponent::onReady(ObjectRef parent, LevelRef level) {
+	void TerrainPhysicsComponent::onReady(ObjectRef parent, StageRef stage) {
 		_world = dynamic_pointer_cast<TerrainObject>(parent)->getWorld();
 	}
 
@@ -87,7 +87,7 @@ namespace terrain {
 	
 	bool MouseCutterComponent::mouseDown( const ci::app::MouseEvent &event ) {
 		_mouseScreen = event.getPos();
-		_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+		_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 		
 		_cutting = true;
 		_cutStart = _cutEnd = _mouseWorld;
@@ -98,7 +98,7 @@ namespace terrain {
 	bool MouseCutterComponent::mouseUp( const ci::app::MouseEvent &event ){
 		if (_cutting) {
 			if (_terrain) {
-				const float radius = _radius / getLevel()->getViewport()->getScale();
+				const float radius = _radius / getStage()->getViewport()->getScale();
 				_terrain->getWorld()->cut(_cutStart, _cutEnd, radius);
 			}
 			
@@ -109,13 +109,13 @@ namespace terrain {
 	
 	bool MouseCutterComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 		_mouseScreen = event.getPos();
-		_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+		_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 		return false;
 	}
 	
 	bool MouseCutterComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 		_mouseScreen = event.getPos();
-		_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+		_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 		if (_cutting) {
 			_cutEnd = _mouseWorld;
 		}
@@ -128,8 +128,8 @@ namespace terrain {
 	_color(color)
 	{}
 	
-	void MouseCutterDrawComponent::onReady(ObjectRef parent, LevelRef level){
-		DrawComponent::onReady(parent,level);
+	void MouseCutterDrawComponent::onReady(ObjectRef parent, StageRef stage){
+		DrawComponent::onReady(parent,stage);
 		_cutterComponent = getSibling<MouseCutterComponent>();
 	}
 	

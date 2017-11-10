@@ -9,7 +9,7 @@
 #include "cinder/app/RendererGl.h"
 #include "App.hpp"
 
-#include "SurfacerLevelScenario.hpp"
+#include "SurfacerScenario.hpp"
 
 class SurfacerApp : public core::App {
 public:
@@ -25,7 +25,7 @@ public:
 
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<surfacer::SurfacerLevelScenario>("surfacer/levels/0.xml"));
+		setScenario(make_shared<surfacer::SurfacerScenario>("surfacer/stages/0.xml"));
 	}
  
 };

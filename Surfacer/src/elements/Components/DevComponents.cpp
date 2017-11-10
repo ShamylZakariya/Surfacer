@@ -109,8 +109,8 @@ _gridColor(1,1,1,1)
 	_batch = gl::Batch::create(geom::Rect().rect(Rectf(-1,-1,1,1)), _shader);
 }
 
-void WorldCartesianGridDrawComponent::onReady(ObjectRef parent, LevelRef level) {
-	level->signals.onViewportMotion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
+void WorldCartesianGridDrawComponent::onReady(ObjectRef parent, StageRef stage) {
+	stage->signals.onViewportMotion.connect(this, &WorldCartesianGridDrawComponent::onViewportMotion);
 	setupShaderUniforms();
 }
 
@@ -138,7 +138,7 @@ namespace {
 }
 
 void WorldCartesianGridDrawComponent::setupShaderUniforms() {
-	ViewportRef vp = getLevel()->getViewport();
+	ViewportRef vp = getStage()->getViewport();
 
 	// find largest period where rendered texel scale (ratio of one texel to one pixel) is less than or equal to maxTexelScale
 	const double textureSize = _texture->getWidth();
@@ -167,7 +167,7 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	const double betaPeriodAlpha = 1 - (betaPeriodTexelScale - minTexelScale) / (maxTexelScale - minTexelScale);
 	const double alphaPeriodAlpha = 1 - betaPeriodAlpha;
 
-	// compute the mip level so we can pass texel size [0...1] to the shader.
+	// compute the mip stage so we can pass texel size [0...1] to the shader.
 	// This is used by shader to detect axis edges
 	double alphaPeriodMip = max(ceil(log2(1/alphaPeriodTexelScale)), 0.0);
 	double betaPeriodMip = max(ceil(log2(1/betaPeriodTexelScale)), 0.0);
@@ -234,7 +234,7 @@ void ManualViewportControlComponent::step(const time_state &time) {
 
 bool ManualViewportControlComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+	_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 
 	//CI_LOG_D("screen: " << _mouseScreen << " world: " << _mouseWorld << " SPACE: " << isKeyDown(app::KeyEvent::KEY_SPACE) << " ALT: " << event.isAltDown());
 
@@ -259,13 +259,13 @@ bool ManualViewportControlComponent::mouseUp( const ci::app::MouseEvent &event )
 
 bool ManualViewportControlComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+	_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 	return false;
 }
 
 bool ManualViewportControlComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+	_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE ))
 	{
@@ -404,8 +404,8 @@ MousePickComponent::~MousePickComponent() {
 	cpBodyFree(_mouseBody);
 }
 
-void MousePickComponent::onReady(ObjectRef parent, LevelRef level) {
-	InputComponent::onReady(parent, level);
+void MousePickComponent::onReady(ObjectRef parent, StageRef stage) {
+	InputComponent::onReady(parent, stage);
 	_mouseBody = cpBodyNewKinematic();
 }
 
@@ -421,7 +421,7 @@ bool MousePickComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	releaseDragConstraint();
 
 	_mouseScreen = event.getPos();
-	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+	_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 
 	if ( isKeyDown( app::KeyEvent::KEY_SPACE )) {
 		return false;
@@ -429,7 +429,7 @@ bool MousePickComponent::mouseDown( const ci::app::MouseEvent &event ) {
 
 	const float distance = 1.f;
 	cpPointQueryInfo info = {};
-	cpShape *pick = cpSpacePointQueryNearest(getLevel()->getSpace()->getSpace(), cpv(_mouseWorld), distance, _pickFilter, &info);
+	cpShape *pick = cpSpacePointQueryNearest(getStage()->getSpace()->getSpace(), cpv(_mouseWorld), distance, _pickFilter, &info);
 	if (pick) {
 		cpBody *pickBody = cpShapeGetBody(pick);
 
@@ -439,7 +439,7 @@ bool MousePickComponent::mouseDown( const ci::app::MouseEvent &event ) {
 			_draggingBody = pickBody;
 			_mouseJoint = cpPivotJointNew2(_mouseBody, _draggingBody, cpvzero, cpBodyWorldToLocal(_draggingBody,nearest));
 
-			getLevel()->getSpace()->addConstraint(_mouseJoint);
+			getStage()->getSpace()->addConstraint(_mouseJoint);
 
 			return true;
 		}
@@ -455,13 +455,13 @@ bool MousePickComponent::mouseUp( const ci::app::MouseEvent &event ) {
 
 bool MousePickComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	_mouseScreen = event.getPos();
-	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+	_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 	return false;
 }
 
 bool MousePickComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ){
 	_mouseScreen = event.getPos();
-	_mouseWorld = getLevel()->getViewport()->screenToWorld(_mouseScreen);
+	_mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 	return false;
 }
 
@@ -479,8 +479,8 @@ _color(color),
 _radius(radius)
 {}
 
-void MousePickDrawComponent::onReady(ObjectRef parent, LevelRef level) {
-	DrawComponent::onReady(parent,level);
+void MousePickDrawComponent::onReady(ObjectRef parent, StageRef stage) {
+	DrawComponent::onReady(parent,stage);
 	_pickComponent = getSibling<MousePickComponent>();
 }
 
@@ -548,7 +548,7 @@ _dragHandler(dragger)
 bool MouseDelegateComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	if (_pressHandler) {
 		dvec2 screen = event.getPos();
-		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
+		dvec2 world = getStage()->getViewport()->screenToWorld(screen);
 
 		return _pressHandler(screen, world, event);
 	}
@@ -558,7 +558,7 @@ bool MouseDelegateComponent::mouseDown( const ci::app::MouseEvent &event ) {
 bool MouseDelegateComponent::mouseUp( const ci::app::MouseEvent &event ) {
 	if (_releaseHandler) {
 		dvec2 screen = event.getPos();
-		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
+		dvec2 world = getStage()->getViewport()->screenToWorld(screen);
 		
 		return _releaseHandler(screen, world, event);
 	}
@@ -568,8 +568,8 @@ bool MouseDelegateComponent::mouseUp( const ci::app::MouseEvent &event ) {
 bool MouseDelegateComponent::mouseMove( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	if (_moveHandler) {
 		dvec2 screen = event.getPos();
-		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
-		dvec2 worldDelta = getLevel()->getViewport()->screenToWorldDir(delta);
+		dvec2 world = getStage()->getViewport()->screenToWorld(screen);
+		dvec2 worldDelta = getStage()->getViewport()->screenToWorldDir(delta);
 		
 		return _moveHandler(screen, world, delta, worldDelta, event);
 	}
@@ -580,8 +580,8 @@ bool MouseDelegateComponent::mouseMove( const ci::app::MouseEvent &event, const 
 bool MouseDelegateComponent::mouseDrag( const ci::app::MouseEvent &event, const ivec2 &delta ) {
 	if (_dragHandler) {
 		dvec2 screen = event.getPos();
-		dvec2 world = getLevel()->getViewport()->screenToWorld(screen);
-		dvec2 worldDelta = getLevel()->getViewport()->screenToWorldDir(delta);
+		dvec2 world = getStage()->getViewport()->screenToWorld(screen);
+		dvec2 worldDelta = getStage()->getViewport()->screenToWorldDir(delta);
 		
 		return _dragHandler(screen, world, delta, worldDelta, event);
 	}

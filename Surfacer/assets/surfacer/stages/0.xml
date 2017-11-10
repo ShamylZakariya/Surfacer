@@ -22,7 +22,7 @@
 	</prefab>
 </prefabs>
 
-<level name="Hello">
+<stage name="Hello">
 	<terrain path="svg_tests/complex_world_test.svg" friction="1" density="1" scale="2"/>
 	<space damping="0.9"/>
 	<gravity type="radial" strength="200" falloff_power="0" primary="true"/>
@@ -34,4 +34,4 @@
 		<eggsac name="eggsac_1" prefab_id="eggsac" width="24" height="24"/>
 		<eggsac name="eggsac_2" prefab_id="eggsac" width="32" height="32"/>
 	</enemies>
-</level>
+</stage>

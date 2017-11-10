@@ -9,7 +9,7 @@
 #include "cinder/app/RendererGl.h"
 #include "App.hpp"
 
-#include "PrecariouslyLevelScenario.hpp"
+#include "PrecariouslyScenario.hpp"
 
 class PrecariouslyApp : public core::App {
 public:
@@ -25,7 +25,7 @@ public:
 
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<precariously::PrecariouslyLevelScenario>("precariously/levels/0.xml"));
+		setScenario(make_shared<precariously::PrecariouslyScenario>("precariously/stages/0.xml"));
 	}
  
 };
