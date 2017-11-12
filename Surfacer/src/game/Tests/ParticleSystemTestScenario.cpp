@@ -74,8 +74,8 @@ namespace {
 }
 
 /*
- UniversalParticleSystemRef _explosionPs;
- UniversalParticleSimulation::particle_template _smoke, _spark, _rubble;
+ SystemRef _explosionPs;
+ ParticleSimulation::particle_template _smoke, _spark, _rubble;
  
  bool _emitting;
  dvec2 _emissionPosition, _emissionVelocity;
@@ -224,13 +224,13 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	auto image = loadImage(app::loadAsset("precariously/textures/Explosion.png"));
 	gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
 	
-	UniversalParticleSystem::config config;
+	ParticleSystem::config config;
 	config.maxParticleCount = 500;
 	config.drawConfig.drawLayer = 1000;
 	config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
-	config.drawConfig.atlasType = ParticleAtlasType::TwoByTwo;
+	config.drawConfig.atlasType = Atlas::TwoByTwo;
 	
-	_explosionPs = UniversalParticleSystem::create("_explosionPs", config);
+	_explosionPs = ParticleSystem::create("_explosionPs", config);
 	
 	auto stage = getStage();
 	stage->addObject(_explosionPs);
@@ -266,7 +266,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	_rubble.mass = 10.0;
 	_rubble.color = TerrainColor;
 	_rubble.velocity = dvec2(0,100);
-	_rubble.kinematics = particles::UniversalParticleSimulation::particle_kinematics_template(1, ShapeFilters::TERRAIN);
+	_rubble.kinematics = particles::ParticleSimulation::particle_kinematics_template(1, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
 	_explosionEmitter->add(_smoke, 0.25, 10);
@@ -275,21 +275,21 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 }
 
 void ParticleSystemTestScenario::emitSmokeParticle(dvec2 world, dvec2 vel) {
-	UniversalParticleSimulationRef sim = _explosionPs->getComponent<UniversalParticleSimulation>();
+	ParticleSimulationRef sim = _explosionPs->getComponent<ParticleSimulation>();
 	_smoke.position = world;
 	_smoke.velocity = vel;
 	sim->emit(_smoke);
 }
 
 void ParticleSystemTestScenario::emitSparkParticle(dvec2 world, dvec2 vel) {
-	UniversalParticleSimulationRef sim = _explosionPs->getComponent<UniversalParticleSimulation>();
+	ParticleSimulationRef sim = _explosionPs->getComponent<ParticleSimulation>();
 	_spark.position = world;
 	_spark.velocity = vel;
 	sim->emit(_spark);
 }
 
 void ParticleSystemTestScenario::emitRubbleParticle(dvec2 world, dvec2 vel) {
-	UniversalParticleSimulationRef sim = _explosionPs->getComponent<UniversalParticleSimulation>();
+	ParticleSimulationRef sim = _explosionPs->getComponent<ParticleSimulation>();
 	_rubble.position = world;
 	_rubble.velocity = vel;
 	sim->emit(_rubble);

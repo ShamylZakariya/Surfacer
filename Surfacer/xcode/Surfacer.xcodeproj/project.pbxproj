@@ -69,13 +69,13 @@
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
-		63E29EF21F97A4C300CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */; };
-		63E29EF31F97A4C300CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */; };
-		63E29EF41F97A4C300CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */; };
+		63E29EF21F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */; };
+		63E29EF31F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */; };
+		63E29EF41F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */; };
 		63E29EF71F97A87300CAF39E /* CloudLayerParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF51F97A87300CAF39E /* CloudLayerParticleSystem.cpp */; };
-		63E29EFB1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* UniversalParticleSystem.cpp */; };
-		63E29EFC1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* UniversalParticleSystem.cpp */; };
-		63E29EFD1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* UniversalParticleSystem.cpp */; };
+		63E29EFB1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* ParticleSystem.cpp */; };
+		63E29EFC1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* ParticleSystem.cpp */; };
+		63E29EFD1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF91F9E3F5D00CAF39E /* ParticleSystem.cpp */; };
 		63F93C071F86804900F537CA /* App.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C061F86804900F537CA /* App.cpp */; };
 		63F93C0A1F8681E100F537CA /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C081F8681E100F537CA /* Entity.cpp */; };
 		63F93C171F8687F700F537CA /* SurfacerStage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C0E1F86877D00F537CA /* SurfacerStage.cpp */; };
@@ -187,12 +187,12 @@
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
 		63BFD8181E89ED2A00D821E4 /* Stage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Stage.cpp; sourceTree = "<group>"; };
 		63BFD8191E89ED2A00D821E4 /* Stage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Stage.hpp; sourceTree = "<group>"; };
-		63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleSystem.cpp; sourceTree = "<group>"; };
-		63E29EF11F97A4C300CAF39E /* ParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ParticleSystem.hpp; sourceTree = "<group>"; };
+		63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BaseParticleSystem.cpp; sourceTree = "<group>"; };
+		63E29EF11F97A4C300CAF39E /* BaseParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BaseParticleSystem.hpp; sourceTree = "<group>"; };
 		63E29EF51F97A87300CAF39E /* CloudLayerParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CloudLayerParticleSystem.cpp; sourceTree = "<group>"; };
 		63E29EF61F97A87300CAF39E /* CloudLayerParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CloudLayerParticleSystem.hpp; sourceTree = "<group>"; };
-		63E29EF91F9E3F5D00CAF39E /* UniversalParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UniversalParticleSystem.cpp; sourceTree = "<group>"; };
-		63E29EFA1F9E3F5D00CAF39E /* UniversalParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = UniversalParticleSystem.hpp; sourceTree = "<group>"; };
+		63E29EF91F9E3F5D00CAF39E /* ParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleSystem.cpp; sourceTree = "<group>"; };
+		63E29EFA1F9E3F5D00CAF39E /* ParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ParticleSystem.hpp; sourceTree = "<group>"; };
 		63F93C051F86804800F537CA /* App.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = App.hpp; sourceTree = "<group>"; };
 		63F93C061F86804900F537CA /* App.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = App.cpp; sourceTree = "<group>"; };
 		63F93C081F8681E100F537CA /* Entity.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Entity.cpp; sourceTree = "<group>"; };
@@ -451,10 +451,10 @@
 		63E29EEF1F97A4B400CAF39E /* ParticleSystem */ = {
 			isa = PBXGroup;
 			children = (
-				63E29EF01F97A4C300CAF39E /* ParticleSystem.cpp */,
-				63E29EF11F97A4C300CAF39E /* ParticleSystem.hpp */,
-				63E29EF91F9E3F5D00CAF39E /* UniversalParticleSystem.cpp */,
-				63E29EFA1F9E3F5D00CAF39E /* UniversalParticleSystem.hpp */,
+				63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */,
+				63E29EF11F97A4C300CAF39E /* BaseParticleSystem.hpp */,
+				63E29EF91F9E3F5D00CAF39E /* ParticleSystem.cpp */,
+				63E29EFA1F9E3F5D00CAF39E /* ParticleSystem.hpp */,
 			);
 			path = ParticleSystem;
 			sourceTree = "<group>";
@@ -703,7 +703,7 @@
 				638F4DB41F8BCFCE004437E8 /* DevComponents.cpp in Sources */,
 				638F4DB51F8BCFCE004437E8 /* Terrain.cpp in Sources */,
 				638F4DB61F8BCFCE004437E8 /* TerrainWorld.cpp in Sources */,
-				63E29EFD1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */,
+				63E29EFD1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */,
 				638F4DB71F8BCFCE004437E8 /* ViewportController.cpp in Sources */,
 				638F4DB81F8BCFCE004437E8 /* ChipmunkHelpers.cpp in Sources */,
 				638F4DB91F8BCFCE004437E8 /* Object.cpp in Sources */,
@@ -712,7 +712,7 @@
 				638F4DBC1F8BCFCE004437E8 /* Scenario.cpp in Sources */,
 				638F4DBD1F8BCFCE004437E8 /* BlendMode.cpp in Sources */,
 				638F4DBE1F8BCFCE004437E8 /* Stage.cpp in Sources */,
-				63E29EF41F97A4C300CAF39E /* ParticleSystem.cpp in Sources */,
+				63E29EF41F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */,
 				638F4DBF1F8BCFCE004437E8 /* PerlinNoise.cpp in Sources */,
 				638F4DC01F8BCFCE004437E8 /* Entity.cpp in Sources */,
 				638F4DC11F8BCFCE004437E8 /* App.cpp in Sources */,
@@ -733,10 +733,10 @@
 				63F93C441F8714B200F537CA /* Svg.cpp in Sources */,
 				63F93C451F8714B200F537CA /* ChipmunkDebugDraw.cpp in Sources */,
 				63F93C461F8714B200F537CA /* SvgParsing.cpp in Sources */,
-				63E29EFC1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */,
+				63E29EFC1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */,
 				63F93C471F8714B200F537CA /* Xml.cpp in Sources */,
 				63F93C481F8714B200F537CA /* DevComponents.cpp in Sources */,
-				63E29EF31F97A4C300CAF39E /* ParticleSystem.cpp in Sources */,
+				63E29EF31F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */,
 				63F93C491F8714B200F537CA /* Terrain.cpp in Sources */,
 				63F93C4A1F8714B200F537CA /* TerrainWorld.cpp in Sources */,
 				63E29EF71F97A87300CAF39E /* CloudLayerParticleSystem.cpp in Sources */,
@@ -768,7 +768,7 @@
 				63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */,
 				63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */,
 				63F93C171F8687F700F537CA /* SurfacerStage.cpp in Sources */,
-				63E29EFB1F9E3F5D00CAF39E /* UniversalParticleSystem.cpp in Sources */,
+				63E29EFB1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */,
 				63F93C181F8687F700F537CA /* Eggsac.cpp in Sources */,
 				63F93C191F8687F700F537CA /* Boid.cpp in Sources */,
 				63F93C1A1F8687F700F537CA /* Player.cpp in Sources */,
@@ -776,7 +776,7 @@
 				632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */,
 				63BFD8161E89565600D821E4 /* Object.cpp in Sources */,
 				638F4D921F87D4F3004437E8 /* Planet.cpp in Sources */,
-				63E29EF21F97A4C300CAF39E /* ParticleSystem.cpp in Sources */,
+				63E29EF21F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */,
 				632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */,
 				632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */,
 				638F4D961F87D7BC004437E8 /* PerlinNoise.cpp in Sources */,

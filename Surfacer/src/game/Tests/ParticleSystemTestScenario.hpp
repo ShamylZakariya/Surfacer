@@ -14,7 +14,7 @@
 #include "Svg.hpp"
 
 #include "Terrain.hpp"
-#include "UniversalParticleSystem.hpp"
+#include "ParticleSystem.hpp"
 
 
 using namespace ci;
@@ -49,9 +49,9 @@ protected:
 	
 private:
 
-	UniversalParticleSystemRef _explosionPs;
-	UniversalParticleSimulation::particle_template _smoke, _spark, _rubble;
-	EmitterRef _explosionEmitter;
+	ParticleSystemRef _explosionPs;
+	ParticleSimulation::particle_template _smoke, _spark, _rubble;
+	ParticleEmitterRef _explosionEmitter;
 	
 	ci::Rand _rng;
 	bool _emitting;

@@ -4,10 +4,13 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-UniversalParticleSystem
+System
 	- create template.initialVelocity and move velocity to private _velocity
 	- Rename , get rid of "Universal"
 	- Rename particle_template to particle_prototype since `template` is reserved
+	- Consider sorting by age after compact() phase
+	
+	
 
 
 ## BUGS PRIORITY 0

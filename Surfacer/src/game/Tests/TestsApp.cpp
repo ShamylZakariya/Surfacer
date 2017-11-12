@@ -8,7 +8,7 @@
 #include "cinder/app/RendererGl.h"
 #include "App.hpp"
 
-#include "UniversalParticleSystem.hpp"
+#include "ParticleSystem.hpp"
 #include "TerrainTestScenario.hpp"
 #include "SvgTestScenario.hpp"
 #include "ParticleSystemTestScenario.hpp"

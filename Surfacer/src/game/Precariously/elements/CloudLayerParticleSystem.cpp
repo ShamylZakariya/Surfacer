@@ -90,7 +90,7 @@ namespace precariously {
 	}
 	
 	void CloudLayerParticleSimulation::setParticleCount(size_t count) {
-		ParticleSimulation::setParticleCount(count);
+		BaseParticleSimulation::setParticleCount(count);
 		_physics.resize(count);
 	}
 	
@@ -214,19 +214,19 @@ namespace precariously {
 	CloudLayerParticleSystem::config CloudLayerParticleSystem::config::parse(const util::xml::XmlMultiTree &node) {
 		config c;
 		c.drawConfig.drawLayer = DrawLayers::EFFECTS;
-		c.drawConfig = UniversalParticleSystemDrawComponent::config::parse(node.getChild("draw"));
+		c.drawConfig = ParticleSystemDrawComponent::config::parse(node.getChild("draw"));
 		c.simulationConfig = CloudLayerParticleSimulation::config::parse(node.getChild("simulation"));
 		return c;
 	}
 	
 	CloudLayerParticleSystemRef CloudLayerParticleSystem::create(const config &c) {
 		auto simulation = make_shared<CloudLayerParticleSimulation>(c.simulationConfig);
-		auto draw = make_shared<UniversalParticleSystemDrawComponent>(c.drawConfig);
+		auto draw = make_shared<ParticleSystemDrawComponent>(c.drawConfig);
 		return Object::create<CloudLayerParticleSystem>("CloudLayer", { draw, simulation });
 	}
 	
 	CloudLayerParticleSystem::CloudLayerParticleSystem(string name):
-	ParticleSystem(name)
+	BaseParticleSystem(name)
 	{}
 	
 	

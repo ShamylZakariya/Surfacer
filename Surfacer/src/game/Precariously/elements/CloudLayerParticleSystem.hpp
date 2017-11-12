@@ -8,8 +8,8 @@
 #ifndef CloudLayerParticleSystem_hpp
 #define CloudLayerParticleSystem_hpp
 
+#include "BaseParticleSystem.hpp"
 #include "ParticleSystem.hpp"
-#include "UniversalParticleSystem.hpp"
 #include "PerlinNoise.hpp"
 
 #include "PrecariouslyConstants.hpp"
@@ -20,7 +20,7 @@ namespace precariously {
 	SMART_PTR(CloudLayerParticleSystemDrawComponent);
 	SMART_PTR(CloudLayerParticleSystem);
 	
-	class CloudLayerParticleSimulation : public particles::ParticleSimulation {
+	class CloudLayerParticleSimulation : public particles::BaseParticleSimulation {
 	public:
 		
 		struct particle_template {
@@ -107,11 +107,11 @@ namespace precariously {
 		vector<particle_physics> _physics;
 	};
 	
-	class CloudLayerParticleSystem : public particles::ParticleSystem {
+	class CloudLayerParticleSystem : public particles::BaseParticleSystem {
 	public:
 		
 		struct config {
-			particles::UniversalParticleSystemDrawComponent::config drawConfig;
+			particles::ParticleSystemDrawComponent::config drawConfig;
 			CloudLayerParticleSimulation::config simulationConfig;
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);

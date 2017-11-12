@@ -2,169 +2,333 @@
 //  ParticleSystem.hpp
 //  Surfacer
 //
-//  Created by Shamyl Zakariya on 10/18/17.
+//  Created by Shamyl Zakariya on 10/23/17.
 //
 
 #ifndef ParticleSystem_hpp
 #define ParticleSystem_hpp
 
-#include "Core.hpp"
-#include "Xml.hpp"
+#include <cinder/Rand.h>
+
+#include "BaseParticleSystem.hpp"
 
 namespace particles {
 	
-	using core::seconds_t;
-	
-	SMART_PTR(ParticleSimulation);
 	SMART_PTR(ParticleSystem);
+	SMART_PTR(ParticleSimulation);
 	SMART_PTR(ParticleSystemDrawComponent);
+	SMART_PTR(ParticleEmitter);
 	
-	
-	const extern vec2 TexCoords[4];
-		
-#pragma mark -
-	
+	using core::seconds_t;
+
 	/**
-	 particle Atlas Types
-	 
-	 Definition of different particle atlas types
+	 Interpolator
+	 A keyframe-type interpolation but where the values are evenly spaced.
+	 If you provide the values, [0,1,0], you'd get a mapping like so:
+	 0.00 -> 0
+	 0.25 -> 0.5
+	 0.50 -> 1
+	 0.75 -> 0.5
+	 1.00 -> 0
 	 */
-	namespace ParticleAtlasType {
+	template<class T>
+	struct interpolator {
+	public:
 		
-		enum Type {
-			
-			//	No particle atlas, the texture is one big image
-			None = 0,
-			
-			/*
-			 +---+---+
-			 | 2 | 3 |
-			 +---+---+
-			 | 0 | 1 |
-			 +---+---+
-			 */
-			TwoByTwo,
-			
-			/*
-			 +---+---+---+---+
-			 | 12| 13| 14| 15|
-			 +---+---+---+---+
-			 | 8 | 9 | 10| 11|
-			 +---+---+---+---+
-			 | 4 | 5 | 6 | 7 |
-			 +---+---+---+---+
-			 | 0 | 1 | 2 | 3 |
-			 +---+---+---+---+
-			 */
-			
-			FourByFour
-		};
-		
-		extern Type fromString(std::string typeStr);
-		extern std::string toString(Type t);
-		
-		extern const vec2* AtlasOffsets(Type atlasType);
-		extern float AtlasScaling(Type atlasType);
-		
-	}
-	
-#pragma mark - ParticleSimulation
-	
-	struct particle_state {
-		bool		active;				// if true particle is active and should be rendered
-		dvec2		position;			// base position in world coordinates
-		dvec2		right;				// x-axis scaled to half horizontal particle size
-		dvec2		up;					// y-axis scaled to half vertical particle size
-		ci::ColorA	color;				// color of particle
-		double		additivity;			// from 0 to 1 where 0 is transparency blending, and 1 is additive blending
-		size_t		atlasIdx;			// index into the texture atlas
-		seconds_t	age;				// age of particle in seconds
-		double		completion;			// degree of completion of particle, e.g., if it has a lifespan of 3 seconds and is 1.5 seconds old, completion is 0.5
-		
-		particle_state():
-		active(false),
-		position(0,0),
-		right(0.5,0),
-		up(0,0.5),
-		color(1,1,1,1),
-		additivity(0),
-		atlasIdx(0),
-		age(0),
-		completion(0)
+		interpolator()
 		{}
 		
-		// the default copy-ctor and operator= seem to work fine
+		interpolator(const initializer_list<T> values):
+		_values(values)
+		{
+			CI_ASSERT_MSG(!_values.empty(), "Values array must not be empty");
+		}
+		
+		interpolator(const interpolator<T> &copy):
+		_values(copy._values)
+		{
+			CI_ASSERT_MSG(!_values.empty(), "Values array must not be empty");
+		}
+		
+		interpolator &operator = (const interpolator<T> &rhs) {
+			_values = rhs._values;
+			return *this;
+		}
+		
+		interpolator &operator = (const initializer_list<T> values) {
+			_values = values;
+			CI_ASSERT_MSG(!_values.empty(), "Values array must not be empty");
+			return *this;
+		}
+		
+		interpolator &operator = (const T &value) {
+			_values.clear();
+			_values.push_back(value);
+			return *this;
+		}
+		
+		// get the value equivalent to *this(0)
+		T getInitialValue() const {
+			return _values.front();
+		}
+		
+		// get the value equivalent to *this(1)
+		T getFinalValue() const {
+			return _values.back();
+		}
+		
+		// get the interpolated value for a given time `v` from [0 to 1]
+		T operator()(double v) const {
+			if (_values.size() == 1) {
+				return _values.front();
+			}
+			
+			if (v <= 0) {
+				return _values.front();
+			} else if (v >= 1) {
+				return _values.back();
+			}
+			
+			size_t s = _values.size() - 1;
+			double dist = v * s;
+			double distFloor = floor(dist);
+			double distCeil = distFloor + 1;
+			size_t aIdx = static_cast<size_t>(distFloor);
+			size_t bIdx = aIdx + 1;
+			
+			T a = _values[aIdx];
+			T b = _values[bIdx];
+			double factor = (dist - distFloor) / (distCeil - distFloor);
+			
+			return a + (factor * (b - a));
+		}
+		
+	private:
+		
+		vector<T> _values;
+		
 	};
 	
-	/**
-	 ParticleSimulation
-	 A ParticleSimulation is responsible for updating a fixed-size vector of particle. It does not render.
-	 Subclasses of ParticleSimulation can implement different types of behavior - e.g., one might make
-	 a physics-modeled simulation using circle shapes/bodies; one might make a traditional one where
-	 particles are emitted and have some kind of lifespan.
-	 */
-	class ParticleSimulation : public core::Component {
+	class ParticleSimulation : public BaseParticleSimulation {
+	public:
+		
+		struct particle_kinematics_template {
+			bool isKinematic;
+			double friction;
+			cpShapeFilter filter;
+			
+			particle_kinematics_template():
+			isKinematic(false),
+			friction(1),
+			filter(CP_SHAPE_FILTER_ALL)
+			{}
+			
+			particle_kinematics_template(double friction, cpShapeFilter filter):
+			isKinematic(true),
+			friction(friction),
+			filter(filter)
+			{}
+			
+			operator bool() const {
+				return isKinematic == true;
+			}
+		};
+		
+		struct particle_template {
+		public:
+			
+			// index into texture atlas for this particle
+			int atlasIdx;
+			
+			// lifespan in seconds of the particle
+			seconds_t lifespan;
+			
+			// radius interpolator
+			interpolator<double> radius;
+			
+			// damping interpolator. damping value > 0 subtracts that amount from velocity per timestamp
+			interpolator<double> damping;
+			
+			// additivity interpolator
+			interpolator<double> additivity;
+			
+			// mass interpolator. If non-zero particles are affected by gravity.
+			// values > 0 are attracted to gravity wells and values < 0 are repelled.
+			interpolator<double> mass;
+			
+			// color interpolator
+			interpolator<ci::ColorA> color;
+			
+			// initial position of particle. as particle is simulated position will change
+			dvec2 position;
+			
+			// initial velocity to apply to particle. particle motion will be ballistic after this
+			dvec2 velocity;
+			
+			// if true, particle is rotated such that the X axis aligns with the direction of velocity
+			bool orientToVelocity;
+			
+			particle_kinematics_template kinematics;
+			
+		private:
+			
+			friend class ParticleSimulation;
+
+			cpShape* _shape;
+			cpBody* _body;
+			double _completion;
+			seconds_t _age;
+
+			void destroy() {
+				if (_shape) {
+					cpCleanupAndFree(_shape);
+					_shape = nullptr;
+				}
+				if (_body) {
+					cpCleanupAndFree(_body);
+					_body = nullptr;
+				}
+			}
+			
+			void prepare() {
+				_age = 0;
+				_completion = 0;
+			}
+
+		public:
+			
+			particle_template():
+			atlasIdx(0),
+			lifespan(0),
+			position(0,0),
+			velocity(0,0),
+			orientToVelocity(false),
+			_shape(nullptr),
+			_body(nullptr),
+			_completion(0),
+			_age(0)
+			{}			
+		};
+		
 	public:
 		
 		ParticleSimulation();
 		
 		// Component
-		void onReady(core::ObjectRef parent, core::StageRef stage) override {}
-		void onCleanup() override {}
-		void update(const core::time_state &timeState) override {}
-		
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+		void onCleanup() override;
+		void update(const core::time_state &time) override;
+
+		// BaseParticleSimulation
+		void setParticleCount(size_t count) override;
+		size_t getFirstActive() const override;
+		size_t getActiveCount() const override;
+		cpBB getBB() const override;
+
 		// ParticleSimulation
 		
-		// set the number of particles this simulation will represent
-		virtual void setParticleCount(size_t particleCount) {
-			_state.resize(particleCount);
-		}
+		// emit a single particle
+		void emit(const particle_template &particle);
+		void emit(const particle_template &particle, const dvec2 &world, const dvec2 &vel);
 
-		// get the maximum number of particles that might be drawn or simulated.
-		// note, to get the number of *active* particles, see getActiveCount()
-		size_t getParticleCount() const { return _state.size(); }
-
-		// get the storage vector; note,
-		const vector<particle_state> &getParticleState() const { return _state; }
+	protected:
 		
-		// get the offset of the first active particle - a draw method would
-		// draw particles from [getFirstActive(), (getFirstActive() + getActiveCount()) % getParticleCount())
-		// this is because the storage might be used as a ring buffer
-		virtual size_t getFirstActive() const = 0;
-		
-		// get the count of active particles, this may be less than getParticleState().size()
-		virtual size_t getActiveCount() const = 0;
-		
-		// return true iff there are active particles being simulated
-		virtual bool isActive() const { return getActiveCount() > 0; }
-		
-		// return true iff there are no active particles being simulated
-		bool isEmpty() const { return !isActive(); }
-		
-		// return a bounding box containing the entirety of the particles
-		virtual cpBB getBB() const = 0;
+		virtual void _prepareForSimulation(const core::time_state &time);
+		virtual void _simulate(const core::time_state &time);
 		
 	protected:
 		
-		vector<particle_state> _state;
-
+		size_t _count;
+		cpBB _bb;
+		vector<particle_template> _templates, _pending;
+		core::SpaceAccessRef _spaceAccess;
+		
 	};
 	
-#pragma mark - ParticleSystemDrawComponent
-	
-	class ParticleSystemDrawComponent : public core::DrawComponent {
+	class ParticleEmitter : public core::Component {
 	public:
 		
-		struct config {
-			
-			int drawLayer;
-			
+		enum Envelope {
+			RampUp,
+			Bell,
+			RampDown
+		};
+		
+	public:
+		
+		ParticleEmitter(uint32_t seed = 12345);
+		
+		// Component
+		void update(const core::time_state &time) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+
+		// ParticleEmitter
+		
+		void setSimulation(const ParticleSimulationRef simulation);
+		ParticleSimulationRef getSimulation() const;
+		
+		void seed(uint32_t seed);
+		
+		/**
+		 Add a template to the emission library. The higher probability is relative to other templates
+		 the more often this template will be emitted.
+		 */
+		void add(ParticleSimulation::particle_template templ, float variance, int probability = 1);
+		
+		/**
+		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
+		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
+		 */
+		void emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env);
+		
+		/**
+		 Emit `count particles in the circular volume of `radius about `world
+		 */
+		void emit(dvec2 world, double radius, dvec2 vel, int count = 1);
+
+
+	private:
+		
+		double nextDouble(double variance);
+		dvec2 nextDVec2(double variance);		
+		dvec2 perturb(const dvec2 dir, double variance);
+		
+		struct particle_templates {
+			ParticleSimulation::particle_template templ;
+			float variance;
+		};
+		
+		struct emission {
+			seconds_t startTime, endTime;
+			dvec2 world;
+			double radius;
+			double rate;
+			Envelope envelope;
+		};
+		
+		ParticleSimulationWeakRef _simulation;
+		ci::Rand _rng;
+		vector<emission> _emissions;
+		vector<particle_templates> _templates;
+		vector<size_t> _templateLookup;
+		
+	};
+
+	
+	class ParticleSystemDrawComponent : public particles::BaseParticleSystemDrawComponent {
+	public:
+		
+		struct config : public particles::BaseParticleSystemDrawComponent::config {
+			ci::gl::Texture2dRef textureAtlas;
+			particles::Atlas::Type atlasType;
+
 			config():
-			drawLayer(0)
+			atlasType(particles::Atlas::None)
 			{}
 			
-			config(const config &other):
-			drawLayer(other.drawLayer)
+			config(const particles::BaseParticleSystemDrawComponent::config &c):
+			particles::BaseParticleSystemDrawComponent::config(c),
+			atlasType(particles::Atlas::None)
 			{}
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);
@@ -173,52 +337,57 @@ namespace particles {
 	public:
 		
 		ParticleSystemDrawComponent(config c);
-
-		// DrawComponent
-		cpBB getBB() const override;
-		void draw(const core::render_state &renderState) override {};
-		int getLayer() const override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::FRUSTUM_CULLING; };
-
-		// ParticleSystemDrawComponent
-		const config &getConfig() const { return _config; }
-		config &getConfig() { return _config; }
-
-		virtual void setSimulation(const ParticleSimulationRef simulation) { _simulation = simulation; }
-		ParticleSimulationRef getSimulation() const { return _simulation.lock(); }
-
-		template<typename T>
-		shared_ptr<T> getSimulation() const { return dynamic_pointer_cast<T>(_simulation.lock()); }
-
-	private:
 		
-		ParticleSimulationWeakRef _simulation;
+		// BaseParticleSystemDrawComponent
+		void setSimulation(const particles::BaseParticleSimulationRef simulation) override;
+		void draw(const core::render_state &renderState) override;
+		
+	protected:
+		
+		// update _particles store for submitting to GPU - return true iff there are particles to draw
+		virtual bool updateParticles(const BaseParticleSimulationRef &sim);
+		
+		struct particle_vertex {
+			vec2 position;
+			vec2 texCoord;
+			ci::ColorA color;
+		};
+		
 		config _config;
+		gl::GlslProgRef _shader;
+		vector<particle_vertex> _particles;
+		gl::VboRef _particlesVbo;
+		gl::BatchRef _particlesBatch;
+		GLsizei _batchDrawStart, _batchDrawCount;
 		
 	};
 	
-#pragma mark - ParticleSystem
 	
-	class ParticleSystem : public core::Object {
+	class ParticleSystem : public particles::BaseParticleSystem {
 	public:
 		
+		struct config {
+			size_t maxParticleCount;
+			particles::ParticleSystemDrawComponent::config drawConfig;
+			
+			config():
+			maxParticleCount(500)
+			{}
+			
+			static config parse(const core::util::xml::XmlMultiTree &node);
+		};
+		
+		static ParticleSystemRef create(std::string name, const config &c);
+		
+	public:
+		
+		// do not call this, call ::create
 		ParticleSystem(std::string name);
 		
-		// Object
-		void onReady(core::StageRef stage) override;
-		void addComponent(core::ComponentRef component) override;
-		
-		// ParticleSystem
-		ParticleSimulationRef getSimulation() const { return _simulation; }
-		
-		template<typename T>
-		shared_ptr<T> getSimulation() const { return dynamic_pointer_cast<T>(_simulation); }
-
-	private:
-		
-		ParticleSimulationRef _simulation;
+		ParticleEmitterRef createEmitter();
 		
 	};
+	
 	
 }
 
