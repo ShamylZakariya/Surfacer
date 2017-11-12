@@ -14,8 +14,8 @@ using namespace particles;
 
 namespace precariously {
 	
-	CloudLayerParticleSimulation::particle_template CloudLayerParticleSimulation::particle_template::parse(const util::xml::XmlMultiTree &node) {
-		particle_template pt;
+	CloudLayerParticleSimulation::particle_prototype CloudLayerParticleSimulation::particle_prototype::parse(const util::xml::XmlMultiTree &node) {
+		particle_prototype pt;
 		pt.minRadius = util::xml::readNumericAttribute<double>(node, "minRadius", pt.minRadius);
 		pt.maxRadius = util::xml::readNumericAttribute<double>(node, "maxRadius", pt.maxRadius);
 		pt.minRadiusNoiseValue = util::xml::readNumericAttribute<double>(node, "minRadiusNoiseValue", pt.minRadiusNoiseValue);
@@ -29,7 +29,7 @@ namespace precariously {
 		config c;
 		
 		c.generator = util::PerlinNoise::config::parse(node.getChild("generator"));
-		c.particle = particle_template::parse(node.getChild("particle"));
+		c.particle = particle_prototype::parse(node.getChild("particle"));
 		c.origin = util::xml::readPointAttribute(node, "origin", c.origin);
 		c.radius = util::xml::readNumericAttribute<double>(node, "radius", c.radius);
 		c.count = util::xml::readNumericAttribute<size_t>(node, "count", c.count);

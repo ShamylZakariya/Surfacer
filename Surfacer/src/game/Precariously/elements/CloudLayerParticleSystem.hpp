@@ -23,27 +23,27 @@ namespace precariously {
 	class CloudLayerParticleSimulation : public particles::BaseParticleSimulation {
 	public:
 		
-		struct particle_template {
+		struct particle_prototype {
 			double minRadius;
 			double maxRadius;
 			double minRadiusNoiseValue;
 			ci::ColorA color;
 			
-			particle_template():
+			particle_prototype():
 			minRadius(0),
 			maxRadius(100),
 			minRadiusNoiseValue(0.5),
 			color(1,1,1,1)
 			{}
 
-			static particle_template parse(const core::util::xml::XmlMultiTree &node);
+			static particle_prototype parse(const core::util::xml::XmlMultiTree &node);
 
 		};
 
 		
 		struct config {
 			core::util::PerlinNoise::config generator;
-			particle_template particle;
+			particle_prototype particle;
 			dvec2 origin;
 			double radius;
 			core::seconds_t period;

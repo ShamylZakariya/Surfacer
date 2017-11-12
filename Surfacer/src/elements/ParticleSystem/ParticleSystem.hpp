@@ -109,21 +109,22 @@ namespace particles {
 		
 	};
 	
-	class ParticleSimulation : public BaseParticleSimulation {
+	
+	struct particle_prototype {
 	public:
 		
-		struct particle_kinematics_template {
+		struct kinematics_prototype {
 			bool isKinematic;
 			double friction;
 			cpShapeFilter filter;
 			
-			particle_kinematics_template():
+			kinematics_prototype():
 			isKinematic(false),
 			friction(1),
 			filter(CP_SHAPE_FILTER_ALL)
 			{}
 			
-			particle_kinematics_template(double friction, cpShapeFilter filter):
+			kinematics_prototype(double friction, cpShapeFilter filter):
 			isKinematic(true),
 			friction(friction),
 			filter(filter)
@@ -134,82 +135,83 @@ namespace particles {
 			}
 		};
 		
-		struct particle_template {
-		public:
-			
-			// index into texture atlas for this particle
-			int atlasIdx;
-			
-			// lifespan in seconds of the particle
-			seconds_t lifespan;
-			
-			// radius interpolator
-			interpolator<double> radius;
-			
-			// damping interpolator. damping value > 0 subtracts that amount from velocity per timestamp
-			interpolator<double> damping;
-			
-			// additivity interpolator
-			interpolator<double> additivity;
-			
-			// mass interpolator. If non-zero particles are affected by gravity.
-			// values > 0 are attracted to gravity wells and values < 0 are repelled.
-			interpolator<double> mass;
-			
-			// color interpolator
-			interpolator<ci::ColorA> color;
-			
-			// initial position of particle. as particle is simulated position will change
-			dvec2 position;
-			
-			// initial velocity to apply to particle. particle motion will be ballistic after this
-			dvec2 velocity;
-			
-			// if true, particle is rotated such that the X axis aligns with the direction of velocity
-			bool orientToVelocity;
-			
-			particle_kinematics_template kinematics;
-			
-		private:
-			
-			friend class ParticleSimulation;
-
-			cpShape* _shape;
-			cpBody* _body;
-			double _completion;
-			seconds_t _age;
-
-			void destroy() {
-				if (_shape) {
-					cpCleanupAndFree(_shape);
-					_shape = nullptr;
-				}
-				if (_body) {
-					cpCleanupAndFree(_body);
-					_body = nullptr;
-				}
-			}
-			
-			void prepare() {
-				_age = 0;
-				_completion = 0;
-			}
-
-		public:
-			
-			particle_template():
-			atlasIdx(0),
-			lifespan(0),
-			position(0,0),
-			velocity(0,0),
-			orientToVelocity(false),
-			_shape(nullptr),
-			_body(nullptr),
-			_completion(0),
-			_age(0)
-			{}			
-		};
 		
+	public:
+		
+		// index into texture atlas for this particle
+		int atlasIdx;
+		
+		// lifespan in seconds of the particle
+		seconds_t lifespan;
+		
+		// radius interpolator
+		interpolator<double> radius;
+		
+		// damping interpolator. damping value > 0 subtracts that amount from velocity per timestamp
+		interpolator<double> damping;
+		
+		// additivity interpolator
+		interpolator<double> additivity;
+		
+		// mass interpolator. If non-zero particles are affected by gravity.
+		// values > 0 are attracted to gravity wells and values < 0 are repelled.
+		interpolator<double> mass;
+		
+		// color interpolator
+		interpolator<ci::ColorA> color;
+		
+		// initial position of particle. as particle is simulated position will change
+		dvec2 position;
+		
+		// initial velocity to apply to particle. particle motion will be ballistic after this
+		dvec2 velocity;
+		
+		// if true, particle is rotated such that the X axis aligns with the direction of velocity
+		bool orientToVelocity;
+		
+		kinematics_prototype kinematics;
+		
+	private:
+		
+		friend class ParticleSimulation;
+		
+		cpShape* _shape;
+		cpBody* _body;
+		double _completion;
+		seconds_t _age;
+		
+		void destroy() {
+			if (_shape) {
+				cpCleanupAndFree(_shape);
+				_shape = nullptr;
+			}
+			if (_body) {
+				cpCleanupAndFree(_body);
+				_body = nullptr;
+			}
+		}
+		
+		void prepare() {
+			_age = 0;
+			_completion = 0;
+		}
+		
+	public:
+		
+		particle_prototype():
+		atlasIdx(0),
+		lifespan(0),
+		position(0,0),
+		velocity(0,0),
+		orientToVelocity(false),
+		_shape(nullptr),
+		_body(nullptr),
+		_completion(0),
+		_age(0)
+		{}
+	};
+	
+	class ParticleSimulation : public BaseParticleSimulation {
 	public:
 		
 		ParticleSimulation();
@@ -228,8 +230,8 @@ namespace particles {
 		// ParticleSimulation
 		
 		// emit a single particle
-		void emit(const particle_template &particle);
-		void emit(const particle_template &particle, const dvec2 &world, const dvec2 &vel);
+		void emit(const particle_prototype &particle);
+		void emit(const particle_prototype &particle, const dvec2 &world, const dvec2 &vel);
 
 	protected:
 		
@@ -240,7 +242,7 @@ namespace particles {
 		
 		size_t _count;
 		cpBB _bb;
-		vector<particle_template> _templates, _pending;
+		vector<particle_prototype> _prototypes, _pending;
 		core::SpaceAccessRef _spaceAccess;
 		
 	};
@@ -273,7 +275,7 @@ namespace particles {
 		 Add a template to the emission library. The higher probability is relative to other templates
 		 the more often this template will be emitted.
 		 */
-		void add(ParticleSimulation::particle_template templ, float variance, int probability = 1);
+		void add(const particle_prototype &prototype, float variance, int probability = 1);
 		
 		/**
 		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
@@ -293,8 +295,8 @@ namespace particles {
 		dvec2 nextDVec2(double variance);		
 		dvec2 perturb(const dvec2 dir, double variance);
 		
-		struct particle_templates {
-			ParticleSimulation::particle_template templ;
+		struct emission_prototype {
+			particle_prototype prototype;
 			float variance;
 		};
 		
@@ -309,8 +311,8 @@ namespace particles {
 		ParticleSimulationWeakRef _simulation;
 		ci::Rand _rng;
 		vector<emission> _emissions;
-		vector<particle_templates> _templates;
-		vector<size_t> _templateLookup;
+		vector<emission_prototype> _prototypes;
+		vector<size_t> _prototypeLookup;
 		
 	};
 

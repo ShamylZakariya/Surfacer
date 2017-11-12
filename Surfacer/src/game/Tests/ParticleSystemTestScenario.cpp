@@ -75,7 +75,7 @@ namespace {
 
 /*
  SystemRef _explosionPs;
- ParticleSimulation::particle_template _smoke, _spark, _rubble;
+ particle_prototype _smoke, _spark, _rubble;
  
  bool _emitting;
  dvec2 _emissionPosition, _emissionVelocity;
@@ -266,7 +266,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	_rubble.mass = 10.0;
 	_rubble.color = TerrainColor;
 	_rubble.velocity = dvec2(0,100);
-	_rubble.kinematics = particles::ParticleSimulation::particle_kinematics_template(1, ShapeFilters::TERRAIN);
+	_rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
 	_explosionEmitter->add(_smoke, 0.25, 10);

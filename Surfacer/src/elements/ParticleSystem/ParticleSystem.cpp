@@ -23,7 +23,7 @@ namespace particles {
 	/*
 	 size_t _count;
 	 cpBB _bb;
-	 vector<particle_template> _templates;
+	 vector<particle_prototype> _prototypes;
 	 core::SpaceAccessRef _spaceAccess;
 	 */
 		
@@ -53,7 +53,7 @@ namespace particles {
 	
 	void ParticleSimulation::setParticleCount(size_t count) {
 		BaseParticleSimulation::setParticleCount(count);
-		_templates.resize(count);
+		_prototypes.resize(count);
 	}
 	
 	size_t ParticleSimulation::getFirstActive() const {
@@ -71,11 +71,11 @@ namespace particles {
 	
 	// ParticleSimulation
 	
-	void ParticleSimulation::emit(const particle_template &particle) {
+	void ParticleSimulation::emit(const particle_prototype &particle) {
 		_pending.push_back(particle);
 	}
 	
-	void ParticleSimulation::emit(const particle_template &particle, const dvec2 &world, const dvec2 &vel) {
+	void ParticleSimulation::emit(const particle_prototype &particle, const dvec2 &world, const dvec2 &vel) {
 		_pending.push_back(particle);
 		_pending.back().position = world;
 		_pending.back().velocity = vel;
@@ -88,23 +88,23 @@ namespace particles {
 		
 		auto state = _state.begin();
 		auto end = state + activeCount;
-		auto templ = _templates.begin();
-		for (; state != end; ++state, ++templ) {
+		auto prototype = _prototypes.begin();
+		for (; state != end; ++state, ++prototype) {
 			
 			//
 			// update age and completion
 			//
 			
-			templ->_age += time.deltaT;
-			templ->_completion = templ->_age / templ->lifespan;
+			prototype->_age += time.deltaT;
+			prototype->_completion = prototype->_age / prototype->lifespan;
 			
-			if (templ->_completion > 1) {
+			if (prototype->_completion > 1) {
 				
 				//
 				// This particle is expired. Clean it up, and note how many expired we have
 				//
 				
-				templ->destroy();
+				prototype->destroy();
 				expiredCount++;
 			}
 		}
@@ -117,11 +117,11 @@ namespace particles {
 			// needed next pass to update()
 			//
 			
-			auto end = partition(_templates.begin(), _templates.begin() + activeCount, [](const particle_template &templ){
-				return templ._completion <= 1;
+			auto end = partition(_prototypes.begin(), _prototypes.begin() + activeCount, [](const particle_prototype &prototype){
+				return prototype._completion <= 1;
 			});
 			
-			_count = end - _templates.begin();
+			_count = end - _prototypes.begin();
 			
 			CI_LOG_D("COMPACTED, went from: " << activeCount << " to " << getActiveCount() << " active particles");
 		}
@@ -138,14 +138,14 @@ namespace particles {
 				// if a particle already lives at this point, perform any cleanup needed
 				//
 				
-				const size_t idx = _count % _templates.size();
-				_templates[idx].destroy();
+				const size_t idx = _count % _prototypes.size();
+				_prototypes[idx].destroy();
 				
 				//
 				//	Assign template, and if it's kinematic, create chipmunk physics backing
 				//
 				
-				_templates[idx] = particle;
+				_prototypes[idx] = particle;
 				
 				if (particle.kinematics) {
 					double mass = particle.mass.getInitialValue();
@@ -166,13 +166,13 @@ namespace particles {
 					cpShapeSetFilter(shape, particle.kinematics.filter);
 					cpShapeSetFriction(shape, particle.kinematics.friction);
 					
-					_templates[idx]._body = body;
-					_templates[idx]._shape = shape;
-					_templates[idx].position = particle.position;
-					_templates[idx].velocity = particle.velocity;
+					_prototypes[idx]._body = body;
+					_prototypes[idx]._shape = shape;
+					_prototypes[idx].position = particle.position;
+					_prototypes[idx].velocity = particle.velocity;
 				}
 				
-				_templates[idx].prepare();
+				_prototypes[idx].prepare();
 				
 				_count++;
 			}
@@ -194,42 +194,42 @@ namespace particles {
 		
 		auto state = _state.begin();
 		auto end = state + getActiveCount();
-		auto templ = _templates.begin();
+		auto prototype = _prototypes.begin();
 		size_t idx = 0;
-		for (; state != end; ++state, ++templ, ++idx) {
+		for (; state != end; ++state, ++prototype, ++idx) {
 			
 			// _prepareForSimulation deactivates all particles
 			// and requires _simulate to re-activate any which should be active
 
-			state->active = templ->_completion <= 1;
+			state->active = prototype->_completion <= 1;
 			if (!state->active) {
 				continue;
 			}
 
-			const auto radius = templ->radius(templ->_completion);
+			const auto radius = prototype->radius(prototype->_completion);
 			const auto size = radius * M_SQRT2;
-			const auto damping = 1-saturate(templ->damping(templ->_completion));
-			const auto additivity = templ->additivity(templ->_completion);
-			const auto mass = templ->mass(templ->_completion);
-			const auto color = templ->color(templ->_completion);
+			const auto damping = 1-saturate(prototype->damping(prototype->_completion));
+			const auto additivity = prototype->additivity(prototype->_completion);
+			const auto mass = prototype->mass(prototype->_completion);
+			const auto color = prototype->color(prototype->_completion);
 			
 			bool didRotate = false;
 			
-			if (!templ->kinematics) {
+			if (!prototype->kinematics) {
 				
 				//
 				//	Non-kinematic particles get standard velocity + damping + gravity applied
 				//
 				
-				templ->position = templ->position + templ->velocity * time.deltaT;
+				prototype->position = prototype->position + prototype->velocity * time.deltaT;
 				
 				for (const auto &gravity : gravities) {
-					auto force = gravity->calculate(templ->position);
-					templ->velocity += mass * force.magnitude * force.dir * time.deltaT;
+					auto force = gravity->calculate(prototype->position);
+					prototype->velocity += mass * force.magnitude * force.dir * time.deltaT;
 				}
 				
 				if (damping < 1) {
-					templ->velocity *= damping;
+					prototype->velocity *= damping;
 				}
 				
 				
@@ -239,19 +239,19 @@ namespace particles {
 				// Kinematic bodies are simulated by chipmunk; extract position, rotation etc
 				//
 				
-				cpShape *shape = templ->_shape;
-				cpBody *body = templ->_body;
+				cpShape *shape = prototype->_shape;
+				cpBody *body = prototype->_body;
 				
-				templ->position = v2(cpBodyGetPosition(body));
+				prototype->position = v2(cpBodyGetPosition(body));
 				
 				if (damping < 1) {
 					cpBodySetVelocity(body, cpvmult(cpBodyGetVelocity(body), damping));
 					cpBodySetAngularVelocity(body, damping * cpBodyGetAngularVelocity(body));
 				}
 				
-				templ->velocity = v2(cpBodyGetVelocity(body));
+				prototype->velocity = v2(cpBodyGetVelocity(body));
 				
-				if (!templ->orientToVelocity) {
+				if (!prototype->orientToVelocity) {
 					dvec2 rotation = v2(cpBodyGetRotation(body));
 					state->right = rotation * size;
 					state->up = rotateCCW(state->right);
@@ -263,10 +263,10 @@ namespace particles {
 				cpCircleShapeSetRadius(shape, max(radius,MinKinematicParticleRadius));
 			}
 			
-			if (templ->orientToVelocity) {
-				dvec2 dir = templ->velocity;
+			if (prototype->orientToVelocity) {
+				dvec2 dir = prototype->velocity;
 				double len2 = lengthSquared(dir);
-				if (templ->orientToVelocity && len2 > 1e-2) {
+				if (prototype->orientToVelocity && len2 > 1e-2) {
 					state->right = (dir/sqrt(len2)) * size;
 					state->up = rotateCCW(state->right);
 					didRotate = true;
@@ -281,14 +281,14 @@ namespace particles {
 				state->up.y = size;
 			}
 			
-			state->atlasIdx = templ->atlasIdx;
-			state->age = templ->_age;
-			state->completion = templ->_completion;
-			state->position = templ->position;
+			state->atlasIdx = prototype->atlasIdx;
+			state->age = prototype->_age;
+			state->completion = prototype->_completion;
+			state->position = prototype->position;
 			state->color = color;
 			state->additivity = additivity;
 			
-			bb = cpBBExpand(bb, templ->position, size);
+			bb = cpBBExpand(bb, prototype->position, size);
 		}
 		
 		//
@@ -304,8 +304,8 @@ namespace particles {
 	/*
 	 ParticleSimulationWeakRef _simulation;
 	 vector<emission> _emissions;
-	 vector<particle_templates> _templates;
-	 vector<int> _templateLookup;
+	 vector<emission_prototype> _prototypes;
+	 vector<int> _prototypeLookup;
 	*/
 	
 	ParticleEmitter::ParticleEmitter(uint32_t seed):
@@ -341,11 +341,11 @@ namespace particles {
 		_rng.seed(seed);
 	}
 	
-	void ParticleEmitter::add(ParticleSimulation::particle_template templ, float variance, int probability) {
-		size_t idx = _templates.size();
-		_templates.push_back({templ, variance});
+	void ParticleEmitter::add(const particle_prototype &prototype, float variance, int probability) {
+		size_t idx = _prototypes.size();
+		_prototypes.push_back({prototype, variance});
 		for (int i = 0; i < probability; i++) {
-			_templateLookup.push_back(idx);
+			_prototypeLookup.push_back(idx);
 		}
 	}
 	
@@ -356,12 +356,12 @@ namespace particles {
 	void ParticleEmitter::emit(dvec2 world, double radius, dvec2 vel, int count) {
 		if (ParticleSimulationRef sim = _simulation.lock()) {
 			for (int i = 0; i < count; i++) {
-				size_t idx = static_cast<size_t>(_rng.nextUint()) % _templateLookup.size();
-				const particle_templates &templs = _templates[_templateLookup[idx]];
+				size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
+				const emission_prototype &templs = _prototypes[_prototypeLookup[idx]];
 				dvec2 pos = world + radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
-				dvec2 velocity = perturb(templs.templ.velocity, templs.variance) + perturb(vel, templs.variance);
+				dvec2 velocity = perturb(templs.prototype.velocity, templs.variance) + perturb(vel, templs.variance);
 				
-				sim->emit(templs.templ, pos, velocity);
+				sim->emit(templs.prototype, pos, velocity);
 			}
 		}
 	}

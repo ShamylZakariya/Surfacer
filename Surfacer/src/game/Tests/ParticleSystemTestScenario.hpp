@@ -50,7 +50,7 @@ protected:
 private:
 
 	ParticleSystemRef _explosionPs;
-	ParticleSimulation::particle_template _smoke, _spark, _rubble;
+	particle_prototype _smoke, _spark, _rubble;
 	ParticleEmitterRef _explosionEmitter;
 	
 	ci::Rand _rng;
