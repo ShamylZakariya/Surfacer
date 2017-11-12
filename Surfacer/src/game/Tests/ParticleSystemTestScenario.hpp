@@ -8,6 +8,8 @@
 #ifndef ParticleSystemTestScenario_hpp
 #define ParticleSystemTestScenario_hpp
 
+#include <cinder/Rand.h>
+
 #include "Core.hpp"
 #include "Svg.hpp"
 
@@ -49,6 +51,11 @@ private:
 
 	UniversalParticleSystemRef _explosionPs;
 	UniversalParticleSimulation::particle_template _smoke, _spark, _rubble;
+	EmitterRef _explosionEmitter;
+	
+	ci::Rand _rng;
+	bool _emitting;
+	dvec2 _emissionPosition;
 	
 };
 

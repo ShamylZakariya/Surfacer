@@ -8,6 +8,8 @@
 #ifndef UniversalParticleSystem_hpp
 #define UniversalParticleSystem_hpp
 
+#include <cinder/Rand.h>
+
 #include "ParticleSystem.hpp"
 
 namespace particles {
@@ -15,6 +17,7 @@ namespace particles {
 	SMART_PTR(UniversalParticleSystem);
 	SMART_PTR(UniversalParticleSimulation);
 	SMART_PTR(UniversalParticleSystemDrawComponent);
+	SMART_PTR(Emitter);
 	
 	using core::seconds_t;
 
@@ -226,7 +229,8 @@ namespace particles {
 		
 		// emit a single particle
 		void emit(const particle_template &particle);
-		
+		void emit(const particle_template &particle, const dvec2 &world, const dvec2 &vel);
+
 	protected:
 		
 		virtual void _prepareForSimulation(const core::time_state &time);
@@ -240,6 +244,76 @@ namespace particles {
 		core::SpaceAccessRef _spaceAccess;
 		
 	};
+	
+	class Emitter : public core::Component {
+	public:
+		
+		enum Envelope {
+			RampUp,
+			Bell,
+			RampDown
+		};
+		
+	public:
+		
+		Emitter(uint32_t seed = 12345);
+		
+		// Component
+		void update(const core::time_state &time) override;
+		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+
+		// Emitter
+		
+		void setSimulation(const UniversalParticleSimulationRef simulation);
+		UniversalParticleSimulationRef getSimulation() const;
+		
+		void seed(uint32_t seed);
+		
+		/**
+		 Add a template to the emission library. The higher probability is relative to other templates
+		 the more often this template will be emitted.
+		 */
+		void add(UniversalParticleSimulation::particle_template templ, float variance, int probability = 1);
+		
+		/**
+		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
+		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
+		 */
+		void emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env);
+		
+		/**
+		 Emit `count particles in the circular volume of `radius about `world
+		 */
+		void emit(dvec2 world, double radius, dvec2 vel, int count = 1);
+
+
+	private:
+		
+		double nextDouble(double variance);
+		dvec2 nextDVec2(double variance);		
+		dvec2 perturb(const dvec2 dir, double variance);
+		
+		struct particle_templates {
+			UniversalParticleSimulation::particle_template templ;
+			float variance;
+		};
+		
+		struct emission {
+			seconds_t startTime, endTime;
+			dvec2 world;
+			double radius;
+			double rate;
+			Envelope envelope;
+		};
+		
+		UniversalParticleSimulationWeakRef _simulation;
+		ci::Rand _rng;
+		vector<emission> _emissions;
+		vector<particle_templates> _templates;
+		vector<size_t> _templateLookup;
+		
+	};
+
 	
 	class UniversalParticleSystemDrawComponent : public particles::ParticleSystemDrawComponent {
 	public:
@@ -288,6 +362,7 @@ namespace particles {
 		
 	};
 	
+	
 	class UniversalParticleSystem : public particles::ParticleSystem {
 	public:
 		
@@ -308,6 +383,8 @@ namespace particles {
 		
 		// do not call this, call ::create
 		UniversalParticleSystem(std::string name);
+		
+		EmitterRef createEmitter();
 		
 	};
 	

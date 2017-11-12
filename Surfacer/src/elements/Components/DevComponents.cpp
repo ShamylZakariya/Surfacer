@@ -101,7 +101,8 @@ _gridColor(1,1,1,1)
 						   betaValue.a *= BetaPeriodAlpha;
 						   vec4 gridColor = alphaValue + betaValue;
 						   
-						   oColor = mix(BackgroundColor, gridColor, gridColor.a);
+						   oColor = mix(BackgroundColor, gridColor, gridColor.a * AxisColor.a);
+						   oColor.a = 1;
 					   }
 					   );
 
@@ -190,7 +191,7 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
 	_shader->uniform("BetaPeriodTexelSize", static_cast<float>(betaPeriodTexelSize));
 	_shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
 	_shader->uniform("BackgroundColor", _fillColor);
-	_shader->uniform("Color", _gridColor * ci::ColorA(1,1,1,0.3));
+	_shader->uniform("Color", _gridColor);
 
 	// TODO: Turn this back to red or a separate color when I fix haloing
 	_shader->uniform("AxisColor", _gridColor);
@@ -524,26 +525,33 @@ void KeyboardDelegateComponent::monitoredKeyUp( int keyCode ) {
  MouseDragHandler _dragHandler;
  */
 
-MouseDelegateComponentRef MouseDelegateComponent::forPress(int dispatchReceiptIndex, MousePressHandler h) {
-	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, h);
-}
-MouseDelegateComponentRef MouseDelegateComponent::forRelease(int dispatchReceiptIndex, MouseReleaseHandler h) {
-	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, MousePressHandler(), h, MouseMoveHandler(), MouseDragHandler());
-}
-MouseDelegateComponentRef MouseDelegateComponent::forMove(int dispatchReceiptIndex, MouseMoveHandler h) {
-	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, MousePressHandler(), MouseReleaseHandler(), h, MouseDragHandler());
-}
-MouseDelegateComponentRef MouseDelegateComponent::forDrag(int dispatchReceiptIndex, MouseDragHandler h) {
-	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex, MousePressHandler(), MouseReleaseHandler(), MouseMoveHandler(), h);
+MouseDelegateComponentRef MouseDelegateComponent::create(int dispatchReceiptIndex) {
+	return make_shared<MouseDelegateComponent>(dispatchReceiptIndex);
 }
 
-MouseDelegateComponent::MouseDelegateComponent(int dispatchReceiptIndex, MousePressHandler presser, MouseReleaseHandler releaser, MouseMoveHandler mover, MouseDragHandler dragger):
-InputComponent(dispatchReceiptIndex),
-_pressHandler(presser),
-_releaseHandler(releaser),
-_moveHandler(mover),
-_dragHandler(dragger)
+MouseDelegateComponent::MouseDelegateComponent(int dispatchReceiptIndex):
+InputComponent(dispatchReceiptIndex)
 {}
+
+MouseDelegateComponentRef MouseDelegateComponent::onPress(MousePressHandler h) {
+	_pressHandler = h;
+	return shared_from_this_as<MouseDelegateComponent>();
+}
+
+MouseDelegateComponentRef MouseDelegateComponent::onRelease(MouseReleaseHandler h) {
+	_releaseHandler = h;
+	return shared_from_this_as<MouseDelegateComponent>();
+}
+
+MouseDelegateComponentRef MouseDelegateComponent::onMove(MouseMoveHandler h) {
+	_moveHandler = h;
+	return shared_from_this_as<MouseDelegateComponent>();
+}
+
+MouseDelegateComponentRef MouseDelegateComponent::onDrag(MouseDragHandler h) {
+	_dragHandler = h;
+	return shared_from_this_as<MouseDelegateComponent>();
+}
 
 bool MouseDelegateComponent::mouseDown( const ci::app::MouseEvent &event ) {
 	if (_pressHandler) {

@@ -75,6 +75,12 @@ namespace particles {
 		_pending.push_back(particle);
 	}
 	
+	void UniversalParticleSimulation::emit(const particle_template &particle, const dvec2 &world, const dvec2 &vel) {
+		_pending.push_back(particle);
+		_pending.back().position = world;
+		_pending.back().velocity = vel;
+	}
+	
 	void UniversalParticleSimulation::_prepareForSimulation(const core::time_state &time) {
 		// run a first pass where we update age and completion, then if necessary perform a compaction pass
 		size_t expiredCount = 0;
@@ -293,6 +299,92 @@ namespace particles {
 		notifyMoved();
 	}
 	
+#pragma mark - Emitter
+	
+	/*
+	 UniversalParticleSimulationWeakRef _simulation;
+	 vector<emission> _emissions;
+	 vector<particle_templates> _templates;
+	 vector<int> _templateLookup;
+	*/
+	
+	Emitter::Emitter(uint32_t seed):
+	_rng(seed)
+	{}
+	
+	void Emitter::update(const core::time_state &time) {
+		if (UniversalParticleSimulationRef sim = _simulation.lock()) {
+
+		}
+	}
+	
+	void Emitter::onReady(ObjectRef parent, StageRef stage) {
+		if (!getSimulation()) {
+			UniversalParticleSimulationRef sim = getSibling<UniversalParticleSimulation>();
+			if (sim) {
+				setSimulation(sim);
+			}
+		}
+	}
+	
+	// Emitter
+	
+	void Emitter::setSimulation(const UniversalParticleSimulationRef simulation) {
+		_simulation = simulation;
+	}
+	
+	UniversalParticleSimulationRef Emitter::getSimulation() const {
+		return _simulation.lock();
+	}
+	
+	void Emitter::seed(uint32_t seed) {
+		_rng.seed(seed);
+	}
+	
+	void Emitter::add(UniversalParticleSimulation::particle_template templ, float variance, int probability) {
+		size_t idx = _templates.size();
+		_templates.push_back({templ, variance});
+		for (int i = 0; i < probability; i++) {
+			_templateLookup.push_back(idx);
+		}
+	}
+	
+	void Emitter::emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env) {
+		
+	}
+	
+	void Emitter::emit(dvec2 world, double radius, dvec2 vel, int count) {
+		if (UniversalParticleSimulationRef sim = _simulation.lock()) {
+			for (int i = 0; i < count; i++) {
+				size_t idx = static_cast<size_t>(_rng.nextUint()) % _templateLookup.size();
+				const particle_templates &templs = _templates[_templateLookup[idx]];
+				dvec2 pos = world + radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
+				dvec2 velocity = perturb(templs.templ.velocity, templs.variance) + perturb(vel, templs.variance);
+				
+				sim->emit(templs.templ, pos, velocity);
+			}
+		}
+	}
+	
+	double Emitter::nextDouble(double variance) {
+		return 1.0 + static_cast<double>(_rng.nextFloat(-variance, variance));
+	}
+
+	dvec2 Emitter::nextDVec2(double variance) {
+		return nextDouble(variance) * dvec2(_rng.nextVec2());
+	}
+	
+	dvec2 Emitter::perturb(const dvec2 dir, double variance) {
+		double len2 = lengthSquared(dir);
+		if (len2 > 0) {
+			double len = sqrt(len2);
+			dvec2 p(_rng.nextFloat(-len, +len), _rng.nextFloat(-len,+len));
+			return dir + nextDouble(variance) * p;
+		}
+		return dir;
+	}
+
+
 #pragma mark - UniversalParticleSystemDrawComponent
 	
 	/*
@@ -521,6 +613,13 @@ namespace particles {
 	UniversalParticleSystem::UniversalParticleSystem(string name):
 	ParticleSystem(name)
 	{}
+	
+	EmitterRef UniversalParticleSystem::createEmitter() {
+		EmitterRef emitter = make_shared<Emitter>();
+		emitter->setSimulation(getComponent<UniversalParticleSimulation>());
+		addComponent(emitter);
+		return emitter;
+	}
 	
 	
 }
