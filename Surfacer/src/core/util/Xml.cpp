@@ -292,6 +292,16 @@ namespace core { namespace util { namespace xml {
 		
 		return defaultValue;
 	}
+	
+	bool readBoolAttribute(const XmlMultiTree &node, string attributeName, bool defaultValue) {
+		auto value = node.getAttribute(attributeName);
+		if (value) {
+			string v = *value;
+			return (v == "true") ? true : false;
+		}
+		
+		return defaultValue;
+	}
 
 
 }}}
