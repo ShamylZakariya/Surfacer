@@ -85,6 +85,8 @@ namespace particles {
 		// run a first pass where we update age and completion, then if necessary perform a compaction pass
 		size_t expiredCount = 0;
 		const size_t activeCount = getActiveCount();
+		const size_t storageSize = _prototypes.size();
+		bool sortSuggested = false;
 		
 		auto state = _state.begin();
 		auto end = state + activeCount;
@@ -122,8 +124,7 @@ namespace particles {
 			});
 			
 			_count = end - _prototypes.begin();
-			
-			CI_LOG_D("COMPACTED, went from: " << activeCount << " to " << getActiveCount() << " active particles");
+			sortSuggested = true;
 		}
 		
 		//
@@ -138,7 +139,7 @@ namespace particles {
 				// if a particle already lives at this point, perform any cleanup needed
 				//
 				
-				const size_t idx = _count % _prototypes.size();
+				const size_t idx = _count % storageSize;
 				_prototypes[idx].destroy();
 				
 				//
@@ -175,9 +176,21 @@ namespace particles {
 				_prototypes[idx].prepare();
 				
 				_count++;
+				
+				// we've round-robined, which means a sort might be needed
+				if (_count >= storageSize) {
+					sortSuggested = true;
+				}
 			}
 			
 			_pending.clear();
+		}
+		
+		if (sortSuggested && _keepSorted) {
+			// sort so oldest particles are at front of _prototypes
+			sort(_prototypes.begin(), _prototypes.begin() + getActiveCount(), [](const particle_prototype &a, const particle_prototype &b){
+				return a._age > b._age;
+			});
 		}
 		
 		// we'll re-enable in _simulate
@@ -342,7 +355,7 @@ namespace particles {
 				if (e.secondsAccumulator > e.secondsPerEmission) {
 					// get number of particles to emit
 					double particlesToEmit = ramp * e.secondsAccumulator / e.secondsPerEmission;
-					CI_LOG_D("ramp: " << ramp << " particlesToEmit: " << particlesToEmit);
+					//CI_LOG_D("ramp: " << ramp << " particlesToEmit: " << particlesToEmit);
 					
 					while (particlesToEmit >= 1) {
 						
@@ -715,6 +728,7 @@ namespace particles {
 	ParticleSystem::config ParticleSystem::config::parse(const util::xml::XmlMultiTree &node) {
 		config c;
 		c.maxParticleCount = util::xml::readNumericAttribute<size_t>(node, "count", c.maxParticleCount);
+		c.keepSorted = util::xml::readBoolAttribute(node, "sorted", c.keepSorted);
 		c.drawConfig = ParticleSystemDrawComponent::config::parse(node.getChild("draw"));
 		return c;
 	}
@@ -722,6 +736,7 @@ namespace particles {
 	ParticleSystemRef ParticleSystem::create(string name, const config &c) {
 		auto simulation = make_shared<ParticleSimulation>();
 		simulation->setParticleCount(c.maxParticleCount);
+		simulation->setShouldKeepSorted(c.keepSorted);
 		auto draw = make_shared<ParticleSystemDrawComponent>(c.drawConfig);
 		return Object::create<ParticleSystem>(name, { draw, simulation });
 	}

@@ -233,6 +233,13 @@ namespace particles {
 		void emit(const particle_prototype &particle);
 		void emit(const particle_prototype &particle, const dvec2 &world, const dvec2 &vel);
 
+		// if true, ParticleSimulation will when necessary sort the active particles by age
+		// with oldest being drawn first. Only turn this on if you see periodic "pops" where
+		// particle ordering appears to invert. This can happen when storage is compacted and
+		// when particles overflow particleCount and round-robin to the beginning
+		void setShouldKeepSorted(bool keepSorted) { _keepSorted = keepSorted; }
+		bool shouldKeepSorted() const { return _keepSorted; }
+
 	protected:
 		
 		virtual void _prepareForSimulation(const core::time_state &time);
@@ -244,6 +251,7 @@ namespace particles {
 		cpBB _bb;
 		vector<particle_prototype> _prototypes, _pending;
 		core::SpaceAccessRef _spaceAccess;
+		bool _keepSorted;
 		
 	};
 	
@@ -411,10 +419,12 @@ namespace particles {
 		
 		struct config {
 			size_t maxParticleCount;
+			bool keepSorted;
 			particles::ParticleSystemDrawComponent::config drawConfig;
 			
 			config():
-			maxParticleCount(500)
+			maxParticleCount(500),
+			keepSorted(false)
 			{}
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);

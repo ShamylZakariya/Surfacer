@@ -75,7 +75,7 @@ namespace {
 
 /*
  ParticleSystemRef _explosionPs;
- particle_prototype _smoke, _spark, _rubble;
+ particle_prototype smoke, spark, rubble;
  ParticleEmitterRef _explosionEmitter;
  ParticleEmitter::emission_id _explostionEmissionId;
  */
@@ -96,7 +96,7 @@ void ParticleSystemTestScenario::setup() {
 	}));
 	
 	auto grid = WorldCartesianGridDrawComponent::create(1);
-	grid->setFillColor(ColorA(0.41,0.43,0.33, 1.0));
+	grid->setFillColor(ColorA(0.2,0.22,0.25, 1.0));
 	grid->setGridColor(ColorA(1,1,1,0.1));
 	getStage()->addObject(Object::with("Grid", { grid }));
 
@@ -222,6 +222,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	
 	ParticleSystem::config config;
 	config.maxParticleCount = 500;
+	config.keepSorted = true;
 	config.drawConfig.drawLayer = 1000;
 	config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
 	config.drawConfig.atlasType = Atlas::TwoByTwo;
@@ -233,60 +234,42 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	stage->addGravity(DirectionalGravitationCalculator::create(dvec2(0,-1), 9.8 * 10));
 
 	// build a "smoke" particle template
-	_smoke.atlasIdx = 0;
-	_smoke.lifespan = 3;
-	_smoke.radius = { 0.0, 20.0, 20.0, 0.0 };
-	_smoke.damping = { 0, 0, 0.2 };
-	_smoke.additivity = { 1, 0, 0, 0 };
-	_smoke.mass = { -1.0, 0.0 };
-	_smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
-	_smoke.velocity = dvec2(0,10);
+	particle_prototype smoke;
+	smoke.atlasIdx = 0;
+	smoke.lifespan = 3;
+	smoke.radius = { 0.0, 20.0, 20.0, 0.0 };
+	smoke.damping = { 0, 0, 0.2 };
+	smoke.additivity = { 1, 0, 0, 0 };
+	smoke.mass = { -1.0, 0.0 };
+	smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
+	smoke.velocity = dvec2(0,10);
 	
 	// build a "spark" particle template
-	_spark.atlasIdx = 1;
-	_spark.lifespan = 2;
-	_spark.radius = { 0.0, 2.0, 0.0 };
-	_spark.damping = { 0.0, 0.02 };
-	_spark.additivity = { 1.0 };
-	_spark.mass = { -1.0, +10.0 };
-	_spark.orientToVelocity = true;
-	_spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-	_spark.velocity = dvec2(0,100);
+	particle_prototype spark;
+	spark.atlasIdx = 1;
+	spark.lifespan = 2;
+	spark.radius = { 0.0, 2.0, 0.0 };
+	spark.damping = { 0.0, 0.02 };
+	spark.additivity = { 1.0 };
+	spark.mass = { -1.0, +10.0 };
+	spark.orientToVelocity = true;
+	spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
+	spark.velocity = dvec2(0,100);
 	
 	// build a "rubble" particle template
-	_rubble.atlasIdx = 2;
-	_rubble.lifespan = 10;
-	_rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
-	_rubble.damping = 0.02;
-	_rubble.additivity = 0.0;
-	_rubble.mass = 10.0;
-	_rubble.color = TerrainColor;
-	_rubble.velocity = dvec2(0,100);
-	_rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
+	particle_prototype rubble;
+	rubble.atlasIdx = 2;
+	rubble.lifespan = 10;
+	rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
+	rubble.damping = 0.02;
+	rubble.additivity = 0.0;
+	rubble.mass = 10.0;
+	rubble.color = TerrainColor;
+	rubble.velocity = dvec2(0,100);
+	rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
-	_explosionEmitter->add(_smoke, 0.25, 10);
-	_explosionEmitter->add(_spark, 0.5, 15);
-	_explosionEmitter->add(_rubble, 0.1, 2);
-}
-
-void ParticleSystemTestScenario::emitSmokeParticle(dvec2 world, dvec2 vel) {
-	ParticleSimulationRef sim = _explosionPs->getComponent<ParticleSimulation>();
-	_smoke.position = world;
-	_smoke.velocity = vel;
-	sim->emit(_smoke);
-}
-
-void ParticleSystemTestScenario::emitSparkParticle(dvec2 world, dvec2 vel) {
-	ParticleSimulationRef sim = _explosionPs->getComponent<ParticleSimulation>();
-	_spark.position = world;
-	_spark.velocity = vel;
-	sim->emit(_spark);
-}
-
-void ParticleSystemTestScenario::emitRubbleParticle(dvec2 world, dvec2 vel) {
-	ParticleSimulationRef sim = _explosionPs->getComponent<ParticleSimulation>();
-	_rubble.position = world;
-	_rubble.velocity = vel;
-	sim->emit(_rubble);
+	_explosionEmitter->add(smoke, 0.25, 10);
+	_explosionEmitter->add(spark, 0.5, 15);
+	_explosionEmitter->add(rubble, 0.1, 2);
 }

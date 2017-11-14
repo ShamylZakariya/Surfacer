@@ -43,14 +43,10 @@ public:
 protected:
 
 	void buildExplosionPs();
-	void emitSmokeParticle(dvec2 world, dvec2 vel);
-	void emitSparkParticle(dvec2 world, dvec2 vel);
-	void emitRubbleParticle(dvec2 world, dvec2 vel);
 	
 private:
 
 	ParticleSystemRef _explosionPs;
-	particle_prototype _smoke, _spark, _rubble;
 	ParticleEmitterRef _explosionEmitter;
 	ParticleEmitter::emission_id _explosionEmissionId;
 	
