@@ -50,65 +50,6 @@ namespace precariously {
 			double _magnitudeScale;
 			
 		};
-		
-		class MouseBomberComponent : public core::InputComponent {
-		public:
-			
-			MouseBomberComponent(terrain::TerrainObjectRef terrain, vector<CloudLayerParticleSimulationRef> cloudLayerSimulations, dvec2 centerOfMass, int numSpokes, int numRings, double radius, double thickness, double variance, int dispatchReceiptIndex = 0):
-			InputComponent(dispatchReceiptIndex),
-			_terrain(terrain),
-			_cloudLayerSimulations(cloudLayerSimulations),
-			_centerOfMass(centerOfMass),
-			_numSpokes(numSpokes),
-			_numRings(numRings),
-			_radius(radius),
-			_thickness(thickness),
-			_variance(variance)
-			{}
-			
-			bool mouseDown( const ci::app::MouseEvent &event ) override {
-				if (event.isMetaDown()) {
-					dvec2 mouseScreen = event.getPos();
-					dvec2 mouseWorld = getStage()->getViewport()->screenToWorld(mouseScreen);
-					
-					
-					// create a radial crack and cut the world with it. note, to reduce tiny fragments
-					// we set a fairly high min surface area for the cut.
-					
-					double minSurfaceAreaThreshold = 64;
-					auto crack = make_shared<RadialCrackGeometry>(mouseWorld,_numSpokes, _numRings, _radius, _thickness, _variance);
-					_terrain->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
-					
-					// get the closest point on terrain surface and use that to place explosive charge
-					if (auto r = getStage()->queryNearest(mouseWorld, ShapeFilters::TERRAIN_PROBE)) {
-					
-						dvec2 origin = mouseWorld + _radius * normalize(_centerOfMass - r.point);
-						auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
-						getStage()->addGravity(gravity);
-
-						for (auto &cls : _cloudLayerSimulations) {
-							cls->addGravityDisplacement(gravity);
-						}
-						
-					}
-					
-					return true;
-				}
-				
-				return false;
-			}
-			
-		private:
-			
-			int _numSpokes, _numRings;
-			double _radius, _thickness, _variance;
-			terrain::TerrainObjectRef _terrain;
-			vector<CloudLayerParticleSimulationRef> _cloudLayerSimulations;
-			dvec2 _centerOfMass;
-			
-		};
-		
-		
 	}
 	
 	
@@ -181,25 +122,22 @@ namespace precariously {
 
 		auto cloudLayerNode = util::xml::findElement(stageNode, "cloudLayer", "id", "background");
 		if (cloudLayerNode) {
-			_backgroundCloudLayer = loadCloudLayer(*cloudLayerNode, DrawLayers::PLANET - 1);
+			_cloudLayers.push_back(loadCloudLayer(*cloudLayerNode, DrawLayers::PLANET - 1));
 		}
 
 		cloudLayerNode = util::xml::findElement(stageNode, "cloudLayer", "id", "foreground");
 		if (cloudLayerNode) {
-			_foregroundCloudLayer = loadCloudLayer(*cloudLayerNode, DrawLayers::EFFECTS);
+			_cloudLayers.push_back(loadCloudLayer(*cloudLayerNode, DrawLayers::EFFECTS));
 		}
 
+		buildExplosionParticleSystem();
 		
 		if (true) {
 			
-			vector<CloudLayerParticleSimulationRef> cls;
-			if (_foregroundCloudLayer) {
-				cls.push_back(_foregroundCloudLayer->getSimulation<CloudLayerParticleSimulation>());
-			}
-			if (_backgroundCloudLayer) {
-				cls.push_back(_backgroundCloudLayer->getSimulation<CloudLayerParticleSimulation>());
-			}
-			addObject(Object::with("Crack", { make_shared<MouseBomberComponent>(_planet, cls, _planet->getOrigin(), 7, 4, 75, 2, 100) }));
+			addObject(Object::with("Mouse", MouseDelegateComponent::create(0)->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
+				performExplosion(world);
+				return true;
+			})));
 			
 			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c, app::KeyEvent::KEY_s },
 				[&](int keyCode){
@@ -287,7 +225,7 @@ namespace precariously {
 		
 		const terrain::material terrainMaterial(density, friction, collisionShapeRadius, ShapeFilters::TERRAIN, CollisionType::TERRAIN, minSurfaceArea, terrainColor);
 		const terrain::material anchorMaterial(1, friction, collisionShapeRadius, ShapeFilters::ANCHOR, CollisionType::ANCHOR, minSurfaceArea, coreColor);
-		auto world = make_shared<terrain::World>(getSpace() ,terrainMaterial, anchorMaterial);
+		auto world = make_shared<terrain::World>(getSpace(), terrainMaterial, anchorMaterial);
 		
 		_planet = Planet::create("Planet", world, planetNode, DrawLayers::PLANET);
 		addObject(_planet);
@@ -309,6 +247,63 @@ namespace precariously {
 		return cl;
 	}
 	
+	void PrecariouslyStage::buildExplosionParticleSystem() {
+		using namespace particles;
+
+		auto image = loadImage(app::loadAsset("precariously/textures/Explosion.png"));
+		gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
+		
+		ParticleSystem::config config;
+		config.maxParticleCount = 500;
+		config.keepSorted = true;
+		config.drawConfig.drawLayer = DrawLayers::EFFECTS;
+		config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
+		config.drawConfig.atlasType = Atlas::TwoByTwo;
+		
+		auto ps = ParticleSystem::create("Explosion ParticleSystem", config);
+		addObject(ps);
+		
+		// build a "smoke" particle template
+		particle_prototype smoke;
+		smoke.atlasIdx = 0;
+		smoke.lifespan = 3;
+		smoke.radius = { 0.0, 20.0, 20.0, 0.0 };
+		smoke.damping = { 0, 0, 0.2 };
+		smoke.additivity = { 1, 0, 0, 0 };
+		smoke.mass = { -1.0, 0.0 };
+		smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
+		smoke.velocity = dvec2(0,10);
+		
+		// build a "spark" particle template
+		particle_prototype spark;
+		spark.atlasIdx = 1;
+		spark.lifespan = 2;
+		spark.radius = { 0.0, 2.0, 0.0 };
+		spark.damping = { 0.0, 0.02 };
+		spark.additivity = { 1.0 };
+		spark.mass = { -1.0, +10.0 };
+		spark.orientToVelocity = true;
+		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
+		spark.velocity = dvec2(0,100);
+		
+		// build a "rubble" particle template
+		particle_prototype rubble;
+		rubble.atlasIdx = 2;
+		rubble.lifespan = 10;
+		rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
+		rubble.damping = 0.02;
+		rubble.additivity = 0.0;
+		rubble.mass = 10.0;
+		rubble.color = _planet->getWorld()->getWorldMaterial().color;
+		rubble.velocity = dvec2(0,100);
+		rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
+		
+		_explosionEmitter = ps->createEmitter();
+		_explosionEmitter->add(smoke, 0.25, 10);
+		_explosionEmitter->add(spark, 0.5, 15);
+		_explosionEmitter->add(rubble, 0.1, 2);
+	}
+	
 	void PrecariouslyStage::cullRubble() {
 		size_t count = _planet->getWorld()->cullDynamicGroups(128, 0.75);
 		CI_LOG_D("Culled " << count << " bits of rubble");
@@ -317,6 +312,35 @@ namespace precariously {
 	void PrecariouslyStage::makeSleepersStatic() {
 		size_t count = _planet->getWorld()->makeSleepingDynamicGroupsStatic(5, 0.75);
 		CI_LOG_D("Static'd " << count << " bits of sleeping rubble");
+	}
+	
+	void PrecariouslyStage::performExplosion(dvec2 world) {
+		// create a radial crack and cut the world with it. note, to reduce tiny fragments
+		// we set a fairly high min surface area for the cut.
+		
+		double minSurfaceAreaThreshold = 64;
+		int numSpokes = 7;
+		int numRings = 3;
+		double radius = 75;
+		double thickness = 2;
+		double variance = 100;
+		
+		auto crack = make_shared<RadialCrackGeometry>(world, numSpokes, numRings, radius, thickness, variance);
+		_planet->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
+		
+		// get the closest point on terrain surface and use that to place explosive charge
+		if (auto r = queryNearest(world, ShapeFilters::TERRAIN_PROBE)) {
+			
+			dvec2 origin = world + radius * normalize(_planet->getOrigin() - r.point);
+			auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
+			addGravity(gravity);
+			
+			for (auto &cls : _cloudLayers) {
+				cls->getSimulation<CloudLayerParticleSimulation>()->addGravityDisplacement(gravity);
+			}
+		}
+		
+		_explosionEmitter->emit(world, 2, dvec2(0,0), 1, 60, particles::ParticleEmitter::Sawtooth);
 	}
 	
 } // namespace surfacer

@@ -4,9 +4,6 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-System
-	- create template.initialVelocity and move velocity to private _velocity
-	- add some kind of sort by age method for particles
 
 
 ## BUGS PRIORITY 0

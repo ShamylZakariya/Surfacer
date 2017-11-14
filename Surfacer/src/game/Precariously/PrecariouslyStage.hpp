@@ -16,6 +16,7 @@
 #include "Background.hpp"
 #include "Planet.hpp"
 #include "CloudLayerParticleSystem.hpp"
+#include "ParticleSystem.hpp"
 
 namespace precariously {
 
@@ -60,16 +61,20 @@ namespace precariously {
 		void loadBackground(XmlTree planetNode);
 		void loadPlanet(XmlTree planetNode);
 		CloudLayerParticleSystemRef loadCloudLayer(XmlTree cloudLayer, int drawLayer);
+		void buildExplosionParticleSystem();
 		
 		void cullRubble();
 		void makeSleepersStatic();
+		
+		void performExplosion(dvec2 world);
 
 	private:
 
 		BackgroundRef _background;
 		PlanetRef _planet;
-		CloudLayerParticleSystemRef _foregroundCloudLayer, _backgroundCloudLayer;
+		vector<CloudLayerParticleSystemRef> _cloudLayers;
 		core::RadialGravitationCalculatorRef _gravity;
+		particles::ParticleEmitterRef _explosionEmitter;
 		
 	};
 	

@@ -269,6 +269,8 @@ namespace terrain {
 		const vector<ElementRef> &getElements() const { return _elements; }
 		ElementRef getElementById(string id) const;
 		core::SpaceAccessRef getSpace() const { return _space; }
+		material getWorldMaterial() const { return _worldMaterial; }
+		material getAnchorMaterial() const { return _anchorMaterial; }
 
 		DrawDispatcher &getDrawDispatcher() { return _drawDispatcher; }
 		const DrawDispatcher &getDrawDispatcher() const { return _drawDispatcher; }
