@@ -74,20 +74,18 @@ namespace {
 }
 
 /*
- SystemRef _explosionPs;
+ ParticleSystemRef _explosionPs;
  particle_prototype _smoke, _spark, _rubble;
- 
- bool _emitting;
- dvec2 _emissionPosition, _emissionVelocity;
-*/
+ ParticleEmitterRef _explosionEmitter;
+ ParticleEmitter::emission_id _explostionEmissionId;
+ */
 
 
 ParticleSystemTestScenario::ParticleSystemTestScenario():
-_emitting(false)
+_explosionEmissionId(0)
 {}
 
 ParticleSystemTestScenario::~ParticleSystemTestScenario() {
-	
 }
 
 void ParticleSystemTestScenario::setup() {
@@ -139,25 +137,28 @@ void ParticleSystemTestScenario::setup() {
 	
 	buildExplosionPs();
 	
+	
 	auto mdc = MouseDelegateComponent::create(10)
 		->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
-			_emitting = true;
+			if (event.isMetaDown()) {
+				_explosionEmitter->emit(world, 2, dvec2(0,0), 1, 60, ParticleEmitter::Sawtooth);
+			} else {
+				_explosionEmissionId = _explosionEmitter->emit(world, 2, dvec2(0,0), 60);
+			}
 			return true;
 		})
 		->onRelease([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
-			_emitting = false;
+			_explosionEmitter->cancel(_explosionEmissionId);
 			return true;
 		})
 		->onMove([this](dvec2 screen, dvec2 world, dvec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event){
-			_emissionPosition = world;
 			return true;
 		})
 		->onDrag([this](dvec2 screen, dvec2 world, dvec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event){
-			_emissionPosition = world;
+			_explosionEmitter->setEmissionPosition(_explosionEmissionId, world, 2, dvec2(0,0));
 			return true;
 		});
 
-	
 	getStage()->addObject(Object::with("Mouse Handling", { mdc }));
 }
 
@@ -166,17 +167,12 @@ void ParticleSystemTestScenario::cleanup() {
 }
 
 void ParticleSystemTestScenario::resize( ivec2 size ) {
-	
 }
 
 void ParticleSystemTestScenario::step( const time_state &time ) {
-	
 }
 
 void ParticleSystemTestScenario::update( const time_state &time ) {
-	if (_emitting) {
-		_explosionEmitter->emit(_emissionPosition, 4, dvec2(0), 1);
-	}
 }
 
 void ParticleSystemTestScenario::clear( const render_state &state ) {

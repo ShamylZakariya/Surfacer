@@ -52,10 +52,7 @@ private:
 	ParticleSystemRef _explosionPs;
 	particle_prototype _smoke, _spark, _rubble;
 	ParticleEmitterRef _explosionEmitter;
-	
-	ci::Rand _rng;
-	bool _emitting;
-	dvec2 _emissionPosition;
+	ParticleEmitter::emission_id _explosionEmissionId;
 	
 };
 

@@ -251,10 +251,20 @@ namespace particles {
 	public:
 		
 		enum Envelope {
+			// emission ramps up from 0 to full rate across lifetime
 			RampUp,
-			Bell,
+			
+			// emission ramps from 0 to full rate at half of lifetime and back to zero at end
+			Sawtooth,
+			
+			// emission quickly ramps from 0 to full rate, continues at full rate, and then quickly back to zero at end of lifetime
+			Mesa,
+			
+			// emission starts at full rate and ramps down to zero across lifetime
 			RampDown
 		};
+		
+		typedef size_t emission_id;
 		
 	public:
 		
@@ -269,6 +279,9 @@ namespace particles {
 		void setSimulation(const ParticleSimulationRef simulation);
 		ParticleSimulationRef getSimulation() const;
 		
+		/**
+		 Seed the RNG that purturbs particle emission state
+		 */
 		void seed(uint32_t seed);
 		
 		/**
@@ -280,13 +293,37 @@ namespace particles {
 		/**
 		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
 		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
+		 Returns an id usable to cancel the emission via cancel()
 		 */
-		void emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env);
+		emission_id emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env);
+		
+		/**
+		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
+		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
+		 Returns an id usable to cancel the emission via cancel()
+		 */
+		emission_id emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, const interpolator<double> &envelope);
+		
+		/**
+		 Create an emission for a circular volume in the world at a given rate. It will run until cancel() is called on the returned id.
+		 Returns an id usable to cancel the emission via cancel()
+		 */
+		emission_id emit(dvec2 world, double radius, dvec2 vel, double rate);
+		
+		/**
+		 Update the position, radius and velocity of an active emission
+		 */
+		void setEmissionPosition(emission_id emission, dvec2 world, double radius, dvec2 vel);
+		
+		/**
+		 Cancels a running emission. Pass the id returned by one of the emit() methods
+		*/
+		void cancel(emission_id emissionId);
 		
 		/**
 		 Emit `count particles in the circular volume of `radius about `world
 		 */
-		void emit(dvec2 world, double radius, dvec2 vel, int count = 1);
+		void emitBurst(dvec2 world, double radius, dvec2 vel, int count = 1);
 
 
 	private:
@@ -301,16 +338,20 @@ namespace particles {
 		};
 		
 		struct emission {
-			seconds_t startTime, endTime;
+			emission_id id;
+			seconds_t startTime;
+			seconds_t endTime;
+			seconds_t secondsPerEmission;
+			seconds_t secondsAccumulator;
 			dvec2 world;
-			double radius;
-			double rate;
-			Envelope envelope;
+			dvec2 velocity;
+			double radius;			
+			interpolator<double> envelope;
 		};
 		
 		ParticleSimulationWeakRef _simulation;
 		ci::Rand _rng;
-		vector<emission> _emissions;
+		map<emission_id, emission> _emissions;
 		vector<emission_prototype> _prototypes;
 		vector<size_t> _prototypeLookup;
 		

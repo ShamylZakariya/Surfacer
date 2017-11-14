@@ -301,6 +301,14 @@ namespace particles {
 	
 #pragma mark - ParticleEmitter
 	
+	namespace {
+		ParticleEmitter::emission_id _emission_id_tracker = 0;
+		
+		ParticleEmitter::emission_id next_emission_id() {
+			return ++_emission_id_tracker;
+		}
+	}
+	
 	/*
 	 ParticleSimulationWeakRef _simulation;
 	 vector<emission> _emissions;
@@ -315,6 +323,50 @@ namespace particles {
 	void ParticleEmitter::update(const core::time_state &time) {
 		if (ParticleSimulationRef sim = _simulation.lock()) {
 
+			vector<emission_id> expired;
+			for (auto &it : _emissions) {
+				emission &e = it.second;
+				e.secondsAccumulator += time.deltaT;
+				
+				if (e.endTime > 0 && e.endTime < time.time) {
+					expired.push_back(e.id);
+					continue;
+				}
+				
+				double ramp = 1;
+				if (e.startTime > 0 && e.endTime > 0) {
+					double life = (time.time - e.startTime) / (e.endTime - e.startTime);
+					ramp = e.envelope(life);
+				}
+				
+				if (e.secondsAccumulator > e.secondsPerEmission) {
+					// get number of particles to emit
+					double particlesToEmit = ramp * e.secondsAccumulator / e.secondsPerEmission;
+					CI_LOG_D("ramp: " << ramp << " particlesToEmit: " << particlesToEmit);
+					
+					while (particlesToEmit >= 1) {
+						
+						// emit one particle
+						size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
+						const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
+						dvec2 pos = e.world + e.radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
+						dvec2 velocity = perturb(proto.prototype.velocity, proto.variance) + perturb(e.velocity, proto.variance);
+						sim->emit(proto.prototype, pos, velocity);
+						
+						// remove one particle's worth of seconds from accumulator
+						// accumulator will retain leftovers for next step
+						particlesToEmit -= 1;
+						e.secondsAccumulator -= e.secondsPerEmission;
+					}
+				}
+			}
+			
+			// dispose of expired emissions
+			if (!expired.empty()) {
+				for (auto id : expired) {
+					_emissions.erase(id);
+				}
+			}
 		}
 	}
 	
@@ -349,19 +401,83 @@ namespace particles {
 		}
 	}
 	
-	void ParticleEmitter::emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env) {
+	size_t ParticleEmitter::emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env) {
+		switch (env) {
+			case RampUp:
+				return emit(world, radius, vel, duration, rate, interpolator<double>({0.0,1.0}));
+				break;
+			case Sawtooth:
+				return emit(world, radius, vel, duration, rate, interpolator<double>({0.0,1.0,0.0}));
+				break;
+			case Mesa:
+				return emit(world, radius, vel, duration, rate, interpolator<double>({0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0}));
+				break;
+			case RampDown:
+				return emit(world, radius, vel, duration, rate, interpolator<double>({1.0,0.0}));
+				break;
+		}
 		
+		// this shouldn't happen
+		return 0;
 	}
 	
-	void ParticleEmitter::emit(dvec2 world, double radius, dvec2 vel, int count) {
+	size_t ParticleEmitter::emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, const interpolator<double> &envelope) {
+		emission e;
+		e.id = next_emission_id();
+		e.startTime = getStage()->getTimeState().time;
+		e.endTime = e.startTime + duration;
+		e.secondsPerEmission = 1.0 / rate;
+		e.secondsAccumulator = 0;
+		e.world = world;
+		e.velocity = vel;
+		e.radius = radius;
+		e.envelope = envelope;		
+		_emissions[e.id] = e;
+		
+		return e.id;
+	}
+	
+	size_t ParticleEmitter::emit(dvec2 world, double radius, dvec2 vel, double rate) {
+		emission e;
+		e.id = next_emission_id();
+		e.startTime = e.endTime = -1;
+		e.secondsPerEmission = 1.0 / rate;
+		e.secondsAccumulator = 0;
+		e.world = world;
+		e.velocity = vel;
+		e.radius = radius;
+		e.envelope = 1;
+		
+		_emissions[e.id] = e;
+		
+		return e.id;
+	}
+	
+	void ParticleEmitter::setEmissionPosition(emission_id emissionId, dvec2 world, double radius, dvec2 vel) {
+		auto pos = _emissions.find(emissionId);
+		if (pos != _emissions.end()) {
+			pos->second.world = world;
+			pos->second.radius = radius;
+			pos->second.velocity = vel;
+		}
+	}
+
+	void ParticleEmitter::cancel(emission_id id) {
+		auto pos = _emissions.find(id);
+		if (pos != _emissions.end()) {
+			_emissions.erase(pos);
+		}
+	}
+	
+	void ParticleEmitter::emitBurst(dvec2 world, double radius, dvec2 vel, int count) {
 		if (ParticleSimulationRef sim = _simulation.lock()) {
 			for (int i = 0; i < count; i++) {
 				size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
-				const emission_prototype &templs = _prototypes[_prototypeLookup[idx]];
+				const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
 				dvec2 pos = world + radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
-				dvec2 velocity = perturb(templs.prototype.velocity, templs.variance) + perturb(vel, templs.variance);
+				dvec2 velocity = perturb(proto.prototype.velocity, proto.variance) + perturb(vel, proto.variance);
 				
-				sim->emit(templs.prototype, pos, velocity);
+				sim->emit(proto.prototype, pos, velocity);
 			}
 		}
 	}

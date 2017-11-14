@@ -6,11 +6,7 @@ When satellite debris gets out of hand
 
 System
 	- create template.initialVelocity and move velocity to private _velocity
-	- Rename , get rid of "Universal"
-	- Rename particle_prototype to particle_prototype since `template` is reserved
-	- Consider sorting by age after compact() phase
-	
-	
+	- add some kind of sort by age method for particles
 
 
 ## BUGS PRIORITY 0
