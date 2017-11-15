@@ -237,15 +237,16 @@ namespace particles {
 				prototype->position = prototype->position + prototype->velocity * time.deltaT;
 				
 				for (const auto &gravity : gravities) {
-					auto force = gravity->calculate(prototype->position);
-					prototype->velocity += mass * force.magnitude * force.dir * time.deltaT;
+					if (gravity->getGravitationLayer() & prototype->gravitationLayerMask) {
+						auto force = gravity->calculate(prototype->position);
+						prototype->velocity += mass * force.magnitude * force.dir * time.deltaT;
+					}
 				}
 				
 				if (damping < 1) {
 					prototype->velocity *= damping;
 				}
-				
-				
+								
 			} else {
 				
 				//
@@ -738,11 +739,17 @@ namespace particles {
 		simulation->setParticleCount(c.maxParticleCount);
 		simulation->setShouldKeepSorted(c.keepSorted);
 		auto draw = make_shared<ParticleSystemDrawComponent>(c.drawConfig);
-		return Object::create<ParticleSystem>(name, { draw, simulation });
+		
+		ParticleSystemRef ps = make_shared<ParticleSystem>(name, c);
+		ps->addComponent(draw);
+		ps->addComponent(simulation);
+		
+		return ps;
 	}
 	
-	ParticleSystem::ParticleSystem(string name):
-	BaseParticleSystem(name)
+	ParticleSystem::ParticleSystem(string name, const config &c):
+	BaseParticleSystem(name),
+	_config(c)
 	{}
 	
 	ParticleEmitterRef ParticleSystem::createEmitter() {
@@ -752,5 +759,8 @@ namespace particles {
 		return emitter;
 	}
 	
-	
+	size_t ParticleSystem::getGravitationLayerMask(cpBody *body) const {
+		return _config.kinematicParticleGravitationLayerMask;
+	}
+
 }

@@ -274,6 +274,7 @@ namespace precariously {
 		smoke.damping = { 0, 0, 0.2 };
 		smoke.additivity = { 1, 0, 0, 0 };
 		smoke.mass = { -1.0, 0.0 };
+		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
 		smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
 		
 		// build a "spark" particle template
@@ -281,10 +282,11 @@ namespace precariously {
 		spark.atlasIdx = 1;
 		spark.lifespan = 2;
 		spark.radius = { 0.0, 20.0, 0.0 };
-		spark.damping = { 0.0, 0.02 };
+		spark.damping = { 0.0, 0.001 };
 		spark.additivity = { 1.0 };
 		spark.mass = { -1.0, +10.0 };
 		spark.orientToVelocity = true;
+		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
 		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
 		
 		// build a "rubble" particle template
@@ -292,7 +294,7 @@ namespace precariously {
 		rubble.atlasIdx = 2;
 		rubble.lifespan = 10;
 		rubble.radius = { 0.1, 10.0, 10.0, 10.0, 0.1 };
-		rubble.damping = 0.02;
+		rubble.damping = 0.001;
 		rubble.additivity = 0.0;
 		rubble.mass = 10.0;
 		rubble.color = _planet->getWorld()->getWorldMaterial().color;
@@ -328,17 +330,17 @@ namespace precariously {
 		auto crack = make_shared<RadialCrackGeometry>(world, numSpokes, numRings, radius, thickness, variance);
 		_planet->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
 		
-//		// get the closest point on terrain surface and use that to place explosive charge
-//		if (auto r = queryNearest(world, ShapeFilters::TERRAIN_PROBE)) {
-//
-//			dvec2 origin = world + radius * normalize(_planet->getOrigin() - r.point);
-//			auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
-//			addGravity(gravity);
-//
-//			for (auto &cls : _cloudLayers) {
-//				cls->getSimulation<CloudLayerParticleSimulation>()->addGravityDisplacement(gravity);
-//			}
-//		}
+		// get the closest point on terrain surface and use that to place explosive charge
+		if (auto r = queryNearest(world, ShapeFilters::TERRAIN_PROBE)) {
+
+			dvec2 origin = world + radius * normalize(_planet->getOrigin() - r.point);
+			auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
+			addGravity(gravity);
+
+			for (auto &cls : _cloudLayers) {
+				cls->getSimulation<CloudLayerParticleSimulation>()->addGravityDisplacement(gravity);
+			}
+		}
 		
 		dvec2 emissionDir = normalize(world - _planet->getOrigin()) * 50.0;
 		_explosionEmitter->emit(world, 10, emissionDir, 1, 60, particles::ParticleEmitter::Sawtooth);

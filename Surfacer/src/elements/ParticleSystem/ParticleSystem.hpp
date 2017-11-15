@@ -169,6 +169,9 @@ namespace particles {
 		// if true, particle is rotated such that the X axis aligns with the direction of velocity
 		bool orientToVelocity;
 		
+		// mask describing which gravitation calculators to apply to ballistic (non-kinematic) particles
+		size_t gravitationLayerMask;
+		
 		kinematics_prototype kinematics;
 		
 	private:
@@ -204,6 +207,7 @@ namespace particles {
 		position(0,0),
 		velocity(0,0),
 		orientToVelocity(false),
+		gravitationLayerMask(core::ALL_GRAVITATION_LAYERS),
 		_shape(nullptr),
 		_body(nullptr),
 		_completion(0),
@@ -420,11 +424,13 @@ namespace particles {
 		struct config {
 			size_t maxParticleCount;
 			bool keepSorted;
+			size_t kinematicParticleGravitationLayerMask;
 			particles::ParticleSystemDrawComponent::config drawConfig;
 			
 			config():
 			maxParticleCount(500),
-			keepSorted(false)
+			keepSorted(false),
+			kinematicParticleGravitationLayerMask(core::ALL_GRAVITATION_LAYERS)
 			{}
 			
 			static config parse(const core::util::xml::XmlMultiTree &node);
@@ -435,9 +441,17 @@ namespace particles {
 	public:
 		
 		// do not call this, call ::create
-		ParticleSystem(std::string name);
+		ParticleSystem(std::string name, const config &c);
 		
+		
+		// ParticleSystem
 		ParticleEmitterRef createEmitter();
+		
+		size_t getGravitationLayerMask(cpBody *body) const override;
+		
+	private:
+		
+		config _config;
 		
 	};
 	
