@@ -129,8 +129,8 @@ namespace core {
 		cpShapeFilter getShapeFilter() const { return _shapeFilter; }
 		cpCollisionType getCollisionType() const { return _collisionType; }
 
-		virtual double getGravityModifier(cpBody *body) const { return 1; }
-
+		virtual size_t getGravitationLayerMask(cpBody *body) const;
+		
 		// get bounding box for all shapes in use
 		virtual cpBB getBB() const = 0;
 
@@ -425,6 +425,10 @@ namespace core {
 
 		// if this Object has a PhysicsComponent get the reported BB, else return cpBBInfinity
 		virtual cpBB getBB() const;
+		
+		// if this Object has a PhysicsComponent, defers to PhysicsComponent::getGravitationLayerMask
+		// otherwise default implementation returns ALL_GRAVITATION_LAYERS
+		virtual size_t getGravitationLayerMask(cpBody *body) const;
 
 	protected:
 

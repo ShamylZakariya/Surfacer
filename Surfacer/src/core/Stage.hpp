@@ -28,6 +28,9 @@ namespace core {
 	
 #pragma mark - GravitationCalculator
 	
+	// mask representing ~0, or all layers.
+	extern const size_t ALL_GRAVITATION_LAYERS;
+	
 	class GravitationCalculator {
 	public:
 		
@@ -51,7 +54,7 @@ namespace core {
 		};
 		
 	public:
-		GravitationCalculator();
+		GravitationCalculator(size_t gravitationLayerMask);
 		virtual ~GravitationCalculator(){}
 		
 		virtual force calculate(const dvec2 &world) const = 0;
@@ -59,21 +62,25 @@ namespace core {
 		
 		void setFinished(bool finished) { _finished = finished; }
 		virtual bool isFinished() const { return _finished; }
+		
+		size_t getGravitationLayerMask() const { return _gravitationLayerMask; }
+		void setGravitationLayerMask(size_t layerMask) { _gravitationLayerMask = layerMask; }
 
 	private:
 		
 		bool _finished;
+		size_t _gravitationLayerMask;
 		
 	};
 	
 	class DirectionalGravitationCalculator : public GravitationCalculator {
 	public:
 		
-		static DirectionalGravitationCalculatorRef create(dvec2 dir, double magnitude);
+		static DirectionalGravitationCalculatorRef create(size_t layer, dvec2 dir, double magnitude);
 		
 	public:
 		
-		DirectionalGravitationCalculator(dvec2 dir, double magnitude);
+		DirectionalGravitationCalculator(size_t layer, dvec2 dir, double magnitude);
 		~DirectionalGravitationCalculator(){}
 		
 		// GravitationCalculator
@@ -95,10 +102,10 @@ namespace core {
 	class RadialGravitationCalculator : public GravitationCalculator {
 	public:
 		
-		static RadialGravitationCalculatorRef create(dvec2 centerOfMass, double magnitude, double falloffPower);
+		static RadialGravitationCalculatorRef create(size_t layer, dvec2 centerOfMass, double magnitude, double falloffPower);
 		
 	public:
-		RadialGravitationCalculator(dvec2 centerOfMass, double magnitude, double falloffPower);
+		RadialGravitationCalculator(size_t layer, dvec2 centerOfMass, double magnitude, double falloffPower);
 		~RadialGravitationCalculator(){}
 		
 		// GravitationCalculator
@@ -143,6 +150,11 @@ namespace core {
 		 Get gravity vector (direction and magnitude) for a given position in space.
 		 */
 		GravitationCalculator::force getGravity(const dvec2 &world);
+
+		/**
+		 Get gravity vector (direction and magnitude) for a given position in space.
+		 */
+		GravitationCalculator::force getGravity(size_t gravitationMask, const dvec2 &world);
 
 		cpSpace *getSpace() const { return _space; }
 
@@ -340,9 +352,11 @@ namespace core {
 		const vector<GravitationCalculatorRef> &getGravities() const { return _gravities; }
 		
 		/**
-		 get the direction and strength of gravity at a point in world space
+		 get the direction and strength of gravity at a point in world space.
+		 gravitationLayerMask: mask for gravitations to apply.
+		 world: position in world space.
 		 */
-		GravitationCalculator::force getGravitation(dvec2 world) const;
+		GravitationCalculator::force getGravitation(size_t gravitationLayerMask, dvec2 world) const;
 
 		/**
 		 Listen for collisions between the two collision types. Override onCollision* methods to handle the collisions.

@@ -70,13 +70,21 @@ namespace surfacer {
 	}
 
 	namespace DrawLayers {
-		enum layer {
+		enum Layer {
 			BACKGROUND = 0,
 			TERRAIN = 1,
 			ENEMY = 2,
 			PLAYER = 3
 		};
 	}
+	
+	namespace GravitationLayers {
+		enum Layer {
+			GLOBAL = 1 << 0,
+			EXPLOSION = 1 << 1
+		};
+	}
+
 
 
 #pragma mark - GameStage

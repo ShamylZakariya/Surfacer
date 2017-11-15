@@ -67,7 +67,7 @@ namespace surfacer { namespace enemy {
 		void onCleanup() override;
 		void step(const core::time_state &time) override;
 		cpBB getBB() const override;
-		double getGravityModifier(cpBody*) const override { return 0; }
+		size_t getGravitationLayerMask(cpBody*) const override { return 0; } // not affected by ANY gravities
 
 	protected:
 

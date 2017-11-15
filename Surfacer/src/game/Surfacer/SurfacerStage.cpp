@@ -147,7 +147,7 @@ namespace surfacer {
 			dvec2 origin = util::xml::readPointAttribute(gravityNode, "origin", dvec2(0,0));
 			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
 			double falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
-			auto gravity = RadialGravitationCalculator::create(origin, magnitude, falloffPower);
+			auto gravity = RadialGravitationCalculator::create(GravitationLayers::GLOBAL, origin, magnitude, falloffPower);
 			addGravity(gravity);
 			
 			if (gravityNode.getAttribute("primary") == "true") {
@@ -156,7 +156,7 @@ namespace surfacer {
 		} else if (type == "directional") {
 			dvec2 dir = util::xml::readPointAttribute(gravityNode, "dir", dvec2(0,0));
 			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
-			addGravity(DirectionalGravitationCalculator::create(dir, magnitude));
+			addGravity(DirectionalGravitationCalculator::create(GravitationLayers::GLOBAL, dir, magnitude));
 		}
 	}
 

@@ -60,12 +60,19 @@ namespace precariously {
 	}
 	
 	namespace DrawLayers {
-		enum layer {
+		enum Layer {
 			BACKGROUND = 0,
 			PLANET = 1000,
 			ENEMY = 2000,
 			PLAYER = 3000,
 			EFFECTS = 4000
+		};
+	}
+	
+	namespace GravitationLayers {
+		enum Layer {
+			GLOBAL = 1 << 0,
+			EXPLOSION = 1 << 1
 		};
 	}
 	

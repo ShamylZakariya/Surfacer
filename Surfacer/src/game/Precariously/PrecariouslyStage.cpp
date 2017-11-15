@@ -27,7 +27,7 @@ namespace precariously {
 			
 		public:
 			ExplosionForceCalculator(dvec2 origin, double magnitude, double falloffPower, seconds_t lifespanSeconds):
-			RadialGravitationCalculator(origin, -abs(magnitude), falloffPower),
+			RadialGravitationCalculator(GravitationLayers::EXPLOSION, origin, -abs(magnitude), falloffPower),
 			_startSeconds(time_state::now()),
 			_lifespanSeconds(lifespanSeconds),
 			_magnitudeScale(0)
@@ -191,7 +191,7 @@ namespace precariously {
 			dvec2 origin = util::xml::readPointAttribute(gravityNode, "origin", dvec2(0,0));
 			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
 			double falloffPower = util::xml::readNumericAttribute<double>(gravityNode, "falloff_power", 0);
-			auto gravity = RadialGravitationCalculator::create(origin, magnitude, falloffPower);
+			auto gravity = RadialGravitationCalculator::create(GravitationLayers::GLOBAL, origin, magnitude, falloffPower);
 			addGravity(gravity);
 			
 			if (gravityNode.getAttribute("primary") == "true") {
@@ -201,7 +201,7 @@ namespace precariously {
 		} else if (type == "directional") {
 			dvec2 dir = util::xml::readPointAttribute(gravityNode, "dir", dvec2(0,0));
 			double magnitude = util::xml::readNumericAttribute<double>(gravityNode, "strength", 10);
-			addGravity(DirectionalGravitationCalculator::create(dir, magnitude));
+			addGravity(DirectionalGravitationCalculator::create(GravitationLayers::GLOBAL, dir, magnitude));
 		}
 	}
 	
@@ -267,35 +267,32 @@ namespace precariously {
 		particle_prototype smoke;
 		smoke.atlasIdx = 0;
 		smoke.lifespan = 3;
-		smoke.radius = { 0.0, 20.0, 20.0, 0.0 };
+		smoke.radius = { 0.0, 50.0, 50.0, 0.0 };
 		smoke.damping = { 0, 0, 0.2 };
 		smoke.additivity = { 1, 0, 0, 0 };
 		smoke.mass = { -1.0, 0.0 };
 		smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
-		smoke.velocity = dvec2(0,10);
 		
 		// build a "spark" particle template
 		particle_prototype spark;
 		spark.atlasIdx = 1;
 		spark.lifespan = 2;
-		spark.radius = { 0.0, 2.0, 0.0 };
+		spark.radius = { 0.0, 20.0, 0.0 };
 		spark.damping = { 0.0, 0.02 };
 		spark.additivity = { 1.0 };
 		spark.mass = { -1.0, +10.0 };
 		spark.orientToVelocity = true;
 		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-		spark.velocity = dvec2(0,100);
 		
 		// build a "rubble" particle template
 		particle_prototype rubble;
 		rubble.atlasIdx = 2;
 		rubble.lifespan = 10;
-		rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
+		rubble.radius = { 0.1, 10.0, 10.0, 10.0, 0.1 };
 		rubble.damping = 0.02;
 		rubble.additivity = 0.0;
 		rubble.mass = 10.0;
 		rubble.color = _planet->getWorld()->getWorldMaterial().color;
-		rubble.velocity = dvec2(0,100);
 		rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
 		
 		_explosionEmitter = ps->createEmitter();
@@ -328,19 +325,20 @@ namespace precariously {
 		auto crack = make_shared<RadialCrackGeometry>(world, numSpokes, numRings, radius, thickness, variance);
 		_planet->getWorld()->cut(crack->getPolygon(), crack->getBB(), minSurfaceAreaThreshold);
 		
-		// get the closest point on terrain surface and use that to place explosive charge
-		if (auto r = queryNearest(world, ShapeFilters::TERRAIN_PROBE)) {
-			
-			dvec2 origin = world + radius * normalize(_planet->getOrigin() - r.point);
-			auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
-			addGravity(gravity);
-			
-			for (auto &cls : _cloudLayers) {
-				cls->getSimulation<CloudLayerParticleSimulation>()->addGravityDisplacement(gravity);
-			}
-		}
+//		// get the closest point on terrain surface and use that to place explosive charge
+//		if (auto r = queryNearest(world, ShapeFilters::TERRAIN_PROBE)) {
+//
+//			dvec2 origin = world + radius * normalize(_planet->getOrigin() - r.point);
+//			auto gravity = ExplosionForceCalculator::create(origin, 4000, 0.5, 0.5);
+//			addGravity(gravity);
+//
+//			for (auto &cls : _cloudLayers) {
+//				cls->getSimulation<CloudLayerParticleSimulation>()->addGravityDisplacement(gravity);
+//			}
+//		}
 		
-		_explosionEmitter->emit(world, 2, dvec2(0,0), 1, 60, particles::ParticleEmitter::Sawtooth);
+		dvec2 emissionDir = normalize(world - _planet->getOrigin()) * 50.0;
+		_explosionEmitter->emit(world, 10, emissionDir, 1, 60, particles::ParticleEmitter::Sawtooth);
 	}
 	
 } // namespace surfacer

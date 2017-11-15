@@ -179,6 +179,10 @@ namespace core {
 		cpCleanupAndFree(_bodies);
 		_space.reset();
 	}
+	
+	size_t PhysicsComponent::getGravitationLayerMask(cpBody *body) const {
+		return ALL_GRAVITATION_LAYERS;		
+	}
 
 	void PhysicsComponent::build(cpShapeFilter filter, cpCollisionType collisionType) {
 		CI_ASSERT_MSG(_space, "Can't call ::build before SpaceAccess has been assigned.");
@@ -397,6 +401,13 @@ namespace core {
 			return _physicsComponent->getBB();
 		}
 		return cpBBInvalid;
+	}
+		
+	size_t Object::getGravitationLayerMask(cpBody *body) const {
+		if (_physicsComponent) {
+			return _physicsComponent->getGravitationLayerMask(body);
+		}
+		return ALL_GRAVITATION_LAYERS;
 	}
 
 	void Object::notifyMoved() {

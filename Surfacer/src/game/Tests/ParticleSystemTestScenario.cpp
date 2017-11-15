@@ -53,8 +53,14 @@ namespace {
 	}
 
 	namespace DrawLayers {
-		enum layer {
+		enum Layer {
 			TERRAIN = 1,
+		};
+	}
+	
+	namespace GravitationLayers {
+		enum Layer {
+			GLOBAL = 1 << 0
 		};
 	}
 	
@@ -231,7 +237,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	
 	auto stage = getStage();
 	stage->addObject(_explosionPs);
-	stage->addGravity(DirectionalGravitationCalculator::create(dvec2(0,-1), 9.8 * 10));
+	stage->addGravity(DirectionalGravitationCalculator::create(GravitationLayers::GLOBAL, dvec2(0,-1), 9.8 * 10));
 
 	// build a "smoke" particle template
 	particle_prototype smoke;

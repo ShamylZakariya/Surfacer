@@ -4,7 +4,11 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-
+Explosion effect looks totally wonky in PrecariouslyStage
+	- this is because world gravities include explosive force, which is pushing smoke particles away
+	Consider some kind of gravities mask/filter which allows me to say, "only these gravities affect these particles"
+	
+Refactor KeyboardDelegateComponent to be as slick as MouseDelegateComponent
 
 ## BUGS PRIORITY 0
 

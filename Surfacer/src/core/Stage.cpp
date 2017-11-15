@@ -15,24 +15,29 @@
 
 namespace core {
 	
+	const size_t ALL_GRAVITATION_LAYERS = ~0; // all layers
+	
 #pragma mark - GravitationCalculator
 
 	/*
 	 bool _finished;
+	 size_t _gravitationLayerMask;
 	 */
-	GravitationCalculator::GravitationCalculator():
-	_finished(false)
+	GravitationCalculator::GravitationCalculator(size_t gravitationLayerMask):
+	_finished(false),
+	_gravitationLayerMask(gravitationLayerMask)
 	{}
 	
 	/*
 	 force _force;
 	 */
 	
-	DirectionalGravitationCalculatorRef DirectionalGravitationCalculator::create(dvec2 dir, double magnitude) {
-		return make_shared<DirectionalGravitationCalculator>(dir, magnitude);
+	DirectionalGravitationCalculatorRef DirectionalGravitationCalculator::create(size_t layerMask, dvec2 dir, double magnitude) {
+		return make_shared<DirectionalGravitationCalculator>(layerMask, dir, magnitude);
 	}
 	
-	DirectionalGravitationCalculator::DirectionalGravitationCalculator(dvec2 dir, double magnitude):
+	DirectionalGravitationCalculator::DirectionalGravitationCalculator(size_t layerMask, dvec2 dir, double magnitude):
+	GravitationCalculator(layerMask),
 	_force(normalize(dir), magnitude)
 	{}
 	
@@ -54,11 +59,12 @@ namespace core {
 	 double _falloffPower;
 	 */
 	
-	RadialGravitationCalculatorRef RadialGravitationCalculator::create(dvec2 centerOfMass, double magnitude, double falloffPower) {
-		return make_shared<RadialGravitationCalculator>(centerOfMass, magnitude, falloffPower);
+	RadialGravitationCalculatorRef RadialGravitationCalculator::create(size_t layerMask, dvec2 centerOfMass, double magnitude, double falloffPower) {
+		return make_shared<RadialGravitationCalculator>(layerMask, centerOfMass, magnitude, falloffPower);
 	}
 	
-	RadialGravitationCalculator::RadialGravitationCalculator(dvec2 centerOfMass, double magnitude, double falloffPower):
+	RadialGravitationCalculator::RadialGravitationCalculator(size_t layerMask, dvec2 centerOfMass, double magnitude, double falloffPower):
+	GravitationCalculator(layerMask),
 	_centerOfMass(centerOfMass),
 	_magnitude(magnitude),
 	_falloffPower(max(falloffPower, 0.0))
@@ -118,7 +124,11 @@ namespace core {
 	}
 
 	GravitationCalculator::force SpaceAccess::getGravity(const dvec2 &world) {
-		return _stage->getGravitation(world);
+		return _stage->getGravitation(ALL_GRAVITATION_LAYERS, world);
+	}
+
+	GravitationCalculator::force SpaceAccess::getGravity(size_t gravitationLayerMask, const dvec2 &world) {
+		return _stage->getGravitation(gravitationLayerMask, world);
 	}
 
 
@@ -390,15 +400,14 @@ namespace core {
 		void gravitationCalculatorVelocityFunc(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt) {
 			cpSpace *space = cpBodyGetSpace(body);
 			Stage *stage = static_cast<Stage*>(cpSpaceGetUserData(space));
-			auto g = stage->getGravitation(v2(cpBodyGetPosition(body)));
-			auto magnitude = g.magnitude;
-
-			// objects can define a custom gravity modifier - 0 means no effect, -1 would be repulsive, etc
+			
+			size_t gravitationLayerMask = ALL_GRAVITATION_LAYERS;
 			if (ObjectRef object = cpBodyGetObject(body)) {
-				if (PhysicsComponentRef physics = object->getPhysicsComponent()) {
-					magnitude *= physics->getGravityModifier(body);
-				}
+				gravitationLayerMask = object->getGravitationLayerMask(body);
 			}
+
+			auto g = stage->getGravitation(gravitationLayerMask, v2(cpBodyGetPosition(body)));
+			auto magnitude = g.magnitude;
 
 			cpBodyUpdateVelocity(body, cpv(g.dir * magnitude), damping, dt);
 		}
@@ -648,12 +657,14 @@ namespace core {
 		_gravities.erase(remove(_gravities.begin(), _gravities.end(), gravityCalculator), _gravities.end());
 	}
 
-	GravitationCalculator::force Stage::getGravitation(dvec2 world) const {
+	GravitationCalculator::force Stage::getGravitation(size_t layerMask, dvec2 world) const {
 		
 		if (!_gravities.empty()) {
 			dvec2 gravity(0,0);
 			for (const auto &calc : _gravities) {
-				gravity += calc->calculate(world).getForce();
+				if (calc->getGravitationLayerMask() & layerMask) {
+					gravity += calc->calculate(world).getForce();
+				}
 			}
 			
 			double magnitude = length(gravity);
