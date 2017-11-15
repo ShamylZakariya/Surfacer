@@ -497,12 +497,24 @@ void MousePickDrawComponent::draw(const render_state &renderState) {
 
 #pragma mark - KeyboardDelegateComponent
 
-KeyboardDelegateComponent::KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes, const KeyHandler &keyUpHandler, const KeyHandler &keyDownHandler):
-InputComponent(dispatchReceiptIndex),
-_upHandler(keyUpHandler),
-_downHandler(keyDownHandler)
+KeyboardDelegateComponentRef KeyboardDelegateComponent::create(int dispatchReceiptIndex, const initializer_list<int> keycodes) {
+	return make_shared<KeyboardDelegateComponent>(dispatchReceiptIndex, keycodes);
+}
+
+KeyboardDelegateComponent::KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes):
+InputComponent(dispatchReceiptIndex)
 {
 	monitorKeys(keycodes);
+}
+
+KeyboardDelegateComponentRef KeyboardDelegateComponent::onPress(KeyHandler h) {
+	_downHandler = h;
+	return shared_from_this_as<KeyboardDelegateComponent>();
+}
+
+KeyboardDelegateComponentRef KeyboardDelegateComponent::onRelease(KeyHandler h) {
+	_upHandler = h;
+	return shared_from_this_as<KeyboardDelegateComponent>();
 }
 
 void KeyboardDelegateComponent::monitoredKeyDown( int keyCode ) {

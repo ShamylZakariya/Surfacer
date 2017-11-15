@@ -201,8 +201,13 @@ public:
 	
 	typedef function<void(int keyCode)> KeyHandler;
 	
+	static KeyboardDelegateComponentRef create(int dispatchReceiptIndex, const initializer_list<int> keycodes);
+	
 public:
-	KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes, const KeyHandler &keyUpHandler, const KeyHandler &keyDownHandler = KeyHandler());
+	KeyboardDelegateComponent(int dispatchReceiptIndex, const initializer_list<int> keycodes);
+	
+	KeyboardDelegateComponentRef onPress(KeyHandler h);
+	KeyboardDelegateComponentRef onRelease(KeyHandler h);
 	
 	void monitoredKeyDown( int keyCode ) override;
 	void monitoredKeyUp( int keyCode ) override;

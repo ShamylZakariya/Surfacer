@@ -135,22 +135,25 @@ namespace precariously {
 		if (true) {
 			
 			addObject(Object::with("Mouse", MouseDelegateComponent::create(0)->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
-				performExplosion(world);
-				return true;
+				if (event.isMetaDown()) {
+					performExplosion(world);
+					return true;
+				}
+				return false;
 			})));
 			
-			addObject(Object::with("Keyboard", make_shared<KeyboardDelegateComponent>(0, initializer_list<int>{ app::KeyEvent::KEY_c, app::KeyEvent::KEY_s },
-				[&](int keyCode){
-					switch(keyCode) {
-						case app::KeyEvent::KEY_c:
-							cullRubble();
-							break;
-						case app::KeyEvent::KEY_s:
-							makeSleepersStatic();
-							break;
-				  }
+			auto keys = initializer_list<int>{ app::KeyEvent::KEY_c, app::KeyEvent::KEY_s };
+			addObject(Object::with("Keyboard", KeyboardDelegateComponent::create(0, keys)->onPress([this](int keyCode){
+				switch(keyCode) {
+					case app::KeyEvent::KEY_c:
+						cullRubble();
+						break;
+					case app::KeyEvent::KEY_s:
+						makeSleepersStatic();
+						break;
+				}
 			})));
-			
+				
 		}
 		
 	}
