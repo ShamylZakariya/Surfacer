@@ -63,13 +63,13 @@ namespace core {
 		void setFinished(bool finished) { _finished = finished; }
 		virtual bool isFinished() const { return _finished; }
 		
-		size_t getGravitationLayerMask() const { return _gravitationLayerMask; }
-		void setGravitationLayerMask(size_t layerMask) { _gravitationLayerMask = layerMask; }
+		size_t getGravitationLayer() const { return _gravitationLayer; }
+		void setGravitationLayer(size_t layer) { _gravitationLayer = layer; }
 
 	private:
 		
 		bool _finished;
-		size_t _gravitationLayerMask;
+		size_t _gravitationLayer;
 		
 	};
 	

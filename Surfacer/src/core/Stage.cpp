@@ -21,23 +21,23 @@ namespace core {
 
 	/*
 	 bool _finished;
-	 size_t _gravitationLayerMask;
+	 size_t _gravitationLayer;
 	 */
-	GravitationCalculator::GravitationCalculator(size_t gravitationLayerMask):
+	GravitationCalculator::GravitationCalculator(size_t gravitationLayer):
 	_finished(false),
-	_gravitationLayerMask(gravitationLayerMask)
+	_gravitationLayer(gravitationLayer)
 	{}
 	
 	/*
 	 force _force;
 	 */
 	
-	DirectionalGravitationCalculatorRef DirectionalGravitationCalculator::create(size_t layerMask, dvec2 dir, double magnitude) {
-		return make_shared<DirectionalGravitationCalculator>(layerMask, dir, magnitude);
+	DirectionalGravitationCalculatorRef DirectionalGravitationCalculator::create(size_t layer, dvec2 dir, double magnitude) {
+		return make_shared<DirectionalGravitationCalculator>(layer, dir, magnitude);
 	}
 	
-	DirectionalGravitationCalculator::DirectionalGravitationCalculator(size_t layerMask, dvec2 dir, double magnitude):
-	GravitationCalculator(layerMask),
+	DirectionalGravitationCalculator::DirectionalGravitationCalculator(size_t layer, dvec2 dir, double magnitude):
+	GravitationCalculator(layer),
 	_force(normalize(dir), magnitude)
 	{}
 	
@@ -59,12 +59,12 @@ namespace core {
 	 double _falloffPower;
 	 */
 	
-	RadialGravitationCalculatorRef RadialGravitationCalculator::create(size_t layerMask, dvec2 centerOfMass, double magnitude, double falloffPower) {
-		return make_shared<RadialGravitationCalculator>(layerMask, centerOfMass, magnitude, falloffPower);
+	RadialGravitationCalculatorRef RadialGravitationCalculator::create(size_t layer, dvec2 centerOfMass, double magnitude, double falloffPower) {
+		return make_shared<RadialGravitationCalculator>(layer, centerOfMass, magnitude, falloffPower);
 	}
 	
-	RadialGravitationCalculator::RadialGravitationCalculator(size_t layerMask, dvec2 centerOfMass, double magnitude, double falloffPower):
-	GravitationCalculator(layerMask),
+	RadialGravitationCalculator::RadialGravitationCalculator(size_t layer, dvec2 centerOfMass, double magnitude, double falloffPower):
+	GravitationCalculator(layer),
 	_centerOfMass(centerOfMass),
 	_magnitude(magnitude),
 	_falloffPower(max(falloffPower, 0.0))
@@ -662,7 +662,7 @@ namespace core {
 		if (!_gravities.empty()) {
 			dvec2 gravity(0,0);
 			for (const auto &calc : _gravities) {
-				if (calc->getGravitationLayerMask() & layerMask) {
+				if (calc->getGravitationLayer() & layerMask) {
 					gravity += calc->calculate(world).getForce();
 				}
 			}
