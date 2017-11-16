@@ -147,7 +147,7 @@ void ParticleSystemTestScenario::setup() {
 	auto mdc = MouseDelegateComponent::create(10)
 		->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
 			if (event.isMetaDown()) {
-				_explosionEmitter->emit(world, 2, dvec2(0,0), 1, 60, ParticleEmitter::Sawtooth);
+				_explosionEmitter->emit(world, 2, dvec2(0,1), 1, 60, ParticleEmitter::Sawtooth);
 			} else {
 				_explosionEmissionId = _explosionEmitter->emit(world, 2, dvec2(0,0), 60);
 			}
@@ -161,7 +161,8 @@ void ParticleSystemTestScenario::setup() {
 			return true;
 		})
 		->onDrag([this](dvec2 screen, dvec2 world, dvec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event){
-			_explosionEmitter->setEmissionPosition(_explosionEmissionId, world, 2, dvec2(0,0));
+			dvec2 dir = normalize(deltaWorld);
+			_explosionEmitter->setEmissionPosition(_explosionEmissionId, world, 2, dir);
 			return true;
 		});
 
@@ -248,7 +249,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	smoke.additivity = { 1, 0, 0, 0 };
 	smoke.mass = { -1.0, 0.0 };
 	smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
-	smoke.velocity = dvec2(0,10);
+	smoke.initialVelocity = 10;
 	
 	// build a "spark" particle template
 	particle_prototype spark;
@@ -260,7 +261,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	spark.mass = { -1.0, +10.0 };
 	spark.orientToVelocity = true;
 	spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-	spark.velocity = dvec2(0,100);
+	spark.initialVelocity = 100;
 	
 	// build a "rubble" particle template
 	particle_prototype rubble;
@@ -271,11 +272,11 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	rubble.additivity = 0.0;
 	rubble.mass = 10.0;
 	rubble.color = TerrainColor;
-	rubble.velocity = dvec2(0,100);
+	rubble.initialVelocity = 40;
 	rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
 	_explosionEmitter->add(smoke, 0.25, 10);
-	_explosionEmitter->add(spark, 0.5, 15);
-	_explosionEmitter->add(rubble, 0.1, 2);
+	_explosionEmitter->add(spark, 0.75, 15);
+	_explosionEmitter->add(rubble, 0.5, 2);
 }

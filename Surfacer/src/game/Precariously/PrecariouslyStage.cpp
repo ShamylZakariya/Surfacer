@@ -274,6 +274,7 @@ namespace precariously {
 		smoke.damping = { 0, 0, 0.2 };
 		smoke.additivity = { 1, 0, 0, 0 };
 		smoke.mass = { -1.0, 0.0 };
+		smoke.initialVelocity = 10;
 		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
 		smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
 		
@@ -285,8 +286,9 @@ namespace precariously {
 		spark.damping = { 0.0, 0.001 };
 		spark.additivity = { 1.0 };
 		spark.mass = { -1.0, +10.0 };
+		smoke.initialVelocity = 80;
 		spark.orientToVelocity = true;
-		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
+		spark.gravitationLayerMask = GravitationLayers::GLOBAL;
 		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
 		
 		// build a "rubble" particle template
@@ -297,6 +299,7 @@ namespace precariously {
 		rubble.damping = 0.001;
 		rubble.additivity = 0.0;
 		rubble.mass = 10.0;
+		rubble.initialVelocity = 40;
 		rubble.color = _planet->getWorld()->getWorldMaterial().color;
 		rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
 		
@@ -342,7 +345,7 @@ namespace precariously {
 			}
 		}
 		
-		dvec2 emissionDir = normalize(world - _planet->getOrigin()) * 50.0;
+		dvec2 emissionDir = normalize(world - _planet->getOrigin());
 		_explosionEmitter->emit(world, 10, emissionDir, 1, 60, particles::ParticleEmitter::Sawtooth);
 	}
 	

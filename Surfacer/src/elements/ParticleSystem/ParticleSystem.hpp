@@ -163,13 +163,15 @@ namespace particles {
 		// initial position of particle. as particle is simulated position will change
 		dvec2 position;
 		
-		// initial velocity to apply to particle. particle motion will be ballistic after this
-		dvec2 velocity;
+		// initial velocity of particle motion
+		double initialVelocity;
 		
 		// if true, particle is rotated such that the X axis aligns with the direction of velocity
 		bool orientToVelocity;
 		
 		// mask describing which gravitation calculators to apply to ballistic (non-kinematic) particles
+		// the layer mask for kinematic particles can only be set
+		// via the parent ParticleSystem::config::kinematicParticleGravitationLayerMask field
 		size_t gravitationLayerMask;
 		
 		kinematics_prototype kinematics;
@@ -180,6 +182,7 @@ namespace particles {
 		
 		cpShape* _shape;
 		cpBody* _body;
+		dvec2 _velocity;
 		double _completion;
 		seconds_t _age;
 		
@@ -205,11 +208,12 @@ namespace particles {
 		atlasIdx(0),
 		lifespan(0),
 		position(0,0),
-		velocity(0,0),
+		initialVelocity(0),
 		orientToVelocity(false),
 		gravitationLayerMask(core::ALL_GRAVITATION_LAYERS),
 		_shape(nullptr),
 		_body(nullptr),
+		_velocity(0,0),
 		_completion(0),
 		_age(0)
 		{}
@@ -234,8 +238,7 @@ namespace particles {
 		// ParticleSimulation
 		
 		// emit a single particle
-		void emit(const particle_prototype &particle);
-		void emit(const particle_prototype &particle, const dvec2 &world, const dvec2 &vel);
+		void emit(const particle_prototype &particle, const dvec2 &world, const dvec2 &dir);
 
 		// if true, ParticleSimulation will when necessary sort the active particles by age
 		// with oldest being drawn first. Only turn this on if you see periodic "pops" where
@@ -303,29 +306,29 @@ namespace particles {
 		void add(const particle_prototype &prototype, float variance, int probability = 1);
 		
 		/**
-		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
+		 Create an emission in a diven direction from a circular volume in the world that lasts `duration seconds and has an
 		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
 		 Returns an id usable to cancel the emission via cancel()
 		 */
-		emission_id emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, Envelope env);
+		emission_id emit(dvec2 world, double radius, dvec2 dir, seconds_t duration, double rate, Envelope env);
 		
 		/**
-		 Create an emission for a circular volume in the world that lasts `duration seconds and has an
+		 Create an emission in a given direction from a circular volume in the world that lasts `duration seconds and has an
 		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
 		 Returns an id usable to cancel the emission via cancel()
 		 */
-		emission_id emit(dvec2 world, double radius, dvec2 vel, seconds_t duration, double rate, const interpolator<double> &envelope);
+		emission_id emit(dvec2 world, double radius, dvec2 dir, seconds_t duration, double rate, const interpolator<double> &envelope);
 		
 		/**
-		 Create an emission for a circular volume in the world at a given rate. It will run until cancel() is called on the returned id.
+		 Create an emission in a given direction for a circular volume in the world at a given rate. It will run until cancel() is called on the returned id.
 		 Returns an id usable to cancel the emission via cancel()
 		 */
-		emission_id emit(dvec2 world, double radius, dvec2 vel, double rate);
+		emission_id emit(dvec2 world, double radius, dvec2 dir, double rate);
 		
 		/**
-		 Update the position, radius and velocity of an active emission
+		 Update the position, radius and emission direction of an active emission
 		 */
-		void setEmissionPosition(emission_id emission, dvec2 world, double radius, dvec2 vel);
+		void setEmissionPosition(emission_id emission, dvec2 world, double radius, dvec2 dir);
 		
 		/**
 		 Cancels a running emission. Pass the id returned by one of the emit() methods
@@ -335,15 +338,20 @@ namespace particles {
 		/**
 		 Emit `count particles in the circular volume of `radius about `world
 		 */
-		void emitBurst(dvec2 world, double radius, dvec2 vel, int count = 1);
+		void emitBurst(dvec2 world, double radius, dvec2 dir, int count = 1);
 
 
 	private:
-		
+
+		// returns random double from [1-variance to 1+variance]
 		double nextDouble(double variance);
-		dvec2 nextDVec2(double variance);		
+		
+		// scales dir by [1-variance to 1+variance]
 		dvec2 perturb(const dvec2 dir, double variance);
 		
+		// scales value by [1-variance to 1+variance]
+		double perturb(double value, double variance);
+
 		struct emission_prototype {
 			particle_prototype prototype;
 			float variance;
@@ -356,7 +364,7 @@ namespace particles {
 			seconds_t secondsPerEmission;
 			seconds_t secondsAccumulator;
 			dvec2 world;
-			dvec2 velocity;
+			dvec2 dir;
 			double radius;			
 			interpolator<double> envelope;
 		};
