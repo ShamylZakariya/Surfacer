@@ -270,13 +270,13 @@ namespace precariously {
 		particle_prototype smoke;
 		smoke.atlasIdx = 0;
 		smoke.lifespan = 3;
-		smoke.radius = { 0.0, 50.0, 50.0, 0.0 };
+		smoke.radius = { 0.0, 100.0, 20.0, 0.0 };
 		smoke.damping = { 0, 0, 0.2 };
-		smoke.additivity = { 1, 0, 0, 0 };
+		smoke.additivity = 0;
 		smoke.mass = { -1.0, 0.0 };
 		smoke.initialVelocity = 10;
 		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
-		smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
+		smoke.color = { ci::ColorA(0.8,0.8,0.8,1), ci::ColorA(1,1,1,1) };
 		
 		// build a "spark" particle template
 		particle_prototype spark;
@@ -290,7 +290,7 @@ namespace precariously {
 		spark.orientToVelocity = true;
 		spark.gravitationLayerMask = GravitationLayers::GLOBAL;
 		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-		
+
 		// build a "rubble" particle template
 		particle_prototype rubble;
 		rubble.atlasIdx = 2;
@@ -305,7 +305,7 @@ namespace precariously {
 		
 		_explosionEmitter = ps->createEmitter();
 		_explosionEmitter->add(smoke, 0.25, 10);
-		_explosionEmitter->add(spark, 0.5, 15);
+		_explosionEmitter->add(spark, 0.5, 10);
 		_explosionEmitter->add(rubble, 0.1, 2);
 	}
 	

@@ -116,17 +116,20 @@ namespace particles {
 		struct kinematics_prototype {
 			bool isKinematic;
 			double friction;
+			double elasticity;
 			cpShapeFilter filter;
 			
 			kinematics_prototype():
 			isKinematic(false),
 			friction(1),
+			elasticity(0.5),
 			filter(CP_SHAPE_FILTER_ALL)
 			{}
 			
-			kinematics_prototype(double friction, cpShapeFilter filter):
+			kinematics_prototype(double friction, double elasticity, cpShapeFilter filter):
 			isKinematic(true),
 			friction(friction),
+			elasticity(elasticity),
 			filter(filter)
 			{}
 			

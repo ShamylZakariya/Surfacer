@@ -258,10 +258,11 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	spark.radius = { 0.0, 2.0, 0.0 };
 	spark.damping = { 0.0, 0.02 };
 	spark.additivity = { 1.0 };
-	spark.mass = { -1.0, +10.0 };
+	spark.mass = { 0.1, +10.0 };
 	spark.orientToVelocity = true;
 	spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
 	spark.initialVelocity = 100;
+	spark.kinematics = particle_prototype::kinematics_prototype(1, 1, ShapeFilters::TERRAIN);
 	
 	// build a "rubble" particle template
 	particle_prototype rubble;
@@ -273,10 +274,10 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	rubble.mass = 10.0;
 	rubble.color = TerrainColor;
 	rubble.initialVelocity = 40;
-	rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
+	rubble.kinematics = particle_prototype::kinematics_prototype(1, 0, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
-	_explosionEmitter->add(smoke, 0.25, 10);
+//	_explosionEmitter->add(smoke, 0.25, 10);
 	_explosionEmitter->add(spark, 0.75, 15);
-	_explosionEmitter->add(rubble, 0.5, 2);
+//	_explosionEmitter->add(rubble, 0.5, 2);
 }

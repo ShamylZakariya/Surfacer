@@ -171,6 +171,7 @@ namespace particles {
 					cpBodySetVelocity(body, cpv(particle._velocity));
 					cpShapeSetFilter(shape, particle.kinematics.filter);
 					cpShapeSetFriction(shape, particle.kinematics.friction);
+					cpShapeSetElasticity(shape, min(particle.kinematics.elasticity, 1.0));
 					
 					_prototypes[idx]._body = body;
 					_prototypes[idx]._shape = shape;
