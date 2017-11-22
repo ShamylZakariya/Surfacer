@@ -51,6 +51,18 @@ namespace particles {
 			}
 			return c;
 		}
+
+		interpolator<ci::ColorA> perturb(ci::Rand &rng, const interpolator<ci::ColorA> &value, double variance) {
+			interpolator<ci::ColorA> c = value;
+			for (auto it(c._values.begin()), end(c._values.end()); it != end; ++it) {
+				it->r = saturate(it->r * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance))));
+				it->g = saturate(it->g * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance))));
+				it->b = saturate(it->b * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance))));
+				it->a = saturate(it->a * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance))));
+			}
+			return c;
+		}
+
 		
 		particle_prototype perturb(ci::Rand &rng, const particle_prototype &value, double variance) {
 			particle_prototype c = value;
@@ -60,6 +72,7 @@ namespace particles {
 			c.damping = perturb(rng, c.damping, variance);
 			c.additivity = perturb(rng, c.additivity, variance);
 			c.mass = perturb(rng, c.mass, variance);
+			c.color = perturb(rng, c.color, variance);
 			c.initialVelocity = perturb(rng, c.initialVelocity, variance);
 
 			return c;
