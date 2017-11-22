@@ -103,8 +103,6 @@ namespace particles {
 			return a + (factor * (b - a));
 		}
 		
-	private:
-		
 		vector<T> _values;
 		
 	};
@@ -117,12 +115,14 @@ namespace particles {
 			bool isKinematic;
 			double friction;
 			double elasticity;
+			double scale;
 			cpShapeFilter filter;
 			
 			kinematics_prototype():
 			isKinematic(false),
 			friction(1),
 			elasticity(0.5),
+			scale(1),
 			filter(CP_SHAPE_FILTER_ALL)
 			{}
 			
@@ -130,6 +130,15 @@ namespace particles {
 			isKinematic(true),
 			friction(friction),
 			elasticity(elasticity),
+			scale(1),
+			filter(filter)
+			{}
+
+			kinematics_prototype(double friction, double elasticity, double scale, cpShapeFilter filter):
+			isKinematic(true),
+			friction(friction),
+			elasticity(elasticity),
+			scale(scale),
 			filter(filter)
 			{}
 			
@@ -172,13 +181,18 @@ namespace particles {
 		// if true, particle is rotated such that the X axis aligns with the direction of velocity
 		bool orientToVelocity;
 		
+		// if > 0, represents the minimum velocity for scale of particle to be normal. if the particle
+		// velocity falls beneath this value, the size is scaled proportionally down to zero.
+		// this is a way to hide spark effects when they're immobile.
+		double minVelocity;
+		
 		// mask describing which gravitation calculators to apply to ballistic (non-kinematic) particles
 		// the layer mask for kinematic particles can only be set
 		// via the parent ParticleSystem::config::kinematicParticleGravitationLayerMask field
 		size_t gravitationLayerMask;
 		
 		kinematics_prototype kinematics;
-		
+				
 	private:
 		
 		friend class ParticleSimulation;
@@ -213,6 +227,7 @@ namespace particles {
 		position(0,0),
 		initialVelocity(0),
 		orientToVelocity(false),
+		minVelocity(0),
 		gravitationLayerMask(core::ALL_GRAVITATION_LAYERS),
 		_shape(nullptr),
 		_body(nullptr),
@@ -343,17 +358,7 @@ namespace particles {
 		 */
 		void emitBurst(dvec2 world, double radius, dvec2 dir, int count = 1);
 
-
 	private:
-
-		// returns random double from [1-variance to 1+variance]
-		double nextDouble(double variance);
-		
-		// scales dir by [1-variance to 1+variance]
-		dvec2 perturb(const dvec2 dir, double variance);
-		
-		// scales value by [1-variance to 1+variance]
-		double perturb(double value, double variance);
 
 		struct emission_prototype {
 			particle_prototype prototype;

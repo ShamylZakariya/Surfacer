@@ -24,11 +24,52 @@ namespace particles {
 			}
 			return dir;
 		}
+
+		// returns random double from [1-variance to 1+variance]
+		double next_double(ci::Rand &rng, double variance) {
+			return 1.0 + static_cast<double>(rng.nextFloat(-variance, variance));
+		}
+		
+		// scales dir by [1-variance to 1+variance]
+		dvec2 perturb(ci::Rand &rng, const dvec2 dir, double variance) {
+			double len2 = lengthSquared(dir);
+			if (len2 > 0) {
+				return dir * (1.0 + next_double(rng, variance));
+			}
+			return dir;
+		}
+		
+		// scales value by [1-variance to 1+variance]
+		double perturb(ci::Rand &rng, double value, double variance) {
+			return value * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance)));
+		}
+		
+		interpolator<double> perturb(ci::Rand &rng, const interpolator<double> &value, double variance) {
+			interpolator<double> c = value;
+			for (auto it(c._values.begin()), end(c._values.end()); it != end; ++it) {
+				*it = *it * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance)));
+			}
+			return c;
+		}
+		
+		particle_prototype perturb(ci::Rand &rng, const particle_prototype &value, double variance) {
+			particle_prototype c = value;
+
+			c.lifespan = perturb(rng, c.lifespan, variance);
+			c.radius = perturb(rng, c.radius, variance);
+			c.damping = perturb(rng, c.damping, variance);
+			c.additivity = perturb(rng, c.additivity, variance);
+			c.mass = perturb(rng, c.mass, variance);
+			c.initialVelocity = perturb(rng, c.initialVelocity, variance);
+
+			return c;
+		}
+	
 		
 	}
 	
 #pragma mark - ParticleSimulation
-
+	
 	/*
 	 size_t _count;
 	 cpBB _bb;
@@ -155,7 +196,7 @@ namespace particles {
 				
 				if (particle.kinematics) {
 					double mass = particle.mass.getInitialValue();
-					double radius = max(particle.radius.getInitialValue(), MinKinematicParticleRadius);
+					double radius = particle.kinematics.scale * max(particle.radius.getInitialValue(), MinKinematicParticleRadius);
 					double moment = cpMomentForCircle(mass, 0, radius, cpvzero);
 					cpBody *body = cpBodyNew(mass, moment);
 					cpShape *shape = cpCircleShapeNew(body, radius, cpvzero);
@@ -171,7 +212,7 @@ namespace particles {
 					cpBodySetVelocity(body, cpv(particle._velocity));
 					cpShapeSetFilter(shape, particle.kinematics.filter);
 					cpShapeSetFriction(shape, particle.kinematics.friction);
-					cpShapeSetElasticity(shape, min(particle.kinematics.elasticity, 1.0));
+					cpShapeSetElasticity(shape, saturate(particle.kinematics.elasticity));
 					
 					_prototypes[idx]._body = body;
 					_prototypes[idx]._shape = shape;
@@ -278,7 +319,7 @@ namespace particles {
 				
 				// now update chipmunk's representation
 				cpBodySetMass(body, max(mass, 0.0));
-				cpCircleShapeSetRadius(shape, max(radius,MinKinematicParticleRadius));
+				cpCircleShapeSetRadius(shape, max(radius * prototype->kinematics.scale, MinKinematicParticleRadius));
 			}
 			
 			if (prototype->orientToVelocity) {
@@ -297,6 +338,15 @@ namespace particles {
 				state->right.y = 0;
 				state->up.x = 0;
 				state->up.y = size;
+			}
+			
+			if (prototype->minVelocity > 0) {
+				double vel = length(prototype->_velocity);
+				double scale = vel / prototype->minVelocity;
+				if (scale < 1) {
+					state->right *= scale;
+					state->up *= scale;
+				}
 			}
 			
 			state->atlasIdx = prototype->atlasIdx;
@@ -373,8 +423,9 @@ namespace particles {
 						size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
 						const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
 						dvec2 position = e.world + e.radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
-						dvec2 direction = perturb(e.dir, proto.variance);
-						sim->emit(proto.prototype, position, direction);
+						dvec2 direction = perturb(_rng, e.dir, proto.variance);
+						
+						sim->emit(perturb(_rng, proto.prototype, proto.variance), position, direction);
 						
 						// remove one particle's worth of seconds from accumulator
 						// accumulator will retain leftovers for next step
@@ -500,30 +551,13 @@ namespace particles {
 				size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
 				const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
 				dvec2 position = world + radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
-				dvec2 direction = perturb(dir, proto.variance);
+				dvec2 direction = perturb(_rng, dir, proto.variance);
 				
 				sim->emit(proto.prototype, position, direction);
 			}
 		}
 	}
 	
-	double ParticleEmitter::nextDouble(double variance) {
-		return 1.0 + static_cast<double>(_rng.nextFloat(-variance, variance));
-	}
-
-	dvec2 ParticleEmitter::perturb(const dvec2 dir, double variance) {
-		double len2 = lengthSquared(dir);
-		if (len2 > 0) {
-			return dir * (1.0 + nextDouble(variance));
-		}
-		return dir;
-	}
-	
-	double ParticleEmitter::perturb(double value, double variance) {
-		return value * (1.0 + _rng.nextFloat(-variance, +variance));
-	}
-
-
 #pragma mark - ParticleSystemDrawComponent
 	
 	/*
