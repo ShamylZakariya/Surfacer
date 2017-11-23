@@ -147,9 +147,9 @@ void ParticleSystemTestScenario::setup() {
 	auto mdc = MouseDelegateComponent::create(10)
 		->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
 			if (event.isMetaDown()) {
-				_explosionEmitter->emit(world, 2, dvec2(0,1), 1, 60, ParticleEmitter::Sawtooth);
+				_explosionEmitter->emit(world, dvec2(0,1), 1, 60, ParticleEmitter::Sawtooth);
 			} else {
-				_explosionEmissionId = _explosionEmitter->emit(world, 2, dvec2(0,0), 60);
+				_explosionEmissionId = _explosionEmitter->emit(world, dvec2(0,1), 60);
 			}
 			return true;
 		})
@@ -162,7 +162,7 @@ void ParticleSystemTestScenario::setup() {
 		})
 		->onDrag([this](dvec2 screen, dvec2 world, dvec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event){
 			dvec2 dir = normalize(deltaWorld);
-			_explosionEmitter->setEmissionPosition(_explosionEmissionId, world, 2, dir);
+			_explosionEmitter->setEmissionPosition(_explosionEmissionId, world, dir);
 			return true;
 		});
 
@@ -243,26 +243,27 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	// build a "smoke" particle template
 	particle_prototype smoke;
 	smoke.atlasIdx = 0;
-	smoke.lifespan = 3;
-	smoke.radius = { 0.0, 20.0, 20.0, 0.0 };
-	smoke.damping = { 0, 0, 0.2 };
+	smoke.lifespan = 2;
+	smoke.radius = { 0, 10, 4, 1, 0 };
+	smoke.damping = { 0, 0, 0.1 };
 	smoke.additivity = { 1, 0, 0, 0 };
-	smoke.mass = { -1.0, 0.0 };
-	smoke.color = { ci::ColorA(0.8,0.4,0.0,1), ci::ColorA(1,1,1,1) };
-	smoke.initialVelocity = 10;
+	smoke.mass = { 0 };
+	smoke.initialVelocity = 30;
+	smoke.color = { ci::ColorA(1,0.7,0.2,1), ci::ColorA(0.7,0.7,0.7,1), ci::ColorA(1,1,1,1), ci::ColorA(1,1,1,1) };
 	
 	// build a "spark" particle template
 	particle_prototype spark;
 	spark.atlasIdx = 1;
-	spark.lifespan = 2;
-	spark.radius = { 0.0, 2.0, 0.0 };
-	spark.damping = { 0.0, 0.02 };
+	spark.lifespan = 3;
+	spark.radius = { 0, 4, 4, 4, 4, 0 };
+	spark.damping = { 0.0, 0.05 };
 	spark.additivity = { 1.0 };
-	spark.mass = { 0.1, +10.0 };
+	spark.mass = 10;
 	spark.orientToVelocity = true;
+	spark.initialVelocity = 60;
+	spark.minVelocity = 60;
 	spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-	spark.initialVelocity = 100;
-	spark.kinematics = particle_prototype::kinematics_prototype(1, 1, ShapeFilters::TERRAIN);
+	spark.kinematics = particle_prototype::kinematics_prototype(1, 1, 0.2, ShapeFilters::TERRAIN);
 	
 	// build a "rubble" particle template
 	particle_prototype rubble;
@@ -277,7 +278,7 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	rubble.kinematics = particle_prototype::kinematics_prototype(1, 0, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
-//	_explosionEmitter->add(smoke, 0.25, 10);
-	_explosionEmitter->add(spark, 0.75, 15);
-//	_explosionEmitter->add(rubble, 0.5, 2);
+	_explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.05), 20);
+	_explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 10);
+	_explosionEmitter->add(rubble, ParticleEmitter::Source(10, 1, 0.15), 4);
 }

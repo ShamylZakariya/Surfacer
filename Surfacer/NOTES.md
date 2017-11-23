@@ -5,8 +5,8 @@ When satellite debris gets out of hand
 ## PRESENTLY
 
 Explosion effect looks totally wonky in PrecariouslyStage
-	need to scale the spark size down to zero when motion approaches zero (flag?)
 	Need to figure out how to make initialDirection variance work better. my variance algo isn't cutting it.
+		Consider creating some kind of emission source object. can be a circle, a cone, etc. it vends initial position and direction
 
 ## BUGS PRIORITY 0
 

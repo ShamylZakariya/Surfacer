@@ -25,20 +25,6 @@ namespace particles {
 			return dir;
 		}
 
-		// returns random double from [1-variance to 1+variance]
-		double next_double(ci::Rand &rng, double variance) {
-			return 1.0 + static_cast<double>(rng.nextFloat(-variance, variance));
-		}
-		
-		// scales dir by [1-variance to 1+variance]
-		dvec2 perturb(ci::Rand &rng, const dvec2 dir, double variance) {
-			double len2 = lengthSquared(dir);
-			if (len2 > 0) {
-				return dir * (1.0 + next_double(rng, variance));
-			}
-			return dir;
-		}
-		
 		// scales value by [1-variance to 1+variance]
 		double perturb(ci::Rand &rng, double value, double variance) {
 			return value * (1.0 + static_cast<double>(rng.nextFloat(-variance, +variance)));
@@ -63,7 +49,6 @@ namespace particles {
 			return c;
 		}
 
-		
 		particle_prototype perturb(ci::Rand &rng, const particle_prototype &value, double variance) {
 			particle_prototype c = value;
 
@@ -390,6 +375,35 @@ namespace particles {
 		}
 	}
 	
+	void ParticleEmitter::Source::apply(ci::Rand &rng, const dvec2 &world, const dvec2 &normalizedDirOrZero, dvec2 &outWorld, dvec2 &outDir) const {
+
+		// plot position
+		if (radius > 0) {
+			outWorld = world + dvec2(rng.nextVec2()) * radius;
+		} else {
+			outWorld = world;
+		}
+		
+		// plot spread
+		double l2 = lengthSquared(normalizedDirOrZero);
+		if (spread > 0 && l2 > 1e-5) {
+			dvec2 side = rotateCCW(normalizedDirOrZero);
+			dvec2 back = -normalizedDirOrZero;
+			if (rng.nextBool()) {
+				side = -side;
+			}
+			double f = static_cast<double>(rng.nextFloat()) * spread;
+			if (f < 0.5) {
+				outDir = lrp(f/0.5, normalizedDirOrZero, side);
+			} else {
+				outDir = lrp((f-0.5)/0.5, side, back);
+			}
+			outDir = normalize(outDir);
+		} else {
+			outDir = normalizedDirOrZero;
+		}
+	}
+	
 	/*
 	 ParticleSimulationWeakRef _simulation;
 	 vector<emission> _emissions;
@@ -435,10 +449,11 @@ namespace particles {
 						// emit one particle
 						size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
 						const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
-						dvec2 position = e.world + e.radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
-						dvec2 direction = perturb(_rng, e.dir, proto.variance);
 						
-						sim->emit(perturb(_rng, proto.prototype, proto.variance), position, direction);
+						dvec2 world, dir;
+						proto.source.apply(_rng, e.world, e.dir, world, dir);
+						
+						sim->emit(perturb(_rng, proto.prototype, proto.source.variance), world, dir);
 						
 						// remove one particle's worth of seconds from accumulator
 						// accumulator will retain leftovers for next step
@@ -480,27 +495,27 @@ namespace particles {
 		_rng.seed(seed);
 	}
 	
-	void ParticleEmitter::add(const particle_prototype &prototype, float variance, int probability) {
+	void ParticleEmitter::add(const particle_prototype &prototype, Source source, int probability) {
 		size_t idx = _prototypes.size();
-		_prototypes.push_back({prototype, variance});
+		_prototypes.push_back({prototype, source});
 		for (int i = 0; i < probability; i++) {
 			_prototypeLookup.push_back(idx);
 		}
 	}
 	
-	size_t ParticleEmitter::emit(dvec2 world, double radius, dvec2 dir, seconds_t duration, double rate, Envelope env) {
+	size_t ParticleEmitter::emit(dvec2 world, dvec2 normalizedDirOrZero, seconds_t duration, double rate, Envelope env) {
 		switch (env) {
 			case RampUp:
-				return emit(world, radius, dir, duration, rate, interpolator<double>({0.0,1.0}));
+				return emit(world, normalizedDirOrZero, duration, rate, interpolator<double>({0.0,1.0}));
 				break;
 			case Sawtooth:
-				return emit(world, radius, dir, duration, rate, interpolator<double>({0.0,1.0,0.0}));
+				return emit(world, normalizedDirOrZero, duration, rate, interpolator<double>({0.0,1.0,0.0}));
 				break;
 			case Mesa:
-				return emit(world, radius, dir, duration, rate, interpolator<double>({0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0}));
+				return emit(world, normalizedDirOrZero, duration, rate, interpolator<double>({0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0}));
 				break;
 			case RampDown:
-				return emit(world, radius, dir, duration, rate, interpolator<double>({1.0,0.0}));
+				return emit(world, normalizedDirOrZero, duration, rate, interpolator<double>({1.0,0.0}));
 				break;
 		}
 		
@@ -508,7 +523,7 @@ namespace particles {
 		return 0;
 	}
 	
-	size_t ParticleEmitter::emit(dvec2 world, double radius, dvec2 dir, seconds_t duration, double rate, const interpolator<double> &envelope) {
+	size_t ParticleEmitter::emit(dvec2 world, dvec2 normalizedDirOrZero, seconds_t duration, double rate, const interpolator<double> &envelope) {
 		emission e;
 		e.id = next_emission_id();
 		e.startTime = getStage()->getTimeState().time;
@@ -516,23 +531,21 @@ namespace particles {
 		e.secondsPerEmission = 1.0 / rate;
 		e.secondsAccumulator = 0;
 		e.world = world;
-		e.dir = safe_normalize(dir);
-		e.radius = radius;
-		e.envelope = envelope;		
+		e.dir = safe_normalize(normalizedDirOrZero);
+		e.envelope = envelope;
 		_emissions[e.id] = e;
 		
 		return e.id;
 	}
 	
-	size_t ParticleEmitter::emit(dvec2 world, double radius, dvec2 dir, double rate) {
+	size_t ParticleEmitter::emit(dvec2 world, dvec2 normalizedDirOrZero, double rate) {
 		emission e;
 		e.id = next_emission_id();
 		e.startTime = e.endTime = -1;
 		e.secondsPerEmission = 1.0 / rate;
 		e.secondsAccumulator = 0;
 		e.world = world;
-		e.dir = safe_normalize(dir);
-		e.radius = radius;
+		e.dir = safe_normalize(normalizedDirOrZero);
 		e.envelope = 1;
 		
 		_emissions[e.id] = e;
@@ -540,12 +553,11 @@ namespace particles {
 		return e.id;
 	}
 	
-	void ParticleEmitter::setEmissionPosition(emission_id emissionId, dvec2 world, double radius, dvec2 dir) {
+	void ParticleEmitter::setEmissionPosition(emission_id emissionId, dvec2 world, dvec2 normalizedDirOrZero) {
 		auto pos = _emissions.find(emissionId);
 		if (pos != _emissions.end()) {
 			pos->second.world = world;
-			pos->second.radius = radius;
-			pos->second.dir = safe_normalize(dir);
+			pos->second.dir = safe_normalize(normalizedDirOrZero);
 		}
 	}
 
@@ -556,17 +568,18 @@ namespace particles {
 		}
 	}
 	
-	void ParticleEmitter::emitBurst(dvec2 world, double radius, dvec2 dir, int count) {
+	void ParticleEmitter::emitBurst(dvec2 world, dvec2 normalizedDirOrZero, int count) {
 		if (ParticleSimulationRef sim = _simulation.lock()) {
-			dir = safe_normalize(dir);
+			normalizedDirOrZero = safe_normalize(normalizedDirOrZero);
 
 			for (int i = 0; i < count; i++) {
 				size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
 				const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
-				dvec2 position = world + radius * static_cast<double>(_rng.nextFloat()) * dvec2(_rng.nextVec2());
-				dvec2 direction = perturb(_rng, dir, proto.variance);
+
+				dvec2 world, dir;
+				proto.source.apply(_rng, world, dir, world, dir);
 				
-				sim->emit(proto.prototype, position, direction);
+				sim->emit(perturb(_rng, proto.prototype, proto.source.variance), world, dir);
 			}
 		}
 	}

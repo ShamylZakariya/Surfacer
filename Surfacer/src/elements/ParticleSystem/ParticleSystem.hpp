@@ -283,6 +283,32 @@ namespace particles {
 	class ParticleEmitter : public core::Component {
 	public:
 		
+		struct Source {
+
+			// max distance from emission point; particles will be emitted from
+			// a circular volume of this radius
+			double radius;
+			
+			// max spread in radians from the emission direction. A value of zero
+			// results in a laser-like emission, a value of 0.25 is a cone with 90° tip.
+			// A value of 1 is a full circular emission regardless of direction.
+			double spread;
+			
+			// amount of per-particle randomization variance. A value of 0 means no
+			// change per-particle, a value of 0.5 means each value in the particle will
+			// be multiplied by a random value between [1-0.5, 1+0.5], and so on.
+			double variance;
+			
+			Source(double radius, double spread, double variance):
+			radius(max(radius,0.0)),
+			spread(clamp(spread, 0.0, 1.0)),
+			variance(clamp(variance, 0.0, 1.0))
+			{}
+			
+			void apply(ci::Rand &rng, const dvec2 &world, const dvec2 &normalizedDirOrZero, dvec2 &outWorld, dvec2 &outDir) const;
+
+		};
+		
 		enum Envelope {
 			// emission ramps up from 0 to full rate across lifetime
 			RampUp,
@@ -321,32 +347,32 @@ namespace particles {
 		 Add a template to the emission library. The higher probability is relative to other templates
 		 the more often this template will be emitted.
 		 */
-		void add(const particle_prototype &prototype, float variance, int probability = 1);
+		void add(const particle_prototype &prototype, Source source, int probability = 1);
 		
 		/**
 		 Create an emission in a diven direction from a circular volume in the world that lasts `duration seconds and has an
 		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
 		 Returns an id usable to cancel the emission via cancel()
 		 */
-		emission_id emit(dvec2 world, double radius, dvec2 dir, seconds_t duration, double rate, Envelope env);
+		emission_id emit(dvec2 world, dvec2 normalizedDirOrZero, seconds_t duration, double rate, Envelope env);
 		
 		/**
 		 Create an emission in a given direction from a circular volume in the world that lasts `duration seconds and has an
 		 emission rate following the specified envelope. Will emit at max envolope `rate particles per second.
 		 Returns an id usable to cancel the emission via cancel()
 		 */
-		emission_id emit(dvec2 world, double radius, dvec2 dir, seconds_t duration, double rate, const interpolator<double> &envelope);
+		emission_id emit(dvec2 world, dvec2 normalizedDirOrZero, seconds_t duration, double rate, const interpolator<double> &envelope);
 		
 		/**
 		 Create an emission in a given direction for a circular volume in the world at a given rate. It will run until cancel() is called on the returned id.
 		 Returns an id usable to cancel the emission via cancel()
 		 */
-		emission_id emit(dvec2 world, double radius, dvec2 dir, double rate);
+		emission_id emit(dvec2 world, dvec2 normalizedDirOrZero, double rate);
 		
 		/**
 		 Update the position, radius and emission direction of an active emission
 		 */
-		void setEmissionPosition(emission_id emission, dvec2 world, double radius, dvec2 dir);
+		void setEmissionPosition(emission_id emission, dvec2 world, dvec2 dir);
 		
 		/**
 		 Cancels a running emission. Pass the id returned by one of the emit() methods
@@ -356,13 +382,13 @@ namespace particles {
 		/**
 		 Emit `count particles in the circular volume of `radius about `world
 		 */
-		void emitBurst(dvec2 world, double radius, dvec2 dir, int count = 1);
+		void emitBurst(dvec2 world, dvec2 dir, int count = 1);
 
 	private:
 
 		struct emission_prototype {
 			particle_prototype prototype;
-			float variance;
+			Source source;
 		};
 		
 		struct emission {
@@ -373,7 +399,6 @@ namespace particles {
 			seconds_t secondsAccumulator;
 			dvec2 world;
 			dvec2 dir;
-			double radius;			
 			interpolator<double> envelope;
 		};
 		
