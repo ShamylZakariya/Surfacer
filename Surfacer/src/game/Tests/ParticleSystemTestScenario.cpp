@@ -147,9 +147,9 @@ void ParticleSystemTestScenario::setup() {
 	auto mdc = MouseDelegateComponent::create(10)
 		->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event){
 			if (event.isMetaDown()) {
-				_explosionEmitter->emit(world, dvec2(0,1), 1, 60, ParticleEmitter::Sawtooth);
+				_explosionEmitter->emit(world, dvec2(0,1), 1, 120, ParticleEmitter::Sawtooth);
 			} else {
-				_explosionEmissionId = _explosionEmitter->emit(world, dvec2(0,1), 60);
+				_explosionEmissionId = _explosionEmitter->emit(world, dvec2(0,1), 120);
 			}
 			return true;
 		})
@@ -269,12 +269,12 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	particle_prototype rubble;
 	rubble.atlasIdx = 2;
 	rubble.lifespan = 10;
-	rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
+	rubble.radius = { 0.1, 4.0, 4.0, 4.0, 0.1 };
 	rubble.damping = 0.02;
 	rubble.additivity = 0.0;
 	rubble.mass = 10.0;
 	rubble.color = TerrainColor;
-	rubble.initialVelocity = 40;
+	rubble.initialVelocity = 120;
 	rubble.kinematics = particle_prototype::kinematics_prototype(1, 0, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();

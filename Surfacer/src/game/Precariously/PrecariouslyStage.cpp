@@ -262,6 +262,7 @@ namespace precariously {
 		config.drawConfig.drawLayer = DrawLayers::EFFECTS;
 		config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
 		config.drawConfig.atlasType = Atlas::TwoByTwo;
+		config.kinematicParticleGravitationLayerMask = GravitationLayers::GLOBAL;
 		
 		auto ps = ParticleSystem::create("Explosion ParticleSystem", config);
 		addObject(ps);
@@ -270,43 +271,32 @@ namespace precariously {
 		particle_prototype smoke;
 		smoke.atlasIdx = 0;
 		smoke.lifespan = 3;
-		smoke.radius = { 0.0, 100.0, 20.0, 0.0 };
-		smoke.damping = { 0, 0, 0.2 };
-		smoke.additivity = 0;
-		smoke.mass = { -1.0, 0.0 };
-		smoke.initialVelocity = 10;
+		smoke.radius = { 0, 32, 16, 8, 0 };
+		smoke.damping = { 0, 0, 0.1 };
+		smoke.additivity = { 0.9, 0, 0 };
+		smoke.mass = { 0 };
+		smoke.initialVelocity = 60;
 		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
-		smoke.color = { ci::ColorA(0.8,0.8,0.8,1), ci::ColorA(1,1,1,1) };
+		smoke.color = { ci::ColorA(1,0.3,0.1,1), ci::ColorA(1,0.7,0.2,1), ci::ColorA(1,1,1,1), ci::ColorA(0.3,0.3,0.3,1), ci::ColorA(0.3,0.3,0.3,1) };
 		
 		// build a "spark" particle template
 		particle_prototype spark;
 		spark.atlasIdx = 1;
-		spark.lifespan = 2;
-		spark.radius = { 0.0, 20.0, 0.0 };
-		spark.damping = { 0.0, 0.001 };
+		spark.lifespan = 6;
+		spark.radius = { 0, 8, 8, 8, 8, 0 };
+		spark.damping = { 0.0, 0.02 };
 		spark.additivity = { 1.0 };
-		spark.mass = { -1.0, +10.0 };
-		smoke.initialVelocity = 80;
+		spark.mass = 10;
 		spark.orientToVelocity = true;
-		spark.gravitationLayerMask = GravitationLayers::GLOBAL;
+		spark.initialVelocity = 100;
+		spark.minVelocity = 60;
 		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-
-		// build a "rubble" particle template
-		particle_prototype rubble;
-		rubble.atlasIdx = 2;
-		rubble.lifespan = 10;
-		rubble.radius = { 0.1, 10.0, 10.0, 10.0, 0.1 };
-		rubble.damping = 0.001;
-		rubble.additivity = 0.0;
-		rubble.mass = 10.0;
-		rubble.initialVelocity = 40;
-		rubble.color = _planet->getWorld()->getWorldMaterial().color;
-		rubble.kinematics = particle_prototype::kinematics_prototype(1, ShapeFilters::TERRAIN);
+		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
+		spark.kinematics = particle_prototype::kinematics_prototype(1, 1, 0.2, ShapeFilters::TERRAIN);
 		
 		_explosionEmitter = ps->createEmitter();
-		_explosionEmitter->add(smoke, 0.25, 10);
-		_explosionEmitter->add(spark, 0.5, 10);
-		_explosionEmitter->add(rubble, 0.1, 2);
+		_explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.2), 10);
+		_explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 10);
 	}
 	
 	void PrecariouslyStage::cullRubble() {
@@ -346,7 +336,7 @@ namespace precariously {
 		}
 		
 		dvec2 emissionDir = normalize(world - _planet->getOrigin());
-		_explosionEmitter->emit(world, 10, emissionDir, 1, 60, particles::ParticleEmitter::Sawtooth);
+		_explosionEmitter->emit(world, emissionDir, 0.5, 140, particles::ParticleEmitter::Sawtooth);
 	}
 	
 } // namespace surfacer
