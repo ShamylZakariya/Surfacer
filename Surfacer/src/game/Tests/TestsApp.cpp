@@ -12,26 +12,7 @@
 #include "TerrainTestScenario.hpp"
 #include "SvgTestScenario.hpp"
 #include "ParticleSystemTestScenario.hpp"
-
-namespace {
-	
-	// simple tests of the particles::interpolator mechanism
-	void testInterpolators() {
-		using particles::interpolator;
-		
-		auto dInterp = interpolator<double>({ 0, 10, 0, -10, 0 });
-		for (double i = 0; i <= 1 + 1e-3; i += 0.05) {
-			cout << "progress: " << i << " value: " << dInterp(i) << endl;
-		}
-
-		auto dvec2Interp = interpolator<dvec2>({ dvec2(0,0), dvec2(0,10), dvec2(0,0), dvec2(-10,0), dvec2(0,0) });
-		for (double i = 0; i <= 1 + 1e-3; i += 0.05) {
-			cout << "progress: " << i << " value: " << dvec2Interp(i) << endl;
-		}
-
-	}
-	
-}
+#include "PerlinWorldTest.hpp"
 
 class TestsApp : public core::App {
 public:
@@ -48,7 +29,7 @@ public:
 	
 	virtual void setup() override {
 		App::setup();
-		setScenario(make_shared<ParticleSystemTestScenario>());
+		setScenario(make_shared<PerlinWorldTestScenario>());
 	}
 	
 };
