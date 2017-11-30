@@ -266,37 +266,51 @@ namespace precariously {
 		
 		auto ps = ParticleSystem::create("Explosion ParticleSystem", config);
 		addObject(ps);
-		
-		// build a "smoke" particle template
+
+		//
+		// build fire, smoke and spark templates
+		//
+
+		particle_prototype fire;
+		fire.atlasIdx = 0;
+		fire.lifespan = 1;
+		fire.radius = { 0, 32, 16, 0 };
+		fire.damping = { 0, 0, 0.1 };
+		fire.additivity = 0.5;
+		fire.mass = { 0 };
+		fire.initialVelocity = 60;
+		fire.gravitationLayerMask = GravitationLayers::GLOBAL;
+		fire.color = ci::ColorA(1,0.8,0.1,1);
+
 		particle_prototype smoke;
 		smoke.atlasIdx = 0;
-		smoke.lifespan = 3;
-		smoke.radius = { 0, 32, 16, 8, 0 };
-		smoke.damping = { 0, 0, 0.1 };
-		smoke.additivity = { 0.9, 0, 0 };
+		smoke.lifespan = 2;
+		smoke.radius = { 0, 0, 32, 16, 16, 0 };
+		smoke.damping = { 0, 0, 0, 0, 0, 0.02 };
+		smoke.additivity = 0;
 		smoke.mass = { 0 };
 		smoke.initialVelocity = 60;
 		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
-		smoke.color = { ci::ColorA(1,0.3,0.1,1), ci::ColorA(1,0.7,0.2,1), ci::ColorA(1,1,1,1), ci::ColorA(0.3,0.3,0.3,1), ci::ColorA(0.3,0.3,0.3,1) };
-		
-		// build a "spark" particle template
+		smoke.color = ci::ColorA(0.9,0.9,0.9,1);
+
 		particle_prototype spark;
 		spark.atlasIdx = 1;
 		spark.lifespan = 6;
-		spark.radius = { 0, 8, 8, 8, 8, 0 };
+		spark.radius = { 0, 16, 0 };
 		spark.damping = { 0.0, 0.02 };
-		spark.additivity = { 1.0 };
+		spark.additivity = { 1, 0 };
 		spark.mass = 10;
 		spark.orientToVelocity = true;
-		spark.initialVelocity = 100;
+		spark.initialVelocity = 200;
 		spark.minVelocity = 60;
-		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
-		smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
+		spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(0.5,0.5,0.5,0) };
+		fire.gravitationLayerMask = GravitationLayers::GLOBAL;
 		spark.kinematics = particle_prototype::kinematics_prototype(1, 1, 0.2, ShapeFilters::TERRAIN);
 		
 		_explosionEmitter = ps->createEmitter();
-		_explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.2), 10);
-		_explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 10);
+		_explosionEmitter->add(fire, ParticleEmitter::Source(2, 1, 0.3), 1);
+		_explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.3), 2);
+		_explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 1);
 	}
 	
 	void PrecariouslyStage::cullRubble() {
@@ -336,7 +350,7 @@ namespace precariously {
 		}
 		
 		dvec2 emissionDir = normalize(world - _planet->getOrigin());
-		_explosionEmitter->emit(world, emissionDir, 0.5, 140, particles::ParticleEmitter::Sawtooth);
+		_explosionEmitter->emit(world, emissionDir, 1.0, 140, particles::ParticleEmitter::Sawtooth);
 	}
 	
 } // namespace surfacer
