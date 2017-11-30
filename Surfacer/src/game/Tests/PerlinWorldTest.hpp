@@ -43,6 +43,11 @@ public:
 	
 private:
 	
+	ci::Channel8u createWorldMap() const;
+	terrain::WorldRef createTerrainWorld(const ci::Channel8u &worldMap) const;
+	
+private:
+	
 	ci::Channel8u _buffer;
 	ci::gl::Texture2dRef _tex;
 	

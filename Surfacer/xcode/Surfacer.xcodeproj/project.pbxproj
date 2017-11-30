@@ -68,6 +68,9 @@
 		638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4DA31F8BCF53004437E8 /* TestsApp.cpp */; };
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
 		63920BC21FCA7AA80075B468 /* PerlinWorldTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63920BC01FCA7AA80075B468 /* PerlinWorldTest.cpp */; };
+		63A282731FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
+		63A282741FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
+		63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
 		63E29EF21F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */; };
@@ -185,6 +188,8 @@
 		63920BC01FCA7AA80075B468 /* PerlinWorldTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerlinWorldTest.cpp; sourceTree = "<group>"; };
 		63920BC11FCA7AA80075B468 /* PerlinWorldTest.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PerlinWorldTest.hpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
+		63A282711FD067E400962F8E /* ImageProcessing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = "<group>"; };
+		63A282721FD067E400962F8E /* ImageProcessing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageProcessing.hpp; sourceTree = "<group>"; };
 		63BFD8141E89565600D821E4 /* Object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
 		63BFD8151E89565600D821E4 /* Object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Object.hpp; sourceTree = "<group>"; };
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
@@ -560,6 +565,8 @@
 				63F93C351F86F96A00F537CA /* SvgParsing.hpp */,
 				63F93C3A1F86F96A00F537CA /* Xml.cpp */,
 				63F93C371F86F96A00F537CA /* Xml.hpp */,
+				63A282711FD067E400962F8E /* ImageProcessing.cpp */,
+				63A282721FD067E400962F8E /* ImageProcessing.hpp */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -704,6 +711,7 @@
 				631171361FAB72A50098069F /* ParticleSystemTestScenario.cpp in Sources */,
 				638F4DAB1F8BCFCE004437E8 /* TerrainDetail.cpp in Sources */,
 				638F4DB01F8BCFCE004437E8 /* Svg.cpp in Sources */,
+				63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */,
 				638F4DB11F8BCFCE004437E8 /* ChipmunkDebugDraw.cpp in Sources */,
 				638F4DB21F8BCFCE004437E8 /* SvgParsing.cpp in Sources */,
 				638F4DB31F8BCFCE004437E8 /* Xml.cpp in Sources */,
@@ -737,6 +745,7 @@
 				638F4D9A1F895CE5004437E8 /* Planet.cpp in Sources */,
 				63F93C771F87188600F537CA /* PrecariouslyApp.cpp in Sources */,
 				63F93C781F87188600F537CA /* PrecariouslyScenario.cpp in Sources */,
+				63A282741FD067E400962F8E /* ImageProcessing.cpp in Sources */,
 				63F93C791F87188600F537CA /* PrecariouslyStage.cpp in Sources */,
 				63F93C441F8714B200F537CA /* Svg.cpp in Sources */,
 				63F93C451F8714B200F537CA /* ChipmunkDebugDraw.cpp in Sources */,
@@ -772,6 +781,7 @@
 				63F93C3D1F86F98000F537CA /* ChipmunkDebugDraw.cpp in Sources */,
 				63F93C3E1F86F98000F537CA /* SvgParsing.cpp in Sources */,
 				63F93C3F1F86F98000F537CA /* Xml.cpp in Sources */,
+				63A282731FD067E400962F8E /* ImageProcessing.cpp in Sources */,
 				63F93C2D1F86F88300F537CA /* DevComponents.cpp in Sources */,
 				63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */,
 				63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */,

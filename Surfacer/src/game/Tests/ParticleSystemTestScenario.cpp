@@ -240,45 +240,60 @@ void ParticleSystemTestScenario::buildExplosionPs() {
 	stage->addObject(_explosionPs);
 	stage->addGravity(DirectionalGravitationCalculator::create(GravitationLayers::GLOBAL, dvec2(0,-1), 9.8 * 10));
 
-	// build a "smoke" particle template
+	//
+	// build fire, smoke and spark templates
+	//
+	
+	particle_prototype fire;
+	fire.atlasIdx = 0;
+	fire.lifespan = 1;
+	fire.radius = { 0, 8, 4, 0 };
+	fire.damping = { 0, 0, 0.1 };
+	fire.additivity = 0.5;
+	fire.mass = { 0 };
+	fire.initialVelocity = 15;
+	fire.gravitationLayerMask = GravitationLayers::GLOBAL;
+	fire.color = ci::ColorA(1,0.8,0.1,1);
+	
 	particle_prototype smoke;
 	smoke.atlasIdx = 0;
 	smoke.lifespan = 2;
-	smoke.radius = { 0, 10, 4, 1, 0 };
-	smoke.damping = { 0, 0, 0.1 };
-	smoke.additivity = { 1, 0, 0, 0 };
+	smoke.radius = { 0, 0, 8, 4, 4, 0 };
+	smoke.damping = { 0, 0, 0, 0, 0, 0.02 };
+	smoke.additivity = 0;
 	smoke.mass = { 0 };
-	smoke.initialVelocity = 30;
-	smoke.color = { ci::ColorA(1,0.7,0.2,1), ci::ColorA(0.7,0.7,0.7,1), ci::ColorA(1,1,1,1), ci::ColorA(1,1,1,1) };
+	smoke.initialVelocity = 15;
+	smoke.gravitationLayerMask = GravitationLayers::GLOBAL;
+	smoke.color = ci::ColorA(0.9,0.9,0.9,1);
 	
-	// build a "spark" particle template
 	particle_prototype spark;
 	spark.atlasIdx = 1;
-	spark.lifespan = 3;
-	spark.radius = { 0, 4, 4, 4, 4, 0 };
-	spark.damping = { 0.0, 0.05 };
-	spark.additivity = { 1.0 };
+	spark.lifespan = 2;
+	spark.radius = { 0, 4, 0 };
+	spark.damping = { 0.0, 0.02 };
+	spark.additivity = { 1, 0 };
 	spark.mass = 10;
 	spark.orientToVelocity = true;
-	spark.initialVelocity = 60;
-	spark.minVelocity = 60;
-	spark.color = { ci::ColorA(1,0.5,0.5,1), ci::ColorA(1,0.5,0.5,0) };
+	spark.initialVelocity = 100;
+	spark.minVelocity = 15;
+	spark.color = ci::ColorA(1,0.75,0.5,1);
 	spark.kinematics = particle_prototype::kinematics_prototype(1, 1, 0.2, ShapeFilters::TERRAIN);
 	
 	// build a "rubble" particle template
 	particle_prototype rubble;
 	rubble.atlasIdx = 2;
 	rubble.lifespan = 10;
-	rubble.radius = { 0.1, 4.0, 4.0, 4.0, 0.1 };
+	rubble.radius = { 0.1, 2.0, 2.0, 2.0, 0.1 };
 	rubble.damping = 0.02;
 	rubble.additivity = 0.0;
 	rubble.mass = 10.0;
 	rubble.color = TerrainColor;
-	rubble.initialVelocity = 120;
+	rubble.initialVelocity = 30;
 	rubble.kinematics = particle_prototype::kinematics_prototype(1, 0, ShapeFilters::TERRAIN);
 	
 	_explosionEmitter = _explosionPs->createEmitter();
-	_explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.05), 20);
-	_explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 10);
-	_explosionEmitter->add(rubble, ParticleEmitter::Source(10, 1, 0.15), 4);
+	_explosionEmitter->add(fire, ParticleEmitter::Source(2, 1, 0.3), 4);
+	_explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.3), 8);
+	_explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 4);
+	_explosionEmitter->add(rubble, ParticleEmitter::Source(10, 1, 0.15), 2);
 }
