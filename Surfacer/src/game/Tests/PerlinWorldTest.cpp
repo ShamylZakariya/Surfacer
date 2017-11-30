@@ -14,7 +14,9 @@
 #include "Strings.hpp"
 #include "DevComponents.hpp"
 #include "PerlinNoise.hpp"
-
+#include "MarchingCubes.hpp"
+#include "ContourSimplification.hpp"
+#include "TerrainWorld.hpp"
 
 using namespace ci;
 using namespace core;
@@ -143,6 +145,180 @@ namespace {
 		}
 	}
 	
+	void remap(Channel8u &channel, uint8_t targetValue, uint8_t newTargetValue, uint8_t defaultValue) {
+		Channel8u::Iter src = channel.getIter();
+		while(src.line()) {
+			while(src.pixel()) {
+				uint8_t &v = src.v();
+				v = v == targetValue ? newTargetValue : defaultValue;
+			}
+		}
+	}
+	
+	// implements marching_cubes::march voxel store object
+	class Channel8uVoxelStoreAdapter {
+	public:
+		
+		Channel8uVoxelStoreAdapter(const Channel8u &s):
+		_store(s),
+		_min(0,0),
+		_max(s.getWidth()-1, s.getHeight()-1)
+		{
+			_data = _store.getData();
+			_rowBytes = _store.getRowBytes();
+			_pixelIncrement = _store.getIncrement();
+		}
+		
+		ivec2 min() const { return _min; }
+		
+		ivec2 max() const { return _max; }
+
+		double valueAt( int x, int y ) const {
+			if (x >= _min.x && x <= _max.x && y >= _min.y && y <= _max.y) {
+				uint8_t pv = _data[y*_rowBytes + x*_pixelIncrement];
+				return static_cast<double>(pv) / 255.0;
+			}
+			return 0.0;
+		}
+
+	private:
+		
+		Channel8u _store;
+		ivec2 _min, _max;
+		uint8_t *_data;
+		int32_t _rowBytes, _pixelIncrement;
+	};
+	
+	// implements marching_cubes::march segment callback - stitching a soup of short segments into line loops
+	struct PerimeterGenerator {
+	public:
+		
+		enum winding {
+			CLOCKWISE,
+			COUNTER_CLOCKWISE
+		};
+		
+	private:
+		
+		typedef std::pair< ivec2, ivec2 > Edge;
+		
+		std::map< ivec2, Edge, ivec2Comparator > _edgesByFirstVertex;
+		winding _winding;
+		
+	public:
+		
+		PerimeterGenerator( winding w ):
+		_winding( w )
+		{}
+		
+		inline void operator()( int x, int y, const marching_squares::segment &seg ) {
+			switch( _winding ) {
+				case CLOCKWISE: {
+					Edge e(scaleUp( seg.a ), scaleUp( seg.b ));
+					
+					if ( e.first != e.second ) { _edgesByFirstVertex[e.first] = e; }
+					break;
+				}
+					
+				case COUNTER_CLOCKWISE: {
+					Edge e(scaleUp( seg.b ),
+						   scaleUp( seg.a ));
+					
+					if ( e.first != e.second ) { _edgesByFirstVertex[e.first] = e; }
+					break;
+				}
+			}
+		}
+		
+		/*
+		 Populate a vector of PolyLine2d with every perimeter computed for the isosurface
+		 Exterior perimeters will be in the current winding direction, interior perimeters
+		 will be in the opposite winding.
+		 */
+		
+		size_t generate( std::vector< ci::PolyLine2d > &perimeters, double scale ) {
+			perimeters.clear();
+			
+			while( !_edgesByFirstVertex.empty() ) {
+				std::map< ivec2, Edge, ivec2Comparator >::iterator
+					begin = _edgesByFirstVertex.begin(),
+					end = _edgesByFirstVertex.end(),
+					it = begin;
+				
+				size_t count = _edgesByFirstVertex.size();
+				perimeters.push_back( PolyLine2d() );
+				
+				do {
+					perimeters.back().push_back( scaleDown(it->first) * scale );
+					_edgesByFirstVertex.erase(it);
+					
+					it = _edgesByFirstVertex.find(it->second.second);
+					count--;
+					
+				} while( it != begin && it != end && count > 0 );
+			}
+			
+			return perimeters.size();
+		}
+		
+	private:
+		
+		const double V_SCALE = 256.0;
+		
+		inline ivec2 scaleUp( const dvec2 &v ) const {
+			return ivec2( lrint( V_SCALE * v.x ), lrint( V_SCALE * v.y ) );
+		}
+		
+		inline dvec2 scaleDown( const ivec2 &v ) const {
+			return dvec2( static_cast<double>(v.x) / V_SCALE, static_cast<double>(v.y) / V_SCALE );
+		}
+	};
+	
+	bool march(const Channel8u &store, double scale, std::vector<PolyLine2d> &optimizedPerimeters) {
+		Channel8uVoxelStoreAdapter adapter(store);
+		PerimeterGenerator pgen(PerimeterGenerator::CLOCKWISE);
+		marching_squares::march(adapter, pgen, 0.5);
+		
+		// make optimization threshold track the scale of the terrain
+		const double PerimeterOptimizationLinearDistanceThreshold = 0.25;
+		const double LinearDistanceOptimizationThreshold = PerimeterOptimizationLinearDistanceThreshold * scale;
+		
+		//
+		//	Now, generate our perimeter polylines -- note that since our shapes are
+		//	guaranteed closed, and since a map using Vec2iComparator will consider the
+		//	first entry to be lowest ordinally, it will represent the outer perimeter
+		//
+		
+		std::vector< PolyLine2d > perimeters;
+		if ( pgen.generate( perimeters, scale ) )
+		{
+			for(auto &perimeter : perimeters) {
+				if ( perimeter.size() > 0) {
+					if ( LinearDistanceOptimizationThreshold > 0 ) {
+						optimizedPerimeters.push_back(util::simplify(perimeter, LinearDistanceOptimizationThreshold));
+					}
+					else
+					{
+						optimizedPerimeters.push_back( perimeter );
+					}
+				}
+			}
+		}
+		
+		//
+		//	return whether we got any usable perimeters
+		//
+		
+		return optimizedPerimeters.empty() && optimizedPerimeters.front().size() > 0;
+	}
+	
+	vector<terrain::ShapeRef> march(const Channel8u &store, double scale) {
+		std::vector<PolyLine2d> soup;
+		march(store, scale, soup);
+		
+		return terrain::Shape::fromContours(soup);
+	}
+	
 }
 
 PerlinWorldTestScenario::PerlinWorldTestScenario()
@@ -171,47 +347,43 @@ void PerlinWorldTestScenario::setup() {
 	const float width = _buffer.getWidth(), height = _buffer.getHeight();
 	
 	const float frequency = 32;
-	uint8_t pinionMin = 122;
-	uint8_t pinionMax = 134;
 	
 	ci::Perlin pn;
 	while(iter.line()) {
 		while(iter.pixel()) {
 			float noise = pn.fBm(frequency * iter.x() / width, frequency * iter.y() / height);
-			noise = noise * 0.5 + 0.5;
-			uint8_t b = static_cast<uint8_t>(noise * 255);
-			if (b >= pinionMin && b <= pinionMax) {
-				b = 0;
-			} else {
-				b = 255;
-			}
-			iter.v() = b;
+			iter.v() = noise < -0.05 || noise > 0.05 ? 255 : 0;
 		}
 	}
 	
 	// erode - make the boundary walls stronger
-	_buffer = erode(_buffer, 3);
+	//_buffer = erode(_buffer, 3);
 
+	//
+	// now perform radial samples from inside out, floodfilling
+	// white blobs to grey. grey will be our marker for "solid land"
+	//
+	const uint8_t landValue = 128;
 	{
 		uint8_t *data = _buffer.getData();
 		int32_t rowBytes = _buffer.getRowBytes();
 		int32_t increment = _buffer.getIncrement();
-		
+
 		auto get = [&](const ivec2 &p)-> uint8_t {
 			return data[p.y * rowBytes + p.x * increment];
 		};
-		
-		// now we'll flood fill white regions intersecting rings from center going out
-		double ringThickness = 32;
+
+		double ringThickness = 16;
 		int ringSteps = ((size / 2) * 0.75) / ringThickness;
-		int radsSteps = 90;
-		double radsIncrement = 2 * M_PI / radsSteps;
 		const ivec2 center(size/2, size/2);
-		const uint8_t landValue = 128;
-		
+
 		for (int ringStep = 0; ringStep < ringSteps; ringStep++) {
 			double radius = ringStep * ringThickness;
+
 			double rads = 0;
+			int radsSteps = 180 - 5 * ringStep;
+			double radsIncrement = 2 * M_PI / radsSteps;
+
 			for (int radsStep = 0; radsStep < radsSteps; radsStep++, rads += radsIncrement) {
 				double px = center.x + radius * cos(rads);
 				double py = center.y + radius * sin(rads);
@@ -222,7 +394,15 @@ void PerlinWorldTestScenario::setup() {
 			}
 		}
 	}
-		
+
+	//
+	// Now remap grey to white, and everything else to black, and run a dilate pass.
+	// Dilate will erase thin walls between white blobs.
+	//
+
+	remap(_buffer, landValue, 255, 0);
+	_buffer = dilate(_buffer, 9);
+
 	_tex = ci::gl::Texture2d::create(_buffer);
 }
 

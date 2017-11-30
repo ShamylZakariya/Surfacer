@@ -190,6 +190,7 @@
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
 		63BFD8181E89ED2A00D821E4 /* Stage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Stage.cpp; sourceTree = "<group>"; };
 		63BFD8191E89ED2A00D821E4 /* Stage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Stage.hpp; sourceTree = "<group>"; };
+		63E182C21FCD245900C5F17C /* MarchingCubes.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MarchingCubes.hpp; sourceTree = "<group>"; };
 		63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BaseParticleSystem.cpp; sourceTree = "<group>"; };
 		63E29EF11F97A4C300CAF39E /* BaseParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BaseParticleSystem.hpp; sourceTree = "<group>"; };
 		63E29EF51F97A87300CAF39E /* CloudLayerParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CloudLayerParticleSystem.cpp; sourceTree = "<group>"; };
@@ -515,6 +516,7 @@
 				63F93C211F86F6C000F537CA /* TerrainWorld.cpp */,
 				63F93C1E1F86F6C000F537CA /* TerrainWorld.hpp */,
 				638F4D971F8957F8004437E8 /* TerrainDetail.cpp */,
+				63E182C21FCD245900C5F17C /* MarchingCubes.hpp */,
 			);
 			path = Terrain;
 			sourceTree = "<group>";
