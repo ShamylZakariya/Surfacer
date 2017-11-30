@@ -57,7 +57,6 @@ namespace particles {
 			c.damping = perturb(rng, c.damping, variance);
 			c.additivity = perturb(rng, c.additivity, variance);
 			c.mass = perturb(rng, c.mass, variance);
-			c.color = perturb(rng, c.color, variance);
 			c.initialVelocity = perturb(rng, c.initialVelocity, variance);
 
 			return c;
