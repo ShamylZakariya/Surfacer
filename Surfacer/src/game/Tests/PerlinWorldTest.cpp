@@ -323,17 +323,23 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 	
 	int size = 1024;
 	Channel8u buffer = Channel8u(size, size);
+
+	//
+	//	Initilialize our buffer with perlin noise
+	//
 	
-	Channel8u::Iter iter = buffer.getIter();
-	const float width = buffer.getWidth(), height = buffer.getHeight();
-	
-	const float frequency = 32;
-	
-	ci::Perlin pn;
-	while(iter.line()) {
-		while(iter.pixel()) {
-			float noise = pn.fBm(frequency * iter.x() / width, frequency * iter.y() / height);
-			iter.v() = noise < -0.05 || noise > 0.05 ? 255 : 0;
+	{
+		ci::Perlin pn;
+		const float frequency = 16;
+		const float width = buffer.getWidth();
+		const float height = buffer.getHeight();
+
+		Channel8u::Iter iter = buffer.getIter();
+		while(iter.line()) {
+			while(iter.pixel()) {
+				float noise = pn.fBm(frequency * iter.x() / width, frequency * iter.y() / height);
+				iter.v() = noise < -0.05 || noise > 0.05 ? 255 : 0;
+			}
 		}
 	}
 	
@@ -341,6 +347,7 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 	// now perform radial samples from inside out, floodfilling
 	// white blobs to grey. grey will be our marker for "solid land"
 	//
+	
 	const uint8_t landValue = 128;
 	{
 		uint8_t *data = buffer.getData();
@@ -352,7 +359,7 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 		};
 		
 		double ringThickness = 16;
-		int ringSteps = ((size / 2) * 0.75) / ringThickness;
+		int ringSteps = ((size / 2) * 0.5) / ringThickness;
 		const ivec2 center(size/2, size/2);
 		
 		for (int ringStep = 0; ringStep < ringSteps; ringStep++) {
@@ -367,19 +374,21 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 				double py = center.y + radius * sin(rads);
 				ivec2 plot(static_cast<int>(round(px)), static_cast<int>(round(py)));
 				if (get(plot) == 255) {
-					util::ip::floodfill(buffer, plot, 255, landValue);
+					util::ip::in_place::floodfill(buffer, plot, 255, landValue);
 				}
 			}
 		}
 	}
 	
 	//
-	// Now remap grey to white, and everything else to black, and run a dilate pass.
-	// Dilate will erase thin walls between white blobs.
+	// Remap to make "land" white, and eveything else black. Then a dilate and blur pass
+	// to expand land masses to touch.
 	//
 	
-	util::ip::remap(buffer, landValue, 255, 0);
-	buffer = util::ip::dilate(buffer, 9);
+	util::ip::in_place::remap(buffer, landValue, 255, 0);
+	buffer = util::ip::dilate(buffer, 4);
+	buffer = util::ip::blur(buffer, 15);
+	buffer = util::ip::threshold(buffer, 96);
 
 	return buffer;
 }
