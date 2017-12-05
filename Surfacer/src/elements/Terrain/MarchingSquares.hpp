@@ -1,12 +1,12 @@
 //
-//  MarchingCubes.h
+//  MarchingSquares.h
 //  Surfacer
 //
 //  Created by Shamyl Zakariya on 11/27/17.
 //
 
-#ifndef MarchingCubes_h
-#define MarchingCubes_h
+#ifndef MarchingSquares_h
+#define MarchingSquares_h
 
 #include "Core.hpp"
 
@@ -237,4 +237,4 @@ namespace marching_squares
 	
 }
 
-#endif /* MarchingCubes_h */
+#endif /* MarchingSquares_h */

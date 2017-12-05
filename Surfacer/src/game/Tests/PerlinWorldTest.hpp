@@ -43,13 +43,21 @@ public:
 	
 private:
 	
+	struct segment {
+		dvec2 a, b;
+		ci::Color color;
+	};
+	
 	ci::Channel8u createWorldMap() const;
+	vector<segment> testMarch(ci::Channel8u &iso) const;
 	terrain::WorldRef createTerrainWorld(const ci::Channel8u &worldMap) const;
 	
 private:
 	
-	ci::Channel8u _buffer;
-	ci::gl::Texture2dRef _tex;
+	ci::Channel8u _isoSurface;
+	ci::gl::Texture2dRef _isoTex;
+	vector<segment> _marchSegments;
+	int32_t _seed;
 	
 };
 

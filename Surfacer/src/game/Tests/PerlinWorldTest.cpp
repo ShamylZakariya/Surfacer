@@ -13,7 +13,7 @@
 #include "Strings.hpp"
 #include "DevComponents.hpp"
 #include "PerlinNoise.hpp"
-#include "MarchingCubes.hpp"
+#include "MarchingSquares.hpp"
 #include "ContourSimplification.hpp"
 #include "TerrainWorld.hpp"
 #include "ImageProcessing.hpp"
@@ -248,7 +248,8 @@ namespace {
 	
 }
 
-PerlinWorldTestScenario::PerlinWorldTestScenario()
+PerlinWorldTestScenario::PerlinWorldTestScenario():
+_seed(1234)
 {}
 
 PerlinWorldTestScenario::~PerlinWorldTestScenario() {
@@ -266,10 +267,11 @@ void PerlinWorldTestScenario::setup() {
 	grid->setGridColor(ColorA(1,1,1,0.1));
 	getStage()->addObject(Object::with("Grid", { grid }));
 	
-	_buffer = createWorldMap();
+	_isoSurface = createWorldMap();
+	_marchSegments = testMarch(_isoSurface);
 
 	if (/* DISABLES CODE */ (false)) {
-		auto terrainWorld = createTerrainWorld(_buffer);
+		auto terrainWorld = createTerrainWorld(_isoSurface);
 		auto terrain = terrain::TerrainObject::create("Terrain", terrainWorld, DrawLayers::TERRAIN);
 		getStage()->addObject(terrain);
 	}
@@ -277,6 +279,7 @@ void PerlinWorldTestScenario::setup() {
 
 void PerlinWorldTestScenario::cleanup() {
 	setStage(nullptr);
+	_isoTex.reset();
 }
 
 void PerlinWorldTestScenario::resize( ivec2 size ) {
@@ -295,11 +298,21 @@ void PerlinWorldTestScenario::clear( const render_state &state ) {
 void PerlinWorldTestScenario::draw( const render_state &state ) {
 	Scenario::draw(state);
 	
-	if (_buffer.getData()) {
-		if (!_tex) {
-			_tex = ci::gl::Texture2d::create(_buffer);
+	gl::ScopedBlend blender(true);
+
+	if (_isoSurface.getData()) {
+		if (!_isoTex) {
+			_isoTex = ci::gl::Texture2d::create(_isoSurface);
 		}
-		gl::draw(_tex);
+		gl::color(Color::gray(0.25));
+		gl::draw(_isoTex);
+	}
+	
+	if (!_marchSegments.empty()) {
+		for (const auto &seg : _marchSegments) {
+			gl::color(seg.color);
+			gl::drawLine(seg.a, seg.b);
+		}
 	}
 }
 
@@ -316,12 +329,15 @@ bool PerlinWorldTestScenario::keyDown( const ci::app::KeyEvent &event ) {
 
 void PerlinWorldTestScenario::reset() {
 	cleanup();
+	
+	_seed++;
+
 	setup();
 }
 
 ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 	
-	int size = 1024;
+	int size = 512;
 	Channel8u buffer = Channel8u(size, size);
 
 	//
@@ -329,8 +345,10 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 	//
 	
 	{
-		ci::Perlin pn;
-		const float frequency = 16;
+		const uint8_t octaves = 4;
+		ci::Perlin pn(octaves, _seed);
+
+		const float frequency = size / 64;
 		const float width = buffer.getWidth();
 		const float height = buffer.getHeight();
 
@@ -388,9 +406,26 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 	util::ip::in_place::remap(buffer, landValue, 255, 0);
 	buffer = util::ip::dilate(buffer, 4);
 	buffer = util::ip::blur(buffer, 15);
-	buffer = util::ip::threshold(buffer, 96);
 
 	return buffer;
+}
+
+vector<PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci::Channel8u &iso) const {
+	
+	struct segment_consumer {
+		ci::Rand rng;
+		vector<segment> segments;
+		void operator()( int x, int y, const marching_squares::segment &seg ) {
+			segments.push_back({ seg.a, seg.b, ci::Color(CM_HSV, rng.nextFloat(), 0.7, 0.7)});
+		}
+	} sc;
+	
+	const double isoLevel = 0.5;
+	marching_squares::march(Channel8uVoxelStoreAdapter(iso), sc, isoLevel);
+	
+	CI_LOG_D("testMarch - generated: " << sc.segments.size() << " unordered segments");
+	
+	return sc.segments;
 }
 
 terrain::WorldRef PerlinWorldTestScenario::createTerrainWorld(const ci::Channel8u &worldMap) const {
