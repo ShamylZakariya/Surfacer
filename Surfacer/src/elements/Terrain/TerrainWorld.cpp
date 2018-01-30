@@ -20,6 +20,8 @@
 
 #include "ContourSimplification.hpp"
 #include "TerrainDetail.hpp"
+#include "TerrainDetail_MarchingSquares.hpp"
+#include "TerrainDetail_Svg.hpp"
 #include "SvgParsing.hpp"
 
 using namespace core;
@@ -206,6 +208,15 @@ namespace terrain {
 		}
 
 		detail::svg_load(svgNode, transform, shapes, anchors, elements);
+	}
+
+	void World::march(const ci::Channel8u isoSurface, double isoLevel, dmat4 transform, vector<ShapeRef> &shapes) {
+		shapes = Shape::fromContours(detail::march(isoSurface, isoLevel, transform, 0.01));
+	}
+	
+	void World::march(const ci::Channel8u isoSurface, const ci::Channel8u anchorIsoSurface, double isoLevel, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors) {
+		shapes = Shape::fromContours(detail::march(isoSurface, isoLevel, transform, 0.01));
+		anchors = Anchor::fromContours(detail::march(anchorIsoSurface, isoLevel, transform, 0.01));
 	}
 
 	vector<ShapeRef> World::partition(const vector<ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize) {

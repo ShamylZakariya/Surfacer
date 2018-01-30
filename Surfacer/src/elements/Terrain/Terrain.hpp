@@ -22,7 +22,7 @@ namespace terrain {
 		static TerrainObjectRef create(string name, WorldRef world, int drawLayer) {
 			return make_shared<TerrainObject>(name, world, drawLayer);
 		}
-
+		
 	public:
 
 		TerrainObject(string name, WorldRef world, int drawLayer);

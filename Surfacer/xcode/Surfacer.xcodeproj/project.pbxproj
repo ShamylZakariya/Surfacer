@@ -23,6 +23,9 @@
 		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
 		632623191E7D9A630051ABE2 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622FF1E7D9A630051ABE2 /* Viewport.cpp */; };
 		6326231A1E7D9A630051ABE2 /* ViewportController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632623011E7D9A630051ABE2 /* ViewportController.cpp */; };
+		6332FF832020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */; };
+		6332FF842020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */; };
+		6332FF852020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */; };
 		638F4D921F87D4F3004437E8 /* Planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D901F87D4F3004437E8 /* Planet.cpp */; };
 		638F4D951F87D7BC004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
 		638F4D961F87D7BC004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
@@ -170,6 +173,9 @@
 		632623001E7D9A630051ABE2 /* Viewport.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Viewport.hpp; sourceTree = "<group>"; };
 		632623011E7D9A630051ABE2 /* ViewportController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ViewportController.cpp; sourceTree = "<group>"; };
 		632623021E7D9A630051ABE2 /* ViewportController.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ViewportController.hpp; sourceTree = "<group>"; };
+		6332FF802020C11700279B7F /* TerrainDetail_MarchingSquares.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainDetail_MarchingSquares.hpp; sourceTree = "<group>"; };
+		6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainDetail_Svg.cpp; sourceTree = "<group>"; };
+		6332FF822020C67700279B7F /* TerrainDetail_Svg.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainDetail_Svg.hpp; sourceTree = "<group>"; };
 		638F4D901F87D4F3004437E8 /* Planet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Planet.cpp; sourceTree = "<group>"; };
 		638F4D911F87D4F3004437E8 /* Planet.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Planet.hpp; sourceTree = "<group>"; };
 		638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerlinNoise.cpp; sourceTree = "<group>"; };
@@ -515,13 +521,16 @@
 		63F93C1C1F86F6C000F537CA /* Terrain */ = {
 			isa = PBXGroup;
 			children = (
+				63E182C21FCD245900C5F17C /* MarchingSquares.hpp */,
 				63F93C201F86F6C000F537CA /* Terrain.cpp */,
 				63F93C1D1F86F6C000F537CA /* Terrain.hpp */,
+				6332FF802020C11700279B7F /* TerrainDetail_MarchingSquares.hpp */,
+				6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */,
+				6332FF822020C67700279B7F /* TerrainDetail_Svg.hpp */,
+				638F4D971F8957F8004437E8 /* TerrainDetail.cpp */,
 				63F93C1F1F86F6C000F537CA /* TerrainDetail.hpp */,
 				63F93C211F86F6C000F537CA /* TerrainWorld.cpp */,
 				63F93C1E1F86F6C000F537CA /* TerrainWorld.hpp */,
-				638F4D971F8957F8004437E8 /* TerrainDetail.cpp */,
-				63E182C21FCD245900C5F17C /* MarchingSquares.hpp */,
 			);
 			path = Terrain;
 			sourceTree = "<group>";
@@ -717,6 +726,7 @@
 				638F4DB31F8BCFCE004437E8 /* Xml.cpp in Sources */,
 				638F4DB41F8BCFCE004437E8 /* DevComponents.cpp in Sources */,
 				638F4DB51F8BCFCE004437E8 /* Terrain.cpp in Sources */,
+				6332FF852020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */,
 				638F4DB61F8BCFCE004437E8 /* TerrainWorld.cpp in Sources */,
 				63E29EFD1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */,
 				638F4DB71F8BCFCE004437E8 /* ViewportController.cpp in Sources */,
@@ -748,6 +758,7 @@
 				63A282741FD067E400962F8E /* ImageProcessing.cpp in Sources */,
 				63F93C791F87188600F537CA /* PrecariouslyStage.cpp in Sources */,
 				63F93C441F8714B200F537CA /* Svg.cpp in Sources */,
+				6332FF842020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */,
 				63F93C451F8714B200F537CA /* ChipmunkDebugDraw.cpp in Sources */,
 				63F93C461F8714B200F537CA /* SvgParsing.cpp in Sources */,
 				63E29EFC1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */,
@@ -784,6 +795,7 @@
 				63A282731FD067E400962F8E /* ImageProcessing.cpp in Sources */,
 				63F93C2D1F86F88300F537CA /* DevComponents.cpp in Sources */,
 				63F93C2E1F86F88300F537CA /* Terrain.cpp in Sources */,
+				6332FF832020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */,
 				63F93C2F1F86F88300F537CA /* TerrainWorld.cpp in Sources */,
 				63F93C171F8687F700F537CA /* SurfacerStage.cpp in Sources */,
 				63E29EFB1F9E3F5D00CAF39E /* ParticleSystem.cpp in Sources */,

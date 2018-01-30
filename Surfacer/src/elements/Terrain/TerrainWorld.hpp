@@ -221,6 +221,10 @@ namespace terrain {
 							vector<ShapeRef> &shapes, vector<AnchorRef> &anchors, vector<ElementRef> &elements,
 							bool flip = true);
 
+		static void march(const ci::Channel8u isoSurface, double isoLevel, dmat4 transform, vector<ShapeRef> &shapes);
+
+		static void march(const ci::Channel8u isoSurface, const ci::Channel8u anchorIsoSurface, double isoLevel, dmat4 transform, vector<ShapeRef> &shapes, vector<AnchorRef> &anchors);
+		
 		/**
 		 Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.
 		 The purpose of this is simple: You might have a large stage. You want to divide the geometry of the stage into manageable

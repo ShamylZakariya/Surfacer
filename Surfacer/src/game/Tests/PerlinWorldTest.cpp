@@ -519,7 +519,9 @@ vector<PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci::
 
 terrain::WorldRef PerlinWorldTestScenario::createTerrainWorld(const ci::Channel8u &worldMap) const {
 	// Create shapes
-	vector<terrain::ShapeRef> shapes = march(worldMap, 1);
+	vector<terrain::ShapeRef> shapes;
+	const double isoLevel = 0.5;
+	terrain::World::march(worldMap, isoLevel, dmat4(), shapes);
 
 	auto world = make_shared<terrain::World>(getStage()->getSpace(), TerrainMaterial, AnchorMaterial);
 	world->build(shapes);
