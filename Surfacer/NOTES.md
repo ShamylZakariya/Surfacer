@@ -4,6 +4,12 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
+Marching Squares
+PerimeterGenerator doesn't work.
+Putting arrow heads on segments I see that:
+	1) MC generates segments with sane windings (good!)
+	2) the places where the PG fails, I seem to have *really* short segments. I suspect they collapse when converted to edge?
+
 Explosion effect looks totally wonky in PrecariouslyStage
 	Need to figure out how to make initialDirection variance work better. my variance algo isn't cutting it.
 		Consider creating some kind of emission source object. can be a circle, a cone, etc. it vends initial position and direction

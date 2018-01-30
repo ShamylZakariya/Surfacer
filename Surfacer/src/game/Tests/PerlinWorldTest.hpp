@@ -48,7 +48,14 @@ private:
 		ci::Color color;
 	};
 	
+	struct polyline {
+		ci::PolyLine2 pl;
+		ci::Color color;
+	};
+	
 	ci::Channel8u createWorldMap() const;
+	ci::Channel8u createSimpleTestMap() const;
+	vector<polyline> marchToPerimeters(ci::Channel8u &iso, size_t expectedContourCount) const;
 	vector<segment> testMarch(ci::Channel8u &iso) const;
 	terrain::WorldRef createTerrainWorld(const ci::Channel8u &worldMap) const;
 	
@@ -57,6 +64,7 @@ private:
 	ci::Channel8u _isoSurface;
 	ci::gl::Texture2dRef _isoTex;
 	vector<segment> _marchSegments;
+	vector<polyline> _marchedPolylines;
 	int32_t _seed;
 	
 };

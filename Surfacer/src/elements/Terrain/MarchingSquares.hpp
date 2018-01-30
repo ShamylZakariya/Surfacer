@@ -224,8 +224,8 @@ namespace marching_squares
 		grid_cell cell;
 		ivec2 min = voxels.min(), max = voxels.max();
 		
-		for ( int y = min.y; y < max.y; y++ ) {
-			for ( int x = min.x; x < max.x; x++ ) {
+		for ( int y = min.y-1; y <= max.y; y++ ) {
+			for ( int x = min.x-1; x <= max.x; x++ ) {
 				if ( GetGridCell( x,y, voxels, cell ) ) {
 					for ( int s = 0, nSegments = Polygonise( cell, isolevel, segments ); s < nSegments; s++ ) {
 						sc( x,y, segments[s] );

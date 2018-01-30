@@ -106,7 +106,7 @@ namespace core {
 			simplify(contour.getPoints(), result, threshold);
 
 			PolyLineT<T> pl(result);
-			pl.setClosed();
+			pl.setClosed(contour.isClosed());
 			return pl;
 		}
 

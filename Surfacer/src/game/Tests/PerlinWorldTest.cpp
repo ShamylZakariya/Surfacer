@@ -16,6 +16,7 @@
 #include "MarchingSquares.hpp"
 #include "ContourSimplification.hpp"
 #include "TerrainWorld.hpp"
+#include "TerrainDetail.hpp"
 #include "ImageProcessing.hpp"
 
 using namespace ci;
@@ -27,7 +28,7 @@ namespace {
 	
 	const double COLLISION_SHAPE_RADIUS = 0;
 	const double MIN_SURFACE_AREA = 2;
-	const ci::Color TERRAIN_COLOR(0.2,0.2,0.2);
+	const ci::Color TERRAIN_COLOR(0.8,0.8,0.8);
 	const ci::Color ANCHOR_COLOR(1,0,1);
 	
 	namespace CollisionType {
@@ -130,12 +131,14 @@ namespace {
 		_winding( w )
 		{}
 		
-		inline void operator()( int x, int y, const marching_squares::segment &seg ) {
+		void operator()( int x, int y, const marching_squares::segment &seg ) {
 			switch( _winding ) {
 				case CLOCKWISE: {
 					Edge e(scaleUp( seg.a ), scaleUp( seg.b ));
 					
-					if ( e.first != e.second ) { _edgesByFirstVertex[e.first] = e; }
+					if ( e.first != e.second ) {
+						_edgesByFirstVertex[e.first] = e;
+					}
 					break;
 				}
 					
@@ -143,10 +146,16 @@ namespace {
 					Edge e(scaleUp( seg.b ),
 						   scaleUp( seg.a ));
 					
-					if ( e.first != e.second ) { _edgesByFirstVertex[e.first] = e; }
+					if ( e.first != e.second ) {
+						_edgesByFirstVertex[e.first] = e;
+					}
 					break;
 				}
 			}
+		}
+		
+		size_t numSegments() const {
+			return _edgesByFirstVertex.size();
 		}
 		
 		/*
@@ -168,11 +177,17 @@ namespace {
 				perimeters.push_back( PolyLine2d() );
 				
 				do {
-					perimeters.back().push_back( scaleDown(it->first) * scale );
+					const Edge &e = it->second;
+					perimeters.back().push_back( scaleDown(e.first) * scale );
 					_edgesByFirstVertex.erase(it);
 					
-					it = _edgesByFirstVertex.find(it->second.second);
+					it = _edgesByFirstVertex.find(e.second);
 					count--;
+					
+					// final segment of loop - close it
+					if (it == end) {
+						perimeters.back().push_back( scaleDown(e.second) * scale );
+					}
 					
 				} while( it != begin && it != end && count > 0 );
 			}
@@ -182,13 +197,13 @@ namespace {
 		
 	private:
 		
-		const double V_SCALE = 256.0;
-		
-		inline ivec2 scaleUp( const dvec2 &v ) const {
+		const double V_SCALE = 1024;
+	
+		ivec2 scaleUp( const dvec2 &v ) const {
 			return ivec2( lrint( V_SCALE * v.x ), lrint( V_SCALE * v.y ) );
 		}
 		
-		inline dvec2 scaleDown( const ivec2 &v ) const {
+		dvec2 scaleDown( const ivec2 &v ) const {
 			return dvec2( static_cast<double>(v.x) / V_SCALE, static_cast<double>(v.y) / V_SCALE );
 		}
 	};
@@ -197,6 +212,8 @@ namespace {
 		Channel8uVoxelStoreAdapter adapter(store);
 		PerimeterGenerator pgen(PerimeterGenerator::CLOCKWISE);
 		marching_squares::march(adapter, pgen, 0.5);
+		
+		CI_LOG_D("PerimeterGenerator consumed: " << pgen.numSegments() << " segments");
 		
 		// make optimization threshold track the scale of the terrain
 		const double PerimeterOptimizationLinearDistanceThreshold = 0.25;
@@ -212,6 +229,7 @@ namespace {
 		if ( pgen.generate( perimeters, scale ) )
 		{
 			for(auto &perimeter : perimeters) {
+				perimeter.setClosed(true);
 				if ( perimeter.size() > 0) {
 					if ( LinearDistanceOptimizationThreshold > 0 ) {
 						optimizedPerimeters.push_back(util::simplify(perimeter, LinearDistanceOptimizationThreshold));
@@ -246,6 +264,23 @@ namespace {
 		return terrain::Shape::fromContours(soup);
 	}
 	
+#pragma mark - IP
+	
+	void fill_rect(Channel8u &c, ci::Area region, uint8_t value)
+	{
+		Area clippedRegion(max(region.getX1(), 0), max(region.getY1(), 0), min(region.getX2(), c.getWidth()-1), min(region.getY2(), c.getHeight()-1));
+		uint8_t *data = c.getData();
+		int32_t rowBytes = c.getRowBytes();
+		int32_t increment = c.getIncrement();
+
+		for (int y = clippedRegion.getY1(), yEnd = clippedRegion.getY2(); y <= yEnd; y++) {
+			uint8_t *row = &data[y * rowBytes];
+			for (int x = clippedRegion.getX1(), xEnd = clippedRegion.getX2(); x <= xEnd; x++) {
+				row[x * increment] = value;
+			}
+		}
+	}
+	
 }
 
 PerlinWorldTestScenario::PerlinWorldTestScenario():
@@ -268,9 +303,12 @@ void PerlinWorldTestScenario::setup() {
 	getStage()->addObject(Object::with("Grid", { grid }));
 	
 	_isoSurface = createWorldMap();
-	_marchSegments = testMarch(_isoSurface);
-
-	if (/* DISABLES CODE */ (false)) {
+//	_isoSurface = createSimpleTestMap();
+	
+//	_marchSegments = testMarch(_isoSurface);
+//	_marchedPolylines = marchToPerimeters(_isoSurface, 0);
+	
+	if (/* DISABLES CODE */ (true)) {
 		auto terrainWorld = createTerrainWorld(_isoSurface);
 		auto terrain = terrain::TerrainObject::create("Terrain", terrainWorld, DrawLayers::TERRAIN);
 		getStage()->addObject(terrain);
@@ -298,20 +336,38 @@ void PerlinWorldTestScenario::clear( const render_state &state ) {
 void PerlinWorldTestScenario::draw( const render_state &state ) {
 	Scenario::draw(state);
 	
-	gl::ScopedBlend blender(true);
-
-	if (_isoSurface.getData()) {
-		if (!_isoTex) {
-			_isoTex = ci::gl::Texture2d::create(_isoSurface);
+	if ((false)) {
+		gl::ScopedBlend blender(true);
+		if (_isoSurface.getData()) {
+			
+			if (!_isoTex) {
+				const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
+				_isoTex = ci::gl::Texture2d::create(_isoSurface, fmt);
+			}
+			
+			gl::color(ColorA(1,1,1,0.2));
+			gl::draw(_isoTex);
 		}
-		gl::color(Color::gray(0.25));
-		gl::draw(_isoTex);
-	}
-	
-	if (!_marchSegments.empty()) {
-		for (const auto &seg : _marchSegments) {
-			gl::color(seg.color);
-			gl::drawLine(seg.a, seg.b);
+		
+		if (!_marchSegments.empty()) {
+			double triangleSize = 0.25;
+			for (const auto &seg : _marchSegments) {
+				gl::color(seg.color);
+				gl::drawLine(seg.a, seg.b);
+				dvec2 mid = (seg.a + seg.b) * 0.5;
+				dvec2 dir = normalize(seg.b - seg.a);
+				dvec2 left = rotateCCW(dir);
+				dvec2 right = -left;
+				gl::drawLine(mid + left * triangleSize, seg.b);
+				gl::drawLine(mid + right * triangleSize, seg.b);
+			}
+		}
+		
+		if (!_marchedPolylines.empty()) {
+			for (const auto &pl : _marchedPolylines) {
+				gl::color(pl.color);
+				gl::draw(pl.pl);
+			}
 		}
 	}
 }
@@ -399,15 +455,48 @@ ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 	}
 	
 	//
-	// Remap to make "land" white, and eveything else black. Then a dilate and blur pass
-	// to expand land masses to touch.
+	// Remap to make "land" white, and eveything else black. Then a blur pass
+	// which will cause nearby landmasses to touch when marching_squares is run
 	//
 	
 	util::ip::in_place::remap(buffer, landValue, 255, 0);
-	buffer = util::ip::dilate(buffer, 4);
 	buffer = util::ip::blur(buffer, 15);
 
 	return buffer;
+}
+
+ci::Channel8u PerlinWorldTestScenario::createSimpleTestMap() const {
+	int size = 32;
+	Channel8u buffer = Channel8u(size, size);
+	fill_rect(buffer, Area(0,0,size,size), 0);
+	fill_rect(buffer, Area(6,6,size-6,size-6), 255);
+	fill_rect(buffer, Area(12,12,size-12,size-12), 0);
+	fill_rect(buffer, Area(14,14,size-14,size-14), 255);
+	fill_rect(buffer, Area(0,0,5,5), 255);
+
+	buffer = util::ip::blur(buffer, 2);
+	
+	return buffer;
+}
+
+vector<PerlinWorldTestScenario::polyline> PerlinWorldTestScenario::marchToPerimeters(ci::Channel8u &iso, size_t expectedContours) const {
+	std::vector<PolyLine2d> polylines;
+	march(iso, 1, polylines);
+	
+	if (expectedContours > 0) {
+		CI_ASSERT_MSG(polylines.size() == expectedContours, "Expected correct number of generated contours");
+	}
+
+	CI_LOG_D("Generated " << polylines.size() << " contours" );
+	
+	ci::Rand rng;
+	vector<polyline> ret;
+	for (const auto &pl : polylines) {
+		CI_LOG_D("polyline: " << ret.size() << " num vertices: " << pl.size() );
+		ret.push_back({ terrain::detail::polyline2d_to_2f(pl), ci::Color(CM_HSV, rng.nextFloat(), 0.7, 0.7) });
+	}
+	
+	return ret;
 }
 
 vector<PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci::Channel8u &iso) const {
@@ -422,9 +511,9 @@ vector<PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci::
 	
 	const double isoLevel = 0.5;
 	marching_squares::march(Channel8uVoxelStoreAdapter(iso), sc, isoLevel);
-	
+
 	CI_LOG_D("testMarch - generated: " << sc.segments.size() << " unordered segments");
-	
+
 	return sc.segments;
 }
 
