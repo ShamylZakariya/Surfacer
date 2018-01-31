@@ -23,33 +23,39 @@ using namespace particles;
 
 class ParticleSystemTestScenario : public Scenario {
 public:
-	
-	ParticleSystemTestScenario();
-	virtual ~ParticleSystemTestScenario();
-	
-	virtual void setup() override;
-	virtual void cleanup() override;
-	virtual void resize( ivec2 size ) override;
-	
-	virtual void step( const time_state &time ) override;
-	virtual void update( const time_state &time ) override;
-	virtual void clear( const render_state &state ) override;
-	virtual void drawScreen( const render_state &state ) override;
-	
-	virtual bool keyDown( const ci::app::KeyEvent &event ) override;
-	
-	void reset();
-	
+
+    ParticleSystemTestScenario();
+
+    virtual ~ParticleSystemTestScenario();
+
+    virtual void setup() override;
+
+    virtual void cleanup() override;
+
+    virtual void resize(ivec2 size) override;
+
+    virtual void step(const time_state &time) override;
+
+    virtual void update(const time_state &time) override;
+
+    virtual void clear(const render_state &state) override;
+
+    virtual void drawScreen(const render_state &state) override;
+
+    virtual bool keyDown(const ci::app::KeyEvent &event) override;
+
+    void reset();
+
 protected:
 
-	void buildExplosionPs();
-	
+    void buildExplosionPs();
+
 private:
 
-	ParticleSystemRef _explosionPs;
-	ParticleEmitterRef _explosionEmitter;
-	ParticleEmitter::emission_id _explosionEmissionId;
-	
+    ParticleSystemRef _explosionPs;
+    ParticleEmitterRef _explosionEmitter;
+    ParticleEmitter::emission_id _explosionEmissionId;
+
 };
 
 #endif /* ParticleSystemTestScenario_hpp */

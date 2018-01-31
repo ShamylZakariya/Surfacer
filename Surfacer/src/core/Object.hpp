@@ -17,458 +17,567 @@
 
 namespace core {
 
-	SMART_PTR(Object);
-	SMART_PTR(Stage);
-	SMART_PTR(SpaceAccess);
+    SMART_PTR(Object);
+
+    SMART_PTR(Stage);
+
+    SMART_PTR(SpaceAccess);
 
 #pragma mark - IChipmunkUserData
 
-	/**
-	 IChipmunkUserData
-	 Interface for things which will want to set themselves as user data for a chipmunk shape/body/etc
-	 */
-	class IChipmunkUserData {
-	public:
+    /**
+     IChipmunkUserData
+     Interface for things which will want to set themselves as user data for a chipmunk shape/body/etc
+     */
+    class IChipmunkUserData {
+    public:
 
-		IChipmunkUserData();
-		virtual ~IChipmunkUserData();
+        IChipmunkUserData();
 
-		// return the Object owning this thing, whatever this thing is
-		virtual ObjectRef getObject() const { return nullptr; };
+        virtual ~IChipmunkUserData();
 
-	};
+        // return the Object owning this thing, whatever this thing is
+        virtual ObjectRef getObject() const {
+            return nullptr;
+        };
 
-	// convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IChipmunkUserData
-	ObjectRef cpShapeGetObject(const cpShape *shape);
-	ObjectRef cpBodyGetObject(const cpBody *body);
-	ObjectRef cpConstraintGetObject(const cpConstraint *constraint);
+    };
+
+    // convenience functions for getting a game object from a cpShape/cpBody/cpConstraint where the user data is a IChipmunkUserData
+    ObjectRef cpShapeGetObject(const cpShape *shape);
+
+    ObjectRef cpBodyGetObject(const cpBody *body);
+
+    ObjectRef cpConstraintGetObject(const cpConstraint *constraint);
 
 
 #pragma mark - Component
 
-	SMART_PTR(Component);
-	class Component : public enable_shared_from_this<Component>, public signals::receiver, public IChipmunkUserData {
-	public:
+    SMART_PTR(Component);
 
-		Component(){}
-		virtual ~Component(){}
+    class Component : public enable_shared_from_this<Component>, public signals::receiver, public IChipmunkUserData {
+    public:
 
-		// IChipmunkUserData
-		ObjectRef getObject() const override { return _object.lock(); }
+        Component() {
+        }
 
-		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
-		template<typename T>
-		shared_ptr<T const> shared_from_this_as() const {
-			return static_pointer_cast<T const>(shared_from_this());
-		}
+        virtual ~Component() {
+        }
 
-		// get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
-		template<typename T>
-		shared_ptr<T> shared_from_this_as() {
-			return static_pointer_cast<T>(shared_from_this());
-		}
+        // IChipmunkUserData
+        ObjectRef getObject() const override {
+            return _object.lock();
+        }
 
-		StageRef getStage() const;
+        // get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
+        template<typename T>
+        shared_ptr<T const> shared_from_this_as() const {
+            return static_pointer_cast<T const>(shared_from_this());
+        }
 
-		template<typename T>
-		shared_ptr<T> getObjectAs() {
-			return static_pointer_cast<T>(_object.lock());
-		}
+        // get typed shared_from_this, e.g., shared_ptr<FooComponent> = shared_from_this_as<FooComponent>();
+        template<typename T>
+        shared_ptr<T> shared_from_this_as() {
+            return static_pointer_cast<T>(shared_from_this());
+        }
 
-		template<typename T>
-		shared_ptr<T> getSibling() const;
+        StageRef getStage() const;
 
-		// called when the owning Object has been added to a stage
-		virtual void onReady(ObjectRef parent, StageRef stage){}
-		virtual void onCleanup(){}
-		virtual void step(const time_state &timeState){}
-		virtual void update(const time_state &timeState){}
+        template<typename T>
+        shared_ptr<T> getObjectAs() {
+            return static_pointer_cast<T>(_object.lock());
+        }
 
-	protected:
-		friend class Object;
+        template<typename T>
+        shared_ptr<T> getSibling() const;
 
-		// called on Components immediately after being added to a Object
-		// a component at this point can access its Object owne, but does not
-		// necessarily have access to its neighbors, or to a Stage. Wait for onReady
-		// for these types of actions.
-		virtual void attachedToObject(ObjectRef object) {
-			_object = object;
-		}
+        // called when the owning Object has been added to a stage
+        virtual void onReady(ObjectRef parent, StageRef stage) {
+        }
 
-		virtual void detachedFromObject() {
-			_object.reset();
-		}
+        virtual void onCleanup() {
+        }
 
-		// call this if some change moved the represented object. it will be dispatched
-		// up to object, and down to DrawComponents to notify the draw dispatch graph
-		virtual void notifyMoved();
+        virtual void step(const time_state &timeState) {
+        }
 
-	private:
+        virtual void update(const time_state &timeState) {
+        }
 
-		ObjectWeakRef _object;
+    protected:
+        friend class Object;
 
-	};
+        // called on Components immediately after being added to a Object
+        // a component at this point can access its Object owne, but does not
+        // necessarily have access to its neighbors, or to a Stage. Wait for onReady
+        // for these types of actions.
+        virtual void attachedToObject(ObjectRef object) {
+            _object = object;
+        }
+
+        virtual void detachedFromObject() {
+            _object.reset();
+        }
+
+        // call this if some change moved the represented object. it will be dispatched
+        // up to object, and down to DrawComponents to notify the draw dispatch graph
+        virtual void notifyMoved();
+
+    private:
+
+        ObjectWeakRef _object;
+
+    };
 
 #pragma mark - PhysicsComponent
 
-	SMART_PTR(PhysicsComponent);
-	class PhysicsComponent : public Component {
-	public:
-		PhysicsComponent():_space(nullptr){}
-		virtual ~PhysicsComponent();
+    SMART_PTR(PhysicsComponent);
 
-		void onReady(ObjectRef parent, StageRef stage) override;
-		void onCleanup() override;
+    class PhysicsComponent : public Component {
+    public:
+        PhysicsComponent() : _space(nullptr) {
+        }
 
-		const SpaceAccessRef &getSpace() const { return _space; }
+        virtual ~PhysicsComponent();
 
-		virtual vector<cpBody*> getBodies() const { return _bodies; }
-		virtual vector<cpShape*> getShapes() const { return _shapes; }
-		virtual vector<cpConstraint*> getConstraints() const { return _constraints; }
+        void onReady(ObjectRef parent, StageRef stage) override;
 
-		cpShapeFilter getShapeFilter() const { return _shapeFilter; }
-		cpCollisionType getCollisionType() const { return _collisionType; }
+        void onCleanup() override;
 
-		virtual size_t getGravitationLayerMask(cpBody *body) const;
-		
-		// get bounding box for all shapes in use
-		virtual cpBB getBB() const = 0;
+        const SpaceAccessRef &getSpace() const {
+            return _space;
+        }
 
-	protected:
+        virtual vector<cpBody *> getBodies() const {
+            return _bodies;
+        }
 
-		virtual void onBodyWillBeDestroyed(cpBody* body);
-		virtual void onShapeWillBeDestroyed(cpShape* shape);
-		virtual void onConstraintWillBeDestroyed(cpConstraint* constraint);
+        virtual vector<cpShape *> getShapes() const {
+            return _shapes;
+        }
 
-		void build(cpShapeFilter filter, cpCollisionType collisionType);
-		void setShapeFilter(cpShapeFilter sf);
-		void setCollisionType(cpCollisionType ct);
+        virtual vector<cpConstraint *> getConstraints() const {
+            return _constraints;
+        }
 
-		cpBody *add(cpBody *body) { _bodies.push_back(body); return body; }
-		cpShape *add(cpShape *shape) { _shapes.push_back(shape); return shape; }
-		cpConstraint *add(cpConstraint *c) { _constraints.push_back(c); return c; }
+        cpShapeFilter getShapeFilter() const {
+            return _shapeFilter;
+        }
 
-		void remove(cpBody *);
-		void remove(cpShape *);
-		void remove(cpConstraint *);
+        cpCollisionType getCollisionType() const {
+            return _collisionType;
+        }
 
-	private:
-		SpaceAccessRef _space;
-		vector<cpBody*> _bodies;
-		vector<cpShape*> _shapes;
-		vector<cpConstraint*> _constraints;
-		cpShapeFilter _shapeFilter;
-		cpCollisionType _collisionType;
-	};
+        virtual size_t getGravitationLayerMask(cpBody *body) const;
+
+        // get bounding box for all shapes in use
+        virtual cpBB getBB() const = 0;
+
+    protected:
+
+        virtual void onBodyWillBeDestroyed(cpBody *body);
+
+        virtual void onShapeWillBeDestroyed(cpShape *shape);
+
+        virtual void onConstraintWillBeDestroyed(cpConstraint *constraint);
+
+        void build(cpShapeFilter filter, cpCollisionType collisionType);
+
+        void setShapeFilter(cpShapeFilter sf);
+
+        void setCollisionType(cpCollisionType ct);
+
+        cpBody *add(cpBody *body) {
+            _bodies.push_back(body);
+            return body;
+        }
+
+        cpShape *add(cpShape *shape) {
+            _shapes.push_back(shape);
+            return shape;
+        }
+
+        cpConstraint *add(cpConstraint *c) {
+            _constraints.push_back(c);
+            return c;
+        }
+
+        void remove(cpBody *);
+
+        void remove(cpShape *);
+
+        void remove(cpConstraint *);
+
+    private:
+        SpaceAccessRef _space;
+        vector<cpBody *> _bodies;
+        vector<cpShape *> _shapes;
+        vector<cpConstraint *> _constraints;
+        cpShapeFilter _shapeFilter;
+        cpCollisionType _collisionType;
+    };
 
 
 #pragma mark - DrawComponent
 
-	namespace VisibilityDetermination
-	{
-		enum style {
-			ALWAYS_DRAW,
-			FRUSTUM_CULLING,
-			NEVER_DRAW
-		};
+    namespace VisibilityDetermination {
+        enum style {
+            ALWAYS_DRAW,
+            FRUSTUM_CULLING,
+            NEVER_DRAW
+        };
 
-		inline string toString(style s) {
-			switch(s) {
-				case ALWAYS_DRAW: return "ALWAYS_DRAW";
-				case FRUSTUM_CULLING: return "FRUSTUM_CULLING";
-				case NEVER_DRAW: return "NEVER_DRAW";
-			}
-		}
-	}
+        inline string toString(style s) {
+            switch (s) {
+                case ALWAYS_DRAW:
+                    return "ALWAYS_DRAW";
+                case FRUSTUM_CULLING:
+                    return "FRUSTUM_CULLING";
+                case NEVER_DRAW:
+                    return "NEVER_DRAW";
+            }
+        }
+    }
 
 
-	SMART_PTR(DrawComponent);
-	class DrawComponent : public Component {
-	public:
+    SMART_PTR(DrawComponent);
 
-		/**
-		 @class BatchDrawDelegate
+    class DrawComponent : public Component {
+    public:
 
-		 Some DrawComponents are part of a larger whole ( terrain::Shape, or a swarm of identical enemies, 
-		 for example ) and it is a great help to efficiency to mark them as being part of a single batch 
-		 to be rendered contiguously. In this case, the render system will group the batch together and 
-		 then when drawing them, will for the first call prepareForBatchDraw on the first's batchDrawDelegate, 
-		 draw each, and then call cleanupAfterBatchDraw on the last of the contiguous set.
-		 Note: if these items are on different layers, the draw system will prioritize layer ordering over batching.
-		 */
-		class BatchDrawDelegate
-		{
-		public:
+        /**
+         @class BatchDrawDelegate
 
-			BatchDrawDelegate(){}
-			virtual ~BatchDrawDelegate(){}
+         Some DrawComponents are part of a larger whole ( terrain::Shape, or a swarm of identical enemies,
+         for example ) and it is a great help to efficiency to mark them as being part of a single batch
+         to be rendered contiguously. In this case, the render system will group the batch together and
+         then when drawing them, will for the first call prepareForBatchDraw on the first's batchDrawDelegate,
+         draw each, and then call cleanupAfterBatchDraw on the last of the contiguous set.
+         Note: if these items are on different layers, the draw system will prioritize layer ordering over batching.
+         */
+        class BatchDrawDelegate {
+        public:
 
-			/**
-			 Called before a batch of like objects are rendered.
-			 Passes the render_state, and the first object in the series. This is to simplify
-			 situations where a single object is BatchDrawDelegate to multiple target batches.
-			 */
-			virtual void prepareForBatchDraw( const render_state &, const DrawComponentRef &firstInBatch ){}
-			virtual void cleanupAfterBatchDraw( const render_state &, const DrawComponentRef &firstInBatch, const DrawComponentRef &lastInBatch ){}
-			
-		};
+            BatchDrawDelegate() {
+            }
 
-		typedef shared_ptr<BatchDrawDelegate> BatchDrawDelegateRef;
+            virtual ~BatchDrawDelegate() {
+            }
 
-	public:
-		DrawComponent(){}
-		virtual ~DrawComponent(){}
+            /**
+             Called before a batch of like objects are rendered.
+             Passes the render_state, and the first object in the series. This is to simplify
+             situations where a single object is BatchDrawDelegate to multiple target batches.
+             */
+            virtual void prepareForBatchDraw(const render_state &, const DrawComponentRef &firstInBatch) {
+            }
 
-		// default implementation asks Object for the physicsComponent's BB
-		virtual cpBB getBB() const;
-		virtual void draw(const render_state &renderState) = 0;
-		virtual void drawScreen( const render_state &state ) {};
-		virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
-		virtual int getLayer() const = 0;
-		virtual int getDrawPasses() const { return 1; }
-		virtual BatchDrawDelegateRef getBatchDrawDelegate() const { return nullptr; }
+            virtual void cleanupAfterBatchDraw(const render_state &, const DrawComponentRef &firstInBatch, const DrawComponentRef &lastInBatch) {
+            }
 
-		// Component
-		void onReady(ObjectRef parent, StageRef stage) override;
+        };
 
-	};
+        typedef shared_ptr<BatchDrawDelegate> BatchDrawDelegateRef;
+
+    public:
+        DrawComponent() {
+        }
+
+        virtual ~DrawComponent() {
+        }
+
+        // default implementation asks Object for the physicsComponent's BB
+        virtual cpBB getBB() const;
+
+        virtual void draw(const render_state &renderState) = 0;
+
+        virtual void drawScreen(const render_state &state) {
+        };
+
+        virtual VisibilityDetermination::style getVisibilityDetermination() const = 0;
+
+        virtual int getLayer() const = 0;
+
+        virtual int getDrawPasses() const {
+            return 1;
+        }
+
+        virtual BatchDrawDelegateRef getBatchDrawDelegate() const {
+            return nullptr;
+        }
+
+        // Component
+        void onReady(ObjectRef parent, StageRef stage) override;
+
+    };
 
 #pragma mark - InputComponent
 
-	SMART_PTR(InputComponent);
-	class InputComponent : public Component, public InputListener {
-	public:
-		InputComponent();
-		InputComponent(int dispatchReceiptIndex);
+    SMART_PTR(InputComponent);
 
-		virtual ~InputComponent(){}
+    class InputComponent : public Component, public InputListener {
+    public:
+        InputComponent();
 
-		void onReady(ObjectRef parent, StageRef stage) override;
-		bool isListening() const override;
+        InputComponent(int dispatchReceiptIndex);
 
-		void monitorKey( int keyCode );
-		void ignoreKey( int keyCode );
-		
-		void monitorKeys(const initializer_list<int> &keyCodes);
-		void ignoreKeys(const initializer_list<int> &keyCodes);
+        virtual ~InputComponent() {
+        }
 
-		/**
-			Called when a monitored key is pressed
-		 */
-		virtual void monitoredKeyDown( int keyCode ){}
+        void onReady(ObjectRef parent, StageRef stage) override;
 
-		/**
-			Called when a monitored key is released
-		 */
-		virtual void monitoredKeyUp( int keyCode ){}
+        bool isListening() const override;
 
-		/**
-			return true if any monitored keys are pressed.
-			this ignores any keys that haven't been registered for monitoring by monitorKey()
-		 */
-		bool isMonitoredKeyDown( int keyCode ) const;
+        void monitorKey(int keyCode);
 
-		bool keyDown( const ci::app::KeyEvent &event ) override;
-		bool keyUp( const ci::app::KeyEvent &event ) override;
+        void ignoreKey(int keyCode);
 
-	private:
+        void monitorKeys(const initializer_list<int> &keyCodes);
 
-		bool _attached;
-		map< int, bool > _monitoredKeyStates;
+        void ignoreKeys(const initializer_list<int> &keyCodes);
 
-	};
+        /**
+            Called when a monitored key is pressed
+         */
+        virtual void monitoredKeyDown(int keyCode) {
+        }
+
+        /**
+            Called when a monitored key is released
+         */
+        virtual void monitoredKeyUp(int keyCode) {
+        }
+
+        /**
+            return true if any monitored keys are pressed.
+            this ignores any keys that haven't been registered for monitoring by monitorKey()
+         */
+        bool isMonitoredKeyDown(int keyCode) const;
+
+        bool keyDown(const ci::app::KeyEvent &event) override;
+
+        bool keyUp(const ci::app::KeyEvent &event) override;
+
+    private:
+
+        bool _attached;
+        map<int, bool> _monitoredKeyStates;
+
+    };
 
 #pragma mark - Object
 
-	/**
-	 Object
-	 An Object is a thing added to a Stage. An object generally is a composite of components, and can be anything -
-	 it could be the terrain for a game, it could be a power up, it could be an enemy, or it could be a controller
-	 dispatching high stage changes to the game state based on player progress.
-	 
-	 A common use is to create an object and add custom DrawComponent and PhysicsComponent implementations.
-	 
-	 It is perfectly fine to subclass Object to make custom "prefab" like elements which build their own component sets.
-	 
-	 Note, things which are "alive", e.g., enemies, the player, NPCs - anything with health and a lifecycle and death
-	 should derive from Entity, which is a slim object subclass which provides access to HealthComponent and EntityDrawComponent.
-	 */
-	class Object : public IChipmunkUserData, public enable_shared_from_this<Object>, public signals::receiver {
-	public:
+    /**
+     Object
+     An Object is a thing added to a Stage. An object generally is a composite of components, and can be anything -
+     it could be the terrain for a game, it could be a power up, it could be an enemy, or it could be a controller
+     dispatching high stage changes to the game state based on player progress.
 
-		/**
-		 Create a non-specialized vanilla Object with some components. This is handy for if you
-		 have a simple set of component which needs to be added to a Stage but not be on a complex thing.
-		 */
-		static ObjectRef with(string name, const initializer_list<ComponentRef> &components) {
-			auto obj = make_shared<Object>(name);
-			for (auto &component : components) {
-				obj->addComponent(component);
-			}
+     A common use is to create an object and add custom DrawComponent and PhysicsComponent implementations.
 
-			return obj;
-		}
-		
-		/**
-		 Create a non-specialized vanilla Object with some components. This is handy for if you
-		 have a simple set of component which needs to be added to a Stage but not be on a complex thing.
-		 */
-		template <typename T>
-		static shared_ptr<T> create(string name, const initializer_list<ComponentRef> &components) {
-			auto obj = make_shared<T>(name);
-			for (auto &component : components) {
-				obj->addComponent(component);
-			}
-			
-			return obj;
-		}
-		
-		/**
-		 Create a non-specialized vanilla Object with a single component. This is handy for if you
-		 have a simple component which needs to be added to a Stage.
-		 */
-		static ObjectRef with(string name, ComponentRef component) {
-			auto obj = make_shared<Object>(name);
-			obj->addComponent(component);
-			return obj;
-		}
+     It is perfectly fine to subclass Object to make custom "prefab" like elements which build their own component sets.
 
-		template <typename T>
-		static shared_ptr<T> create(string name, ComponentRef component) {
-			auto obj = make_shared<T>(name);
-			obj->addComponent(component);
-			return obj;
-		}
+     Note, things which are "alive", e.g., enemies, the player, NPCs - anything with health and a lifecycle and death
+     should derive from Entity, which is a slim object subclass which provides access to HealthComponent and EntityDrawComponent.
+     */
+    class Object : public IChipmunkUserData, public enable_shared_from_this<Object>, public signals::receiver {
+    public:
 
-	public:
+        /**
+         Create a non-specialized vanilla Object with some components. This is handy for if you
+         have a simple set of component which needs to be added to a Stage but not be on a complex thing.
+         */
+        static ObjectRef with(string name, const initializer_list<ComponentRef> &components) {
+            auto obj = make_shared<Object>(name);
+            for (auto &component : components) {
+                obj->addComponent(component);
+            }
 
-		Object(string name);
-		virtual ~Object();
+            return obj;
+        }
 
-		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
-		template<typename T>
-		shared_ptr<T const> shared_from_this_as() const {
-			return static_pointer_cast<T const>(shared_from_this());
-		}
+        /**
+         Create a non-specialized vanilla Object with some components. This is handy for if you
+         have a simple set of component which needs to be added to a Stage but not be on a complex thing.
+         */
+        template<typename T>
+        static shared_ptr<T> create(string name, const initializer_list<ComponentRef> &components) {
+            auto obj = make_shared<T>(name);
+            for (auto &component : components) {
+                obj->addComponent(component);
+            }
 
-		// get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
-		template<typename T>
-		shared_ptr<T> shared_from_this_as() {
-			return static_pointer_cast<T>(shared_from_this());
-		}
+            return obj;
+        }
 
-		// IChipmunkUserData
-		ObjectRef getObject() const override { return const_cast<Object*>(this)->shared_from_this(); }
+        /**
+         Create a non-specialized vanilla Object with a single component. This is handy for if you
+         have a simple component which needs to be added to a Stage.
+         */
+        static ObjectRef with(string name, ComponentRef component) {
+            auto obj = make_shared<Object>(name);
+            obj->addComponent(component);
+            return obj;
+        }
 
-		// Object
+        template<typename T>
+        static shared_ptr<T> create(string name, ComponentRef component) {
+            auto obj = make_shared<T>(name);
+            obj->addComponent(component);
+            return obj;
+        }
 
-		// the unique id for this Object - each object is guaranteed a unique id at runtime
-		size_t getId() const { return _id; }
-		
-		// get the name assigned to this object
-		string getName() const { return _name; }
-		
-		// get a debug-friendly description of this object
-		string getDescription() const;
+    public:
 
-		// add a component to this object
-		virtual void addComponent(ComponentRef component);
-		
-		// remove a component from this object
-		virtual void removeComponent(ComponentRef component);
+        Object(string name);
 
-		// flag this object as "finished" - it will be removed from the Stage at the next timestep
-		// and if nobody is holding any strong references, it will then be deallocated.
-		// if secondsFromNow is > 0, the removal will be queued to happen at least that many seconds
-		// in the future.
-		virtual void setFinished(bool finished=true, seconds_t secondsFromNow=0);
+        virtual ~Object();
 
-		// returns true if setFinished(true) has been called.
-		virtual bool isFinished() const { return _finished; }
+        // get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
+        template<typename T>
+        shared_ptr<T const> shared_from_this_as() const {
+            return static_pointer_cast<T const>(shared_from_this());
+        }
 
-		// returns true after this object has been added to the Stage
-		// and onReady() has been called, during which all components are attached and have onReady called on them.
-		bool isReady() const { return _ready; }
+        // get typed shared_from_this, e.g., shared_ptr<FooObj> = shared_from_this_as<FooObj>();
+        template<typename T>
+        shared_ptr<T> shared_from_this_as() {
+            return static_pointer_cast<T>(shared_from_this());
+        }
 
-		// gets first component by type, e.g., fooObj->getComponent<PhysicsComponent>()
-		template<typename T>
-		shared_ptr<T> getComponent() const {
-			for (const auto &c : _components) {
-				shared_ptr<T> typedC = dynamic_pointer_cast<T>(c);
-				if (typedC) {
-					return typedC;
-				}
-			}
-			return nullptr;
-		}
+        // IChipmunkUserData
+        ObjectRef getObject() const override {
+            return const_cast<Object *>(this)->shared_from_this();
+        }
 
-		// get all draw components attached to this Object
-		const set<DrawComponentRef> &getDrawComponents() const { return _drawComponents; }
-		
-		// get the PhysicsComponent attached to this Object
-		PhysicsComponentRef getPhysicsComponent() const { return _physicsComponent; }
+        // Object
 
-		// get the stage this Object is in, or null if it hasn't been added
-		StageRef getStage() const { return _stage.lock(); }
+        // the unique id for this Object - each object is guaranteed a unique id at runtime
+        size_t getId() const {
+            return _id;
+        }
 
-		// called after an Object is added to a Stage. Subclasses must call inherited
-		virtual void onReady(StageRef stage);
+        // get the name assigned to this object
+        string getName() const {
+            return _name;
+        }
 
-		// called when setFinished is passed a time delay. secondsLeft will count to zero, and amountFinished will ramp from 0->1
-		virtual void onFinishing(seconds_t secondsLeft, double amountFinished){}
+        // get a debug-friendly description of this object
+        string getDescription() const;
 
-		// called after a Object is removed from a Stage (directly, or by calling setFinished(true)
-		virtual void onCleanup();
+        // add a component to this object
+        virtual void addComponent(ComponentRef component);
 
-		virtual void step(const time_state &timeState);
-		virtual void update(const time_state &timeState);
+        // remove a component from this object
+        virtual void removeComponent(ComponentRef component);
 
-		// if this Object has a PhysicsComponent get the reported BB, else return cpBBInfinity
-		virtual cpBB getBB() const;
-		
-		// if this Object has a PhysicsComponent, defers to PhysicsComponent::getGravitationLayerMask
-		// otherwise default implementation returns ALL_GRAVITATION_LAYERS
-		virtual size_t getGravitationLayerMask(cpBody *body) const;
+        // flag this object as "finished" - it will be removed from the Stage at the next timestep
+        // and if nobody is holding any strong references, it will then be deallocated.
+        // if secondsFromNow is > 0, the removal will be queued to happen at least that many seconds
+        // in the future.
+        virtual void setFinished(bool finished = true, seconds_t secondsFromNow = 0);
 
-	protected:
+        // returns true if setFinished(true) has been called.
+        virtual bool isFinished() const {
+            return _finished;
+        }
 
-		friend class Stage;
-		friend class Component;
+        // returns true after this object has been added to the Stage
+        // and onReady() has been called, during which all components are attached and have onReady called on them.
+        bool isReady() const {
+            return _ready;
+        }
 
-		virtual void onAddedToStage(StageRef stage) { _stage = stage; }
-		virtual void onRemovedFromStage() {
-			onCleanup();
-		}
+        // gets first component by type, e.g., fooObj->getComponent<PhysicsComponent>()
+        template<typename T>
+        shared_ptr<T> getComponent() const {
+            for (const auto &c : _components) {
+                shared_ptr<T> typedC = dynamic_pointer_cast<T>(c);
+                if (typedC) {
+                    return typedC;
+                }
+            }
+            return nullptr;
+        }
 
-		void notifyMoved();
+        // get all draw components attached to this Object
+        const set<DrawComponentRef> &getDrawComponents() const {
+            return _drawComponents;
+        }
 
-	private:
+        // get the PhysicsComponent attached to this Object
+        PhysicsComponentRef getPhysicsComponent() const {
+            return _physicsComponent;
+        }
 
-		static size_t _idCounter;
-		size_t _id;
-		string _name;
-		bool _finished, _finishingAfterDelay;
-		seconds_t _finishingDelay, _finishedAfterTime;
-		bool _ready;
-		set<ComponentRef> _components;
-		set<DrawComponentRef> _drawComponents;
-		PhysicsComponentRef _physicsComponent;
-		StageWeakRef _stage;
+        // get the stage this Object is in, or null if it hasn't been added
+        StageRef getStage() const {
+            return _stage.lock();
+        }
 
-	};
+        // called after an Object is added to a Stage. Subclasses must call inherited
+        virtual void onReady(StageRef stage);
+
+        // called when setFinished is passed a time delay. secondsLeft will count to zero, and amountFinished will ramp from 0->1
+        virtual void onFinishing(seconds_t secondsLeft, double amountFinished) {
+        }
+
+        // called after a Object is removed from a Stage (directly, or by calling setFinished(true)
+        virtual void onCleanup();
+
+        virtual void step(const time_state &timeState);
+
+        virtual void update(const time_state &timeState);
+
+        // if this Object has a PhysicsComponent get the reported BB, else return cpBBInfinity
+        virtual cpBB getBB() const;
+
+        // if this Object has a PhysicsComponent, defers to PhysicsComponent::getGravitationLayerMask
+        // otherwise default implementation returns ALL_GRAVITATION_LAYERS
+        virtual size_t getGravitationLayerMask(cpBody *body) const;
+
+    protected:
+
+        friend class Stage;
+
+        friend class Component;
+
+        virtual void onAddedToStage(StageRef stage) {
+            _stage = stage;
+        }
+
+        virtual void onRemovedFromStage() {
+            onCleanup();
+        }
+
+        void notifyMoved();
+
+    private:
+
+        static size_t _idCounter;
+        size_t _id;
+        string _name;
+        bool _finished, _finishingAfterDelay;
+        seconds_t _finishingDelay, _finishedAfterTime;
+        bool _ready;
+        set<ComponentRef> _components;
+        set<DrawComponentRef> _drawComponents;
+        PhysicsComponentRef _physicsComponent;
+        StageWeakRef _stage;
+
+    };
 
 #pragma mark - Impls
 
-	template<typename T>
-	shared_ptr<T> Component::getSibling() const {
-		return getObject()->getComponent<T>();
-	}
+    template<typename T>
+    shared_ptr<T> Component::getSibling() const {
+        return getObject()->getComponent<T>();
+    }
 
 } // namespace core
 
-inline ostream &operator << ( ostream &os, core::VisibilityDetermination::style style )
-{
-	return os << core::VisibilityDetermination::toString(style);
+inline ostream &operator<<(ostream &os, core::VisibilityDetermination::style style) {
+    return os << core::VisibilityDetermination::toString(style);
 }
 
 

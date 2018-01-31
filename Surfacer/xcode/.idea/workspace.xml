@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="1545ab49-add2-41b6-abe1-01f8fe7e5457" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/../src/core/App.cpp" afterPath="$PROJECT_DIR$/../src/core/App.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/App.hpp" afterPath="$PROJECT_DIR$/../src/core/App.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/BlendMode.cpp" afterPath="$PROJECT_DIR$/../src/core/BlendMode.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/BlendMode.hpp" afterPath="$PROJECT_DIR$/../src/core/BlendMode.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/ChipmunkHelpers.cpp" afterPath="$PROJECT_DIR$/../src/core/ChipmunkHelpers.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/ChipmunkHelpers.hpp" afterPath="$PROJECT_DIR$/../src/core/ChipmunkHelpers.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Common.hpp" afterPath="$PROJECT_DIR$/../src/core/Common.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Entity.cpp" afterPath="$PROJECT_DIR$/../src/core/Entity.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Entity.hpp" afterPath="$PROJECT_DIR$/../src/core/Entity.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Exception.hpp" afterPath="$PROJECT_DIR$/../src/core/Exception.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/InputDispatcher.cpp" afterPath="$PROJECT_DIR$/../src/core/InputDispatcher.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/InputDispatcher.hpp" afterPath="$PROJECT_DIR$/../src/core/InputDispatcher.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/LineSegment.hpp" afterPath="$PROJECT_DIR$/../src/core/LineSegment.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/MathHelpers.hpp" afterPath="$PROJECT_DIR$/../src/core/MathHelpers.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Object.cpp" afterPath="$PROJECT_DIR$/../src/core/Object.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Object.hpp" afterPath="$PROJECT_DIR$/../src/core/Object.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/RenderState.hpp" afterPath="$PROJECT_DIR$/../src/core/RenderState.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Scenario.cpp" afterPath="$PROJECT_DIR$/../src/core/Scenario.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Scenario.hpp" afterPath="$PROJECT_DIR$/../src/core/Scenario.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Signals.hpp" afterPath="$PROJECT_DIR$/../src/core/Signals.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/SpatialIndex.hpp" afterPath="$PROJECT_DIR$/../src/core/SpatialIndex.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Stage.cpp" afterPath="$PROJECT_DIR$/../src/core/Stage.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Stage.hpp" afterPath="$PROJECT_DIR$/../src/core/Stage.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/StopWatch.hpp" afterPath="$PROJECT_DIR$/../src/core/StopWatch.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Strings.hpp" afterPath="$PROJECT_DIR$/../src/core/Strings.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/TimeState.hpp" afterPath="$PROJECT_DIR$/../src/core/TimeState.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Viewport.cpp" afterPath="$PROJECT_DIR$/../src/core/Viewport.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/Viewport.hpp" afterPath="$PROJECT_DIR$/../src/core/Viewport.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/ViewportController.cpp" afterPath="$PROJECT_DIR$/../src/core/ViewportController.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/ViewportController.hpp" afterPath="$PROJECT_DIR$/../src/core/ViewportController.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/ChipmunkDebugDraw.cpp" afterPath="$PROJECT_DIR$/../src/core/util/ChipmunkDebugDraw.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/ChipmunkDebugDraw.hpp" afterPath="$PROJECT_DIR$/../src/core/util/ChipmunkDebugDraw.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/ContourSimplification.hpp" afterPath="$PROJECT_DIR$/../src/core/util/ContourSimplification.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/ImageProcessing.cpp" afterPath="$PROJECT_DIR$/../src/core/util/ImageProcessing.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/ImageProcessing.hpp" afterPath="$PROJECT_DIR$/../src/core/util/ImageProcessing.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/PerlinNoise.cpp" afterPath="$PROJECT_DIR$/../src/core/util/PerlinNoise.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/PerlinNoise.hpp" afterPath="$PROJECT_DIR$/../src/core/util/PerlinNoise.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/Svg.cpp" afterPath="$PROJECT_DIR$/../src/core/util/Svg.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/Svg.hpp" afterPath="$PROJECT_DIR$/../src/core/util/Svg.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/SvgParsing.cpp" afterPath="$PROJECT_DIR$/../src/core/util/SvgParsing.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/SvgParsing.hpp" afterPath="$PROJECT_DIR$/../src/core/util/SvgParsing.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/Xml.cpp" afterPath="$PROJECT_DIR$/../src/core/util/Xml.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/core/util/Xml.hpp" afterPath="$PROJECT_DIR$/../src/core/util/Xml.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Components/DevComponents.cpp" afterPath="$PROJECT_DIR$/../src/elements/Components/DevComponents.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Components/DevComponents.hpp" afterPath="$PROJECT_DIR$/../src/elements/Components/DevComponents.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/ParticleSystem/BaseParticleSystem.cpp" afterPath="$PROJECT_DIR$/../src/elements/ParticleSystem/BaseParticleSystem.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/ParticleSystem/BaseParticleSystem.hpp" afterPath="$PROJECT_DIR$/../src/elements/ParticleSystem/BaseParticleSystem.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/ParticleSystem/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/../src/elements/ParticleSystem/ParticleSystem.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/ParticleSystem/ParticleSystem.hpp" afterPath="$PROJECT_DIR$/../src/elements/ParticleSystem/ParticleSystem.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/MarchingSquares.hpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/MarchingSquares.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/Terrain.cpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/Terrain.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/Terrain.hpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/Terrain.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail.cpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail.hpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail_MarchingSquares.hpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail_MarchingSquares.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail_Svg.cpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail_Svg.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail_Svg.hpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainDetail_Svg.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainWorld.cpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainWorld.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/elements/Terrain/TerrainWorld.hpp" afterPath="$PROJECT_DIR$/../src/elements/Terrain/TerrainWorld.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyApp.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyApp.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.hpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyScenario.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyScenario.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyScenario.hpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyScenario.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.hpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/elements/Background.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/elements/Background.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/elements/Background.hpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/elements/Background.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/elements/CloudLayerParticleSystem.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/elements/CloudLayerParticleSystem.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/elements/CloudLayerParticleSystem.hpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/elements/CloudLayerParticleSystem.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/elements/Planet.cpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/elements/Planet.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Precariously/elements/Planet.hpp" afterPath="$PROJECT_DIR$/../src/game/Precariously/elements/Planet.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Boid.cpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Boid.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Boid.hpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Boid.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Eggsac.cpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Eggsac.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Eggsac.hpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/Enemies/Eggsac.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/Player/Player.cpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/Player/Player.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/Player/Player.hpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/Player/Player.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerApp.cpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerApp.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerScenario.cpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerScenario.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerScenario.hpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerScenario.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerStage.cpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerStage.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerStage.hpp" afterPath="$PROJECT_DIR$/../src/game/Surfacer/SurfacerStage.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/ParticleSystemTestScenario.cpp" afterPath="$PROJECT_DIR$/../src/game/Tests/ParticleSystemTestScenario.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/ParticleSystemTestScenario.hpp" afterPath="$PROJECT_DIR$/../src/game/Tests/ParticleSystemTestScenario.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/PerlinWorldTest.cpp" afterPath="$PROJECT_DIR$/../src/game/Tests/PerlinWorldTest.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/PerlinWorldTest.hpp" afterPath="$PROJECT_DIR$/../src/game/Tests/PerlinWorldTest.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/SvgTestScenario.cpp" afterPath="$PROJECT_DIR$/../src/game/Tests/SvgTestScenario.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/SvgTestScenario.hpp" afterPath="$PROJECT_DIR$/../src/game/Tests/SvgTestScenario.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/TerrainTestScenario.cpp" afterPath="$PROJECT_DIR$/../src/game/Tests/TerrainTestScenario.cpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/TerrainTestScenario.hpp" afterPath="$PROJECT_DIR$/../src/game/Tests/TerrainTestScenario.hpp" />
+      <change beforePath="$PROJECT_DIR$/../src/game/Tests/TestsApp.cpp" afterPath="$PROJECT_DIR$/../src/game/Tests/TestsApp.cpp" />
+    </list>
+    <ignored path="$USER_HOME$/Library/Developer/Xcode/DerivedData/Surfacer-glltlzylnyaxzkcthlamlvevmubc/" />
+    <ignored path="$PROJECT_DIR$/build/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="macos_x86_64" />
+  <component name="FileEditorManager">
+    <leaf>
+      <file leaf-file-name="App.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/core/App.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-818">
+              <caret line="27" column="0" lean-forward="false" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Core.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/core/Core.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="MathHelpers.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/core/MathHelpers.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-143">
+              <caret line="19" column="51" lean-forward="false" selection-start-line="19" selection-start-column="51" selection-end-line="19" selection-end-column="51" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Viewport.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/core/Viewport.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1209">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PrecariouslyStage.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PrecariouslyStage.cpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.cpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="247">
+              <caret line="144" column="24" lean-forward="false" selection-start-line="144" selection-start-column="24" selection-end-line="144" selection-end-column="24" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PrecariouslyConstants.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-16">
+              <caret line="51" column="8" lean-forward="false" selection-start-line="51" selection-start-column="8" selection-end-line="51" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PrecariouslyConstants.cpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.cpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PrecariouslyScenario.cpp" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyScenario.cpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-874">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="type_mat4x4.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../vendor/cinder_0.9.0_mac/include/glm/detail/type_mat4x4.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="285">
+              <caret line="43" column="11" lean-forward="false" selection-start-line="43" selection-start-column="11" selection-end-line="43" selection-end-column="11" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/../src/game/Tests/PerlinWorldTest.cpp" />
+        <option value="$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.cpp" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="y" value="22" />
+    <option name="width" value="1585" />
+    <option name="height" value="987" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Cidr.FilesView" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="" type="efc3779f:XcodeRootNode" />
+              <item name="Surfacer" type="1d218c8b:XcodeProjectNode" />
+            </path>
+            <path>
+              <item name="" type="efc3779f:XcodeRootNode" />
+              <item name="Surfacer" type="1d218c8b:XcodeProjectNode" />
+              <item name="src" type="fcab9f18:XcodeViewNode" />
+            </path>
+            <path>
+              <item name="" type="efc3779f:XcodeRootNode" />
+              <item name="Surfacer" type="1d218c8b:XcodeProjectNode" />
+              <item name="src" type="fcab9f18:XcodeViewNode" />
+              <item name="core" type="fcab9f18:XcodeViewNode" />
+            </path>
+            <path>
+              <item name="" type="efc3779f:XcodeRootNode" />
+              <item name="Surfacer" type="1d218c8b:XcodeProjectNode" />
+              <item name="src" type="fcab9f18:XcodeViewNode" />
+              <item name="game" type="fcab9f18:XcodeViewNode" />
+            </path>
+            <path>
+              <item name="" type="efc3779f:XcodeRootNode" />
+              <item name="Surfacer" type="1d218c8b:XcodeProjectNode" />
+              <item name="src" type="fcab9f18:XcodeViewNode" />
+              <item name="game" type="fcab9f18:XcodeViewNode" />
+              <item name="Precariously" type="fcab9f18:XcodeViewNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.C/C++/Objective-C" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Application.Precariously">
+    <configuration name="Precariously (Release)" type="AppleRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Surfacer" TARGET_NAME="Precariously" CONFIG_NAME="Release" SCHEME_NAME="Precariously (Release)" RUN_TARGET_PROJECT_NAME="Surfacer" RUN_TARGET_NAME="Precariously" MAKE_ACTIVE="TRUE">
+      <envs />
+      <EXTENSION ID="org.jetbrains.appcode.reveal.RevealRunConfigurationExtension">
+        <REVEAL_SETTINGS autoInject="false" autoInstall="true" askToEnableAutoInstall="true" />
+      </EXTENSION>
+    </configuration>
+    <configuration name="Precariously" type="AppleRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Surfacer" TARGET_NAME="Precariously" CONFIG_NAME="Debug" SCHEME_NAME="Precariously" RUN_TARGET_PROJECT_NAME="Surfacer" RUN_TARGET_NAME="Precariously" MAKE_ACTIVE="TRUE">
+      <envs />
+      <EXTENSION ID="org.jetbrains.appcode.reveal.RevealRunConfigurationExtension">
+        <REVEAL_SETTINGS autoInject="false" autoInstall="true" askToEnableAutoInstall="true" />
+      </EXTENSION>
+    </configuration>
+    <configuration name="Surfacer (Release)" type="AppleRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Surfacer" TARGET_NAME="Surfacer" CONFIG_NAME="Release" SCHEME_NAME="Surfacer (Release)" RUN_TARGET_PROJECT_NAME="Surfacer" RUN_TARGET_NAME="Surfacer" MAKE_ACTIVE="TRUE">
+      <envs />
+      <EXTENSION ID="org.jetbrains.appcode.reveal.RevealRunConfigurationExtension">
+        <REVEAL_SETTINGS autoInject="false" autoInstall="true" askToEnableAutoInstall="true" />
+      </EXTENSION>
+    </configuration>
+    <configuration name="Surfacer" type="AppleRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Surfacer" TARGET_NAME="Surfacer" CONFIG_NAME="Debug" SCHEME_NAME="Surfacer" RUN_TARGET_PROJECT_NAME="Surfacer" RUN_TARGET_NAME="Surfacer" MAKE_ACTIVE="TRUE">
+      <envs />
+      <EXTENSION ID="org.jetbrains.appcode.reveal.RevealRunConfigurationExtension">
+        <REVEAL_SETTINGS autoInject="false" autoInstall="true" askToEnableAutoInstall="true" />
+      </EXTENSION>
+    </configuration>
+    <configuration name="Tests" type="AppleRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Surfacer" TARGET_NAME="Tests" CONFIG_NAME="Debug" SCHEME_NAME="Tests" RUN_TARGET_PROJECT_NAME="Surfacer" RUN_TARGET_NAME="Tests" MAKE_ACTIVE="TRUE">
+      <envs />
+      <EXTENSION ID="org.jetbrains.appcode.reveal.RevealRunConfigurationExtension">
+        <REVEAL_SETTINGS autoInject="false" autoInstall="true" askToEnableAutoInstall="true" />
+      </EXTENSION>
+    </configuration>
+    <list size="5">
+      <item index="0" class="java.lang.String" itemvalue="Application.Surfacer" />
+      <item index="1" class="java.lang.String" itemvalue="Application.Surfacer (Release)" />
+      <item index="2" class="java.lang.String" itemvalue="Application.Precariously" />
+      <item index="3" class="java.lang.String" itemvalue="Application.Precariously (Release)" />
+      <item index="4" class="java.lang.String" itemvalue="Application.Tests" />
+    </list>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1545ab49-add2-41b6-abe1-01f8fe7e5457" name="Default" comment="" />
+      <created>1517327450037</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1517327450037</updated>
+      <workItem from="1517327452916" duration="1965000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="1965000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="22" width="1680" height="1028" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3294979" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3294979" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21845238" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager />
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="appcode.project-settings://4318fded">
+      <provider selected="true" editor-type-id="AppCode.ProjectSettings">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/game/Tests/PerlinWorldTest.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="213">
+          <caret line="495" column="0" lean-forward="false" selection-start-line="495" selection-start-column="0" selection-end-line="495" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/core/App.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-818">
+          <caret line="27" column="0" lean-forward="false" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/core/Core.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../vendor/cinder_0.9.0_mac/include/glm/detail/type_mat4x4.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="43" column="11" lean-forward="false" selection-start-line="43" selection-start-column="11" selection-end-line="43" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/core/MathHelpers.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-143">
+          <caret line="19" column="51" lean-forward="false" selection-start-line="19" selection-start-column="51" selection-end-line="19" selection-end-column="51" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/core/Viewport.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1209">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyStage.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="247">
+          <caret line="144" column="24" lean-forward="false" selection-start-line="144" selection-start-column="24" selection-end-line="144" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-16">
+          <caret line="51" column="8" lean-forward="false" selection-start-line="51" selection-start-column="8" selection-end-line="51" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyConstants.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../src/game/Precariously/PrecariouslyScenario.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-874">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

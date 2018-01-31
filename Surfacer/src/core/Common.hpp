@@ -11,7 +11,7 @@
 
 using namespace std;
 
-#define CLASS_NAME(ptr)		((typeid(*(ptr))).name())
-#define SMART_PTR(cname)	class cname; typedef std::shared_ptr< class cname > cname ## Ref; typedef std::weak_ptr< class cname > cname ## WeakRef;
+#define CLASS_NAME(ptr)        ((typeid(*(ptr))).name())
+#define SMART_PTR(cname)    class cname; typedef std::shared_ptr< class cname > cname ## Ref; typedef std::weak_ptr< class cname > cname ## WeakRef;
 
 #endif /* Common_h */

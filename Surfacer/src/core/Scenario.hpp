@@ -17,118 +17,190 @@
 
 namespace core {
 
-	SMART_PTR(Stage)
-	SMART_PTR(Scenario)
+    SMART_PTR(Stage)
 
-	class Scenario : public InputListener, public signals::receiver, public enable_shared_from_this<Scenario> {
-	public:
+    SMART_PTR(Scenario)
 
-		Scenario();
-		virtual ~Scenario();
+    class Scenario : public InputListener, public signals::receiver, public enable_shared_from_this<Scenario> {
+    public:
 
-		bool isListening() const override;
+        Scenario();
 
-		virtual void setup(){}
-		virtual void cleanup(){}
-		virtual void resize( ivec2 size );
-		virtual void step( const time_state &time );
-		virtual void update( const time_state &time );
+        virtual ~Scenario();
 
-		/**
-		 Clear the screen. No drawing should be done in here.
-		 */
-		virtual void clear( const render_state &state );
+        bool isListening() const override;
 
-		/**
-		 performs draw with viewport set with its current scale, look, etc.
-		 */
-		virtual void draw( const render_state &state );
+        virtual void setup() {
+        }
 
-		/**
-		 performs draw with a top-left 1-to-1 ortho projection suitable for UI.
-		 Note, there's no ViewportRef available in this pass since it's screen-direct.
-		 */
-		virtual void drawScreen( const render_state &state );
+        virtual void cleanup() {
+        }
 
-		const ViewportRef& getViewport() const { return _viewport; }
-		const ViewportControllerRef getViewportController() const { return _viewportController; }
-		void setViewportController(ViewportControllerRef vp);
+        virtual void resize(ivec2 size);
 
-		// time state used for animation
-		const time_state &getTime() const { return _time; }
+        virtual void step(const time_state &time);
 
-		// time state used for physics
-		const time_state &getStepTime() const { return _stepTime; }
+        virtual void update(const time_state &time);
 
-		const render_state &getRenderState() const { return _renderState; }
+        /**
+         Clear the screen. No drawing should be done in here.
+         */
+        virtual void clear(const render_state &state);
 
-		void setRenderMode( RenderMode::mode mode );
-		RenderMode::mode getRenderMode() const { return _renderState.mode; }
+        /**
+         performs draw with viewport set with its current scale, look, etc.
+         */
+        virtual void draw(const render_state &state);
 
-		/**
-		 Save a screenshot as PNG to @a path
-		 */
-		void screenshot( const ci::fs::path &folderPath, const std::string &namingPrefix, const std::string format = "png" );
+        /**
+         performs draw with a top-left 1-to-1 ortho projection suitable for UI.
+         Note, there's no ViewportRef available in this pass since it's screen-direct.
+         */
+        virtual void drawScreen(const render_state &state);
 
-		void setStage(StageRef stage);
-		StageRef getStage() const { return _stage; }
+        const ViewportRef &getViewport() const {
+            return _viewport;
+        }
 
-	public:
+        const ViewportControllerRef getViewportController() const {
+            return _viewportController;
+        }
 
-		virtual void dispatchSetup();
-		virtual void dispatchCleanup();
-		virtual void dispatchResize( const ivec2 &size );
-		virtual void dispatchStep();
-		virtual void dispatchUpdate();
-		virtual void dispatchDraw();
+        void setViewportController(ViewportControllerRef vp);
 
-	protected:
+        // time state used for animation
+        const time_state &getTime() const {
+            return _time;
+        }
 
-		void onViewportMoved(const Viewport &vp);
-		void onViewportBoundsChanged(const Viewport &vp);
+        // time state used for physics
+        const time_state &getStepTime() const {
+            return _stepTime;
+        }
 
-		class ScreenViewport : public IViewport {
-		public:
-			ScreenViewport(){}
-			virtual ~ScreenViewport(){}
+        const render_state &getRenderState() const {
+            return _renderState;
+        }
 
-			void setSize( int width, int height ) { _width = width; _height = height; }
-			ivec2 getSize() const override { return ivec2(_width, _height); }
-			int getWidth() const override { return _width; }
-			int getHeight() const override { return _height; }
-			dvec2 getCenter() const override { return dvec2(_width/2.0, _height/2.0); }
+        void setRenderMode(RenderMode::mode mode);
 
-			virtual double getScale() const override { return 1.0; };
-			virtual double getReciprocalScale() const override { return 1.0; };
+        RenderMode::mode getRenderMode() const {
+            return _renderState.mode;
+        }
 
-			virtual dmat4 getViewMatrix() const override { return mat4(); };
-			virtual dmat4 getInverseViewMatrix() const override { return mat4(); };
-			virtual dmat4 getProjectionMatrix() const override { return mat4(); };
-			virtual dmat4 getInverseProjectionMatrix() const override { return mat4(); };
-			virtual dmat4 getViewProjectionMatrix() const override { return mat4(); };
-			virtual dmat4 getInverseViewProjectionMatrix() const override { return mat4(); };
+        /**
+         Save a screenshot as PNG to @a path
+         */
+        void screenshot(const ci::fs::path &folderPath, const std::string &namingPrefix, const std::string format = "png");
 
-			virtual cpBB getFrustum() const override {
-				return cpBBNew(0, 0, _width, _height);
-			};
+        void setStage(StageRef stage);
 
-		private:
+        StageRef getStage() const {
+            return _stage;
+        }
 
-			int _width, _height;
+    public:
 
-		};
+        virtual void dispatchSetup();
 
-	private:
+        virtual void dispatchCleanup();
 
-		ViewportRef _viewport;
-		shared_ptr<ScreenViewport> _screenViewport;
-		ViewportControllerRef _viewportController;
-		time_state _time, _stepTime;
-		render_state _renderState, _screenRenderState;
-		StageRef _stage;
-		int _width, _height;
-		
-	};
-	
+        virtual void dispatchResize(const ivec2 &size);
+
+        virtual void dispatchStep();
+
+        virtual void dispatchUpdate();
+
+        virtual void dispatchDraw();
+
+    protected:
+
+        void onViewportMoved(const Viewport &vp);
+
+        void onViewportBoundsChanged(const Viewport &vp);
+
+        class ScreenViewport : public IViewport {
+        public:
+            ScreenViewport() {
+            }
+
+            virtual ~ScreenViewport() {
+            }
+
+            void setSize(int width, int height) {
+                _width = width;
+                _height = height;
+            }
+
+            ivec2 getSize() const override {
+                return ivec2(_width, _height);
+            }
+
+            int getWidth() const override {
+                return _width;
+            }
+
+            int getHeight() const override {
+                return _height;
+            }
+
+            dvec2 getCenter() const override {
+                return dvec2(_width / 2.0, _height / 2.0);
+            }
+
+            virtual double getScale() const override {
+                return 1.0;
+            };
+
+            virtual double getReciprocalScale() const override {
+                return 1.0;
+            };
+
+            virtual dmat4 getViewMatrix() const override {
+                return mat4();
+            };
+
+            virtual dmat4 getInverseViewMatrix() const override {
+                return mat4();
+            };
+
+            virtual dmat4 getProjectionMatrix() const override {
+                return mat4();
+            };
+
+            virtual dmat4 getInverseProjectionMatrix() const override {
+                return mat4();
+            };
+
+            virtual dmat4 getViewProjectionMatrix() const override {
+                return mat4();
+            };
+
+            virtual dmat4 getInverseViewProjectionMatrix() const override {
+                return mat4();
+            };
+
+            virtual cpBB getFrustum() const override {
+                return cpBBNew(0, 0, _width, _height);
+            };
+
+        private:
+
+            int _width, _height;
+
+        };
+
+    private:
+
+        ViewportRef _viewport;
+        shared_ptr<ScreenViewport> _screenViewport;
+        ViewportControllerRef _viewportController;
+        time_state _time, _stepTime;
+        render_state _renderState, _screenRenderState;
+        StageRef _stage;
+        int _width, _height;
+
+    };
+
 }
 #endif /* Scenario_hpp */

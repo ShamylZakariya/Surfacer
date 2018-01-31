@@ -14,41 +14,46 @@
 
 namespace core {
 
-class Exception : public std::exception
-{
-public:
+    class Exception : public std::exception {
+    public:
 
-	Exception( const std::string &w ):
-		_what(w)
-	{
-		CI_LOG_EXCEPTION("KABOOM", (*this));
-	}
+        Exception(const std::string &w) :
+                _what(w) {
+            CI_LOG_EXCEPTION("KABOOM", (*this));
+        }
 
-	virtual ~Exception() throw() {}
+        virtual ~Exception() throw() {
+        }
 
-	virtual const char* what() const throw() { return _what.c_str(); }
+        virtual const char *what() const throw() {
+            return _what.c_str();
+        }
 
-private:
+    private:
 
-	std::string _what;
-};
+        std::string _what;
+    };
 
-class DrawException : public Exception
-{
-public:
+    class DrawException : public Exception {
+    public:
 
-	DrawException( const std::string &w ):Exception(w){}
-	virtual ~DrawException() throw() {}
+        DrawException(const std::string &w) : Exception(w) {
+        }
 
-};
+        virtual ~DrawException() throw() {
+        }
 
-class InitException : public Exception
-{
-public:
+    };
 
-	InitException( const std::string &w ):Exception(w){}
-	virtual ~InitException() throw() {}
-};
+    class InitException : public Exception {
+    public:
+
+        InitException(const std::string &w) : Exception(w) {
+        }
+
+        virtual ~InitException() throw() {
+        }
+    };
 
 }
 

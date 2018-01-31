@@ -14,20 +14,21 @@
 class PrecariouslyApp : public core::App {
 public:
 
-	static void prepareSettings(Settings *settings) {
-		App::prepareSettings(settings);
-		settings->setTitle( "Precariously" );
-	}
+    static void prepareSettings(Settings *settings) {
+        App::prepareSettings(settings);
+        settings->setTitle("Precariously");
+    }
 
 public:
 
-	PrecariouslyApp(){}
+    PrecariouslyApp() {
+    }
 
-	virtual void setup() override {
-		App::setup();
-		setScenario(make_shared<precariously::PrecariouslyScenario>("precariously/stages/0.xml"));
-	}
- 
+    virtual void setup() override {
+        App::setup();
+        setScenario(make_shared<precariously::PrecariouslyScenario>("precariously/stages/0.xml"));
+    }
+
 };
 
-CINDER_APP( PrecariouslyApp, app::RendererGl, PrecariouslyApp::prepareSettings )
+CINDER_APP(PrecariouslyApp, app::RendererGl, PrecariouslyApp::prepareSettings)

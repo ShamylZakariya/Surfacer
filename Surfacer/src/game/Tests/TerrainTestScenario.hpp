@@ -18,43 +18,55 @@ using namespace core;
 class TerrainTestScenario : public Scenario {
 public:
 
-	TerrainTestScenario();
-	virtual ~TerrainTestScenario();
+    TerrainTestScenario();
 
-	virtual void setup() override;
-	virtual void cleanup() override;
-	virtual void resize( ivec2 size ) override;
+    virtual ~TerrainTestScenario();
 
-	virtual void step( const time_state &time ) override;
-	virtual void update( const time_state &time ) override;
-	virtual void clear( const render_state &state ) override;
-	virtual void drawScreen( const render_state &state ) override;
+    virtual void setup() override;
 
-	virtual bool keyDown( const ci::app::KeyEvent &event ) override;
+    virtual void cleanup() override;
 
-	void reset();
+    virtual void resize(ivec2 size) override;
 
-private:
+    virtual void step(const time_state &time) override;
 
-	terrain::WorldRef testDistantTerrain();
-	terrain::WorldRef testBasicTerrain();
-	terrain::WorldRef testComplexTerrain();
-	terrain::WorldRef testSimpleAnchors();
-	terrain::WorldRef testComplexAnchors();
+    virtual void update(const time_state &time) override;
 
-	terrain::WorldRef testSimplePartitionedTerrain();
-	terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
+    virtual void clear(const render_state &state) override;
 
-	terrain::WorldRef testSimpleSvgLoad();
-	terrain::WorldRef testComplexSvgLoad();
+    virtual void drawScreen(const render_state &state) override;
 
-	terrain::WorldRef testFail();
+    virtual bool keyDown(const ci::app::KeyEvent &event) override;
 
-	void timeSpatialIndex();
+    void reset();
 
 private:
 
-	terrain::TerrainObjectRef _terrain;
+    terrain::WorldRef testDistantTerrain();
+
+    terrain::WorldRef testBasicTerrain();
+
+    terrain::WorldRef testComplexTerrain();
+
+    terrain::WorldRef testSimpleAnchors();
+
+    terrain::WorldRef testComplexAnchors();
+
+    terrain::WorldRef testSimplePartitionedTerrain();
+
+    terrain::WorldRef testComplexPartitionedTerrainWithAnchors();
+
+    terrain::WorldRef testSimpleSvgLoad();
+
+    terrain::WorldRef testComplexSvgLoad();
+
+    terrain::WorldRef testFail();
+
+    void timeSpatialIndex();
+
+private:
+
+    terrain::TerrainObjectRef _terrain;
 };
 
 #endif /* IslandTestScenario_hpp */

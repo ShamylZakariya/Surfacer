@@ -11,11 +11,15 @@
 
 #include "Core.hpp"
 
-namespace core { namespace util { namespace cdd {
+namespace core {
+    namespace util {
+        namespace cdd {
 
-	void DrawCapsule(dvec2 a, dvec2 b, double radius);
+            void DrawCapsule(dvec2 a, dvec2 b, double radius);
 
 
-}}} // namespace core::util::cdd
+        }
+    }
+} // namespace core::util::cdd
 
 #endif /* ChipmunkDebugDraw_hpp */

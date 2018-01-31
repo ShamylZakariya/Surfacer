@@ -14,20 +14,21 @@
 class SurfacerApp : public core::App {
 public:
 
-	static void prepareSettings(Settings *settings) {
-		App::prepareSettings(settings);
-		settings->setTitle( "Surfacer" );
-	}
+    static void prepareSettings(Settings *settings) {
+        App::prepareSettings(settings);
+        settings->setTitle("Surfacer");
+    }
 
 public:
 
-	SurfacerApp(){}
+    SurfacerApp() {
+    }
 
-	virtual void setup() override {
-		App::setup();
-		setScenario(make_shared<surfacer::SurfacerScenario>("surfacer/stages/0.xml"));
-	}
- 
+    virtual void setup() override {
+        App::setup();
+        setScenario(make_shared<surfacer::SurfacerScenario>("surfacer/stages/0.xml"));
+    }
+
 };
 
-CINDER_APP( SurfacerApp, app::RendererGl, SurfacerApp::prepareSettings )
+CINDER_APP(SurfacerApp, app::RendererGl, SurfacerApp::prepareSettings)

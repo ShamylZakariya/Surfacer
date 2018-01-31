@@ -20,64 +20,83 @@
 
 namespace precariously {
 
-	SMART_PTR(PrecariouslyStage);
+    SMART_PTR(PrecariouslyStage);
 
 #pragma mark - PrecariouslyStage
 
-	class PrecariouslyStage : public core::Stage {
-	public:
-		PrecariouslyStage();
-		virtual ~PrecariouslyStage();
+    class PrecariouslyStage : public core::Stage {
+    public:
+        PrecariouslyStage();
 
-		//
-		//	Stage
-		//
+        virtual ~PrecariouslyStage();
 
-		void addObject(core::ObjectRef obj) override;
-		void removeObject(core::ObjectRef obj) override;
+        //
+        //	Stage
+        //
 
-		//
-		//	PrecariouslyStage
-		//
+        void addObject(core::ObjectRef obj) override;
 
-		void load(ci::DataSourceRef stageXmlData);
-		BackgroundRef getBackground() const { return _background; }
-		PlanetRef getPlanet() const { return _planet; }
+        void removeObject(core::ObjectRef obj) override;
+
+        //
+        //	PrecariouslyStage
+        //
+
+        void load(ci::DataSourceRef stageXmlData);
+
+        BackgroundRef getBackground() const {
+            return _background;
+        }
+
+        PlanetRef getPlanet() const {
+            return _planet;
+        }
 
 
-	protected:
+    protected:
 
-		// Stage
-		void onReady() override;
-		void update( const core::time_state &time ) override;
-		bool onCollisionBegin(cpArbiter *arb) override;
-		bool onCollisionPreSolve(cpArbiter *arb) override;
-		void onCollisionPostSolve(cpArbiter *arb) override;
-		void onCollisionSeparate(cpArbiter *arb) override;
+        // Stage
+        void onReady() override;
 
-		// PrecariouslyStage
-		void applySpaceAttributes(XmlTree spaceNode);
-		void buildGravity(XmlTree gravityNode);
-		void loadBackground(XmlTree planetNode);
-		void loadPlanet(XmlTree planetNode);
-		CloudLayerParticleSystemRef loadCloudLayer(XmlTree cloudLayer, int drawLayer);
-		void buildExplosionParticleSystem();
-		
-		void cullRubble();
-		void makeSleepersStatic();
-		
-		void performExplosion(dvec2 world);
+        void update(const core::time_state &time) override;
 
-	private:
+        bool onCollisionBegin(cpArbiter *arb) override;
 
-		BackgroundRef _background;
-		PlanetRef _planet;
-		vector<CloudLayerParticleSystemRef> _cloudLayers;
-		core::RadialGravitationCalculatorRef _gravity;
-		particles::ParticleEmitterRef _explosionEmitter;
-		
-	};
-	
+        bool onCollisionPreSolve(cpArbiter *arb) override;
+
+        void onCollisionPostSolve(cpArbiter *arb) override;
+
+        void onCollisionSeparate(cpArbiter *arb) override;
+
+        // PrecariouslyStage
+        void applySpaceAttributes(XmlTree spaceNode);
+
+        void buildGravity(XmlTree gravityNode);
+
+        void loadBackground(XmlTree planetNode);
+
+        void loadPlanet(XmlTree planetNode);
+
+        CloudLayerParticleSystemRef loadCloudLayer(XmlTree cloudLayer, int drawLayer);
+
+        void buildExplosionParticleSystem();
+
+        void cullRubble();
+
+        void makeSleepersStatic();
+
+        void performExplosion(dvec2 world);
+
+    private:
+
+        BackgroundRef _background;
+        PlanetRef _planet;
+        vector <CloudLayerParticleSystemRef> _cloudLayers;
+        core::RadialGravitationCalculatorRef _gravity;
+        particles::ParticleEmitterRef _explosionEmitter;
+
+    };
+
 } // namespace surfacer
 
 #endif /* PrecariouslyStage_hpp */

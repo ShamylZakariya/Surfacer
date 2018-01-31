@@ -17,186 +17,241 @@
 
 #include "Xml.hpp"
 
-namespace surfacer { namespace enemy {
+namespace surfacer {
+    namespace enemy {
 
-	SMART_PTR(Eggsac);
-	SMART_PTR(EggsacPhysicsComponent);
-	SMART_PTR(EggsacDrawComponent);
+        SMART_PTR(Eggsac);
 
-	class EggsacDrawComponent : public core::EntityDrawComponent {
-	public:
+        SMART_PTR(EggsacPhysicsComponent);
 
-		struct config {
-		};
+        SMART_PTR(EggsacDrawComponent);
 
-	public:
+        class EggsacDrawComponent : public core::EntityDrawComponent {
+        public:
 
-		EggsacDrawComponent(config c);
-		virtual ~EggsacDrawComponent();
+            struct config {
+            };
 
-		config getConfig() const { return _config; }
+        public:
 
-		// DrawComponent
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+            EggsacDrawComponent(config c);
 
-		void draw(const core::render_state &renderState) override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override { return core::VisibilityDetermination::FRUSTUM_CULLING; }
-		int getLayer() const override;
-		int getDrawPasses() const override { return 1; }
-		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
+            virtual ~EggsacDrawComponent();
 
-	protected:
+            config getConfig() const {
+                return _config;
+            }
 
-		config _config;
-		EggsacPhysicsComponentWeakRef _physics;
+            // DrawComponent
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
-	};
+            void draw(const core::render_state &renderState) override;
 
-	class EggsacPhysicsComponent : public core::PhysicsComponent {
-	public:
+            core::VisibilityDetermination::style getVisibilityDetermination() const override {
+                return core::VisibilityDetermination::FRUSTUM_CULLING;
+            }
 
-		struct config {
-			dvec2 suggestedAttachmentPosition;
-			double density;
-			double width;
-			double height;
+            int getLayer() const override;
 
-			config():
-			density(1),
-			width(0),
-			height(0)
-			{}
-		};
+            int getDrawPasses() const override {
+                return 1;
+            }
 
-	public:
+            BatchDrawDelegateRef getBatchDrawDelegate() const override {
+                return nullptr;
+            }
 
-		EggsacPhysicsComponent(config c);
-		virtual ~EggsacPhysicsComponent();
+        protected:
 
-		config getConfig() const { return _config; }
-		dvec2 getPosition() const { return v2(cpBodyGetPosition(_sacBody)); }
-		dvec2 getUp() const { return _up; }
-		dvec2 getRight() const { return _right; }
-		double getHeight() const { return _config.height; }
-		double getWidth() const { return _config.width; }
+            config _config;
+            EggsacPhysicsComponentWeakRef _physics;
 
-		cpBody*	getBody() const { return _sacBody; }
-		cpShape* getBodyShape() const { return _sacShape; }
-		cpConstraint *getAttachmentSpring() const { return _attachmentSpring; }
+        };
 
-		// return true if eggsac should automatically attach to terrain when not currently attached
-		bool shouldAutomaticallyAttach() const { return _automaticallyAttach; }
-		void setShouldAutomaticallyAttach(bool a) { _automaticallyAttach = a; }
+        class EggsacPhysicsComponent : public core::PhysicsComponent {
+        public:
 
-		// return true iff attached to terrain
-		bool isAttached() const;
+            struct config {
+                dvec2 suggestedAttachmentPosition;
+                double density;
+                double width;
+                double height;
 
-		// if !attached, attach to closest terrain
-		void attach();
+                config() :
+                        density(1),
+                        width(0),
+                        height(0) {
+                }
+            };
 
-		// if attached, detach from whatever terrain attached to
-		void detach();
+        public:
 
-		// PhysicsComponent
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
-		void onCleanup() override;
-		void step(const core::time_state &time) override;
-		cpBB getBB() const override;
+            EggsacPhysicsComponent(config c);
 
-	protected:
+            virtual ~EggsacPhysicsComponent();
 
-		void onBodyWillBeDestroyed(core::PhysicsComponentRef physics, cpBody *body);
-		void onShapeWillBeDestroyed(core::PhysicsComponentRef physics, cpShape *shape);
+            config getConfig() const {
+                return _config;
+            }
 
-	protected:
+            dvec2 getPosition() const {
+                return v2(cpBodyGetPosition(_sacBody));
+            }
 
-		config _config;
-		bool _automaticallyAttach;
-		cpBody *_sacBody, *_attachedToBody;
-		cpShape *_sacShape, *_attachedToShape;
-		cpConstraint *_attachmentSpring;
-		dvec2 _up, _right;
-		double _mass;
+            dvec2 getUp() const {
+                return _up;
+            }
 
-	};
+            dvec2 getRight() const {
+                return _right;
+            }
+
+            double getHeight() const {
+                return _config.height;
+            }
+
+            double getWidth() const {
+                return _config.width;
+            }
+
+            cpBody *getBody() const {
+                return _sacBody;
+            }
+
+            cpShape *getBodyShape() const {
+                return _sacShape;
+            }
+
+            cpConstraint *getAttachmentSpring() const {
+                return _attachmentSpring;
+            }
+
+            // return true if eggsac should automatically attach to terrain when not currently attached
+            bool shouldAutomaticallyAttach() const {
+                return _automaticallyAttach;
+            }
+
+            void setShouldAutomaticallyAttach(bool a) {
+                _automaticallyAttach = a;
+            }
+
+            // return true iff attached to terrain
+            bool isAttached() const;
+
+            // if !attached, attach to closest terrain
+            void attach();
+
+            // if attached, detach from whatever terrain attached to
+            void detach();
+
+            // PhysicsComponent
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
+
+            void onCleanup() override;
+
+            void step(const core::time_state &time) override;
+
+            cpBB getBB() const override;
+
+        protected:
+
+            void onBodyWillBeDestroyed(core::PhysicsComponentRef physics, cpBody *body);
+
+            void onShapeWillBeDestroyed(core::PhysicsComponentRef physics, cpShape *shape);
+
+        protected:
+
+            config _config;
+            bool _automaticallyAttach;
+            cpBody *_sacBody, *_attachedToBody;
+            cpShape *_sacShape, *_attachedToShape;
+            cpConstraint *_attachmentSpring;
+            dvec2 _up, _right;
+            double _mass;
+
+        };
 
 #pragma mark - EggsacSpawnComponent
 
-	class EggsacSpawnComponent : public core::Component {
-	public:
+        class EggsacSpawnComponent : public core::Component {
+        public:
 
-		struct config {
-			// number of times we can spawn a flock
-			size_t spawnCount;
+            struct config {
+                // number of times we can spawn a flock
+                size_t spawnCount;
 
-			// number of elements in a flock
-			size_t spawnSize;
+                // number of elements in a flock
+                size_t spawnSize;
 
-			// config for BoidFlockController which builds and spawns the boid flock
-			BoidFlock::config flock;
-		};
+                // config for BoidFlockController which builds and spawns the boid flock
+                BoidFlock::config flock;
+            };
 
-	public:
+        public:
 
-		EggsacSpawnComponent(config c);
-		virtual ~EggsacSpawnComponent();
+            EggsacSpawnComponent(config c);
 
-		// get number of flocks have been spawned
-		int getSpawnCount() const;
+            virtual ~EggsacSpawnComponent();
 
-		// returns true if we can spawn a new flock
-		bool canSpawn() const;
+            // get number of flocks have been spawned
+            int getSpawnCount() const;
 
-		// spawn a new flock
-		void spawn();
+            // returns true if we can spawn a new flock
+            bool canSpawn() const;
 
-		void update(const core::time_state &time) override;
+            // spawn a new flock
+            void spawn();
 
-	protected:
+            void update(const core::time_state &time) override;
 
-		void onFlockDidFinish(const BoidFlockControllerRef &fc);
+        protected:
 
-	protected:
+            void onFlockDidFinish(const BoidFlockControllerRef &fc);
 
-		config _config;
-		int _spawnCount;
-		BoidFlockWeakRef _flock;
+        protected:
 
-	};
+            config _config;
+            int _spawnCount;
+            BoidFlockWeakRef _flock;
+
+        };
 
 
 #pragma mark - Eggsac
 
-	class Eggsac : public core::Entity {
-	public:
+        class Eggsac : public core::Entity {
+        public:
 
-		struct config {
-			EggsacPhysicsComponent::config physics;
-			EggsacDrawComponent::config draw;
-			EggsacSpawnComponent::config spawn;
-			core::HealthComponent::config health;
-		};
+            struct config {
+                EggsacPhysicsComponent::config physics;
+                EggsacDrawComponent::config draw;
+                EggsacSpawnComponent::config spawn;
+                core::HealthComponent::config health;
+            };
 
-		static EggsacRef create(string name, dvec2 position, core::util::xml::XmlMultiTree node);
+            static EggsacRef create(string name, dvec2 position, core::util::xml::XmlMultiTree node);
 
-	public:
+        public:
 
-		Eggsac(string name);
-		virtual ~Eggsac();
+            Eggsac(string name);
 
-		// Entity
-		void onHealthChanged(double oldHealth, double newHealth) override;
-		void onDeath() override;
+            virtual ~Eggsac();
 
-		// Object
-		void update(const core::time_state &time) override;
-		void onFinishing(core::seconds_t secondsLeft, double amountFinished) override;
+            // Entity
+            void onHealthChanged(double oldHealth, double newHealth) override;
+
+            void onDeath() override;
+
+            // Object
+            void update(const core::time_state &time) override;
+
+            void onFinishing(core::seconds_t secondsLeft, double amountFinished) override;
 
 
-	};
+        };
 
 
-
-}} // namespace surfacer::enemy
+    }
+} // namespace surfacer::enemy
 
 #endif /* Eggsac_hpp */

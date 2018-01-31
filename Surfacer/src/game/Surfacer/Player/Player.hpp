@@ -15,500 +15,626 @@
 #include "Entity.hpp"
 #include "DevComponents.hpp"
 
-namespace surfacer { namespace player {
+namespace surfacer {
+    namespace player {
 
-	SMART_PTR(Player);
-	SMART_PTR(Gun);
-	SMART_PTR(PlayerPhysicsComponent);
-	SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
-	SMART_PTR(PlayerDrawComponent);
-	SMART_PTR(PlayerInputComponent);
-	SMART_PTR(Projectile);
-	SMART_PTR(BeamProjectile);
+        SMART_PTR(Player);
+
+        SMART_PTR(Gun);
+
+        SMART_PTR(PlayerPhysicsComponent);
+
+        SMART_PTR(JetpackUnicyclePlayerPhysicsComponent);
+
+        SMART_PTR(PlayerDrawComponent);
+
+        SMART_PTR(PlayerInputComponent);
+
+        SMART_PTR(Projectile);
+
+        SMART_PTR(BeamProjectile);
 
 #pragma mark - Projectile
 
-	class Projectile : public core::Component {
-	public:
+        class Projectile : public core::Component {
+        public:
 
-		struct config {
-			double range;
-			double damage;
+            struct config {
+                double range;
+                double damage;
 
-			config():
-			range(0),
-			damage(0)
-			{}
-		};
+                config() :
+                        range(0),
+                        damage(0) {
+                }
+            };
 
-		struct contact {
-			dvec2 position;
-			dvec2 normal;
-			cpShape *shape;
-			core::ObjectRef object;
+            struct contact {
+                dvec2 position;
+                dvec2 normal;
+                cpShape *shape;
+                core::ObjectRef object;
 
-			contact():
-			position(0),
-			normal(0),
-			shape(nullptr)
-			{}
+                contact() :
+                        position(0),
+                        normal(0),
+                        shape(nullptr) {
+                }
 
-			contact(const contact &c):
-			position(c.position),
-			normal(c.normal),
-			shape(c.shape),
-			object(c.object)
-			{}
-		};
+                contact(const contact &c) :
+                        position(c.position),
+                        normal(c.normal),
+                        shape(c.shape),
+                        object(c.object) {
+                }
+            };
 
-	public:
+        public:
 
-		Projectile(config c, PlayerRef player);
-		virtual ~Projectile();
+            Projectile(config c, PlayerRef player);
 
-		virtual void fire(dvec2 origin, dvec2 dir);
-		dvec2 getOrigin() const { return _origin; }
-		dvec2 getDirection() const { return _dir; }
-		PlayerRef getPlayer() const { return _player.lock(); }
-		float getDamage() const { return _config.damage; }
+            virtual ~Projectile();
 
-		// returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
-		const vector<contact> &getContacts() const { return _contacts; }
+            virtual void fire(dvec2 origin, dvec2 dir);
 
-	protected:
+            dvec2 getOrigin() const {
+                return _origin;
+            }
 
-		// call this to compute contacts between projectile and scene and notify stage
-		// note this is only critical for projectiles with synthetic collisions (e.g., lasers)
-		// not for a rock or some other thing which can be added to the game space
-		void processContacts();
+            dvec2 getDirection() const {
+                return _dir;
+            }
 
-		// custom implementations should compute their contacts here stuffing them into _contacts
-		// which is empty when this function is called. the results will be handled by processContacts
-		virtual void updateContacts() = 0;
+            PlayerRef getPlayer() const {
+                return _player.lock();
+            }
 
-	protected:
+            float getDamage() const {
+                return _config.damage;
+            }
 
-		config _config;
-		PlayerWeakRef _player;
-		dvec2 _origin, _dir;
-		vector<contact> _contacts;
+            // returns a vector of coordinates in world space representing the intersection with world geometry of the gun beam
+            const vector <contact> &getContacts() const {
+                return _contacts;
+            }
 
-	};
+        protected:
 
-	class BeamProjectile : public Projectile {
-	public:
-		struct config : public Projectile::config {
-			float width;
+            // call this to compute contacts between projectile and scene and notify stage
+            // note this is only critical for projectiles with synthetic collisions (e.g., lasers)
+            // not for a rock or some other thing which can be added to the game space
+            void processContacts();
 
-			config():
-			width(0)
-			{}
-		};
+            // custom implementations should compute their contacts here stuffing them into _contacts
+            // which is empty when this function is called. the results will be handled by processContacts
+            virtual void updateContacts() = 0;
 
-		struct segment {
-			dvec2 head, tail;
-			double len;
+        protected:
 
-			segment():
-			head(0),
-			tail(0),
-			len(0)
-			{}
-		};
+            config _config;
+            PlayerWeakRef _player;
+            dvec2 _origin, _dir;
+            vector <contact> _contacts;
 
-	public:
+        };
 
-		BeamProjectile(config c, PlayerRef player);
-		virtual ~BeamProjectile();
+        class BeamProjectile : public Projectile {
+        public:
+            struct config : public Projectile::config {
+                float width;
 
-		void fire(dvec2 origin, dvec2 dir) override;
-		double getWidth() const { return _config.width; }
-		segment getSegment() const { return _segment; }
+                config() :
+                        width(0) {
+                }
+            };
 
-	protected:
+            struct segment {
+                dvec2 head, tail;
+                double len;
 
-		void updateContacts() override;
+                segment() :
+                        head(0),
+                        tail(0),
+                        len(0) {
+                }
+            };
 
-	protected:
+        public:
 
-		config _config;
-		segment _segment;
+            BeamProjectile(config c, PlayerRef player);
 
-	};
+            virtual ~BeamProjectile();
+
+            void fire(dvec2 origin, dvec2 dir) override;
+
+            double getWidth() const {
+                return _config.width;
+            }
+
+            segment getSegment() const {
+                return _segment;
+            }
+
+        protected:
+
+            void updateContacts() override;
+
+        protected:
+
+            config _config;
+            segment _segment;
+
+        };
 
 
-	class PulseProjectile : public BeamProjectile {
-	public:
+        class PulseProjectile : public BeamProjectile {
+        public:
 
-		struct config : public BeamProjectile::config {
-			double length;
-			double velocity;
+            struct config : public BeamProjectile::config {
+                double length;
+                double velocity;
 
-			config():
-			length(0),
-			velocity(0)
-			{}
-		};
+                config() :
+                        length(0),
+                        velocity(0) {
+                }
+            };
 
-	public:
+        public:
 
-		PulseProjectile(config c, PlayerRef player);
-		virtual ~PulseProjectile();
+            PulseProjectile(config c, PlayerRef player);
 
-		// Component
-		void update(const core::time_state &time) override;
+            virtual ~PulseProjectile();
 
-	protected:
+            // Component
+            void update(const core::time_state &time) override;
 
-		config _config;
-		double _distanceTraveled;
-		bool _hasHit;
+        protected:
 
-	};
+            config _config;
+            double _distanceTraveled;
+            bool _hasHit;
 
-	class CutterProjectile : public BeamProjectile {
-	public:
+        };
 
-		struct config : public BeamProjectile::config {
-			core::seconds_t lifespan;
-			double cutDepth;
+        class CutterProjectile : public BeamProjectile {
+        public:
 
-			config():
-			lifespan(0),
-			cutDepth(0)
-			{}
-		};
+            struct config : public BeamProjectile::config {
+                core::seconds_t lifespan;
+                double cutDepth;
 
-	public:
+                config() :
+                        lifespan(0),
+                        cutDepth(0) {
+                }
+            };
 
-		CutterProjectile(config c, PlayerRef player);
-		virtual ~CutterProjectile(){}
+        public:
 
-		// Projectile
-		void fire(dvec2 origin, dvec2 dir) override;
+            CutterProjectile(config c, PlayerRef player);
 
-		// Component
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
-		void update(const core::time_state &time) override;
+            virtual ~CutterProjectile() {
+            }
 
-	protected:
+            // Projectile
+            void fire(dvec2 origin, dvec2 dir) override;
 
-		void computeCutSegment();
+            // Component
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
-	protected:
+            void update(const core::time_state &time) override;
 
-		config _config;
-		core::seconds_t _startSeconds;
+        protected:
 
-	};
+            void computeCutSegment();
+
+        protected:
+
+            config _config;
+            core::seconds_t _startSeconds;
+
+        };
 
 #pragma mark - BeamProjectileDrawComponent
 
-	class BeamProjectileDrawComponent : public core::DrawComponent {
-	public:
+        class BeamProjectileDrawComponent : public core::DrawComponent {
+        public:
 
-		BeamProjectileDrawComponent();
-		virtual ~BeamProjectileDrawComponent();
+            BeamProjectileDrawComponent();
 
-		// Component
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+            virtual ~BeamProjectileDrawComponent();
 
-		// DrawComponent
-		cpBB getBB() const override;
-		void draw(const core::render_state &renderState) override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override;
-		int getLayer() const override;
-		int getDrawPasses() const override;
-		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
+            // Component
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
-	private:
+            // DrawComponent
+            cpBB getBB() const override;
 
-		BeamProjectileWeakRef _beam;
-		
-	};
+            void draw(const core::render_state &renderState) override;
+
+            core::VisibilityDetermination::style getVisibilityDetermination() const override;
+
+            int getLayer() const override;
+
+            int getDrawPasses() const override;
+
+            BatchDrawDelegateRef getBatchDrawDelegate() const override {
+                return nullptr;
+            }
+
+        private:
+
+            BeamProjectileWeakRef _beam;
+
+        };
 
 
 #pragma mark - Gun
 
-	class Gun : public core::Component {
-	public:
+        class Gun : public core::Component {
+        public:
 
-		struct config {
-			PulseProjectile::config pulse;
-			CutterProjectile::config cutter;
-			double cutterChargePerSecond;
-		};
+            struct config {
+                PulseProjectile::config pulse;
+                CutterProjectile::config cutter;
+                double cutterChargePerSecond;
+            };
 
-	public:
+        public:
 
-		Gun(config c);
-		virtual ~Gun();
+            Gun(config c);
 
-		void setShooting(bool shooting);
-		bool isShooting() const { return _shooting; }
+            virtual ~Gun();
 
-		// get the current charge stage [0,1]
-		double getCharge() const { return _charge; }
+            void setShooting(bool shooting);
 
-		// origin of gun beam in world space
-		void setAimOrigin(dvec2 origin) { _aimOrigin = origin; }
-		dvec2 getAimOrigin() const { return _aimOrigin; }
+            bool isShooting() const {
+                return _shooting;
+            }
 
-		// normalized direction of gun beam in world space
-		void setAimDirection(dvec2 dir) { _aimDir = dir; }
-		dvec2 getAimDirection() const { return _aimDir; }
+            // get the current charge stage [0,1]
+            double getCharge() const {
+                return _charge;
+            }
 
-		// Component
-		void update(const core::time_state &time) override;
+            // origin of gun beam in world space
+            void setAimOrigin(dvec2 origin) {
+                _aimOrigin = origin;
+            }
 
-	private:
+            dvec2 getAimOrigin() const {
+                return _aimOrigin;
+            }
 
-		void firePulse();
-		void fireCutter();
+            // normalized direction of gun beam in world space
+            void setAimDirection(dvec2 dir) {
+                _aimDir = dir;
+            }
 
-	private:
+            dvec2 getAimDirection() const {
+                return _aimDir;
+            }
 
-		config _config;
-		bool _shooting;
-		dvec2 _aimOrigin, _aimDir;
-		double _charge;
-		core::seconds_t _chargeStartTime;
+            // Component
+            void update(const core::time_state &time) override;
 
-	};
+        private:
+
+            void firePulse();
+
+            void fireCutter();
+
+        private:
+
+            config _config;
+            bool _shooting;
+            dvec2 _aimOrigin, _aimDir;
+            double _charge;
+            core::seconds_t _chargeStartTime;
+
+        };
 
 #pragma mark - PlayerPhysicsComponent
 
-	class PlayerPhysicsComponent : public core::PhysicsComponent {
-	public:
+        class PlayerPhysicsComponent : public core::PhysicsComponent {
+        public:
 
-		struct config {
-			// initial position of player in world units
-			dvec2 position;
+            struct config {
+                // initial position of player in world units
+                dvec2 position;
 
-			double width;
-			double height;
-			double density;
-			double footFriction;
-			double bodyFriction;
+                double width;
+                double height;
+                double density;
+                double footFriction;
+                double bodyFriction;
 
-			double jetpackAntigravity;
-			double jetpackFuelMax;
-			double jetpackFuelConsumptionPerSecond;
-			double jetpackFuelRegenerationPerSecond;
-		};
+                double jetpackAntigravity;
+                double jetpackFuelMax;
+                double jetpackFuelConsumptionPerSecond;
+                double jetpackFuelRegenerationPerSecond;
+            };
 
-	public:
+        public:
 
-		PlayerPhysicsComponent(config c);
-		virtual ~PlayerPhysicsComponent();
+            PlayerPhysicsComponent(config c);
 
-		// PhysicsComponent
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+            virtual ~PlayerPhysicsComponent();
 
-		// PlayerPhysicsComponent
-		const config& getConfig()const { return _config; }
+            // PhysicsComponent
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
-		virtual dvec2 getPosition() const = 0;
-		virtual dvec2 getUp() const = 0;
-		virtual dvec2 getGroundNormal() const = 0;
-		virtual bool isTouchingGround() const = 0;
-		virtual cpBody *getBody() const = 0;
-		virtual cpBody *getFootBody() const = 0;
-		virtual cpShape *getBodyShape() const = 0;
-		virtual cpShape *getFootShape() const = 0;
-		virtual double getJetpackFuelStage() const = 0;
-		virtual double getJetpackFuelMax() const = 0;
-		virtual dvec2 getJetpackThrustDirection() const = 0;
+            // PlayerPhysicsComponent
+            const config &getConfig() const {
+                return _config;
+            }
 
-		// Control inputs, called by Player in Player::update
-		virtual void setSpeed( double vel ) { _speed = vel; }
-		double getSpeed() const { return _speed; }
+            virtual dvec2 getPosition() const = 0;
 
-		virtual void setFlying( bool j ) { _flying = j; }
-		bool isFlying() const { return _flying; }
+            virtual dvec2 getUp() const = 0;
 
-	protected:
+            virtual dvec2 getGroundNormal() const = 0;
 
-		dvec2 _getGroundNormal() const;
-		bool _isTouchingGround( cpShape *shape ) const;
+            virtual bool isTouchingGround() const = 0;
+
+            virtual cpBody *getBody() const = 0;
+
+            virtual cpBody *getFootBody() const = 0;
+
+            virtual cpShape *getBodyShape() const = 0;
+
+            virtual cpShape *getFootShape() const = 0;
+
+            virtual double getJetpackFuelStage() const = 0;
+
+            virtual double getJetpackFuelMax() const = 0;
+
+            virtual dvec2 getJetpackThrustDirection() const = 0;
+
+            // Control inputs, called by Player in Player::update
+            virtual void setSpeed(double vel) {
+                _speed = vel;
+            }
+
+            double getSpeed() const {
+                return _speed;
+            }
+
+            virtual void setFlying(bool j) {
+                _flying = j;
+            }
+
+            bool isFlying() const {
+                return _flying;
+            }
+
+        protected:
+
+            dvec2 _getGroundNormal() const;
+
+            bool _isTouchingGround(cpShape *shape) const;
 
 
-	protected:
+        protected:
 
-		config _config;
-		bool _flying;
-		double _speed;
+            config _config;
+            bool _flying;
+            double _speed;
 
-	};
+        };
 
 #pragma mark - JetpackUnicyclePlayerPhysicsComponent
 
-	class JetpackUnicyclePlayerPhysicsComponent : public PlayerPhysicsComponent {
-	public:
+        class JetpackUnicyclePlayerPhysicsComponent : public PlayerPhysicsComponent {
+        public:
 
-		JetpackUnicyclePlayerPhysicsComponent(config c);
-		virtual ~JetpackUnicyclePlayerPhysicsComponent();
+            JetpackUnicyclePlayerPhysicsComponent(config c);
 
-		// PhysicsComponent
-		cpBB getBB() const override;
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
-		void step(const core::time_state &timeState) override;
+            virtual ~JetpackUnicyclePlayerPhysicsComponent();
 
-		// PlayerPhysicsComponent
-		dvec2 getPosition() const override;
-		dvec2 getUp() const override;
-		dvec2 getGroundNormal() const override;
-		bool isTouchingGround() const override;
-		cpBody *getBody() const override;
-		cpBody *getFootBody() const override;
-		cpShape *getBodyShape() const override;
-		cpShape *getFootShape() const override;
-		double getJetpackFuelStage() const override;
-		double getJetpackFuelMax() const override;
-		dvec2 getJetpackThrustDirection() const override;
+            // PhysicsComponent
+            cpBB getBB() const override;
 
-		struct capsule {
-			dvec2 a,b;
-			double radius;
-		};
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
-		capsule getBodyCapsule() const;
+            void step(const core::time_state &timeState) override;
 
-		struct wheel {
-			dvec2 position;
-			double radius;
-			double radians;
-		};
+            // PlayerPhysicsComponent
+            dvec2 getPosition() const override;
 
-		wheel getFootWheel() const;
+            dvec2 getUp() const override;
+
+            dvec2 getGroundNormal() const override;
+
+            bool isTouchingGround() const override;
+
+            cpBody *getBody() const override;
+
+            cpBody *getFootBody() const override;
+
+            cpShape *getBodyShape() const override;
+
+            cpShape *getFootShape() const override;
+
+            double getJetpackFuelStage() const override;
+
+            double getJetpackFuelMax() const override;
+
+            dvec2 getJetpackThrustDirection() const override;
+
+            struct capsule {
+                dvec2 a, b;
+                double radius;
+            };
+
+            capsule getBodyCapsule() const;
+
+            struct wheel {
+                dvec2 position;
+                double radius;
+                double radians;
+            };
+
+            wheel getFootWheel() const;
 
 
-	private:
+        private:
 
-		cpBody *_body, *_wheelBody;
-		cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
-		cpConstraint *_wheelMotor, *_orientationConstraint;
-		double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
-		double _jetpackFuelStage, _jetpackFuelMax, _lean;
-		dvec2 _up, _groundNormal, _jetpackForceDir;
-		PlayerInputComponentWeakRef _input;
-	};
+            cpBody *_body, *_wheelBody;
+            cpShape *_bodyShape, *_wheelShape, *_groundContactSensorShape;
+            cpConstraint *_wheelMotor, *_orientationConstraint;
+            double _wheelRadius, _wheelFriction, _touchingGroundAcc, _totalMass;
+            double _jetpackFuelStage, _jetpackFuelMax, _lean;
+            dvec2 _up, _groundNormal, _jetpackForceDir;
+            PlayerInputComponentWeakRef _input;
+        };
 
 #pragma mark - PlayerInputComponent
 
-	class PlayerInputComponent : public core::InputComponent {
-	public:
+        class PlayerInputComponent : public core::InputComponent {
+        public:
 
-		PlayerInputComponent();
-		virtual ~PlayerInputComponent();
+            PlayerInputComponent();
 
-		// actions
-		bool isRunning() const;
-		bool isGoingRight() const;
-		bool isGoingLeft() const;
-		bool isJumping() const;
-		bool isCrouching() const;
-		bool isShooting() const;
-		dvec2 getShootingTargetWorld() const;
+            virtual ~PlayerInputComponent();
 
-	private:
+            // actions
+            bool isRunning() const;
 
-		int _keyRun, _keyLeft, _keyRight, _keyJump, _keyCrouch;
-		bool _shooting;
+            bool isGoingRight() const;
 
-	};
+            bool isGoingLeft() const;
+
+            bool isJumping() const;
+
+            bool isCrouching() const;
+
+            bool isShooting() const;
+
+            dvec2 getShootingTargetWorld() const;
+
+        private:
+
+            int _keyRun, _keyLeft, _keyRight, _keyJump, _keyCrouch;
+            bool _shooting;
+
+        };
 
 #pragma mark - PlayerDrawComponent
 
-	class PlayerDrawComponent : public core::EntityDrawComponent {
-	public:
+        class PlayerDrawComponent : public core::EntityDrawComponent {
+        public:
 
-		PlayerDrawComponent();
-		virtual ~PlayerDrawComponent();
+            PlayerDrawComponent();
 
-		// DrawComponent
-		void onReady(core::ObjectRef parent, core::StageRef stage) override;
+            virtual ~PlayerDrawComponent();
 
-		cpBB getBB() const override;
-		void draw(const core::render_state &renderState) override;
-		void drawScreen(const core::render_state &renderState) override;
-		core::VisibilityDetermination::style getVisibilityDetermination() const override;
-		int getLayer() const override;
-		int getDrawPasses() const override;
-		BatchDrawDelegateRef getBatchDrawDelegate() const override { return nullptr; }
+            // DrawComponent
+            void onReady(core::ObjectRef parent, core::StageRef stage) override;
 
-	protected:
+            cpBB getBB() const override;
 
-		void drawPlayer(const core::render_state &renderState);
-		void drawGunCharge(GunRef gun, const core::render_state &renderState);
+            void draw(const core::render_state &renderState) override;
 
-	private:
-		
-		JetpackUnicyclePlayerPhysicsComponentWeakRef _physics;
-		GunWeakRef _gun;
-		
-	};
+            void drawScreen(const core::render_state &renderState) override;
+
+            core::VisibilityDetermination::style getVisibilityDetermination() const override;
+
+            int getLayer() const override;
+
+            int getDrawPasses() const override;
+
+            BatchDrawDelegateRef getBatchDrawDelegate() const override {
+                return nullptr;
+            }
+
+        protected:
+
+            void drawPlayer(const core::render_state &renderState);
+
+            void drawGunCharge(GunRef gun, const core::render_state &renderState);
+
+        private:
+
+            JetpackUnicyclePlayerPhysicsComponentWeakRef _physics;
+            GunWeakRef _gun;
+
+        };
 
 #pragma mark - Player
 
-	class Player : public core::Entity, public TargetTrackingViewportControlComponent::TrackingTarget {
-	public:
+        class Player : public core::Entity, public TargetTrackingViewportControlComponent::TrackingTarget {
+        public:
 
-		struct config {
-			PlayerPhysicsComponent::config physics;
-			Gun::config gun;
-			core::HealthComponent::config health;
+            struct config {
+                PlayerPhysicsComponent::config physics;
+                Gun::config gun;
+                core::HealthComponent::config health;
 
-			// TODO: Add a PlayerDrawComponent::config for appearance control
+                // TODO: Add a PlayerDrawComponent::config for appearance control
 
-			double walkSpeed;
-			double runMultiplier;
+                double walkSpeed;
+                double runMultiplier;
 
-			config():
-			walkSpeed(1), // 1mps
-			runMultiplier(3)
-			{}
-		};
+                config() :
+                        walkSpeed(1), // 1mps
+                        runMultiplier(3) {
+                }
+            };
 
-		/**
-		 Create a player configured via the XML in playerXmlFile, at a given position in world units
-		 */
-		static PlayerRef create(string name, ci::DataSourceRef playerXmlFile, dvec2 position);
+            /**
+             Create a player configured via the XML in playerXmlFile, at a given position in world units
+             */
+            static PlayerRef create(string name, ci::DataSourceRef playerXmlFile, dvec2 position);
 
-	public:
-		Player(string name);
-		virtual ~Player();
+        public:
+            Player(string name);
 
-		const config &getConfig() const { return _config; }
+            virtual ~Player();
 
-		// Entity
-		void onHealthChanged(double oldHealth, double newHealth) override;
-		void onDeath() override;
+            const config &getConfig() const {
+                return _config;
+            }
 
-		// Object
-		void update(const core::time_state &time) override;
+            // Entity
+            void onHealthChanged(double oldHealth, double newHealth) override;
 
-		// TrackingTarget
-		TargetTrackingViewportControlComponent::tracking getViewportTracking() const override;
+            void onDeath() override;
 
-		const PlayerPhysicsComponentRef &getPhysics() const { return _physics; }
-		const PlayerInputComponentRef &getInput() const { return _input; }
-		const GunRef &getGun() const { return _gun; }
+            // Object
+            void update(const core::time_state &time) override;
 
-	protected:
+            // TrackingTarget
+            TargetTrackingViewportControlComponent::tracking getViewportTracking() const override;
 
-		virtual void build(config c);
+            const PlayerPhysicsComponentRef &getPhysics() const {
+                return _physics;
+            }
 
-	private:
+            const PlayerInputComponentRef &getInput() const {
+                return _input;
+            }
 
-		config _config;
-		PlayerPhysicsComponentRef _physics;
-		PlayerDrawComponentRef _drawing;
-		PlayerInputComponentRef _input;
-		GunRef _gun;
+            const GunRef &getGun() const {
+                return _gun;
+            }
 
-	};
+        protected:
 
-}} // namespace surfacer::player
+            virtual void build(config c);
+
+        private:
+
+            config _config;
+            PlayerPhysicsComponentRef _physics;
+            PlayerDrawComponentRef _drawing;
+            PlayerInputComponentRef _input;
+            GunRef _gun;
+
+        };
+
+    }
+} // namespace surfacer::player
 
 #endif /* Player_hpp */

@@ -13,231 +13,225 @@
 namespace core {
 
 
-	void App::prepareSettings( Settings *settings ) {
-		settings->setTitle( "Controlled Demolition" );
-		settings->setWindowSize( 800, 600 );
-		settings->setFrameRate( 60 );
+    void App::prepareSettings(Settings *settings) {
+        settings->setTitle("Controlled Demolition");
+        settings->setWindowSize(800, 600);
+        settings->setFrameRate(60);
 
-		// TODO: turning on HiDPI requires translation of mouse coords and viewport
-		settings->setHighDensityDisplayEnabled(false);
-	}
+        // TODO: turning on HiDPI requires translation of mouse coords and viewport
+        settings->setHighDensityDisplayEnabled(false);
+    }
 
-	App::App():
-	_stepCount(0),
-	_stepCountTime(0),
-	_averageStepsPerSecond(0)
-	{}
+    App::App() :
+            _stepCount(0),
+            _stepCountTime(0),
+            _averageStepsPerSecond(0) {
+    }
 
-	App::~App()
-	{}
+    App::~App() {
+    }
 
-	void App::setup() {
-		InputDispatcher::set(make_shared<InputDispatcher>(getWindow()));
-	}
+    void App::setup() {
+        InputDispatcher::set(make_shared<InputDispatcher>(getWindow()));
+    }
 
-	void App::cleanup() {
-		CI_LOG_D("GameApp::cleanup - shutting down active scenario...");
-		setScenario(nullptr);
-	}
+    void App::cleanup() {
+        CI_LOG_D("GameApp::cleanup - shutting down active scenario...");
+        setScenario(nullptr);
+    }
 
-	void App::update() {
-		// run physics step()
+    void App::update() {
+        // run physics step()
 #if USE_PHYSICS_LOOP
-		_physicsLoop->step();
+        _physicsLoop->step();
 #else
-		step();
+        step();
 #endif
 
-		// update is always called after physics step()
-		_scenario->dispatchUpdate();
-	}
+        // update is always called after physics step()
+        _scenario->dispatchUpdate();
+    }
 
-	void App::draw() {
-		_scenario->dispatchDraw();
-	}
+    void App::draw() {
+        _scenario->dispatchDraw();
+    }
 
-	void App::resize() {
-		_scenario->dispatchResize(getWindowSize());
-	}
+    void App::resize() {
+        _scenario->dispatchResize(getWindowSize());
+    }
 
-	void App::step() {
+    void App::step() {
 #if USE_PHYSICS_LOOP
-		_stepCount++;
-		if ( _stepCount > 60 )
-		{
-			const seconds_t
-			Now = app::getElapsedSeconds(),
-			Elapsed = Now - _stepCountTime;
+        _stepCount++;
+        if ( _stepCount > 60 )
+        {
+            const seconds_t
+            Now = app::getElapsedSeconds(),
+            Elapsed = Now - _stepCountTime;
 
-			_averageStepsPerSecond = double( seconds_t(_stepCount) / Elapsed );
-			_stepCount = 0;
-			_stepCountTime = Now;
-		}
+            _averageStepsPerSecond = double( seconds_t(_stepCount) / Elapsed );
+            _stepCount = 0;
+            _stepCountTime = Now;
+        }
 
-		_scenario->dispatchStep( _physicsLoop->interval() );
+        _scenario->dispatchStep( _physicsLoop->interval() );
 
 #else
 
-		_scenario->dispatchStep();
-		_averageStepsPerSecond = lrp<double>(0.1, _averageStepsPerSecond, 1.0/_scenario->getStepTime().deltaT );
+        _scenario->dispatchStep();
+        _averageStepsPerSecond = lrp<double>(0.1, _averageStepsPerSecond, 1.0 / _scenario->getStepTime().deltaT);
 
 #endif
-	}
+    }
 
-	void App::setScenario( ScenarioRef scenario ) {
-		if (_scenario) {
-			_scenario->dispatchCleanup();
-		}
+    void App::setScenario(ScenarioRef scenario) {
+        if (_scenario) {
+            _scenario->dispatchCleanup();
+        }
 
-		_scenario = scenario;
+        _scenario = scenario;
 
-		if (_scenario) {
-			_scenario->dispatchSetup();
-			_scenario->dispatchResize(getWindowSize());
-		}
-	}
+        if (_scenario) {
+            _scenario->dispatchSetup();
+            _scenario->dispatchResize(getWindowSize());
+        }
+    }
 
 #pragma mark - PhysicsLoop
 
-	/*
-	 GameApp				*_app;
-	 int						_rate;
-	 seconds_t				_interval;
-	 */
+    /*
+     GameApp				*_app;
+     int						_rate;
+     seconds_t				_interval;
+     */
 
-	PhysicsLoop::PhysicsLoop( App *app, int rate ):
-	_app(app),
-	_rate(rate),
-	_interval( seconds_t(1) / seconds_t(rate))
-	{}
+    PhysicsLoop::PhysicsLoop(App *app, int rate) :
+            _app(app),
+            _rate(rate),
+            _interval(seconds_t(1) / seconds_t(rate)) {
+    }
 
-	PhysicsLoop::~PhysicsLoop( void )
-	{}
+    PhysicsLoop::~PhysicsLoop(void) {
+    }
 
 #pragma mark - AdaptivePhysicsLoop
 
-	/*
-	 seconds_t _currentTime, _lastTime, _timeRemainder;
-	 */
+    /*
+     seconds_t _currentTime, _lastTime, _timeRemainder;
+     */
 
-	AdaptivePhysicsLoop::AdaptivePhysicsLoop( App *app, int rate ):
-	PhysicsLoop(app, rate),
-	_timeRemainder(0)
-	{
-		_currentTime = _lastTime = app->getElapsedSeconds();
-	}
+    AdaptivePhysicsLoop::AdaptivePhysicsLoop(App *app, int rate) :
+            PhysicsLoop(app, rate),
+            _timeRemainder(0) {
+        _currentTime = _lastTime = app->getElapsedSeconds();
+    }
 
-	AdaptivePhysicsLoop::~AdaptivePhysicsLoop( void )
-	{}
+    AdaptivePhysicsLoop::~AdaptivePhysicsLoop(void) {
+    }
 
-	void
-	AdaptivePhysicsLoop::step( void ) {
-		//
-		//	Update time and find out how much time
-		//	has elapsed since last call to ::update
-		//
-		//	Then add whatever was left over from last iteration.
-		//
+    void
+    AdaptivePhysicsLoop::step(void) {
+        //
+        //	Update time and find out how much time
+        //	has elapsed since last call to ::update
+        //
+        //	Then add whatever was left over from last iteration.
+        //
 
-		_currentTime = app()->getElapsedSeconds();
+        _currentTime = app()->getElapsedSeconds();
 
-		seconds_t
-		dt = _currentTime - _lastTime,
-		interval = this->interval();
+        seconds_t
+                dt = _currentTime - _lastTime,
+                interval = this->interval();
 
-		_lastTime = _currentTime;
+        _lastTime = _currentTime;
 
-		seconds_t availableTime = dt + _timeRemainder;
+        seconds_t availableTime = dt + _timeRemainder;
 
-		if ( availableTime < interval )
-		{
-			_timeRemainder += dt;
-		}
-		else
-		{
-			seconds_t steps = availableTime / interval;
-			size_t numSteps = lrint( steps );
+        if (availableTime < interval) {
+            _timeRemainder += dt;
+        } else {
+            seconds_t steps = availableTime / interval;
+            size_t numSteps = lrint(steps);
 
-			for ( size_t i=0; i < numSteps; i++ )
-			{
-				dispatchStep();
-			}
+            for (size_t i = 0; i < numSteps; i++) {
+                dispatchStep();
+            }
 
-			_timeRemainder = seconds_t(steps - seconds_t( numSteps )) * interval;
-		}
-	}
+            _timeRemainder = seconds_t(steps - seconds_t(numSteps)) * interval;
+        }
+    }
 
 #pragma mark - SacredSoftwarePhysicsLoop
 
-	/*
-	 seconds_t _currentTime, _lastTime, _timeRemainderm, _cyclesLeftOver;
-	 */
+    /*
+     seconds_t _currentTime, _lastTime, _timeRemainderm, _cyclesLeftOver;
+     */
 
-	SacredSoftwarePhysicsLoop::SacredSoftwarePhysicsLoop( App *app, int rate ):
-	PhysicsLoop(app,rate),
-	_timeRemainder(0),
-	_cyclesLeftOver(0)
-	{
-		_currentTime = _lastTime = app->getElapsedSeconds();
-	}
+    SacredSoftwarePhysicsLoop::SacredSoftwarePhysicsLoop(App *app, int rate) :
+            PhysicsLoop(app, rate),
+            _timeRemainder(0),
+            _cyclesLeftOver(0) {
+        _currentTime = _lastTime = app->getElapsedSeconds();
+    }
 
-	SacredSoftwarePhysicsLoop::~SacredSoftwarePhysicsLoop( void ) {}
+    SacredSoftwarePhysicsLoop::~SacredSoftwarePhysicsLoop(void) {
+    }
 
-	void
-	SacredSoftwarePhysicsLoop::step( void ) {
-		/*
-		 From:
-		 http://www.sacredsoftware.net/tutorials/Animation/TimeBasedAnimation.xhtml
+    void
+    SacredSoftwarePhysicsLoop::step(void) {
+        /*
+         From:
+         http://www.sacredsoftware.net/tutorials/Animation/TimeBasedAnimation.xhtml
 
-		 #define MAXIMUM_FRAME_RATE 120
-		 #define MINIMUM_FRAME_RATE 15
-		 #define UPDATE_INTERVAL (1.0 / MAXIMUM_FRAME_RATE)
-		 #define MAX_CYCLES_PER_FRAME (MAXIMUM_FRAME_RATE / MINIMUM_FRAME_RATE)
+         #define MAXIMUM_FRAME_RATE 120
+         #define MINIMUM_FRAME_RATE 15
+         #define UPDATE_INTERVAL (1.0 / MAXIMUM_FRAME_RATE)
+         #define MAX_CYCLES_PER_FRAME (MAXIMUM_FRAME_RATE / MINIMUM_FRAME_RATE)
 
-		 void runGame() {
-		 static seconds_t lastFrameTime = 0.0;
-		 static seconds_t cyclesLeftOver = 0.0;
-		 seconds_t currentTime;
-		 seconds_t updateIterations;
+         void runGame() {
+         static seconds_t lastFrameTime = 0.0;
+         static seconds_t cyclesLeftOver = 0.0;
+         seconds_t currentTime;
+         seconds_t updateIterations;
 
-		 currentTime = GetCurrentTime();
-		 updateIterations = ((currentTime - lastFrameTime) + cyclesLeftOver);
+         currentTime = GetCurrentTime();
+         updateIterations = ((currentTime - lastFrameTime) + cyclesLeftOver);
 
-		 if (updateIterations > (MAX_CYCLES_PER_FRAME * UPDATE_INTERVAL)) {
-		 updateIterations = (MAX_CYCLES_PER_FRAME * UPDATE_INTERVAL);
-		 }
+         if (updateIterations > (MAX_CYCLES_PER_FRAME * UPDATE_INTERVAL)) {
+         updateIterations = (MAX_CYCLES_PER_FRAME * UPDATE_INTERVAL);
+         }
 
-		 while (updateIterations > UPDATE_INTERVAL) {
-		 updateIterations -= UPDATE_INTERVAL;
+         while (updateIterations > UPDATE_INTERVAL) {
+         updateIterations -= UPDATE_INTERVAL;
 
-		 updateGame(); // Update game state a variable number of times
-		 }
+         updateGame(); // Update game state a variable number of times
+         }
 
-		 cyclesLeftOver = updateIterations;
-		 lastFrameTime = currentTime;
+         cyclesLeftOver = updateIterations;
+         lastFrameTime = currentTime;
 
-		 drawScene(); // Draw the scene only once
-		 }
-		 */
+         drawScene(); // Draw the scene only once
+         }
+         */
 
-		const seconds_t MaxFrameRate = this->rate(),
-		MinFrameRate = 4,
-		UpdateInterval = this->interval(),
-		MaxCyclesPerFrame = ( MaxFrameRate / MinFrameRate );
+        const seconds_t MaxFrameRate = this->rate(),
+                MinFrameRate = 4,
+                UpdateInterval = this->interval(),
+                MaxCyclesPerFrame = (MaxFrameRate / MinFrameRate);
 
-		_currentTime = app()->getElapsedSeconds();
+        _currentTime = app()->getElapsedSeconds();
 
-		seconds_t updateIterations = ((_currentTime - _lastTime) + _cyclesLeftOver);
-		updateIterations = std::min( updateIterations, MaxCyclesPerFrame * UpdateInterval );
-		
-		while( updateIterations > UpdateInterval )
-		{
-			updateIterations -= UpdateInterval;
-			dispatchStep();
-		}
-		
-		_cyclesLeftOver = updateIterations;
-		_lastTime = _currentTime;
-	}
-	
+        seconds_t updateIterations = ((_currentTime - _lastTime) + _cyclesLeftOver);
+        updateIterations = std::min(updateIterations, MaxCyclesPerFrame * UpdateInterval);
+
+        while (updateIterations > UpdateInterval) {
+            updateIterations -= UpdateInterval;
+            dispatchStep();
+        }
+
+        _cyclesLeftOver = updateIterations;
+        _lastTime = _currentTime;
+    }
+
 } // end namespace core
