@@ -153,7 +153,7 @@ namespace terrain {
             }
         };
 
-        bool march(const Channel8u &store, double isoLevel, dmat4 transform, double simplificationThreshold, std::vector<PolyLine2d> &resultPerimeters) {
+        inline bool march(const Channel8u &store, double isoLevel, dmat4 transform, double simplificationThreshold, std::vector<PolyLine2d> &resultPerimeters) {
             Channel8uVoxelStoreAdapter adapter(store);
             PerimeterGenerator pgen(PerimeterGenerator::CLOCKWISE);
             marching_squares::march(adapter, pgen, isoLevel);
@@ -179,7 +179,7 @@ namespace terrain {
             return resultPerimeters.empty() && resultPerimeters.front().size() > 0;
         }
 
-        std::vector<PolyLine2d> march(const Channel8u &store, double isoLevel, dmat4 transform, double simplificationThreshold) {
+        inline std::vector<PolyLine2d> march(const Channel8u &store, double isoLevel, dmat4 transform, double simplificationThreshold) {
             std::vector<PolyLine2d> soup;
             march(store, isoLevel, transform, simplificationThreshold, soup);
 

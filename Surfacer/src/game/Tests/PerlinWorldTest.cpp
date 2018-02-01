@@ -14,7 +14,10 @@
 #include "MarchingSquares.hpp"
 #include "ContourSimplification.hpp"
 #include "TerrainDetail.hpp"
+#include "TerrainDetail_MarchingSquares.hpp"
 #include "ImageProcessing.hpp"
+
+#include "PlanetGenerator.hpp"
 
 using namespace ci;
 using namespace core;
@@ -68,197 +71,6 @@ namespace {
 
     const terrain::material TerrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
     terrain::material AnchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
-
-
-#pragma mark - Marching Cubes
-
-    // implements marching_cubes::march voxel store object
-    class Channel8uVoxelStoreAdapter {
-    public:
-
-        Channel8uVoxelStoreAdapter(const Channel8u &s) :
-                _store(s),
-                _min(0, 0),
-                _max(s.getWidth() - 1, s.getHeight() - 1) {
-            _data = _store.getData();
-            _rowBytes = _store.getRowBytes();
-            _pixelIncrement = _store.getIncrement();
-        }
-
-        ivec2 min() const {
-            return _min;
-        }
-
-        ivec2 max() const {
-            return _max;
-        }
-
-        double valueAt(int x, int y) const {
-            if (x >= _min.x && x <= _max.x && y >= _min.y && y <= _max.y) {
-                uint8_t pv = _data[y * _rowBytes + x * _pixelIncrement];
-                return static_cast<double>(pv) / 255.0;
-            }
-            return 0.0;
-        }
-
-    private:
-
-        Channel8u _store;
-        ivec2 _min, _max;
-        uint8_t *_data;
-        int32_t _rowBytes, _pixelIncrement;
-    };
-
-    // implements marching_cubes::march segment callback - stitching a soup of short segments into line loops
-    struct PerimeterGenerator {
-    public:
-
-        enum winding {
-            CLOCKWISE,
-            COUNTER_CLOCKWISE
-        };
-
-    private:
-
-        typedef std::pair<ivec2, ivec2> Edge;
-
-        std::map<ivec2, Edge, ivec2Comparator> _edgesByFirstVertex;
-        winding _winding;
-
-    public:
-
-        PerimeterGenerator(winding w) :
-                _winding(w) {
-        }
-
-        void operator()(int x, int y, const marching_squares::segment &seg) {
-            switch (_winding) {
-                case CLOCKWISE: {
-                    Edge e(scaleUp(seg.a), scaleUp(seg.b));
-
-                    if (e.first != e.second) {
-                        _edgesByFirstVertex[e.first] = e;
-                    }
-                    break;
-                }
-
-                case COUNTER_CLOCKWISE: {
-                    Edge e(scaleUp(seg.b),
-                            scaleUp(seg.a));
-
-                    if (e.first != e.second) {
-                        _edgesByFirstVertex[e.first] = e;
-                    }
-                    break;
-                }
-            }
-        }
-
-        size_t numSegments() const {
-            return _edgesByFirstVertex.size();
-        }
-
-        /*
-         Populate a vector of PolyLine2d with every perimeter computed for the isosurface
-         Exterior perimeters will be in the current winding direction, interior perimeters
-         will be in the opposite winding.
-         */
-
-        size_t generate(std::vector<ci::PolyLine2d> &perimeters, double scale) {
-            perimeters.clear();
-
-            while (!_edgesByFirstVertex.empty()) {
-                std::map<ivec2, Edge, ivec2Comparator>::iterator
-                        begin = _edgesByFirstVertex.begin(),
-                        end = _edgesByFirstVertex.end(),
-                        it = begin;
-
-                size_t count = _edgesByFirstVertex.size();
-                perimeters.push_back(PolyLine2d());
-
-                do {
-                    const Edge &e = it->second;
-                    perimeters.back().push_back(scaleDown(e.first) * scale);
-                    _edgesByFirstVertex.erase(it);
-
-                    it = _edgesByFirstVertex.find(e.second);
-                    count--;
-
-                    // final segment of loop - close it
-                    if (it == end) {
-                        perimeters.back().push_back(scaleDown(e.second) * scale);
-                    }
-
-                } while (it != begin && it != end && count > 0);
-            }
-
-            return perimeters.size();
-        }
-
-    private:
-
-        const double V_SCALE = 1024;
-
-        ivec2 scaleUp(const dvec2 &v) const {
-            return ivec2(lrint(V_SCALE * v.x), lrint(V_SCALE * v.y));
-        }
-
-        dvec2 scaleDown(const ivec2 &v) const {
-            return dvec2(static_cast<double>(v.x) / V_SCALE, static_cast<double>(v.y) / V_SCALE);
-        }
-    };
-
-    bool march(const Channel8u &store, double scale, std::vector<PolyLine2d> &optimizedPerimeters) {
-        Channel8uVoxelStoreAdapter adapter(store);
-        PerimeterGenerator pgen(PerimeterGenerator::CLOCKWISE);
-        marching_squares::march(adapter, pgen, 0.5);
-
-        CI_LOG_D("PerimeterGenerator consumed: " << pgen.numSegments() << " segments");
-
-        // make optimization threshold track the scale of the terrain
-        const double PerimeterOptimizationLinearDistanceThreshold = 0.25;
-        const double LinearDistanceOptimizationThreshold = PerimeterOptimizationLinearDistanceThreshold * scale;
-
-        //
-        //	Now, generate our perimeter polylines -- note that since our shapes are
-        //	guaranteed closed, and since a map using Vec2iComparator will consider the
-        //	first entry to be lowest ordinally, it will represent the outer perimeter
-        //
-
-        std::vector<PolyLine2d> perimeters;
-        if (pgen.generate(perimeters, scale)) {
-            for (auto &perimeter : perimeters) {
-                perimeter.setClosed(true);
-                if (perimeter.size() > 0) {
-                    if (LinearDistanceOptimizationThreshold > 0) {
-                        optimizedPerimeters.push_back(util::simplify(perimeter, LinearDistanceOptimizationThreshold));
-                    } else {
-                        optimizedPerimeters.push_back(perimeter);
-                    }
-                }
-            }
-        }
-
-        //
-        //	return whether we got any usable perimeters
-        //
-
-        return optimizedPerimeters.empty() && optimizedPerimeters.front().size() > 0;
-    }
-
-    vector <terrain::ShapeRef> march(const Channel8u &store, double scale) {
-        std::vector<PolyLine2d> soup;
-        march(store, scale, soup);
-
-        // filter out degenerate polylines
-        CI_LOG_D("before removing degenrates, soup.size: " << soup.size());
-        soup.erase(std::remove_if(soup.begin(), soup.end(), [](const PolyLine2d &contour) {
-            return contour.size() < 3;
-        }), soup.end());
-        CI_LOG_D("after removing degenrates, soup.size: " << soup.size());
-
-        return terrain::Shape::fromContours(soup);
-    }
 
 #pragma mark - IP
 
@@ -340,7 +152,7 @@ void PerlinWorldTestScenario::draw(const render_state &state) {
                 _isoTex = ci::gl::Texture2d::create(_isoSurface, fmt);
             }
 
-            gl::color(ColorA(1, 1, 1, 0.4));
+            gl::color(ColorA(1, 1, 1, 1));
             gl::draw(_isoTex);
         }
 
@@ -388,74 +200,12 @@ void PerlinWorldTestScenario::reset() {
 
 ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
 
-    int size = 512;
-    Channel8u buffer = Channel8u(size, size);
-
-    //
-    //	Initilialize our buffer with perlin noise
-    //
-
-    {
-        const uint8_t octaves = 4;
-        ci::Perlin pn(octaves, _seed);
-
-        const float frequency = size / 64;
-        const float width = buffer.getWidth();
-        const float height = buffer.getHeight();
-
-        Channel8u::Iter iter = buffer.getIter();
-        while (iter.line()) {
-            while (iter.pixel()) {
-                float noise = pn.fBm(frequency * iter.x() / width, frequency * iter.y() / height);
-                iter.v() = noise < -0.05 || noise > 0.05 ? 255 : 0;
-            }
-        }
-    }
-
-    //
-    // now perform radial samples from inside out, floodfilling
-    // white blobs to grey. grey will be our marker for "solid land"
-    //
-
-    const uint8_t landValue = 128;
-    {
-        uint8_t *data = buffer.getData();
-        int32_t rowBytes = buffer.getRowBytes();
-        int32_t increment = buffer.getIncrement();
-
-        auto get = [&](const ivec2 &p) -> uint8_t {
-            return data[p.y * rowBytes + p.x * increment];
-        };
-
-        double ringThickness = 16;
-        int ringSteps = ((size / 2) * 0.5) / ringThickness;
-        const ivec2 center(size / 2, size / 2);
-
-        for (int ringStep = 0; ringStep < ringSteps; ringStep++) {
-            double radius = ringStep * ringThickness;
-
-            double rads = 0;
-            int radsSteps = 180 - 5 * ringStep;
-            double radsIncrement = 2 * M_PI / radsSteps;
-
-            for (int radsStep = 0; radsStep < radsSteps; radsStep++, rads += radsIncrement) {
-                double px = center.x + radius * cos(rads);
-                double py = center.y + radius * sin(rads);
-                ivec2 plot(static_cast<int>(round(px)), static_cast<int>(round(py)));
-                if (get(plot) == 255) {
-                    util::ip::in_place::floodfill(buffer, plot, 255, landValue);
-                }
-            }
-        }
-    }
-
-    //
-    // Remap to make "land" white, and eveything else black. Then a blur pass
-    // which will cause nearby landmasses to touch when marching_squares is run
-    //
-
-    util::ip::in_place::remap(buffer, landValue, 255, 0);
-    buffer = util::ip::blur(buffer, 15);
+    precariously::planet_generation::params params;
+    params.size = 512;
+    params.seed = 34567;
+    
+    Channel8u buffer;
+    precariously::planet_generation::generate_terrain_map(params, buffer);
 
     return buffer;
 }
@@ -475,8 +225,8 @@ ci::Channel8u PerlinWorldTestScenario::createSimpleTestMap() const {
 }
 
 vector <PerlinWorldTestScenario::polyline> PerlinWorldTestScenario::marchToPerimeters(ci::Channel8u &iso, size_t expectedContours) const {
-    std::vector<PolyLine2d> polylines;
-    march(iso, 1, polylines);
+    
+    std::vector<PolyLine2d> polylines = terrain::detail::march(iso, 0.5, dmat4(), 0.01);
 
     if (expectedContours > 0) {
         CI_ASSERT_MSG(polylines.size() == expectedContours, "Expected correct number of generated contours");
@@ -506,7 +256,7 @@ vector <PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci:
     } sc;
 
     const double isoLevel = 0.5;
-    marching_squares::march(Channel8uVoxelStoreAdapter(iso), sc, isoLevel);
+    marching_squares::march(terrain::detail::Channel8uVoxelStoreAdapter(iso), sc, isoLevel);
 
     CI_LOG_D("testMarch - generated: " << sc.segments.size() << " unordered segments");
 
@@ -514,7 +264,7 @@ vector <PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci:
 }
 
 terrain::WorldRef PerlinWorldTestScenario::createTerrainWorld(const ci::Channel8u &worldMap) const {
-    // Create shapes
+
     vector <terrain::ShapeRef> shapes;
     const double isoLevel = 0.5;
     const dmat4 transform = glm::scale(dvec3(4,4,1)) * glm::translate(dvec3(-worldMap.getWidth()/2, -worldMap.getHeight()/2, 0));
