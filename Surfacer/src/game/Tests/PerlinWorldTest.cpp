@@ -72,20 +72,66 @@ namespace {
     const terrain::material TerrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
     terrain::material AnchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 
-#pragma mark - IP
-
+#pragma mark -
+    
     void fill_rect(Channel8u &c, ci::Area region, uint8_t value) {
         Area clippedRegion(max(region.getX1(), 0), max(region.getY1(), 0), min(region.getX2(), c.getWidth() - 1), min(region.getY2(), c.getHeight() - 1));
         uint8_t *data = c.getData();
         int32_t rowBytes = c.getRowBytes();
         int32_t increment = c.getIncrement();
-
+        
         for (int y = clippedRegion.getY1(), yEnd = clippedRegion.getY2(); y <= yEnd; y++) {
             uint8_t *row = &data[y * rowBytes];
             for (int x = clippedRegion.getX1(), xEnd = clippedRegion.getX2(); x <= xEnd; x++) {
                 row[x * increment] = value;
             }
         }
+    }
+    
+    ci::Channel8u create_simple_test_map() {
+        int size = 32;
+        Channel8u buffer = Channel8u(size, size);
+        fill_rect(buffer, Area(0, 0, size, size), 0);
+        fill_rect(buffer, Area(6, 6, size - 6, size - 6), 255);
+        fill_rect(buffer, Area(12, 12, size - 12, size - 12), 0);
+        fill_rect(buffer, Area(14, 14, size - 14, size - 14), 255);
+        fill_rect(buffer, Area(0, 0, 5, 5), 255);
+        
+        return util::ip::blur(buffer, 2);
+    }
+    
+    pair<terrain::WorldRef, ci::Channel8u> create_world_0(SpaceAccessRef space) {
+        precariously::planet_generation::params params;
+        params.size = 512;
+        params.seed = 34567;
+        
+        Channel8u buffer;
+        precariously::planet_generation::generate_terrain_map(params, buffer);
+        
+        vector <terrain::ShapeRef> shapes;
+        const double isoLevel = 0.5;
+        const dmat4 transform = glm::scale(dvec3(4,4,1)) * glm::translate(dvec3(-params.size/2, -params.size/2, 0));
+        terrain::World::march(buffer, isoLevel, transform, shapes);
+        
+        auto world = make_shared<terrain::World>(space, TerrainMaterial, AnchorMaterial);
+        world->build(shapes);
+
+        return make_pair(world, buffer);
+    }
+    
+    pair<terrain::WorldRef, ci::Channel8u> create_world_1(SpaceAccessRef space) {
+        precariously::planet_generation::params params;
+        params.size = 512;
+        params.seed = 34567;
+
+        // TODO: Why does an identity transform result in zero world generation?
+        // TODO: Test the floater pruning (requires finding a seed which produces islands... )
+        
+//        params.transform = glm::scale(dvec3(1,1,1));
+        params.transform = glm::translate(dvec3(-params.size/2, -params.size/2, 0));
+//        params.transform = glm::scale(dvec3(1,1,1)) * glm::translate(dvec3(-params.size/2, -params.size/2, 0));
+        
+        return precariously::planet_generation::generate(params, space, TerrainMaterial);
     }
 
 }
@@ -109,17 +155,12 @@ void PerlinWorldTestScenario::setup() {
     grid->setGridColor(ColorA(1, 1, 1, 0.1));
     getStage()->addObject(Object::with("Grid", {grid}));
 
-    _isoSurface = createWorldMap();
-//	_isoSurface = createSimpleTestMap();
-
-//	_marchSegments = testMarch(_isoSurface);
-//	_marchedPolylines = marchToPerimeters(_isoSurface, 0);
-
-    if (/* DISABLES CODE */ (true)) {
-        auto terrainWorld = createTerrainWorld(_isoSurface);
-        auto terrain = terrain::TerrainObject::create("Terrain", terrainWorld, DrawLayers::TERRAIN);
-        getStage()->addObject(terrain);
-    }
+    
+    auto r = create_world_1(getStage()->getSpace());
+    _isoSurface = r.second;
+    
+    auto terrain = terrain::TerrainObject::create("Terrain", r.first, DrawLayers::TERRAIN);
+    getStage()->addObject(terrain);
 }
 
 void PerlinWorldTestScenario::cleanup() {
@@ -198,32 +239,6 @@ void PerlinWorldTestScenario::reset() {
     setup();
 }
 
-ci::Channel8u PerlinWorldTestScenario::createWorldMap() const {
-
-    precariously::planet_generation::params params;
-    params.size = 512;
-    params.seed = 34567;
-    
-    Channel8u buffer;
-    precariously::planet_generation::generate_terrain_map(params, buffer);
-
-    return buffer;
-}
-
-ci::Channel8u PerlinWorldTestScenario::createSimpleTestMap() const {
-    int size = 32;
-    Channel8u buffer = Channel8u(size, size);
-    fill_rect(buffer, Area(0, 0, size, size), 0);
-    fill_rect(buffer, Area(6, 6, size - 6, size - 6), 255);
-    fill_rect(buffer, Area(12, 12, size - 12, size - 12), 0);
-    fill_rect(buffer, Area(14, 14, size - 14, size - 14), 255);
-    fill_rect(buffer, Area(0, 0, 5, 5), 255);
-
-    buffer = util::ip::blur(buffer, 2);
-
-    return buffer;
-}
-
 vector <PerlinWorldTestScenario::polyline> PerlinWorldTestScenario::marchToPerimeters(ci::Channel8u &iso, size_t expectedContours) const {
     
     std::vector<PolyLine2d> polylines = terrain::detail::march(iso, 0.5, dmat4(), 0.01);
@@ -262,17 +277,3 @@ vector <PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci:
 
     return sc.segments;
 }
-
-terrain::WorldRef PerlinWorldTestScenario::createTerrainWorld(const ci::Channel8u &worldMap) const {
-
-    vector <terrain::ShapeRef> shapes;
-    const double isoLevel = 0.5;
-    const dmat4 transform = glm::scale(dvec3(4,4,1)) * glm::translate(dvec3(-worldMap.getWidth()/2, -worldMap.getHeight()/2, 0));
-    terrain::World::march(worldMap, isoLevel, transform, shapes);
-
-    auto world = make_shared<terrain::World>(getStage()->getSpace(), TerrainMaterial, AnchorMaterial);
-    world->build(shapes);
-    return world;
-}
-
-

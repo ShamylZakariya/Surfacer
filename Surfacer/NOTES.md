@@ -4,11 +4,9 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-Marching Squares
-PerimeterGenerator doesn't work.
-Putting arrow heads on segments I see that:
-	1) MC generates segments with sane windings (good!)
-	2) the places where the PG fails, I seem to have *really* short segments. I suspect they collapse when converted to edge?
+PlanetGeneration
+Seems to generate good blob maps. But some seeds produce small floating islands. They're adorable, but not good for the game. Could do a pass when generating the world geometry to keep only the one biggest blob.
+
 
 Explosion effect looks totally wonky in PrecariouslyStage
 	Need to figure out how to make initialDirection variance work better. my variance algo isn't cutting it.

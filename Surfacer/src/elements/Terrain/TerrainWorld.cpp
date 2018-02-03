@@ -1461,7 +1461,9 @@ namespace terrain {
         vector <ShapeRef> shapes;
         for (auto &rn : rootNodes) {
             vector <ShapeRef> built = build_from_contour_tree(rn, 0);
-            shapes.insert(end(shapes), begin(built), end(built));
+            for (ShapeRef &s : built) {
+                shapes.push_back(s);
+            }
         }
 
         return shapes;
@@ -1590,6 +1592,44 @@ namespace terrain {
         vector <ShapeRef> result = {const_cast<Shape *>(this)->shared_from_this_as<Shape>()};
         return result;
     }
+    
+    double Shape::getSurfaceArea() {
+        if (_trimesh == nullptr) {
+            if (!triangulate()) {
+                return 0;
+            }
+        }
+        
+        double area = 0;
+        cpVect triangle[3];
+        
+        for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
+            vec2 a, b, c;
+            _trimesh->getTriangleVertices(i, &a, &b, &c);
+            
+            // find the winding with positive area
+            triangle[0] = cpv(a);
+            triangle[1] = cpv(b);
+            triangle[2] = cpv(c);
+            double triArea = length(cross(dvec3(b - a, 0), dvec3(c - a, 0))) * 0.5;
+            
+            if (triArea < 0) {
+                
+                //
+                // sanity check. this doesn't seem to ever actually happen
+                // but it's no skin off my back to be prepared
+                //
+                
+                triangle[0] = cpv(c);
+                triangle[1] = cpv(b);
+                triangle[2] = cpv(a);
+                triArea = -triArea;
+            }
+            
+            area += triArea;
+        }
+        return area;
+    }
 
     void Shape::updateWorldSpaceContourAndBB() {
         if (_worldSpaceShapeContourEdgesDirty) {
@@ -1650,39 +1690,8 @@ namespace terrain {
             return true;
         }
 
+        _trimesh.reset();
         return false;
-    }
-
-    double Shape::getSurfaceArea() const {
-        double area = 0;
-        cpVect triangle[3];
-
-        for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
-            vec2 a, b, c;
-            _trimesh->getTriangleVertices(i, &a, &b, &c);
-
-            // find the winding with positive area
-            triangle[0] = cpv(a);
-            triangle[1] = cpv(b);
-            triangle[2] = cpv(c);
-            double triArea = length(cross(dvec3(b - a, 0), dvec3(c - a, 0))) * 0.5;
-
-            if (triArea < 0) {
-
-                //
-                // sanity check. this doesn't seem to ever actually happen
-                // but it's no skin off my back to be prepared
-                //
-
-                triangle[0] = cpv(c);
-                triangle[1] = cpv(b);
-                triangle[2] = cpv(a);
-                triArea = -triArea;
-            }
-
-            area += triArea;
-        }
-        return area;
     }
 
     void Shape::computeMassAndMoment(double density, double &mass, double &moment, double &area) {

@@ -966,6 +966,8 @@ namespace terrain {
         bool shouldDraw(const core::render_state &state) const override {
             return true;
         }
+        
+        double getSurfaceArea();
 
         const unordered_set<poly_edge> &getWorldSpaceContourEdges();
 
@@ -987,8 +989,6 @@ namespace terrain {
 
         // build the trimesh, returning true iff we got > 0 triangles
         bool triangulate();
-
-        double getSurfaceArea() const;
 
         void computeMassAndMoment(double density, double &mass, double &moment, double &area);
 
