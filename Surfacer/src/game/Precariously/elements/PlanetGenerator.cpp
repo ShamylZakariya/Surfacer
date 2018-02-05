@@ -120,14 +120,22 @@ namespace precariously { namespace planet_generation {
             }
         }
         
-        void prune_floater(vector<terrain::ShapeRef> &shapes) {
+        /**
+         Prune any unconnected floating islands that may have been generated.
+         (in reality, this is just filtering the set of shapes to the biggest single shape)
+         */
+        size_t prune_floater(vector<terrain::ShapeRef> &shapes) {
             if (shapes.size() > 1) {
                 // find biggest shape, keep it only
                 sort(shapes.begin(), shapes.end(), [](const terrain::ShapeRef &a, const terrain::ShapeRef & b) -> bool {
                     return a->getSurfaceArea() > b->getSurfaceArea();
                 });
+                size_t originalSize = shapes.size();
                 shapes = vector<terrain::ShapeRef> { shapes.front() };
+                size_t newSize = shapes.size();
+                return originalSize - newSize;
             }
+            return 0;
         }
         
     }
@@ -156,7 +164,10 @@ namespace precariously { namespace planet_generation {
         anchors = terrain::Anchor::fromContours(terrain::detail::march(anchorsMap, isoLevel, p.transform, 0.01));
         
         if (p.pruneFloaters) {
-            prune_floater(shapes);
+            size_t culled = prune_floater(shapes);
+            if (culled > 0) {
+                CI_LOG_D("Culled " << culled << " islands from generated shapes");
+            }
         }
         
         return make_pair(terrainMap, anchorsMap);
@@ -167,12 +178,15 @@ namespace precariously { namespace planet_generation {
         generate_terrain_map(p, terrainMap);
         
         double isoLevel = 0.5;
-        double linearOptimizationThreshold = 0.01;
+        double linearOptimizationThreshold = 0; // zero, because terrain::Shape::fromContours performs its own optimization
         vector<PolyLine2d> contours = terrain::detail::march(terrainMap, isoLevel, p.transform, linearOptimizationThreshold);
         shapes = terrain::Shape::fromContours(contours);
         
         if (p.pruneFloaters) {
-            prune_floater(shapes);
+            size_t culled = prune_floater(shapes);
+            if (culled > 0) {
+                CI_LOG_D("Culled " << culled << " islands from generated shapes");
+            }
         }
         
         return terrainMap;

@@ -5,7 +5,8 @@ When satellite debris gets out of hand
 ## PRESENTLY
 
 PlanetGeneration
-Seems to generate good blob maps. But some seeds produce small floating islands. They're adorable, but not good for the game. Could do a pass when generating the world geometry to keep only the one biggest blob.
+- Need to verify anchor generation
+
 
 
 Explosion effect looks totally wonky in PrecariouslyStage

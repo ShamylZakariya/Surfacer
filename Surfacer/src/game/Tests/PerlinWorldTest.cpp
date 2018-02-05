@@ -28,8 +28,8 @@ namespace {
 
     const double COLLISION_SHAPE_RADIUS = 0;
     const double MIN_SURFACE_AREA = 2;
-    const ci::Color TERRAIN_COLOR(0.8, 0.8, 0.8);
-    const ci::Color ANCHOR_COLOR(1, 0, 1);
+    const ci::Color TERRAIN_COLOR(1, 0, 1);
+    const ci::Color ANCHOR_COLOR(0, 1, 1);
 
     namespace CollisionType {
 
@@ -99,45 +99,10 @@ namespace {
         
         return util::ip::blur(buffer, 2);
     }
-    
-    pair<terrain::WorldRef, ci::Channel8u> create_world_0(SpaceAccessRef space) {
-        precariously::planet_generation::params params;
-        params.size = 512;
-        params.seed = 34567;
-        
-        Channel8u buffer;
-        precariously::planet_generation::generate_terrain_map(params, buffer);
-        
-        vector <terrain::ShapeRef> shapes;
-        const double isoLevel = 0.5;
-        const dmat4 transform = glm::scale(dvec3(4,4,1)) * glm::translate(dvec3(-params.size/2, -params.size/2, 0));
-        terrain::World::march(buffer, isoLevel, transform, shapes);
-        
-        auto world = make_shared<terrain::World>(space, TerrainMaterial, AnchorMaterial);
-        world->build(shapes);
-
-        return make_pair(world, buffer);
-    }
-    
-    pair<terrain::WorldRef, ci::Channel8u> create_world_1(SpaceAccessRef space) {
-        precariously::planet_generation::params params;
-        params.size = 512;
-        params.seed = 34567;
-
-        // TODO: Why does an identity transform result in zero world generation?
-        // TODO: Test the floater pruning (requires finding a seed which produces islands... )
-        
-//        params.transform = glm::scale(dvec3(1,1,1));
-        params.transform = glm::translate(dvec3(-params.size/2, -params.size/2, 0));
-//        params.transform = glm::scale(dvec3(1,1,1)) * glm::translate(dvec3(-params.size/2, -params.size/2, 0));
-        
-        return precariously::planet_generation::generate(params, space, TerrainMaterial);
-    }
-
 }
 
 PerlinWorldTestScenario::PerlinWorldTestScenario() :
-        _seed(1234) {
+    _seed(1234) {
 }
 
 PerlinWorldTestScenario::~PerlinWorldTestScenario() {
@@ -156,11 +121,20 @@ void PerlinWorldTestScenario::setup() {
     getStage()->addObject(Object::with("Grid", {grid}));
 
     
-    auto r = create_world_1(getStage()->getSpace());
-    _isoSurface = r.second;
+    precariously::planet_generation::params params;
+    params.size = 512;
+    params.seed = _seed;
+    params.noiseOctaves = 2;
+    params.noiseFrequencyScale = 2;
+    params.pruneFloaters = true;
+    params.transform = glm::scale(dvec3(3,3,1)) * glm::translate(dvec3(-params.size/2, -params.size/2, 0));
     
-    auto terrain = terrain::TerrainObject::create("Terrain", r.first, DrawLayers::TERRAIN);
+    auto result = precariously::planet_generation::generate(params, getStage()->getSpace(), TerrainMaterial);
+
+    auto terrain = terrain::TerrainObject::create("Terrain", result.first, DrawLayers::TERRAIN);
     getStage()->addObject(terrain);
+
+    _isoSurface = result.second;
 }
 
 void PerlinWorldTestScenario::cleanup() {
@@ -193,7 +167,7 @@ void PerlinWorldTestScenario::draw(const render_state &state) {
                 _isoTex = ci::gl::Texture2d::create(_isoSurface, fmt);
             }
 
-            gl::color(ColorA(1, 1, 1, 1));
+            gl::color(ColorA(1, 1, 1, 0.5));
             gl::draw(_isoTex);
         }
 
@@ -235,6 +209,7 @@ void PerlinWorldTestScenario::reset() {
     cleanup();
 
     _seed++;
+    CI_LOG_D("_seed: " << _seed);
 
     setup();
 }
