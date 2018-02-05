@@ -176,7 +176,7 @@ namespace terrain {
             //	return whether we got any usable perimeters
             //
 
-            return resultPerimeters.empty() && resultPerimeters.front().size() > 0;
+            return !resultPerimeters.empty() && resultPerimeters.front().size() > 0;
         }
 
         inline std::vector<PolyLine2d> march(const Channel8u &store, double isoLevel, dmat4 transform, double simplificationThreshold) {
