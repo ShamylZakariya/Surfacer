@@ -101,8 +101,20 @@ namespace {
     }
 }
 
+/*
+ float _surfaceSolidity;
+ int32_t _seed;
+ 
+ vector<ci::Channel8u> _isoSurfaces;
+ vector<ci::gl::Texture2dRef> _isoTexes;
+ vector <segment> _marchSegments;
+ vector <polyline> _marchedPolylines;
+*/
+
 PerlinWorldTestScenario::PerlinWorldTestScenario() :
-    _seed(1234) {
+    _seed(1234),
+    _surfaceSolidity(0.5)
+{
 }
 
 PerlinWorldTestScenario::~PerlinWorldTestScenario() {
@@ -120,26 +132,31 @@ void PerlinWorldTestScenario::setup() {
     grid->setGridColor(ColorA(1, 1, 1, 0.1));
     getStage()->addObject(Object::with("Grid", {grid}));
 
-    
-    precariously::planet_generation::params params;
-    params.size = 512;
-    params.seed = _seed;
+
+    auto params = precariously::planet_generation::params(512, _seed).defaultCenteringTransform(4);
     params.noiseOctaves = 2;
     params.noiseFrequencyScale = 2;
     params.pruneFloaters = true;
-    params.transform = glm::scale(dvec3(3,3,1)) * glm::translate(dvec3(-params.size/2, -params.size/2, 0));
+    params.surfaceSolidity = _surfaceSolidity;
     
-    auto result = precariously::planet_generation::generate(params, getStage()->getSpace(), TerrainMaterial);
-
+    auto result = precariously::planet_generation::generate(params, getStage()->getSpace(), TerrainMaterial, AnchorMaterial);
+    
     auto terrain = terrain::TerrainObject::create("Terrain", result.first, DrawLayers::TERRAIN);
     getStage()->addObject(terrain);
-
-    _isoSurface = result.second;
+    
+    _isoSurfaces = vector<Channel8u> { result.second.first, result.second.second };
+    
+    const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
+    for(Channel8u isoSurface : _isoSurfaces) {
+        _isoTexes.push_back(ci::gl::Texture2d::create(isoSurface, fmt));
+    }
+    
 }
 
 void PerlinWorldTestScenario::cleanup() {
     setStage(nullptr);
-    _isoTex.reset();
+    _isoSurfaces.clear();
+    _isoTexes.clear();
 }
 
 void PerlinWorldTestScenario::resize(ivec2 size) {
@@ -159,18 +176,9 @@ void PerlinWorldTestScenario::draw(const render_state &state) {
     Scenario::draw(state);
 
     if ((true)) {
-        gl::ScopedBlend blender(true);
-        if (_isoSurface.getData()) {
-
-            if (!_isoTex) {
-                const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
-                _isoTex = ci::gl::Texture2d::create(_isoSurface, fmt);
-            }
-
-            gl::color(ColorA(1, 1, 1, 0.5));
-            gl::draw(_isoTex);
-        }
-
+        gl::ScopedBlend sb(true);
+        gl::ScopedModelMatrix smm;
+        
         if (!_marchSegments.empty()) {
             double triangleSize = 0.25;
             for (const auto &seg : _marchSegments) {
@@ -195,22 +203,47 @@ void PerlinWorldTestScenario::draw(const render_state &state) {
 }
 
 void PerlinWorldTestScenario::drawScreen(const render_state &state) {
+    {
+        gl::ScopedModelMatrix smm;
+        gl::scale(0.25, 0.25, 1);
+        int x = 0;
+        for (auto tex : _isoTexes) {
+            gl::color(ColorA(1, 1, 1, 1));
+            gl::translate(vec3(x, 0, 0));
+            gl::draw(tex);
+            x += tex->getWidth();
+        }
+    }
 }
 
 bool PerlinWorldTestScenario::keyDown(const ci::app::KeyEvent &event) {
-    if (event.getChar() == 'r') {
-        reset();
-        return true;
+    
+    switch(event.getChar()) {
+        case 'r':
+            reset();
+            return true;
+        case 's':
+            _seed++;
+            CI_LOG_D("_seed: " << _seed);
+            reset();
+            return true;
+        case '-':
+            _surfaceSolidity = max<float>(_surfaceSolidity - 0.1, 0);
+            CI_LOG_D("_surfaceSolidity: " << _surfaceSolidity);
+            reset();
+            return true;
+        case '=':
+            _surfaceSolidity = min<float>(_surfaceSolidity + 0.1, 1);
+            CI_LOG_D("_surfaceSolidity: " << _surfaceSolidity);
+            reset();
+            return true;
     }
+
     return false;
 }
 
 void PerlinWorldTestScenario::reset() {
     cleanup();
-
-    _seed++;
-    CI_LOG_D("_seed: " << _seed);
-
     setup();
 }
 

@@ -24,7 +24,7 @@ namespace precariously { namespace planet_generation {
     
     namespace {
         
-        void generate_map(const params &p, double vignetteStart, Channel8u &map) {
+        void generate_map(const params &p, double vignetteStart, double vignetteEnd, Channel8u &map) {
             map = Channel8u(p.size, p.size);
             
             //
@@ -49,35 +49,42 @@ namespace precariously { namespace planet_generation {
             
             //
             // now perform radial samples from inside out, floodfilling
-            // white blobs to grey. grey will be our marker for "solid land"
+            // white blobs to grey. grey will be our marker for "solid land". we
+            // sample less frequently as we move out so as to allow for "swiss cheese" surface
             //
             
+            const double surfaceSolidity = saturate<double>(p.surfaceSolidity);
             const uint8_t landValue = 128;
+
             {
                 uint8_t *data = map.getData();
                 int32_t rowBytes = map.getRowBytes();
                 int32_t increment = map.getIncrement();
                 
-                auto get = [&](const ivec2 &p) -> uint8_t {
+                auto sample = [&](const ivec2 &p) -> uint8_t {
                     return data[p.y * rowBytes + p.x * increment];
                 };
                 
-                double ringThickness = p.size / 32.0;
-                int ringSteps = static_cast<int>(((p.size / 2) * 0.5) / ringThickness);
+                const double radiusStep = p.size / 64.0;
+                const double endRadius = p.size * 0.5 * vignetteEnd;
                 
-                for (int ringStep = 0; ringStep < ringSteps; ringStep++) {
-                    double radius = ringStep * ringThickness;
+                // we want to sample the ring less and less as we step out towards end radius. so we have a
+                // scale factor which increases the sample distance, and the pow factor which delinearizes the change
+                const double surfaceSolidityRadIncrementPow = lrp<double>(surfaceSolidity, 0.5, 16);
+                const double surfaceSolidityRadIncrmementScale = lrp<double>(surfaceSolidity, p.size * 0.5, p.size * 0.01);
+                
+                // walk a ring of positions from center out to endRadius. skip the origin pixel to avoid div by zero
+                for (double radius = 1; radius <= endRadius; radius += radiusStep) {
                     
-                    // TODO: Compute the arc-width of a pixel at a given radius, and step the rads by that amount * some scalar.
-                    double rads = 0;
-                    int radsSteps = 180 - 5 * ringStep;
-                    double radsIncrement = 2 * M_PI / radsSteps;
-                    
-                    for (int radsStep = 0; radsStep < radsSteps; radsStep++, rads += radsIncrement) {
-                        double px = center.x + radius * cos(rads);
-                        double py = center.y + radius * sin(rads);
+                    const double pixelArcWidth = abs(sin(1/radius)); // approx arc-width of 1 pixel at this radius
+                    const double progress = radius / endRadius;
+                    const double radsIncrement = max<double>(surfaceSolidityRadIncrmementScale * pow(progress, surfaceSolidityRadIncrementPow) * pixelArcWidth, 2 * pixelArcWidth);
+
+                    for (double radians = 0; radians < 2 * M_PI; radians += radsIncrement) {
+                        double px = center.x + radius * cos(radians);
+                        double py = center.y + radius * sin(radians);
                         ivec2 plot(static_cast<int>(round(px)), static_cast<int>(round(py)));
-                        if (get(plot) == 255) {
+                        if (sample(plot) == 255) {
                             util::ip::in_place::floodfill(map, plot, 255, landValue);
                         }
                     }
@@ -91,20 +98,27 @@ namespace precariously { namespace planet_generation {
             //
             
             util::ip::in_place::remap(map, landValue, 255, 0);
-            
-            // TODO: Compute blur radius based on parameters
-            map = util::ip::blur(map, 15);
-            
+
             //
-            //  Now apply vignette to prevent blobs from touching edges
+            // blur to join up the island masses so marching squares isolevel will treat them as a single solid
+            // use more blur for more solid surfaces since it will join more
             //
-            
+
+            int blurRadius = static_cast<int>(lrp<double>(surfaceSolidity, 5, 21));
+            map = util::ip::blur(map, blurRadius);
+
+
+            //
+            // Now apply vignette to prevent blobs from touching edges and, generally,
+            // circularize the median geometry
+            //
+
             {
-                const float outerVignetteRadius = size * 0.5f;
-                const float innerVignetteRadius = outerVignetteRadius * vignetteStart;
+                const float outerVignetteRadius = size * 0.5f * vignetteEnd;
+                const float innerVignetteRadius = size * 0.5f * vignetteStart;
                 const float innerVignetteRadius2 = innerVignetteRadius * innerVignetteRadius;
                 const float vignetteThickness = outerVignetteRadius - innerVignetteRadius;
-                
+
                 Channel8u::Iter iter = map.getIter();
                 while (iter.line()) {
                     while (iter.pixel()) {
@@ -122,17 +136,22 @@ namespace precariously { namespace planet_generation {
         
         /**
          Prune any unconnected floating islands that may have been generated.
-         (in reality, this is just filtering the set of shapes to the biggest single shape)
+         Return number of pruned islands.
          */
         size_t prune_floater(vector<terrain::ShapeRef> &shapes) {
             if (shapes.size() > 1) {
-                // find biggest shape, keep it only
+                
+                //
+                // sort such that biggest shape is front in list, and then keep just that one
+                //
+
                 sort(shapes.begin(), shapes.end(), [](const terrain::ShapeRef &a, const terrain::ShapeRef & b) -> bool {
                     return a->getSurfaceArea() > b->getSurfaceArea();
                 });
                 size_t originalSize = shapes.size();
                 shapes = vector<terrain::ShapeRef> { shapes.front() };
                 size_t newSize = shapes.size();
+
                 return originalSize - newSize;
             }
             return 0;
@@ -140,28 +159,31 @@ namespace precariously { namespace planet_generation {
         
     }
 
-    void generate_terrain_map(const params &p, Channel8u &terrain) {
-        generate_map(p, 0.9, terrain);
+    Channel8u generate_terrain_map(const params &p) {
+        Channel8u terrain;
+        generate_map(p, 0.9, 1, terrain);
+        return terrain;
     }
 
-    void generate_anchors_map(const params &p, Channel8u &anchors) {
+    Channel8u generate_anchors_map(const params &p) {
         params p2 = p;
         p2.seed++;
-        generate_map(p2, 0.5, anchors);
+        Channel8u anchors;
+        generate_map(p2, 0.5, 0.6, anchors);
+        return anchors;
     }
 
-    void generate_maps(const params &p, Channel8u &terrain, Channel8u &anchors) {
-        generate_terrain_map(p, terrain);
-        generate_anchors_map(p, anchors);
+    pair<ci::Channel8u, ci::Channel8u> generate_maps(const params &p) {
+        return make_pair(generate_terrain_map(p), generate_anchors_map(p));
     }
     
     pair<ci::Channel8u, ci::Channel8u> generate(const params &p, vector <terrain::ShapeRef> &shapes, vector <terrain::AnchorRef> &anchors) {
-        Channel8u terrainMap, anchorsMap;
-        generate_maps(p, terrainMap, anchorsMap);
+        auto maps = generate_maps(p);
 
-        double isoLevel = 0.5;
-        shapes = terrain::Shape::fromContours(terrain::detail::march(terrainMap, isoLevel, p.transform, 0.01));
-        anchors = terrain::Anchor::fromContours(terrain::detail::march(anchorsMap, isoLevel, p.transform, 0.01));
+        const double isoLevel = 0.5;
+        const double linearOptimizationThreshold = 0; // zero, because terrain::Shape::fromContours performs its own optimization
+        shapes = terrain::Shape::fromContours(terrain::detail::march(maps.first, isoLevel, p.transform, linearOptimizationThreshold));
+        anchors = terrain::Anchor::fromContours(terrain::detail::march(maps.second, isoLevel, p.transform, linearOptimizationThreshold));
         
         if (p.pruneFloaters) {
             size_t culled = prune_floater(shapes);
@@ -170,15 +192,14 @@ namespace precariously { namespace planet_generation {
             }
         }
         
-        return make_pair(terrainMap, anchorsMap);
+        return make_pair(maps.first, maps.second);
     }
     
     ci::Channel8u generate(const params &p, vector <terrain::ShapeRef> &shapes) {
-        Channel8u terrainMap;
-        generate_terrain_map(p, terrainMap);
+        Channel8u terrainMap = generate_terrain_map(p);
         
-        double isoLevel = 0.5;
-        double linearOptimizationThreshold = 0; // zero, because terrain::Shape::fromContours performs its own optimization
+        const double isoLevel = 0.5;
+        const double linearOptimizationThreshold = 0; // zero, because terrain::Shape::fromContours performs its own optimization
         vector<PolyLine2d> contours = terrain::detail::march(terrainMap, isoLevel, p.transform, linearOptimizationThreshold);
         shapes = terrain::Shape::fromContours(contours);
         

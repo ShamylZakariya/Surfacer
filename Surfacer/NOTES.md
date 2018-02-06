@@ -5,8 +5,7 @@ When satellite debris gets out of hand
 ## PRESENTLY
 
 PlanetGeneration
-- Need to verify anchor generation
-
+It's slow. Profile with optimized build. Consider some kind of way to thread this safely.
 
 
 Explosion effect looks totally wonky in PrecariouslyStage

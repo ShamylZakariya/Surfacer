@@ -65,11 +65,13 @@ private:
 
 private:
 
-    ci::Channel8u _isoSurface;
-    ci::gl::Texture2dRef _isoTex;
+    float _surfaceSolidity;
+    int32_t _seed;
+
+    vector<ci::Channel8u> _isoSurfaces;
+    vector<ci::gl::Texture2dRef> _isoTexes;
     vector <segment> _marchSegments;
     vector <polyline> _marchedPolylines;
-    int32_t _seed;
 
 };
 
