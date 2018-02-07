@@ -17,6 +17,68 @@
 namespace core {
     namespace util {
         namespace ip {
+            
+            struct Channel8uSampler {
+            private:
+                const ci::Channel8u &channel;
+                const uint8_t *bytes;
+                int32_t rowBytes;
+                int32_t increment;
+                int32_t lastCol;
+                int32_t lastRow;
+                
+            public:
+                
+                Channel8uSampler(const ci::Channel8u &src) :
+                channel(src),
+                bytes(src.getData()),
+                rowBytes(src.getRowBytes()),
+                increment(src.getIncrement()),
+                lastCol(src.getWidth() - 1),
+                lastRow(src.getHeight() - 1) {
+                }
+                
+                inline uint8_t sampleClamped(int x, int y) const {
+                    x = min(max(x, 0), lastCol);
+                    y = min(max(y, 0), lastRow);
+                    return bytes[y * rowBytes + x * increment];
+                }
+                
+                inline uint8_t sampleUnsafe(int x, int y) const {
+                    return bytes[y * rowBytes + x * increment];
+                }
+            };
+            
+            struct Channel8uWriter {
+            private:
+                ci::Channel8u &channel;
+                uint8_t *bytes;
+                int32_t rowBytes;
+                int32_t increment;
+                int32_t cols;
+                int32_t rows;
+                
+            public:
+                
+                Channel8uWriter(ci::Channel8u &src) :
+                channel(src),
+                bytes(src.getData()),
+                rowBytes(src.getRowBytes()),
+                increment(src.getIncrement()),
+                cols(src.getWidth()),
+                rows(src.getHeight()) {
+                }
+                
+                inline void writeClamped(int x, int y, uint8_t v) {
+                    if (x >= 0 && x <= cols && y >= 0 && y < rows) {
+                        bytes[y * rowBytes + x * increment] = v;
+                    }
+                }
+                
+                inline void writeUnsafe(int x, int y, uint8_t v) {
+                    bytes[y * rowBytes + x * increment] = v;
+                }
+            };
 
             // perform a dilation pass such that each pixel in dst image is the max of the pixels in src kernel for that pixel
             void dilate(const ci::Channel8u &src, ci::Channel8u &dst, int radius);

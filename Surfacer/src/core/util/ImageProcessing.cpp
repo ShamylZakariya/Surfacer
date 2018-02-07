@@ -45,59 +45,6 @@ namespace core {
                     }
                 }
 
-                struct Channel8uSampler {
-                private:
-                    const Channel8u &channel;
-                    const uint8_t *bytes;
-                    int32_t rowBytes;
-                    int32_t increment;
-                    int32_t lastCol;
-                    int32_t lastRow;
-
-                public:
-
-                    Channel8uSampler(const Channel8u &src) :
-                            channel(src),
-                            bytes(src.getData()),
-                            rowBytes(src.getRowBytes()),
-                            increment(src.getIncrement()),
-                            lastCol(src.getWidth() - 1),
-                            lastRow(src.getHeight() - 1) {
-                    }
-
-                    uint8_t sample(int x, int y) const {
-                        x = min(max(x, 0), lastCol);
-                        y = min(max(y, 0), lastRow);
-                        return bytes[y * rowBytes + x * increment];
-                    }
-                };
-
-                struct Channel8uWriter {
-                private:
-                    Channel8u &channel;
-                    uint8_t *bytes;
-                    int32_t rowBytes;
-                    int32_t increment;
-                    int32_t cols;
-                    int32_t rows;
-
-                public:
-
-                    Channel8uWriter(Channel8u &src) :
-                            channel(src),
-                            bytes(src.getData()),
-                            rowBytes(src.getRowBytes()),
-                            increment(src.getIncrement()),
-                            cols(src.getWidth()),
-                            rows(src.getHeight()) {
-                    }
-
-                    void write(int x, int y, uint8_t v) {
-                        if (x >= 0 && x <= cols && y >= 0 && y < rows) {
-                            bytes[y * rowBytes + x * increment] = v;
-                        }
-                    }
-                };
             }
 
 
@@ -240,59 +187,61 @@ namespace core {
                     }
                 }
             }
-
+      
             void blur(const ci::Channel8u &src, ci::Channel8u &dst, int radius) {
                 //
-                //	Create the kernel and the buffers to hole horizontal & vertical passes
+                //    Create the kernel and the buffers
                 //
-
+                
                 kernel krnl;
                 create_kernel(radius, krnl);
-
+                const kernel::const_iterator kend = krnl.end();
+                
                 ci::Channel8u horizontalPass(src.getWidth(), src.getHeight());
                 if (dst.getSize() != src.getSize()) {
                     dst = Channel8u(src.getWidth(), src.getHeight());
                 }
-
+                
                 //
-                //	Store our iteration bounds
+                //    Run the horizontal pass
                 //
-
-                const int rows = src.getHeight();
-                const int cols = src.getWidth();
-                const kernel::const_iterator kend = krnl.end();
-
-                //
-                //	Run the horizontal pass
-                //
-
-                Channel8uSampler srcSampler(src);
-                Channel8uWriter horizontalPassWriter(horizontalPass);
-                for (int y = 0; y < rows; y++) {
-                    for (int x = 0; x < cols; x++) {
-                        double accum = 0;
-                        for (kernel::const_iterator k(krnl.begin()); k != kend; ++k) {
-                            accum += srcSampler.sample(x + k->first, y) * k->second;
+                
+                {
+                    Channel8u::ConstIter srcIt = src.getIter();
+                    Channel8u::Iter dstIt = horizontalPass.getIter();
+                    
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            
+                            double accum = 0;
+                            for (kernel::const_iterator k(krnl.begin()); k != kend; ++k) {
+                                accum += srcIt.vClamped(k->first, 0) * k->second;
+                            }
+                            
+                            uint8_t v = clamp<uint8_t>(static_cast<uint8_t>(lrint(accum)), 0, 255);
+                            dstIt.v() = v;
                         }
-
-                        horizontalPassWriter.write(x, y, clamp<uint8_t>(static_cast<uint8_t>(lrint(accum)), 0, 255));
                     }
                 }
-
+                
                 //
-                //	Run the vertical pass
+                //    Run the vertical pass
                 //
+                
+                {
+                    Channel8u::Iter srcIt = horizontalPass.getIter();
+                    Channel8u::Iter dstIt = dst.getIter();
 
-                Channel8uSampler horizontalPassSampler(horizontalPass);
-                Channel8uWriter dstWriter(dst);
-                for (int y = 0; y < rows; y++) {
-                    for (int x = 0; x < cols; x++) {
-                        double accum = 0;
-                        for (kernel::const_iterator k(krnl.begin()); k != kend; ++k) {
-                            accum += horizontalPassSampler.sample(x, y + k->first) * k->second;
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            double accum = 0;
+                            for (kernel::const_iterator k(krnl.begin()); k != kend; ++k) {
+                                accum += srcIt.vClamped(0, k->first) * k->second;
+                            }
+                            
+                            uint8_t v = clamp<uint8_t>(static_cast<uint8_t>(lrint(accum)), 0, 255);
+                            dstIt.v() = v;
                         }
-
-                        dstWriter.write(x, y, clamp<uint8_t>(static_cast<uint8_t>(lrint(accum)), 0, 255));
                     }
                 }
             }
