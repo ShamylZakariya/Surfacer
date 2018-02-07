@@ -10,43 +10,41 @@
 #include "TerrainDetail.hpp"
 #include "PerlinNoise.hpp"
 #include "PrecariouslyConstants.hpp"
+#include "PlanetGenerator.hpp"
+
 
 using namespace core;
 using namespace terrain;
 
-namespace {
-
-    dpolygon2 circle(dvec2 origin, double radius, double arcPrecisionDegrees, util::PerlinNoise *permuter, double noiseRoughness, double noiseOffset) {
-        permuter->setScale(noiseRoughness);
-        dpolygon2 contour;
-        for (double angle = 0; angle < 360; angle += arcPrecisionDegrees) {
-            double radians = angle * M_PI / 180;
-            double noise = permuter->noise(angle) * noiseOffset;
-            double vertexRadius = radius + noise;
-
-            vec2 v(origin.x + vertexRadius * cos(radians), origin.y + vertexRadius * sin(radians));
-            contour.outer().push_back(boost::geometry::make<dpoint2>(v.x, v.y));
-        }
-        boost::geometry::correct(contour);
-        return contour;
-    }
-
-}
 
 namespace precariously {
 
+    namespace {
+        
+        const int MAP_RESOLUTION = 512;
+    
+        precariously::planet_generation::params create_planet_generation_params(const Planet::config &config, dvec2 worldOrigin, double worldRadius) {
+            precariously::planet_generation::params params;
+            params.size = MAP_RESOLUTION;
+            params.seed = config.seed;
+            params.surfaceSolidity = config.surfaceSolidity;
+            
+            //
+            // compute a transform to put this at origin with requested radius
+            //
+
+            params.transform = glm::scale( dvec3(worldRadius / params.size, worldRadius / params.size, 1)) * glm::translate(dvec3(worldOrigin.x - params.size/2, worldOrigin.y - params.size/2, 0));
+            
+            return params;
+        }
+        
+    }
+
     Planet::config Planet::config::parse(core::util::xml::XmlMultiTree configNode) {
         config c;
-
         c.seed = util::xml::readNumericAttribute<int>(configNode, "seed", c.seed);
-
         c.radius = util::xml::readNumericAttribute<double>(configNode, "radius", c.radius);
-        c.arcPrecisionDegrees = util::xml::readNumericAttribute<double>(configNode, "arcPrecisionDegrees", c.arcPrecisionDegrees);
-
-        c.noiseOctaves = util::xml::readNumericAttribute<size_t>(configNode, "noiseOctaves", c.noiseOctaves);
-        c.noiseFalloff = util::xml::readNumericAttribute<double>(configNode, "noiseFalloff", c.noiseFalloff);
-        c.noiseOffset = util::xml::readNumericAttribute<double>(configNode, "noiseOffset", c.noiseOffset);
-        c.noiseRoughness = util::xml::readNumericAttribute<double>(configNode, "noiseRoughness", c.noiseRoughness);
+        c.surfaceSolidity = util::xml::readNumericAttribute<double>(configNode, "surfaceSolidity", c.surfaceSolidity);
 
         return c;
     }
@@ -60,30 +58,20 @@ namespace precariously {
     }
 
     PlanetRef Planet::create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer) {
+        
+        planet_generation::params surfaceParams = create_planet_generation_params(surfaceConfig, origin, surfaceConfig.radius);
+        planet_generation::params coreParams = create_planet_generation_params(coreConfig, origin, coreConfig.radius);
 
-        util::PerlinNoise surfacePermuter(surfaceConfig.noiseOctaves, surfaceConfig.noiseFalloff, 1, surfaceConfig.seed);
-        util::PerlinNoise corePermuter(coreConfig.noiseOctaves, coreConfig.noiseFalloff, 1, coreConfig.seed);
-
-        // create basic planet outer contour
-        vector<dpolygon2> contourPolygons = {
-                circle(origin, surfaceConfig.radius, surfaceConfig.arcPrecisionDegrees, &surfacePermuter, surfaceConfig.noiseRoughness, surfaceConfig.noiseOffset)
-        };
-
-        // build planet core contour
-        dpolygon2 corePolygon = circle(origin, coreConfig.radius, coreConfig.arcPrecisionDegrees, &corePermuter, surfaceConfig.noiseRoughness, coreConfig.noiseOffset);
-        PolyLine2d corePolyline = terrain::detail::dpolygon2_to_polyline2d(corePolygon);
-
-        // now convert the contours to a form consumable by terrain::World::build
-        vector<ShapeRef> shapes = terrain::detail::dpolygon2_to_shape(contourPolygons, dmat4());
+        vector<ShapeRef> shapes;
+        vector<AnchorRef> anchors;
+        planet_generation::generate(surfaceParams, shapes);
+        planet_generation::generate(coreParams, anchors);
 
         if (partitionSize > 0) {
             shapes = terrain::World::partition(shapes, origin, partitionSize);
         }
 
-        vector<AnchorRef> anchors = {terrain::Anchor::fromContour(corePolyline)};
         world->build(shapes, anchors);
-
-        // then perturb the world with additions (mountains, junk, etc) and subtractions (craters, lakebeds, etc)
 
         // finally create the Planet
         return make_shared<Planet>(name, world, drawLayer);

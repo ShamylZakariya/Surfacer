@@ -90,6 +90,14 @@ namespace precariously { namespace planet_generation {
     ci::Channel8u generate(const params &p, vector <terrain::ShapeRef> &shapes);
 
     /**
+     Generate just anchors and anchor map from given generation parameters,
+     and populate terrain::Shape vector with the marched/triangulated geometry.
+     return terrain map
+     */
+    ci::Channel8u generate(const params &p, vector <terrain::AnchorRef> &anchors);
+
+    
+    /**
      Generate a terrin::World with given generation parameters.
      return pair with .first as terrain::World, .second as pair with .first as terrain map, .second as anchor map
      */

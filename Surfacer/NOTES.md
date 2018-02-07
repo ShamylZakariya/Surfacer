@@ -5,7 +5,7 @@ When satellite debris gets out of hand
 ## PRESENTLY
 
 PlanetGeneration
-It's slow. Profile with optimized build. Consider some kind of way to thread this safely.
+I beleive I want to put vignette start/end into planet_generation::params
 
 
 Explosion effect looks totally wonky in PrecariouslyStage

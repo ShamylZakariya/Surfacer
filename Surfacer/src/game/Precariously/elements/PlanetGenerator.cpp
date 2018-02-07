@@ -164,19 +164,20 @@ namespace precariously { namespace planet_generation {
     }
 
     Channel8u generate_terrain_map(const params &p) {
-        Channel8u terrain = generate_map(p, 0.9, 1);
+        Channel8u terrain = generate_map(p, 0.8, 1);
         return terrain;
     }
 
     Channel8u generate_anchors_map(const params &p) {
-        params p2 = p;
-        p2.seed++;
-        Channel8u anchors = generate_map(p2, 0.5, 0.6);
+        Channel8u anchors = generate_map(p, 0.3, 0.7);
         return anchors;
     }
 
     pair<ci::Channel8u, ci::Channel8u> generate_maps(const params &p) {
-        return make_pair(generate_terrain_map(p), generate_anchors_map(p));
+        params p2 = p;
+        p2.seed++;
+
+        return make_pair(generate_terrain_map(p), generate_anchors_map(p2));
     }
     
     pair<ci::Channel8u, ci::Channel8u> generate(const params &p, vector <terrain::ShapeRef> &shapes, vector <terrain::AnchorRef> &anchors) {
@@ -213,6 +214,17 @@ namespace precariously { namespace planet_generation {
         }
         
         return terrainMap;
+    }
+    
+    ci::Channel8u generate(const params &p, vector <terrain::AnchorRef> &anchors) {
+        Channel8u anchorMap = generate_anchors_map(p);
+        
+        const double isoLevel = 0.5;
+        const double linearOptimizationThreshold = 0; // zero, because terrain::Shape::fromContours performs its own optimization
+        vector<PolyLine2d> contours = terrain::detail::march(anchorMap, isoLevel, p.transform, linearOptimizationThreshold);
+        anchors = terrain::Anchor::fromContours(contours);
+        
+        return anchorMap;
     }
     
     pair<terrain::WorldRef, pair<ci::Channel8u, ci::Channel8u>> generate(const params &p, core::SpaceAccessRef space, terrain::material terrainMaterial, terrain::material anchorMaterial) {

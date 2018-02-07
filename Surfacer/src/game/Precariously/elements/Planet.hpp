@@ -25,21 +25,14 @@ namespace precariously {
             int seed;
 
             double radius;
-            double arcPrecisionDegrees;
+            double surfaceSolidity;
 
-            size_t noiseOctaves;
-            double noiseFalloff;
-            double noiseOffset;
-            double noiseRoughness;
-
+            
             config() :
                     seed(12345),
                     radius(500),
-                    arcPrecisionDegrees(0.5),
-                    noiseOctaves(4),
-                    noiseFalloff(0.5),
-                    noiseOffset(0),
-                    noiseRoughness(0.25) {
+                    surfaceSolidity(0.5)
+            {
             }
 
             static config parse(core::util::xml::XmlMultiTree node);

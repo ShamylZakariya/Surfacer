@@ -12,18 +12,14 @@
 	</background>
 	<planet origin="0,0" friction="0.5" density="1" partitionSize="250" color="72,95,112" coreColor="60,71,79">
 		<surface
+			seed="345"
 			radius="1000"
-			noiseOctaves="8"
-			noiseFalloff="0.4"
-			noiseOffset="500"
-			noiseRoughness="0.03"
+			surfaceSolidity="0.6"
 		/>
 		<core
-			radius="400"
-			noiseOctaves="4"
-			noiseFalloff="0.5"
-			noiseOffset="100"
-			noiseRoughness="0.1"
+			seed="345"
+			radius="800"
+			surfaceSolidity="0.3"
 		/>
 	</planet>
 	<cloudLayer id="background">
