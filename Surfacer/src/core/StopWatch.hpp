@@ -33,7 +33,7 @@ namespace core {
         ~StopWatch() {
             if (!_eventName.empty()) {
                 auto t = mark();
-                ci::app::console() << "StopWatch[" << _eventName << "] TIME: " << t << " seconds";
+                ci::app::console() << "StopWatch[" << _eventName << "] TIME: " << t << " seconds" << std::endl;
             }
         }
 

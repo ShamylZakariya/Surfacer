@@ -24,8 +24,10 @@ namespace precariously { namespace planet_generation {
     
     namespace {
         
-        void generate_map(const params &p, double vignetteStart, double vignetteEnd, Channel8u &map) {
-            map = Channel8u(p.size, p.size);
+        Channel8u generate_map(const params &p, double vignetteStart, double vignetteEnd) {
+
+            StopWatch timer("generate_map");
+            Channel8u map = Channel8u(p.size, p.size);
             
             //
             //    Initilialize our terrain with perlin noise, fading out to black with radial vignette
@@ -132,6 +134,8 @@ namespace precariously { namespace planet_generation {
                     }
                 }
             }
+            
+            return map;
         }
         
         /**
@@ -160,16 +164,14 @@ namespace precariously { namespace planet_generation {
     }
 
     Channel8u generate_terrain_map(const params &p) {
-        Channel8u terrain;
-        generate_map(p, 0.9, 1, terrain);
+        Channel8u terrain = generate_map(p, 0.9, 1);
         return terrain;
     }
 
     Channel8u generate_anchors_map(const params &p) {
         params p2 = p;
         p2.seed++;
-        Channel8u anchors;
-        generate_map(p2, 0.5, 0.6, anchors);
+        Channel8u anchors = generate_map(p2, 0.5, 0.6);
         return anchors;
     }
 
@@ -214,6 +216,8 @@ namespace precariously { namespace planet_generation {
     }
     
     pair<terrain::WorldRef, pair<ci::Channel8u, ci::Channel8u>> generate(const params &p, core::SpaceAccessRef space, terrain::material terrainMaterial, terrain::material anchorMaterial) {
+        
+        StopWatch timer("generate");
 
         vector <terrain::ShapeRef> shapes;
         vector <terrain::AnchorRef> anchors;
