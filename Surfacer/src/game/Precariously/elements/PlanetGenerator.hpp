@@ -32,6 +32,10 @@ namespace precariously { namespace planet_generation {
         
         // Value of zero results in a very wispy planet surface, and 1 results in a very solid surface
         double surfaceSolidity;
+        
+        double vignetteStart;
+        
+        double vignetteEnd;
 
         // if true, terrain (not anchors) will be pruned of all but the biggest solid geometry
         bool pruneFloaters;
@@ -46,6 +50,8 @@ namespace precariously { namespace planet_generation {
         noiseOctaves(4),
         noiseFrequencyScale(1),
         surfaceSolidity(1),
+        vignetteStart(0.9),
+        vignetteEnd(1),
         pruneFloaters(true)
         {}
         
@@ -57,22 +63,11 @@ namespace precariously { namespace planet_generation {
             return *this;
         }
     };
-    
-    /**
-     Generate a terrain map given generation parameters
-     */
-    ci::Channel8u generate_terrain_map(const params &p);
 
     /**
-     Generate an anchors map given generation parameters
+     Generate a map given the provided parameters
      */
-    ci::Channel8u generate_anchors_map(const params &p);
-
-    /**
-     Generate terrain and anchors map given generation parameters.
-     return pair with .first as terrain map, .second as anchors map
-     */
-    pair<ci::Channel8u, ci::Channel8u> generate_maps(const params &p);
+    Channel8u generate_map(const params &p);
 
     /**
      Generate terrain and anchors map from given generation parameters,
@@ -96,7 +91,6 @@ namespace precariously { namespace planet_generation {
      */
     ci::Channel8u generate(const params &p, vector <terrain::AnchorRef> &anchors);
 
-    
     /**
      Generate a terrin::World with given generation parameters.
      return pair with .first as terrain::World, .second as pair with .first as terrain map, .second as anchor map

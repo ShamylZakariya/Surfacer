@@ -12,13 +12,13 @@
 	</background>
 	<planet origin="0,0" friction="0.5" density="1" partitionSize="250" color="72,95,112" coreColor="60,71,79">
 		<surface
-			seed="345"
+			seed="34567"
 			radius="1000"
-			surfaceSolidity="0.6"
+			surfaceSolidity="0.4"
 		/>
 		<core
 			seed="345"
-			radius="800"
+			radius="400"
 			surfaceSolidity="0.3"
 		/>
 	</planet>

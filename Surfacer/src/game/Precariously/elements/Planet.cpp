@@ -33,7 +33,8 @@ namespace precariously {
             // compute a transform to put this at origin with requested radius
             //
 
-            params.transform = glm::scale( dvec3(worldRadius / params.size, worldRadius / params.size, 1)) * glm::translate(dvec3(worldOrigin.x - params.size/2, worldOrigin.y - params.size/2, 0));
+            double halfSize = params.size / 2;
+            params.transform = glm::scale( dvec3(worldRadius / halfSize, worldRadius / halfSize, 1)) * glm::translate(dvec3(worldOrigin.x - halfSize, worldOrigin.y - halfSize, 0));
             
             return params;
         }
@@ -61,6 +62,11 @@ namespace precariously {
         
         planet_generation::params surfaceParams = create_planet_generation_params(surfaceConfig, origin, surfaceConfig.radius);
         planet_generation::params coreParams = create_planet_generation_params(coreConfig, origin, coreConfig.radius);
+        
+        surfaceParams.vignetteStart = 0.9;
+        surfaceParams.vignetteEnd = 1;
+        coreParams.vignetteStart = 0.9;
+        coreParams.vignetteEnd = 1;
 
         vector<ShapeRef> shapes;
         vector<AnchorRef> anchors;

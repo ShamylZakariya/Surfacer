@@ -136,7 +136,7 @@ void PerlinWorldTestScenario::setup() {
     auto params = precariously::planet_generation::params(512, _seed).defaultCenteringTransform(4);
     params.noiseOctaves = 2;
     params.noiseFrequencyScale = 2;
-    params.pruneFloaters = true;
+    params.pruneFloaters = false;
     params.surfaceSolidity = _surfaceSolidity;
     
     auto result = precariously::planet_generation::generate(params, getStage()->getSpace(), TerrainMaterial, AnchorMaterial);
