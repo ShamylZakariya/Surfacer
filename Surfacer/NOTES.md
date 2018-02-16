@@ -7,19 +7,39 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-PlanetGeneration
-I beleive I want to put vignette start/end into planet_generation::params
+Planet Attachments
+- attachment is just a transform relative to a group
+- an attachment must be *inside* a shape
+- when a shape is cut, all that shape's attachments are tested to be inside the generated new shapes. They are reparented or orphaned accordingly.
+- when orphaned send a signal
+- no update() or draw(). just functions for querying local and world space transforms
+
+STEPS:
+DONE:
+    - attachment @confirmed
+    - basic tests for if attachment is in a group/shape @confirmed
+    - draw attachments in debug mode @ confirmed
+    - add attachments to world @confirmed
+TODO:
+    - migrate attachments to new groups (see World::build ~:766 - this is where new shapes are configured)
+        - make orphans of those which couldn't be attached
+    
+THOUGHTS:
+    - make certain I'm setting localTransform right when adding
+    - don't forget to set _group ptr
+    
 
 
 Explosion effect looks totally wonky in PrecariouslyStage
 	Need to figure out how to make initialDirection variance work better. my variance algo isn't cutting it.
 		Consider creating some kind of emission source object. can be a circle, a cone, etc. it vends initial position and direction
 
-## BUGS PRIORITY 0
+## BUGS PRIORITY HIGH
 
+WorldCartesianGridComponent - color of grid not working
 For my sanity I really must make zooming about mouse cursor work again
 
-## BUGS PRIORITY 1
+## BUGS PRIORITY LOW
 
 Consider rewriting DrawDispatcher using raw pointers and not shared_ptr<> ?
 

@@ -25,7 +25,7 @@ using namespace core;
 namespace terrain {
 
 
-#pragma mark - DrawDispatcher
+#pragma mark - Helpers
 
     namespace {
 
@@ -78,6 +78,8 @@ namespace terrain {
         }
 
     }
+    
+#pragma mark - DrawDispatcher
 
     /*
         cpSpatialIndex *_index;
@@ -516,9 +518,36 @@ namespace terrain {
                 const double angle = drawable->getAngle();
                 const dvec3 modelCentroid = dvec3(drawable->getModelCentroid(), 0);
 
-                gl::ScopedModelMatrix smm2;
-                gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, dvec3(0, 0, 1)) * rScaleMat);
-                gl::drawString(str(drawable->getId()), dvec2(0, 0), Color(1, 1, 1));
+                {
+                    gl::ScopedModelMatrix smm;
+                    gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, dvec3(0, 0, 1)) * rScaleMat);
+                    gl::drawString(str(drawable->getId()), dvec2(0, 0), Color(1, 1, 1));
+                }
+            }
+            
+            // render attachments
+            auto groupAttachmentRenderer = [&](const GroupBaseRef &group, float axisSize = 10) {
+                gl::lineWidth(1);
+                if (cpBBIntersects(renderState.viewport->getFrustum(), group->getBB())) {
+                    gl::ScopedModelMatrix smm;
+                    gl::multModelMatrix(group->getModelMatrix());
+                    for (auto &attachment : group->getAttachments()) {
+                        dvec2 position = attachment->getLocalPosition();
+                        dvec2 right = attachment->getLocalRotation() * rScale;
+                        dvec2 up = rotateCCW(right);
+                        gl::color(1,1,1);
+                        gl::drawStrokedCircle(position, axisSize * rScale, 16);
+                        gl::color(1, 0, 0);
+                        gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * right.x, position.y + axisSize * right.y, 0));
+                        gl::color(0, 1, 0);
+                        gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * up.x, position.y + axisSize * up.y, 0));
+                    }
+                }
+            };
+            
+            groupAttachmentRenderer(_staticGroup);
+            for (const auto &dynamicGroup : _dynamicGroups) {
+                groupAttachmentRenderer(dynamicGroup);
             }
         }
     }
@@ -644,6 +673,33 @@ namespace terrain {
 
     ObjectRef World::getObject() const {
         return _object.lock();
+    }
+    
+    bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, double angle) {
+
+        // attempts to add the attachment to the provided group, returning true if successful
+        auto addToGroup = [&](const GroupBaseRef &group) -> bool {
+            if (group->isWorldPointInsideShapes(worldPosition)) {
+                attachment->configure(group, worldPosition, dvec2(cos(angle), sin(angle)));
+                group->addAttachment(attachment);
+                return true;
+            }
+            return false;
+        };
+        
+        // now try to add to static and dynamic groups
+
+        if (addToGroup(_staticGroup)) {
+            return true;
+        }
+        
+        for (auto &dynamicGroup : _dynamicGroups) {
+            if (addToGroup(dynamicGroup)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     void World::notifyCollisionShapesWillBeDestoyed(vector < cpShape * > shapes) {
@@ -805,6 +861,43 @@ namespace terrain {
 
         return false;
     }
+    
+#pragma mark - Attachment
+
+    Attachment::Attachment() {}
+
+    Attachment::~Attachment() {}
+
+    dvec2 Attachment::getLocalPosition() const {
+        dvec4 col3 = _localTransform[3];
+        return dvec2(col3.x, col3.y);
+    }
+
+    dvec2 Attachment::getLocalRotation() const {
+        dvec4 col0 = _localTransform[0];
+        return dvec2(col0.x, col0.y);
+    }
+
+    dvec2 Attachment::getWorldPosition() const {
+        dvec4 col3 = _worldTransform[3];
+        return dvec2(col3.x, col3.y);
+    }
+
+    dvec2 Attachment::getWorldRotation() const {
+        dvec4 col0 = _worldTransform[0];
+        return dvec2(col0.x, col0.y);
+    }
+    
+    void Attachment::configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation) {
+        _group = group;
+        _worldTransform = dmat4(vec4(rotation.x, rotation.y, 0, 0),
+                                vec4(-rotation.y, rotation.x, 0, 0),
+                                vec4(0, 0, 1, 0),
+                                vec4(position.x, position.y, 0, 1));
+
+        // TODO: Confirm this matrix mult ordering
+        _localTransform = group->getInverseModelMatrix() * _worldTransform;
+    }
 
 #pragma mark - GroupBase
 
@@ -836,7 +929,6 @@ namespace terrain {
     ObjectRef GroupBase::getObject() const {
         return _world.lock()->getObject();
     }
-
 
 #pragma mark - StaticGroup
 
@@ -881,6 +973,19 @@ namespace terrain {
             _drawDispatcher.remove(shape);
         }
         _shapes.clear();
+    }
+    
+    bool StaticGroup::isLocalPointInsideShapes(const dvec2 lp) const {
+        // note: StaticGroup is always in world space so we can treat local == world
+        if (cpBBContainsVect(getBB(), cpv(lp))) {
+            for (auto &shape : _shapes) {
+                if (shape->isLocalPointInside(lp)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     void StaticGroup::addShape(ShapeRef shape, double minShapeArea) {
@@ -1025,20 +1130,10 @@ namespace terrain {
         }
         _shapes.clear();
     }
-
-    void DynamicGroup::draw(const render_state &renderState) {
-        if (renderState.mode == RenderMode::DEVELOPMENT) {
-            const double rScale = renderState.viewport->getReciprocalScale();
-
-            gl::ScopedModelMatrix smm2;
-            gl::multModelMatrix(translate(dvec3(getPosition() + dvec2(0, 20), 0)) * scale(dvec3(rScale, -rScale, 1)));
-
-            gl::drawString(getName(), dvec2(0, 0), Color(1, 1, 1));
-        }
-    }
-
+    
     void DynamicGroup::step(const time_state &timeState) {
         syncToCpBody();
+        updateAttachments();
 
         if (cpBodyIsSleeping(_body)) {
             if (_sleepDuration < 0) {
@@ -1052,6 +1147,18 @@ namespace terrain {
     }
 
     void DynamicGroup::update(const time_state &timeState) {
+    }
+    
+    bool DynamicGroup::isLocalPointInsideShapes(const dvec2 lp) const {
+        if (cpBBContains(_modelBB, cpv(lp))) {
+            for (auto &shape : _shapes) {
+                if (shape->isLocalPointInside(lp)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     bool DynamicGroup::isSleeping() const {
@@ -1269,6 +1376,12 @@ namespace terrain {
                     drawDispatcher.moved(shape);
                 }
             }
+        }
+    }
+    
+    void DynamicGroup::updateAttachments() {
+        for(const AttachmentRef &attachment : _attachments) {
+            attachment->_worldTransform = attachment->_localTransform * _modelMatrix;
         }
     }
 
@@ -1591,6 +1704,36 @@ namespace terrain {
         // handle failure case
         vector <ShapeRef> result = {const_cast<Shape *>(this)->shared_from_this_as<Shape>()};
         return result;
+    }
+    
+    bool Shape::isLocalPointInside(dvec2 localPoint) {
+        if (_trimesh == nullptr) {
+            if (!triangulate()) {
+                return false;
+            }
+        }
+
+        if (cpBBContains(_shapesModelBB, cpv(localPoint))) {
+            // now we want to walk each triangle and test this point
+            const float epsilon = 1e-4;
+            for (size_t i = 0, N = _trimesh->getNumTriangles(); i < N; i++) {
+                vec2 a, b, c;
+                _trimesh->getTriangleVertices(i, &a, &b, &c);
+                
+                // barycentric coordinate test
+                // https://stackoverflow.com/questions/13300904/determine-whether-point-lies-inside-triangle
+                
+                float alpha = ((b.y - c.y)*(localPoint.x - c.x) + (c.x - b.x)*(localPoint.y - c.y)) / ((b.y - c.y)*(a.x - c.x) + (c.x - b.x)*(a.y - c.y));
+                float beta = ((c.y - a.y)*(localPoint.x - c.x) + (a.x - c.x)*(localPoint.y - c.y)) / ((b.y - c.y)*(a.x - c.x) + (c.x - b.x)*(a.y - c.y));
+                float gamma = 1.0f - alpha - beta;
+                
+                if (alpha > -epsilon && beta > -epsilon && gamma > -epsilon) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
     
     double Shape::getSurfaceArea() {

@@ -8,7 +8,8 @@
 #include "cinder/app/RendererGl.h"
 #include "App.hpp"
 
-#include "ParticleSystem.hpp"
+#include "TerrainTestScenario.hpp"
+#include "TerrainAttachmentsTestScenario.hpp"
 #include "SvgTestScenario.hpp"
 #include "PerlinWorldTest.hpp"
 
@@ -27,7 +28,7 @@ public:
 
     virtual void setup() override {
         App::setup();
-        setScenario(make_shared<PerlinWorldTestScenario>());
+        setScenario(make_shared<TerrainAttachmentsTestScenario>());
     }
 
 };

@@ -14,6 +14,7 @@
 #include <unordered_set>
 
 #include "Core.hpp"
+#include "Signals.hpp"
 
 namespace terrain {
 
@@ -35,6 +36,8 @@ namespace terrain {
     SMART_PTR(Anchor);
 
     SMART_PTR(Element);
+    
+    SMART_PTR(Attachment);
 
     /**
      Edges whos vertices are within 1/POLY_EDGE_PRECISION distance of eachother are considered congruent, and thus snapped.
@@ -309,6 +312,10 @@ namespace terrain {
         }
 
         ElementRef getElementById(string id) const;
+        
+        const vector <AttachmentRef> &getOrphanedAttachments() const {
+            return _orphanedAttachments;
+        }
 
         core::SpaceAccessRef getSpace() const {
             return _space;
@@ -353,6 +360,12 @@ namespace terrain {
          Get the Object which wraps this World for use in a Stage
          */
         core::ObjectRef getObject() const;
+        
+        /**
+         Attempt to place an attachment in the World. Returns true if the position corresponded to solid geometry
+         and the attachment was able to be parented to it.
+         */
+        bool addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, double angle = 0);
 
     protected:
 
@@ -384,12 +397,67 @@ namespace terrain {
         set <DynamicGroupRef> _dynamicGroups;
         vector <AnchorRef> _anchors;
         vector <ElementRef> _elements;
+        vector <AttachmentRef> _orphanedAttachments;
         map <string, ElementRef> _elementsById;
 
         DrawDispatcher _drawDispatcher;
         ci::gl::GlslProgRef _shader;
 
         core::ObjectWeakRef _object;
+    };
+    
+#pragma mark - Attachment
+    
+    class Attachment {
+    public:
+
+        // signal fired when this attachment is orphaned from a group and moved from Group ownership to the World's orphan set
+        core::signals::signal<void()> onOrphaned;
+        
+    public:
+
+        // create an unparented Attachment. Position is assigned when calling World::addAttachment
+        Attachment();
+        virtual ~Attachment();
+        
+        // get the Group this Attachment is attached to
+        GroupBaseRef getGroup() const { return _group.lock(); }
+        
+        // return true if this Attachment has become detached from a Group and has become orphaned
+        bool isOrphaned() const { return _group.expired(); }
+
+        // get transform (position/rotation) of this Attachment relative to its parent group
+        dmat4 getLocalTransform() const { return _localTransform; }
+        
+        // get transform (position/rotation) of this attachment relative to world
+        dmat4 getWorldTransform() const { return _worldTransform; }
+        
+        // get position of this attachment in coordinate space of its group
+        dvec2 getLocalPosition() const;
+        
+        // get rotation of this attachment in coordinate space of its group
+        dvec2 getLocalRotation() const;
+        
+        // get position of this attachment in world
+        dvec2 getWorldPosition() const;
+        
+        // get rotation of this attachment in world
+        dvec2 getWorldRotation() const;
+        
+    private:
+        
+        friend class World;
+        friend class GroupBase;
+        friend class StaticGroup;
+        friend class DynamicGroup;
+        
+        // called by World::addAttachment
+        void configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation);
+        
+        dmat4 _localTransform;
+        dmat4 _worldTransform;
+        GroupBaseWeakRef _group;
+        
     };
 
 
@@ -426,6 +494,10 @@ namespace terrain {
         virtual cpHashValue getHash() const {
             return _hash;
         }
+        
+        virtual bool isStatic() const = 0;
+        
+        virtual bool isDynamic() const { return !isStatic(); }
 
         virtual cpBody *getBody() const = 0;
 
@@ -449,8 +521,6 @@ namespace terrain {
             return _drawingBatchId;
         }
 
-        virtual void draw(const core::render_state &renderState) = 0;
-
         virtual void step(const core::time_state &timeState) = 0;
 
         virtual void update(const core::time_state &timeState) = 0;
@@ -466,16 +536,40 @@ namespace terrain {
         }
 
         WorldRef getWorld() const;
+        
+        // return true iff lp (in local coordinate space) is inside one of this Group's shapes
+        virtual bool isLocalPointInsideShapes(const dvec2 lp) const = 0;
+
+        // return true iff wp (in world coordinate space) is inside one of this Group's shapes
+        virtual bool isWorldPointInsideShapes(const dvec2 wp) const { return isLocalPointInsideShapes(getInverseModelMatrix() * wp); };
+        
+        const set <AttachmentRef> &getAttachments() const { return _attachments; }
+        
+        // add an attachment to this Group's attachment set
+        void addAttachment(const AttachmentRef &a) {
+            _attachments.insert(a);
+        }
+        
+        // remove an attachment from this Group's attachment set, returning true if it was removed
+        virtual bool removeAttachment(const AttachmentRef &a) {
+            if (_attachments.erase(a) > 0) {
+                a->_group.reset();
+                return true;
+            }
+            return false;
+        }
 
         // IChipmunkUserData
         core::ObjectRef getObject() const override;
-
+        
     protected:
+
 
         DrawDispatcher &_drawDispatcher;
         size_t _drawingBatchId;
         WorldWeakRef _world;
         core::SpaceAccessRef _space;
+        set<AttachmentRef> _attachments;
         material _material;
         string _name;
         cpHashValue _hash;
@@ -489,6 +583,8 @@ namespace terrain {
         StaticGroup(WorldRef world, material m, DrawDispatcher &dispatcher);
 
         ~StaticGroup();
+        
+        virtual bool isStatic() const override { return true; }
 
         cpBody *getBody() const override {
             return _body;
@@ -522,14 +618,13 @@ namespace terrain {
 
         void releaseShapes() override;
 
-        void draw(const core::render_state &renderState) override {
-        }
-
         void step(const core::time_state &timeState) override {
         }
 
         void update(const core::time_state &timeState) override {
         }
+        
+        bool isLocalPointInsideShapes(const dvec2 lp) const override;
 
         void addShape(ShapeRef shape, double minShapeArea);
 
@@ -560,6 +655,8 @@ namespace terrain {
         string getName() const override;
 
         Color getColor(const core::render_state &state) const override;
+        
+        virtual bool isStatic() const override { return false; }
 
         cpBody *getBody() const override {
             return _body;
@@ -595,11 +692,11 @@ namespace terrain {
 
         void releaseShapes() override;
 
-        void draw(const core::render_state &renderState) override;
-
         void step(const core::time_state &timeState) override;
 
         void update(const core::time_state &timeState) override;
+        
+        bool isLocalPointInsideShapes(const dvec2 lp) const override;
 
         // DynamicGroup
         // return true iff the physics body is sleeping
@@ -616,6 +713,7 @@ namespace terrain {
         bool build(set <ShapeRef> shapes, const GroupBaseRef &parentGroup, double minShapeArea);
 
         void syncToCpBody();
+        void updateAttachments();
 
     private:
 
@@ -735,6 +833,7 @@ namespace terrain {
         dmat4 getModelMatrix() const override {
             return dmat4(1);
         } // identity
+        
         double getAngle() const override {
             return 0;
         };
@@ -816,9 +915,12 @@ namespace terrain {
             return LAYER;
         }
 
+        // anchors are static, so always returns identity
         dmat4 getModelMatrix() const override {
             return dmat4(1);
-        } // identity
+        }
+        
+        // anchors are static, no rotation
         double getAngle() const override {
             return 0;
         };
@@ -974,6 +1076,9 @@ namespace terrain {
         cpBB getWorldSpaceContourEdgesBB();
 
         vector <ShapeRef> subtract(const dpolygon2 &polygonToSubtract) const;
+        
+        // return true iff the point localPoint (in this shape's group's coordinate space) is inside this shape
+        bool isLocalPointInside(dvec2 localPoint);
 
     protected:
 
@@ -1015,7 +1120,7 @@ namespace terrain {
         TriMeshRef _trimesh;
         ci::gl::VboMeshRef _vboMesh;
     };
-
+    
 } // namespace terrain
 
 #endif /* TerrainWorld_hpp */

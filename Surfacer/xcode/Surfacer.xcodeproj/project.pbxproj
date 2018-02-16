@@ -76,6 +76,7 @@
 		63A282731FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63A282741FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
+		63B8AF07202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63B8AF05202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
 		63E29EF21F97A4C300CAF39E /* BaseParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63E29EF01F97A4C300CAF39E /* BaseParticleSystem.cpp */; };
@@ -200,6 +201,8 @@
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
 		63A282711FD067E400962F8E /* ImageProcessing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = "<group>"; };
 		63A282721FD067E400962F8E /* ImageProcessing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageProcessing.hpp; sourceTree = "<group>"; };
+		63B8AF05202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainAttachmentsTestScenario.cpp; sourceTree = "<group>"; };
+		63B8AF06202CA1A70021AC63 /* TerrainAttachmentsTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainAttachmentsTestScenario.hpp; sourceTree = "<group>"; };
 		63BFD8141E89565600D821E4 /* Object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
 		63BFD8151E89565600D821E4 /* Object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Object.hpp; sourceTree = "<group>"; };
 		63BFD8171E895D6900D821E4 /* Common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Common.hpp; sourceTree = "<group>"; };
@@ -562,6 +565,8 @@
 				631171351FAB72A50098069F /* ParticleSystemTestScenario.hpp */,
 				63920BC01FCA7AA80075B468 /* PerlinWorldTest.cpp */,
 				63920BC11FCA7AA80075B468 /* PerlinWorldTest.hpp */,
+				63B8AF05202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp */,
+				63B8AF06202CA1A70021AC63 /* TerrainAttachmentsTestScenario.hpp */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -724,6 +729,7 @@
 				638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */,
 				638F4DA91F8BCFCE004437E8 /* Background.cpp in Sources */,
 				631171361FAB72A50098069F /* ParticleSystemTestScenario.cpp in Sources */,
+				63B8AF07202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp in Sources */,
 				638F4DAB1F8BCFCE004437E8 /* TerrainDetail.cpp in Sources */,
 				638F4DB01F8BCFCE004437E8 /* Svg.cpp in Sources */,
 				63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */,
