@@ -39,6 +39,7 @@ public:
         return -1;
     }
 
+    // set color of background fill
     void setFillColor(ci::ColorA fillColor) {
         _fillColor = fillColor;
     }
@@ -47,12 +48,32 @@ public:
         return _fillColor;
     }
 
+    // set the color of the grid
     void setGridColor(ci::ColorA color) {
         _gridColor = color;
     }
 
     ci::ColorA getGridColor() const {
         return _gridColor;
+    }
+    
+    // set the color of the grid, where it overlaps with x==0 || y== 0
+    void setAxisColor(ci::ColorA axisColor) {
+        _axisColor = axisColor;
+    }
+    
+    ci::ColorA getAxisColor() const {
+        return _axisColor;
+    }
+    
+    // set the "intensity", e.g boldness/thickness of the grid where it overlaps with x==0 || y==0.
+    // default value of 0 causes axis lines to be drawn same as any other grid line. Value of 1 is very bold.
+    void setAxisIntensity(double intensity) {
+        _axisIntensity = saturate<float>(intensity);
+    }
+    
+    double getAxisIntensity() const {
+        return _axisIntensity;
     }
 
 protected:
@@ -66,9 +87,10 @@ private:
     gl::TextureRef _texture;
     double _basePeriod;
     double _periodStep;
+    double _axisIntensity;
     gl::GlslProgRef _shader;
     gl::BatchRef _batch;
-    ci::ColorA _fillColor, _gridColor;
+    ci::ColorA _fillColor, _gridColor, _axisColor;
 
 };
 

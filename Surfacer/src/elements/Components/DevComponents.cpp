@@ -30,8 +30,11 @@ WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef 
         _texture(tex),
         _basePeriod(basePeriod),
         _periodStep(periodStep),
+        _axisIntensity(0),
         _fillColor(0, 0, 0, 0),
-        _gridColor(1, 1, 1, 1) {
+        _gridColor(0.5, 0.5, 0.5, 1),
+        _axisColor(1, 0, 0, 1) {
+
     _texture->setWrap(GL_REPEAT, GL_REPEAT);
     _texture->setMagFilter(GL_NEAREST);
     _texture->setMinFilter(GL_LINEAR_MIPMAP_LINEAR);
@@ -61,20 +64,15 @@ WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef 
             uniform float BetaPeriod;
             uniform float BetaPeriodTexelSize;
             uniform float BetaPeriodAlpha;
-            uniform
-            vec4 BackgroundColor;
-            uniform
-            vec4 Color;
-            uniform
-            vec4 AxisColor;
-            uniform
-            sampler2D Tex0;
+            uniform vec4 BackgroundColor;
+            uniform vec4 GridColor;
+            uniform vec4 AxisColor;
+            uniform float AxisIntensity;
+            uniform sampler2D Tex0;
 
-            in
-            vec2 worldPosition;
+            in vec2 worldPosition;
 
-            out
-            vec4 oColor;
+            out vec4 oColor;
 
             /*
              TODO: Fix the haloing in the onAxis determination. It might make sense to switch from
@@ -85,34 +83,29 @@ WorldCartesianGridDrawComponent::WorldCartesianGridDrawComponent(gl::TextureRef 
              fragments with axis color when inside N fragments of axis lines.
              */
 
-            vec4 getGridForPeriod(float period, float texelSize, vec4 gridColor, vec4 axisColor) {
+            vec2 getGridForPeriod(float period, float texelSize) {
                 vec2 texCoord = worldPosition / period;
                 vec2 aTexCoord = abs(texCoord);
-
+                float alpha = texture(Tex0, texCoord).a;
+                
                 // determine if texCoord is on either the x or y axis, "binary" in that value is 0, 1 or 2 for being on both axes
                 // then clamp that to 0->1
                 float onAxis = (1.0 - step(texelSize, aTexCoord.s)) + (1.0 - step(texelSize, aTexCoord.t));
                 onAxis = clamp(onAxis, 0.0, 1.0);
+                
+                alpha = mix(alpha, 1, AxisIntensity * onAxis);
 
-                // mix between primary color and axis color
-                vec4 color = mix(gridColor, axisColor, onAxis);
-
-                float alpha = texture(Tex0, texCoord).a;
-                color.a = mix(alpha, 1.0, onAxis);
-
-                return color;
+                return vec2(alpha, onAxis);
             }
 
             void main(void) {
-                vec4 alphaValue = getGridForPeriod(AlphaPeriod, AlphaPeriodTexelSize, Color, AxisColor);
-                vec4 betaValue = getGridForPeriod(BetaPeriod, BetaPeriodTexelSize, Color, vec4(0, 0, 0, 0));
+                vec2 alphaValue = getGridForPeriod(AlphaPeriod, AlphaPeriodTexelSize);
+                vec2 betaValue = getGridForPeriod(BetaPeriod, BetaPeriodTexelSize);
 
-                alphaValue.a *= AlphaPeriodAlpha;
-                betaValue.a *= BetaPeriodAlpha;
-                vec4 gridColor = alphaValue + betaValue;
+                float gridAlpha = ((alphaValue.r * AlphaPeriodAlpha) + (betaValue.r * BetaPeriodAlpha));
+                vec4 gridColor = mix(GridColor, AxisColor, betaValue.g);
 
-                oColor = mix(BackgroundColor, gridColor, gridColor.a * AxisColor.a);
-                oColor.a = 1;
+                oColor = mix(BackgroundColor, gridColor, gridAlpha);
             }
     );
 
@@ -201,10 +194,9 @@ void WorldCartesianGridDrawComponent::setupShaderUniforms() {
     _shader->uniform("BetaPeriodTexelSize", static_cast<float>(betaPeriodTexelSize));
     _shader->uniform("BetaPeriodAlpha", static_cast<float>(betaPeriodAlpha));
     _shader->uniform("BackgroundColor", _fillColor);
-    _shader->uniform("Color", _gridColor);
-
-    // TODO: Turn this back to red or a separate color when I fix haloing
-    _shader->uniform("AxisColor", _gridColor);
+    _shader->uniform("GridColor", _gridColor);
+    _shader->uniform("AxisColor", _axisColor);
+    _shader->uniform("AxisIntensity", static_cast<float>(_axisIntensity));
 }
 
 void WorldCartesianGridDrawComponent::onViewportMotion(const Viewport &vp) {
