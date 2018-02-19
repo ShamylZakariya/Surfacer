@@ -313,7 +313,7 @@ namespace terrain {
 
         ElementRef getElementById(string id) const;
         
-        const vector <AttachmentRef> &getOrphanedAttachments() const {
+        const set <AttachmentRef> &getOrphanedAttachments() const {
             return _orphanedAttachments;
         }
 
@@ -374,6 +374,10 @@ namespace terrain {
         friend class Shape;
 
         friend class DynamicGroup;
+        
+        bool addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 rotation);
+        
+        void handleOrphanedAttachment(const AttachmentRef &attachment);
 
         void notifyCollisionShapesWillBeDestoyed(vector<cpShape *> shapes);
 
@@ -397,7 +401,7 @@ namespace terrain {
         set <DynamicGroupRef> _dynamicGroups;
         vector <AnchorRef> _anchors;
         vector <ElementRef> _elements;
-        vector <AttachmentRef> _orphanedAttachments;
+        set <AttachmentRef> _orphanedAttachments;
         map <string, ElementRef> _elementsById;
 
         DrawDispatcher _drawDispatcher;
@@ -419,6 +423,8 @@ namespace terrain {
         // create an unparented Attachment. Position is assigned when calling World::addAttachment
         Attachment();
         virtual ~Attachment();
+        
+        size_t getId() const { return _id; }
         
         // get the Group this Attachment is attached to
         GroupBaseRef getGroup() const { return _group.lock(); }
@@ -444,6 +450,14 @@ namespace terrain {
         // get rotation of this attachment in world
         dvec2 getWorldRotation() const;
         
+        // To "kill" an attachment, call setFinished(true); it will be detached from its group
+        // or if it's an orphan, will be detached from the world's orphan set. It will no longer
+        // be updated and if no strong references are held, it will be destroyed.
+        void setFinished(bool finished=true);
+
+        // return true if this attachment is scheduled to be let go next timestep
+        bool isFinished() const { return _finished; }
+        
     private:
         
         friend class World;
@@ -454,9 +468,11 @@ namespace terrain {
         // called by World::addAttachment
         void configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation);
         
+        size_t _id;
         dmat4 _localTransform;
         dmat4 _worldTransform;
         GroupBaseWeakRef _group;
+        bool _finished;
         
     };
 
@@ -521,9 +537,9 @@ namespace terrain {
             return _drawingBatchId;
         }
 
-        virtual void step(const core::time_state &timeState) = 0;
+        virtual void step(const core::time_state &timeState);
 
-        virtual void update(const core::time_state &timeState) = 0;
+        virtual void update(const core::time_state &timeState);
 
         cpTransform getModelTransform() const {
             dmat4 mm = getModelMatrix();
@@ -544,6 +560,8 @@ namespace terrain {
         virtual bool isWorldPointInsideShapes(const dvec2 wp) const { return isLocalPointInsideShapes(getInverseModelMatrix() * wp); };
         
         const set <AttachmentRef> &getAttachments() const { return _attachments; }
+        
+        void clearAttachments() { _attachments.clear(); }
         
         // add an attachment to this Group's attachment set
         void addAttachment(const AttachmentRef &a) {
@@ -617,12 +635,6 @@ namespace terrain {
         }
 
         void releaseShapes() override;
-
-        void step(const core::time_state &timeState) override {
-        }
-
-        void update(const core::time_state &timeState) override {
-        }
         
         bool isLocalPointInsideShapes(const dvec2 lp) const override;
 
@@ -693,9 +705,8 @@ namespace terrain {
         void releaseShapes() override;
 
         void step(const core::time_state &timeState) override;
-
         void update(const core::time_state &timeState) override;
-        
+
         bool isLocalPointInsideShapes(const dvec2 lp) const override;
 
         // DynamicGroup
@@ -713,7 +724,6 @@ namespace terrain {
         bool build(set <ShapeRef> shapes, const GroupBaseRef &parentGroup, double minShapeArea);
 
         void syncToCpBody();
-        void updateAttachments();
 
     private:
 

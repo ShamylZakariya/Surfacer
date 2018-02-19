@@ -504,50 +504,93 @@ namespace terrain {
             const double rScale = renderState.viewport->getReciprocalScale();
             const dmat4 rScaleMat = glm::scale(dvec3(rScale, -rScale, 1));
             const ColorA bbColor(1, 0.2, 1, 0.5);
+            
+            const bool DrawDrawables = false;
+            const bool DrawGroups = true;
+            const bool DrawAttachments = true;
 
             gl::lineWidth(1);
-            for (const auto &drawable : _drawDispatcher.getVisibleSorted()) {
-
-                // draw the bounds
-                const auto bb = drawable->getBB();
-                gl::color(bbColor);
-                gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
-
-                // draw the shape id
-                const auto R = drawable->getModelMatrix();
-                const double angle = drawable->getAngle();
-                const dvec3 modelCentroid = dvec3(drawable->getModelCentroid(), 0);
-
-                {
-                    gl::ScopedModelMatrix smm;
-                    gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, dvec3(0, 0, 1)) * rScaleMat);
-                    gl::drawString(str(drawable->getId()), dvec2(0, 0), Color(1, 1, 1));
+            if ((DrawDrawables)) {
+                for (const auto &drawable : _drawDispatcher.getVisibleSorted()) {
+                    
+                    // draw the bounds
+                    const auto bb = drawable->getBB();
+                    gl::color(bbColor);
+                    gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
+                    
+                    // draw the shape id
+                    const auto R = drawable->getModelMatrix();
+                    const double angle = drawable->getAngle();
+                    const dvec3 modelCentroid = dvec3(drawable->getModelCentroid(), 0);
+                    
+                    {
+                        gl::ScopedModelMatrix smm;
+                        gl::multModelMatrix(R * glm::translate(modelCentroid) * glm::rotate(-angle, dvec3(0, 0, 1)) * rScaleMat);
+                        gl::drawString(str(drawable->getId()), dvec2(0, 0), Color(1, 1, 1));
+                    }
                 }
             }
             
-            // render attachments
-            auto groupAttachmentRenderer = [&](const GroupBaseRef &group, float axisSize = 10) {
-                gl::lineWidth(1);
-                if (cpBBIntersects(renderState.viewport->getFrustum(), group->getBB())) {
-                    gl::ScopedModelMatrix smm;
-                    gl::multModelMatrix(group->getModelMatrix());
-                    for (auto &attachment : group->getAttachments()) {
-                        dvec2 position = attachment->getLocalPosition();
-                        dvec2 right = attachment->getLocalRotation() * rScale;
-                        dvec2 up = rotateCCW(right);
-                        gl::color(1,1,1);
-                        gl::drawStrokedCircle(position, axisSize * rScale, 16);
+            if ((DrawGroups)) {
+                for (const auto &group : _dynamicGroups) {
+                    // draw the bounds
+                    const auto bb = group->getBB();
+                    gl::color(bbColor);
+                    gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t));
+                    
+                    // draw the shape id
+                    const auto R = group->getModelMatrix();
+                    const double angle = group->getAngle();
+                    const double axisSize = 10;
+                    
+                    {
+                        gl::ScopedModelMatrix smm;
+                        gl::multModelMatrix(R * glm::rotate(-angle, dvec3(0, 0, 1)) * rScaleMat);
+                        gl::drawString(group->getName(), dvec2(0, 0), Color(1, 1, 1));
+                    }
+                    
+                    {
+                        gl::ScopedModelMatrix smm;
+                        gl::multModelMatrix(R);
+
                         gl::color(1, 0, 0);
-                        gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * right.x, position.y + axisSize * right.y, 0));
+                        gl::drawLine(vec3(0, 0, 0), vec3(axisSize, 0, 0));
                         gl::color(0, 1, 0);
-                        gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * up.x, position.y + axisSize * up.y, 0));
+                        gl::drawLine(vec3(0, 0, 0), vec3(0, axisSize, 0));
+                        
+                        gl::color(1,1,1);
+                        gl::drawStrokedCircle(dvec2(0,0), axisSize, 16);
                     }
                 }
-            };
+            }
             
-            groupAttachmentRenderer(_staticGroup);
-            for (const auto &dynamicGroup : _dynamicGroups) {
-                groupAttachmentRenderer(dynamicGroup);
+            if ((DrawAttachments)) {
+                // render attachments
+                auto groupAttachmentRenderer = [&](const GroupBaseRef &group, float axisSize = 10) {
+                    gl::lineWidth(1);
+                    if (cpBBIntersects(renderState.viewport->getFrustum(), group->getBB())) {
+    
+                        for (auto &attachment : group->getAttachments()) {
+                            dvec2 position = attachment->getWorldPosition();
+                            dvec2 right = attachment->getWorldRotation();
+                            dvec2 up = rotateCCW(right);
+                            gl::color(1, 0, 0);
+                            gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * right.x, position.y + axisSize * right.y, 0));
+                            gl::color(0, 1, 0);
+                            gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * up.x, position.y + axisSize * up.y, 0));
+                            
+                            gl::color(1,1,1);
+                            gl::drawStrokedCircle(position, axisSize, 16);
+                            
+                            gl::drawString(str(attachment->getId()), position, Color(1, 1, 1));
+                        }
+                    }
+                };
+                
+                groupAttachmentRenderer(_staticGroup);
+                for (const auto &dynamicGroup : _dynamicGroups) {
+                    groupAttachmentRenderer(dynamicGroup);
+                }
             }
         }
     }
@@ -676,11 +719,17 @@ namespace terrain {
     }
     
     bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, double angle) {
+        return addAttachment(attachment, worldPosition,dvec2(cos(angle), sin(angle)));
+    }
+    
+    bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 rotation) {
+        
+        CI_LOG_D("adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << rotation);
 
         // attempts to add the attachment to the provided group, returning true if successful
         auto addToGroup = [&](const GroupBaseRef &group) -> bool {
             if (group->isWorldPointInsideShapes(worldPosition)) {
-                attachment->configure(group, worldPosition, dvec2(cos(angle), sin(angle)));
+                attachment->configure(group, worldPosition, rotation);
                 group->addAttachment(attachment);
                 return true;
             }
@@ -700,6 +749,13 @@ namespace terrain {
         }
         
         return false;
+    }
+    
+    void World::handleOrphanedAttachment(const AttachmentRef &attachment) {
+        _orphanedAttachments.insert(attachment);
+        attachment->_group.reset();
+        attachment->_localTransform = dmat4(); // identity, only world position matters now
+        attachment->onOrphaned();
     }
 
     void World::notifyCollisionShapesWillBeDestoyed(vector < cpShape * > shapes) {
@@ -751,6 +807,7 @@ namespace terrain {
         //
 
         auto shapeGroups = findShapeGroups(affectedShapes, parentage);
+        set<AttachmentRef> attachments;
 
         for (const auto &shapeGroup : shapeGroups) {
 
@@ -766,8 +823,21 @@ namespace terrain {
                 }
             }
 
+            //
+            //  We need to migrate any attachments from the groups that are affected by the cut
+            //  TODO: How to handle this cheaply for the static group? Re-adding everything is NOT cheap.
+            //  Maybe attachments should have an associated shape to speed up testing?
+            //
+            
+            if (parentGroup) {
+                for (auto &attachment : parentGroup->getAttachments()) {
+                    attachments.insert(attachment);
+                }
+                parentGroup->clearAttachments();
+            }
+            
             if (isShapeGroupStatic(shapeGroup, parentGroup)) {
-
+                
                 //
                 //	 Add these shapes to the singleton static group
                 //
@@ -797,6 +867,18 @@ namespace terrain {
                 }
             }
         }
+        
+        // now re-parent all affected attachments
+        for (auto &attachment : attachments) {
+            dvec2 position = attachment->getWorldPosition();
+            dvec2 rotation = attachment->getWorldRotation();
+            if (!addAttachment(attachment, position, rotation)) {
+                // we have a new orphan
+                CI_LOG_D("Sending attachment " << attachment->getId() << " world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation() << " to orphanarium");
+                handleOrphanedAttachment(attachment);
+            }
+        }
+
     }
 
     vector <set<ShapeRef>> World::findShapeGroups(const vector <ShapeRef> &affectedShapes, const map <ShapeRef, GroupBaseRef> &parentage) {
@@ -806,8 +888,6 @@ namespace terrain {
         // these neighbors all go into a new group, and get removed from the affectedShapes set
         // note: A singleton shape (no neighbors) still becomes a group
         //
-
-        // TODO: Speed up find_contact_group with a spatial index when the search space > ~400
 
         set <ShapeRef> affectedShapesSet(affectedShapes.begin(), affectedShapes.end());
         vector <set<ShapeRef>> shapeGroups;
@@ -863,14 +943,20 @@ namespace terrain {
     }
     
 #pragma mark - Attachment
+    
+    namespace {
+        size_t _attachmentIdCounter = 0;
+    }
 
-    Attachment::Attachment() {}
+    Attachment::Attachment():
+            _id(_attachmentIdCounter++),
+            _finished(false)
+    {}
 
     Attachment::~Attachment() {}
 
     dvec2 Attachment::getLocalPosition() const {
-        dvec4 col3 = _localTransform[3];
-        return dvec2(col3.x, col3.y);
+        return _localTransform * dvec2(0,0);
     }
 
     dvec2 Attachment::getLocalRotation() const {
@@ -879,8 +965,7 @@ namespace terrain {
     }
 
     dvec2 Attachment::getWorldPosition() const {
-        dvec4 col3 = _worldTransform[3];
-        return dvec2(col3.x, col3.y);
+        return _worldTransform * dvec2(0,0);
     }
 
     dvec2 Attachment::getWorldRotation() const {
@@ -895,7 +980,6 @@ namespace terrain {
                                 vec4(0, 0, 1, 0),
                                 vec4(position.x, position.y, 0, 1));
 
-        // TODO: Confirm this matrix mult ordering
         _localTransform = group->getInverseModelMatrix() * _worldTransform;
     }
 
@@ -920,6 +1004,22 @@ namespace terrain {
     }
 
     GroupBase::~GroupBase() {
+    }
+    
+    void GroupBase::step(const core::time_state &timeState) {}
+    
+    void GroupBase::update(const core::time_state &timeState) {
+        vector<AttachmentRef> expired;
+        for (auto &attachment : _attachments) {
+            if (attachment->isFinished()) {
+                expired.push_back(attachment);
+            }
+        }
+        if (!expired.empty()) {
+            for (auto &attachment : expired) {
+                _attachments.erase(attachment);
+            }
+        }
     }
 
     WorldRef GroupBase::getWorld() const {
@@ -1132,8 +1232,9 @@ namespace terrain {
     }
     
     void DynamicGroup::step(const time_state &timeState) {
+        GroupBase::step(timeState);
+
         syncToCpBody();
-        updateAttachments();
 
         if (cpBodyIsSleeping(_body)) {
             if (_sleepDuration < 0) {
@@ -1145,8 +1246,14 @@ namespace terrain {
             _sleepDuration = -1;
         }
     }
+    
+    void DynamicGroup::update(const core::time_state &timeState) {
+        GroupBase::update(timeState);
 
-    void DynamicGroup::update(const time_state &timeState) {
+        // update each attachment's worldTransform
+        for(const AttachmentRef &attachment : _attachments) {
+            attachment->_worldTransform = _modelMatrix * attachment->_localTransform;
+        }
     }
     
     bool DynamicGroup::isLocalPointInsideShapes(const dvec2 lp) const {
@@ -1379,12 +1486,6 @@ namespace terrain {
         }
     }
     
-    void DynamicGroup::updateAttachments() {
-        for(const AttachmentRef &attachment : _attachments) {
-            attachment->_worldTransform = attachment->_localTransform * _modelMatrix;
-        }
-    }
-
 #pragma mark - Drawable
 
     /*

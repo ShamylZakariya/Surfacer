@@ -20,14 +20,13 @@ DONE:
     - basic tests for if attachment is in a group/shape @confirmed
     - draw attachments in debug mode @ confirmed
     - add attachments to world @confirmed
-TODO:
-    - migrate attachments to new groups (see World::build ~:766 - this is where new shapes are configured)
-        - make orphans of those which couldn't be attached
-    
+    - reparenting/orphaning dynamic @confirmed
+    - reparenting/orphaning static @confirmed
+
 THOUGHTS:
-    - make certain I'm setting localTransform right when adding
-    - don't forget to set _group ptr
-    
+    - big performance problem potential when modifying global static group. any cut will cause all attachments to undergo re-parenting.
+    A possible optimization here is for Attachments to have a "shape hint" which would be a ref to the shape that contains them. When reattaching, see if shape hint still exists, and if it does, we're good. If it doesn't, THEN do the expensive search. May potentially optimize further by providing hints for the shapes generated FROM the source shape.
+
 
 
 Explosion effect looks totally wonky in PrecariouslyStage
