@@ -27,7 +27,10 @@ THOUGHTS:
     - big performance problem potential when modifying global static group. any cut will cause all attachments to undergo re-parenting.
     A possible optimization here is for Attachments to have a "shape hint" which would be a ref to the shape that contains them. When reattaching, see if shape hint still exists, and if it does, we're good. If it doesn't, THEN do the expensive search. May potentially optimize further by providing hints for the shapes generated FROM the source shape.
 
-
+OPTIMIZATIONS:
+- core::ip can be threaded
+    - http://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency
+    algs like split blur, etc can be chunked, giving each thread a subset of the image to work on, say, rows 0->255, 256->512 on a 2-core machine. Just reimplement the operations to take a first and last row, and then if > 1 CPU, spawn N threads, and join.
 
 Explosion effect looks totally wonky in PrecariouslyStage
 	Need to figure out how to make initialDirection variance work better. my variance algo isn't cutting it.
