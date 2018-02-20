@@ -421,7 +421,8 @@ namespace terrain {
                                   << " groups) to cut");
 
             //
-            // Collect all shapes which are in groups affected by the cut
+            // Collect all shapes which are in groups affected by the cut,
+            // but NOT shapes which will be actually cut.
             //
 
             vector <ShapeRef> affectedShapes;
@@ -440,9 +441,15 @@ namespace terrain {
 
             map <ShapeRef, GroupBaseRef> parentage;
             for (const ShapeRef &shapeToCut : collector.shapes) {
-                GroupBaseRef parentGroup = shapeToCut->getGroup();
 
+                GroupBaseRef parentGroup = shapeToCut->getGroup();
+                
                 auto result = shapeToCut->subtract(polygonShape);
+                
+                //
+                // add newly generated shapes to the affected list
+                //
+
                 affectedShapes.insert(end(affectedShapes), begin(result), end(result));
 
                 //
@@ -722,33 +729,40 @@ namespace terrain {
         return addAttachment(attachment, worldPosition,dvec2(cos(angle), sin(angle)));
     }
     
-    bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 rotation) {
+    bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 worldRotation) {
         
-        CI_LOG_D("adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << rotation);
+        CI_LOG_D("adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << worldRotation);
 
-        // attempts to add the attachment to the provided group, returning true if successful
-        auto addToGroup = [&](const GroupBaseRef &group) -> bool {
-            if (group->isWorldPointInsideShapes(worldPosition)) {
-                attachment->configure(group, worldPosition, rotation);
-                group->addAttachment(attachment);
-                return true;
-            }
-            return false;
-        };
-        
-        // now try to add to static and dynamic groups
-
-        if (addToGroup(_staticGroup)) {
+        if (tryAddAttachment(attachment, _staticGroup, worldPosition, worldRotation)) {
             return true;
         }
         
         for (auto &dynamicGroup : _dynamicGroups) {
-            if (addToGroup(dynamicGroup)) {
+            if (tryAddAttachment(attachment, dynamicGroup, worldPosition, worldRotation)) {
                 return true;
             }
         }
         
         return false;
+    }
+    
+    bool World::tryAddAttachment(const AttachmentRef &attachment, const GroupBaseRef &group, dvec2 worldPosition, dvec2 worldRotation) {
+        ShapeRef shape = group->findShapeContainingWorldPoint(worldPosition);
+        if (shape) {
+            addAttachment(attachment, group, shape, worldPosition, worldRotation);
+            return true;
+        }
+        return false;
+    }
+    
+    void World::addAttachment(const AttachmentRef &attachment, const GroupBaseRef &group, const ShapeRef shapeHint, dvec2 worldPosition, dvec2 worldRotation) {
+        // now set up the attachment and parentage to group
+        attachment->configure(group, worldPosition, worldRotation);
+        group->addAttachment(attachment);
+
+        // record shape hints to speed up future assignment after cuts are performed
+        attachment->clearShapeHints();
+        attachment->addShapeHint(shapeHint);
     }
     
     void World::handleOrphanedAttachment(const AttachmentRef &attachment) {
@@ -803,7 +817,8 @@ namespace terrain {
         }
 
         //
-        // given the new shapes, their parentage, and existing shapes, find the groups they make up
+        // given the new shapes, their parentage, and existing shapes, find the groups they make up.
+        // while building new groups, collect any attachments from the old groups, and re-insert after we're done.
         //
 
         auto shapeGroups = findShapeGroups(affectedShapes, parentage);
@@ -868,15 +883,55 @@ namespace terrain {
             }
         }
         
+        //
         // now re-parent all affected attachments
+        //
         for (auto &attachment : attachments) {
-            dvec2 position = attachment->getWorldPosition();
-            dvec2 rotation = attachment->getWorldRotation();
-            if (!addAttachment(attachment, position, rotation)) {
-                // we have a new orphan
-                CI_LOG_D("Sending attachment " << attachment->getId() << " world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation() << " to orphanarium");
-                handleOrphanedAttachment(attachment);
+            
+            const dvec2 position = attachment->getWorldPosition();
+            const dvec2 rotation = attachment->getWorldRotation();
+            bool added = false;
+
+            CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
+
+            // first try our shape hints
+            for(auto &weakShape : attachment->getShapeHints()) {
+                if (ShapeRef shape = weakShape.lock()) {
+                    if (GroupBaseRef group = shape->getGroup()) {
+                        if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
+                            addAttachment(attachment, group, shape, position, rotation);
+                            added = true;
+                            CI_LOG_D("\tAdded via SHAPE HINT");
+                            break;
+                        }
+                    }
+                }
             }
+
+            // if we didn't add from shape hints, try the affected shapes - one of them might be a new insertion point
+            if (!added) {
+                for(auto &shape : affectedShapes) {
+                    if (GroupBaseRef group = shape->getGroup()) {
+                        if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
+                            addAttachment(attachment, group, shape, position, rotation);
+                            added = true;
+                            CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // well, let's do this expensively
+            if (!added) {
+                if (!addAttachment(attachment, position, rotation)) {
+                    CI_LOG_D("\tOrphaned!");
+                    handleOrphanedAttachment(attachment);
+                } else {
+                    CI_LOG_D("\tAdded via EXPENSIVE SEARCH");
+                }
+            }
+            
         }
 
     }
@@ -956,7 +1011,9 @@ namespace terrain {
     Attachment::~Attachment() {}
 
     dvec2 Attachment::getLocalPosition() const {
-        return _localTransform * dvec2(0,0);
+        // minor optimization compared to: return _localTransform * dvec2(0,0);
+        dvec4 col3 = _localTransform[3];
+        return dvec2(col3.x, col3.y);
     }
 
     dvec2 Attachment::getLocalRotation() const {
@@ -965,7 +1022,9 @@ namespace terrain {
     }
 
     dvec2 Attachment::getWorldPosition() const {
-        return _worldTransform * dvec2(0,0);
+        // minor optimization compared to: return _worldTransform * dvec2(0,0);
+        dvec4 col3 = _worldTransform[3];
+        return dvec2(col3.x, col3.y);
     }
 
     dvec2 Attachment::getWorldRotation() const {
@@ -1075,17 +1134,17 @@ namespace terrain {
         _shapes.clear();
     }
     
-    bool StaticGroup::isLocalPointInsideShapes(const dvec2 lp) const {
+    ShapeRef StaticGroup::findShapeContainingLocalPoint(const dvec2 lp) const {
         // note: StaticGroup is always in world space so we can treat local == world
         if (cpBBContainsVect(getBB(), cpv(lp))) {
             for (auto &shape : _shapes) {
                 if (shape->isLocalPointInside(lp)) {
-                    return true;
+                    return shape;
                 }
             }
         }
         
-        return false;
+        return nullptr;
     }
 
     void StaticGroup::addShape(ShapeRef shape, double minShapeArea) {
@@ -1256,16 +1315,16 @@ namespace terrain {
         }
     }
     
-    bool DynamicGroup::isLocalPointInsideShapes(const dvec2 lp) const {
+    ShapeRef DynamicGroup::findShapeContainingLocalPoint(const dvec2 lp) const {
         if (cpBBContains(_modelBB, cpv(lp))) {
             for (auto &shape : _shapes) {
                 if (shape->isLocalPointInside(lp)) {
-                    return true;
+                    return shape;
                 }
             }
         }
         
-        return false;
+        return nullptr;
     }
 
     bool DynamicGroup::isSleeping() const {

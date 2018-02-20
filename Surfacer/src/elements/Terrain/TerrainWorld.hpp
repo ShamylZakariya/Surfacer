@@ -377,6 +377,10 @@ namespace terrain {
         
         bool addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 rotation);
         
+        bool tryAddAttachment(const AttachmentRef &attachment, const GroupBaseRef &group, dvec2 worldPosition, dvec2 worldRotation);
+
+        void addAttachment(const AttachmentRef &attachment, const GroupBaseRef &group, const ShapeRef shapeHint, dvec2 worldPosition, dvec2 worldRotation);
+        
         void handleOrphanedAttachment(const AttachmentRef &attachment);
 
         void notifyCollisionShapesWillBeDestoyed(vector<cpShape *> shapes);
@@ -468,11 +472,18 @@ namespace terrain {
         // called by World::addAttachment
         void configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation);
         
+        void clearShapeHints() { _shapeHints.clear(); }
+        void addShapeHint(ShapeRef shape) { _shapeHints.push_back(shape); }
+        const vector<ShapeWeakRef> getShapeHints() const { return _shapeHints; }
+        
         size_t _id;
         dmat4 _localTransform;
         dmat4 _worldTransform;
         GroupBaseWeakRef _group;
         bool _finished;
+        
+        // shape hints: list of shapes that this attachment might be able to attach to, to narrow search space
+        vector<ShapeWeakRef> _shapeHints;
         
     };
 
@@ -553,11 +564,11 @@ namespace terrain {
 
         WorldRef getWorld() const;
         
-        // return true iff lp (in local coordinate space) is inside one of this Group's shapes
-        virtual bool isLocalPointInsideShapes(const dvec2 lp) const = 0;
+        // return shape which contains a given point in this group's local coordinate space
+        virtual ShapeRef findShapeContainingLocalPoint(const dvec2 lp) const = 0;
 
-        // return true iff wp (in world coordinate space) is inside one of this Group's shapes
-        virtual bool isWorldPointInsideShapes(const dvec2 wp) const { return isLocalPointInsideShapes(getInverseModelMatrix() * wp); };
+        // return shape which contains a given point in the world coordinate space
+        virtual ShapeRef findShapeContainingWorldPoint(const dvec2 wp) const { return findShapeContainingLocalPoint(getInverseModelMatrix() * wp); };
         
         const set <AttachmentRef> &getAttachments() const { return _attachments; }
         
@@ -636,7 +647,7 @@ namespace terrain {
 
         void releaseShapes() override;
         
-        bool isLocalPointInsideShapes(const dvec2 lp) const override;
+        ShapeRef findShapeContainingLocalPoint(const dvec2 lp) const override;
 
         void addShape(ShapeRef shape, double minShapeArea);
 
@@ -707,7 +718,7 @@ namespace terrain {
         void step(const core::time_state &timeState) override;
         void update(const core::time_state &timeState) override;
 
-        bool isLocalPointInsideShapes(const dvec2 lp) const override;
+        ShapeRef findShapeContainingLocalPoint(const dvec2 lp) const override;
 
         // DynamicGroup
         // return true iff the physics body is sleeping
