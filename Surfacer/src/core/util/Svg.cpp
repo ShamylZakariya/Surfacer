@@ -760,12 +760,21 @@ namespace core {
                 _localTransformPosition = position;
                 _transformDirty = true;
             }
+            
+            void Group::setRotation(const dvec2 &rotation) {
+                _localTransformAngle = atan2(rotation.y, rotation.x);
+                _transformDirty = true;
+            }
+            
+            dvec2 Group::getRotation() const {
+                return dvec2(cos(_localTransformAngle), sin(_localTransformAngle));
+            }
 
             void Group::setAngle(double a) {
                 _localTransformAngle = a;
                 _transformDirty = true;
             }
-
+            
             void Group::setScale(const dvec2 &scale) {
                 _localTransformScale = scale;
                 _transformDirty = true;
@@ -889,16 +898,10 @@ namespace core {
             void Group::_updateTransform() {
                 if (_transformDirty) {
                     _transformDirty = false;
-
+                    
                     const dmat4 S = glm::scale(dvec3(_localTransformScale, 1));
                     const dmat4 T = glm::translate(dvec3(_localTransformPosition, 0));
-
-                    const dvec2 rotation(std::cos(_localTransformAngle), std::sin(_localTransformAngle));
-
-                    dmat4 R(1);
-                    R[0] = vec4(rotation.x, rotation.y, 0, 0);
-                    R[1] = vec4(-rotation.y, rotation.x, 0, 0);
-
+                    const dmat4 R = glm::rotate(_localTransformAngle, dvec3(0,0,1));
                     _transform = _groupTransform * (T * S * R);
                 }
             }

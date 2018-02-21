@@ -42,6 +42,7 @@ public:
 private:
     
     terrain::WorldRef testBasicTerrain();
+    terrain::WorldRef testBasicAttachmentAdapter();
     terrain::WorldRef testComplexSvgLoad();
     
 private:

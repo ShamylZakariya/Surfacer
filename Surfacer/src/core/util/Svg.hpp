@@ -325,12 +325,14 @@ namespace core {
                 dvec2 getPosition() const {
                     return _localTransformPosition;
                 }
+                
+                void setRotation(const dvec2 &rotation);
+                
+                dvec2 getRotation() const;
 
                 void setAngle(double a);
 
-                double getAngle() const {
-                    return _localTransformAngle;
-                }
+                double getAngle() const { return _localTransformAngle; }
 
                 void setScale(double s) {
                     setScale(s, s);
@@ -449,9 +451,9 @@ namespace core {
 
             class SvgDrawComponent : public DrawComponent {
             public:
-                SvgDrawComponent(util::svg::GroupRef doc) :
+                SvgDrawComponent(util::svg::GroupRef doc, int layer = 0) :
                         _docRoot(doc),
-                        _layer(0) {
+                        _layer(layer) {
                 }
 
                 cpBB getBB() const override {

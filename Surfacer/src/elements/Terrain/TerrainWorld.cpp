@@ -514,6 +514,7 @@ namespace terrain {
             
             const bool DrawDrawables = false;
             const bool DrawGroups = true;
+            const bool DrawGroupOrigins = true;
             const bool DrawAttachments = true;
 
             gl::lineWidth(1);
@@ -556,7 +557,7 @@ namespace terrain {
                         gl::drawString(group->getName(), dvec2(0, 0), Color(1, 1, 1));
                     }
                     
-                    {
+                    if (DrawGroupOrigins) {
                         gl::ScopedModelMatrix smm;
                         gl::multModelMatrix(R);
 
@@ -892,16 +893,16 @@ namespace terrain {
             const dvec2 rotation = attachment->getWorldRotation();
             bool added = false;
 
-            CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
+            //CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
 
             // first try our shape hints
             for(auto &weakShape : attachment->getShapeHints()) {
                 if (ShapeRef shape = weakShape.lock()) {
                     if (GroupBaseRef group = shape->getGroup()) {
                         if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
+                            //CI_LOG_D("\tAdded via SHAPE HINT");
                             addAttachment(attachment, group, shape, position, rotation);
                             added = true;
-                            CI_LOG_D("\tAdded via SHAPE HINT");
                             break;
                         }
                     }
@@ -913,9 +914,9 @@ namespace terrain {
                 for(auto &shape : affectedShapes) {
                     if (GroupBaseRef group = shape->getGroup()) {
                         if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
+                            //CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
                             addAttachment(attachment, group, shape, position, rotation);
                             added = true;
-                            CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
                             break;
                         }
                     }
@@ -925,10 +926,8 @@ namespace terrain {
             // well, let's do this expensively
             if (!added) {
                 if (!addAttachment(attachment, position, rotation)) {
-                    CI_LOG_D("\tOrphaned!");
+                    //CI_LOG_D("\tOrphaned!");
                     handleOrphanedAttachment(attachment);
-                } else {
-                    CI_LOG_D("\tAdded via EXPENSIVE SEARCH");
                 }
             }
             
@@ -999,12 +998,8 @@ namespace terrain {
     
 #pragma mark - Attachment
     
-    namespace {
-        size_t _attachmentIdCounter = 0;
-    }
-
     Attachment::Attachment():
-            _id(_attachmentIdCounter++),
+            _id(World::nextId()),
             _finished(false)
     {}
 

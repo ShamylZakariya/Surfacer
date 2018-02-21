@@ -7,25 +7,8 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-Planet Attachments
-- attachment is just a transform relative to a group
-- an attachment must be *inside* a shape
-- when a shape is cut, all that shape's attachments are tested to be inside the generated new shapes. They are reparented or orphaned accordingly.
-- when orphaned send a signal
-- no update() or draw(). just functions for querying local and world space transforms
-
-STEPS:
-DONE:
-    - attachment @confirmed
-    - basic tests for if attachment is in a group/shape @confirmed
-    - draw attachments in debug mode @ confirmed
-    - add attachments to world @confirmed
-    - reparenting/orphaning dynamic @confirmed
-    - reparenting/orphaning static @confirmed
-
-THOUGHTS:
-    - big performance problem potential when modifying global static group. any cut will cause all attachments to undergo re-parenting.
-    A possible optimization here is for Attachments to have a "shape hint" which would be a ref to the shape that contains them. When reattaching, see if shape hint still exists, and if it does, we're good. If it doesn't, THEN do the expensive search. May potentially optimize further by providing hints for the shapes generated FROM the source shape.
+AttachmentAdapter && SvgAttachmentAdapter
+- Svg Group doesn't appear to draw correct BB, or the wrong BB is being sent to draw dispatcher. Repeatable.
 
 OPTIMIZATIONS:
 - core::ip can be threaded

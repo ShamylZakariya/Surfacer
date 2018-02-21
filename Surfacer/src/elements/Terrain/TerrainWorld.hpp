@@ -257,6 +257,7 @@ namespace terrain {
          */
         static vector <ShapeRef> partition(const vector <ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize);
 
+        // return a unique ID; used to generate IDs for drawables, groups, etc
         static size_t nextId() {
             return _idCounter++;
         }
@@ -428,6 +429,7 @@ namespace terrain {
         Attachment();
         virtual ~Attachment();
         
+        // unique Id of this attachment
         size_t getId() const { return _id; }
         
         // get the Group this Attachment is attached to

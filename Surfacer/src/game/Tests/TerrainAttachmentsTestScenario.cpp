@@ -10,7 +10,7 @@
 #include "TerrainAttachmentsTestScenario.hpp"
 #include "App.hpp"
 #include "DevComponents.hpp"
-
+#include "Svg.hpp"
 
 using namespace core;
 
@@ -56,6 +56,7 @@ namespace {
     namespace DrawLayers {
         enum layer {
             TERRAIN = 1,
+            ATTACHMENTS = 2
         };
     }
     
@@ -68,6 +69,82 @@ namespace {
         pl.setClosed();
         return pl;
     }
+    
+    class AttachmentAdapter : public core::Component {
+    public:
+        AttachmentAdapter(terrain::AttachmentRef attachment):
+                _attachment(attachment),
+                _orphaned(false),
+                _positioned(false) {
+            attachment->onOrphaned.connect(this, &AttachmentAdapter::_onOrphaned);
+        }
+        
+        terrain::AttachmentRef getAttachment() const { return _attachment; }
+        
+        void update(const time_state &timeState) {
+            if (!_orphaned) {
+                const double epsilon = 1e-5;
+                dvec2 position = _attachment->getWorldPosition();
+                dvec2 rotation = _attachment->getWorldRotation();
+                if (!_positioned || lengthSquared(position - _lastPosition) > epsilon || lengthSquared(rotation-_lastRotation) > epsilon) {
+                    _lastPosition = position;
+                    _lastRotation = rotation;
+                    updatePosition(position, rotation, _attachment->getWorldTransform());
+                    _positioned = true;
+                }
+            }
+        }
+        
+        // called when the terrain::Attachment moves, passing world space position/rotation and those two combined into a transform
+        virtual void updatePosition(dvec2 position, dvec2 rotation, dmat4 transform) {}
+        
+        // attachment has been orphaned in the terrain::World.
+        // call to getAttachment() valid for duration of this method, subsequently, this
+        // object should act as a free agent, self terminating or flying away to heaven, whatever
+        virtual void onOrphaned() {}
+        
+    private:
+        
+        void _onOrphaned() {
+            onOrphaned();
+            _orphaned = true;
+            _attachment.reset();
+        }
+
+    private:
+        
+        terrain::AttachmentRef _attachment;
+        bool _orphaned, _positioned;
+        dvec2 _lastPosition, _lastRotation;
+        
+    };
+    
+    class SvgAttachmentAdapter : public AttachmentAdapter {
+    public:
+        SvgAttachmentAdapter(terrain::AttachmentRef attachment, util::svg::GroupRef svgDoc):
+                AttachmentAdapter(attachment),
+                _svgDoc(svgDoc)
+        {}
+        
+        util::svg::GroupRef getSvgDoc() const { return _svgDoc; }
+
+        void updatePosition(dvec2 position, dvec2 rotation, dmat4 transform) override {
+            CI_LOG_D("position: " << position << " rotation: " << rotation);
+            _svgDoc->setPosition(position);
+            _svgDoc->setRotation(rotation);
+            notifyMoved();
+        }
+        
+        void onOrphaned() override {
+            CI_LOG_D("orphaned from " << getAttachment()->getId() << " - self terminating!!!");
+            getObject()->setFinished(true);
+        }
+
+    private:
+      
+        util::svg::GroupRef _svgDoc;
+        
+    };
 }
 
 /*
@@ -86,7 +163,8 @@ void TerrainAttachmentsTestScenario::setup() {
     
     setStage(make_shared<Stage>("Terrain Test Stage"));
     
-    auto world = testBasicTerrain();
+//    auto world = testBasicTerrain();
+    auto world = testBasicAttachmentAdapter();
 //    auto world = testComplexSvgLoad();
     
     _terrain = terrain::TerrainObject::create("Terrain", world, DrawLayers::TERRAIN);
@@ -203,6 +281,48 @@ terrain::WorldRef TerrainAttachmentsTestScenario::testBasicTerrain() {
     CI_ASSERT_MSG(makeAttachment(dvec2(5,5), true), "Should have been successfully added");
     CI_ASSERT_MSG(makeAttachment(dvec2(5,55), false), "Should have been successfully added");
     CI_ASSERT_MSG(makeAttachment(dvec2(-100,-100), false) == false, "Should have NOT been added");
+    
+    return world;
+}
+
+terrain::WorldRef TerrainAttachmentsTestScenario::testBasicAttachmentAdapter() {
+    using namespace terrain;
+    cpSpaceSetDamping(getStage()->getSpace()->getSpace(), 0.5);
+    
+    getViewportController()->setLook(vec2(0, 0));
+    
+    vector<ShapeRef> shapes = {
+        Shape::fromContour(rect(0, 0, 100, 50)),          // 0
+        Shape::fromContour(rect(100, 0, 150, 50)),        // 1 to right of 0 - binds to 0
+        Shape::fromContour(rect(-100, 0, 0, 50)),         // 2 to left of 0 - binds to 0
+        Shape::fromContour(rect(-10, 50, 110, 100)),      // 3 above 0, but wider
+        Shape::fromContour(rect(-10, 100, 110, 200)),     // 4 above 3, binds to 3
+    };
+    
+    vector<AnchorRef> anchors = {
+        Anchor::fromContour(rect(20, 120, 30, 130))       // 5 inside 4, anchors 4 and 3
+    };
+    
+    const material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
+    material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
+    
+    auto world = make_shared<World>(getStage()->getSpace(), terrainMaterial, anchorMaterial);
+    world->build(shapes, anchors);
+    
+    // make some attachments
+    
+    auto makeDingus = [&](dvec2 position) {
+        AttachmentRef attachment = make_shared<Attachment>();
+        if (world->addAttachment(attachment, position)) {
+            auto svg = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/dingus.svg"), 1);
+            getStage()->addObject(Object::with("Dingus", {
+                make_shared<util::svg::SvgDrawComponent>(svg, DrawLayers::ATTACHMENTS),
+                make_shared<SvgAttachmentAdapter>(attachment, svg)
+            }));
+        }
+    };
+
+    makeDingus(dvec2(5,5));
     
     return world;
 }
