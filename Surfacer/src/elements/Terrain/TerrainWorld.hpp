@@ -471,21 +471,22 @@ namespace terrain {
         friend class StaticGroup;
         friend class DynamicGroup;
         
-        // called by World::addAttachment
-        void configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation);
+        // called by World::addAttachment; returns true iff group != previous _group
+        bool configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation);
         
-        void clearShapeHints() { _shapeHints.clear(); }
-        void addShapeHint(ShapeRef shape) { _shapeHints.push_back(shape); }
-        const vector<ShapeWeakRef> getShapeHints() const { return _shapeHints; }
+        void setShapeHint(const ShapeRef &hint) { _shapeHint = hint; }
+        ShapeRef getShapeHint() const { return _shapeHint.lock(); }
         
         size_t _id;
         dmat4 _localTransform;
         dmat4 _worldTransform;
         GroupBaseWeakRef _group;
+        GroupBase *_groupUnsafePtr;
         bool _finished;
         
-        // shape hints: list of shapes that this attachment might be able to attach to, to narrow search space
-        vector<ShapeWeakRef> _shapeHints;
+        // shape hint is the shape that "contains" this attachment; used at
+        // runtime to speed lookup when terrain destruction requires reassignment
+        ShapeWeakRef _shapeHint;
         
     };
 

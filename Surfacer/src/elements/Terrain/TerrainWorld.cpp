@@ -762,13 +762,13 @@ namespace terrain {
         group->addAttachment(attachment);
 
         // record shape hints to speed up future assignment after cuts are performed
-        attachment->clearShapeHints();
-        attachment->addShapeHint(shapeHint);
+        attachment->setShapeHint(shapeHint);
     }
     
     void World::handleOrphanedAttachment(const AttachmentRef &attachment) {
         _orphanedAttachments.insert(attachment);
         attachment->_group.reset();
+        attachment->_groupUnsafePtr = nullptr;
         attachment->_localTransform = dmat4(); // identity, only world position matters now
         attachment->onOrphaned();
     }
@@ -893,18 +893,16 @@ namespace terrain {
             const dvec2 rotation = attachment->getWorldRotation();
             bool added = false;
 
-            //CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
+            CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
 
-            // first try our shape hints
-            for(auto &weakShape : attachment->getShapeHints()) {
-                if (ShapeRef shape = weakShape.lock()) {
-                    if (GroupBaseRef group = shape->getGroup()) {
-                        if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
-                            //CI_LOG_D("\tAdded via SHAPE HINT");
-                            addAttachment(attachment, group, shape, position, rotation);
-                            added = true;
-                            break;
-                        }
+            // first try our shape hint since this will be the common case
+            if (ShapeRef shape = attachment->getShapeHint()) {
+                if (GroupBaseRef group = shape->getGroup()) {
+                    if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
+                        CI_LOG_D("\tAdded via SHAPE HINT");
+                        addAttachment(attachment, group, shape, position, rotation);
+                        added = true;
+                        break;
                     }
                 }
             }
@@ -914,7 +912,7 @@ namespace terrain {
                 for(auto &shape : affectedShapes) {
                     if (GroupBaseRef group = shape->getGroup()) {
                         if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
-                            //CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
+                            CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
                             addAttachment(attachment, group, shape, position, rotation);
                             added = true;
                             break;
@@ -926,7 +924,7 @@ namespace terrain {
             // well, let's do this expensively
             if (!added) {
                 if (!addAttachment(attachment, position, rotation)) {
-                    //CI_LOG_D("\tOrphaned!");
+                    CI_LOG_D("\tOrphaned!");
                     handleOrphanedAttachment(attachment);
                 }
             }
@@ -1000,6 +998,7 @@ namespace terrain {
     
     Attachment::Attachment():
             _id(World::nextId()),
+            _groupUnsafePtr(nullptr),
             _finished(false)
     {}
 
@@ -1027,14 +1026,19 @@ namespace terrain {
         return dvec2(col0.x, col0.y);
     }
     
-    void Attachment::configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation) {
-        _group = group;
-        _worldTransform = dmat4(vec4(rotation.x, rotation.y, 0, 0),
-                                vec4(-rotation.y, rotation.x, 0, 0),
-                                vec4(0, 0, 1, 0),
-                                vec4(position.x, position.y, 0, 1));
-
-        _localTransform = group->getInverseModelMatrix() * _worldTransform;
+    bool Attachment::configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation) {
+        if (group.get() != _groupUnsafePtr) {
+            _group = group;
+            _groupUnsafePtr = group.get();
+            _worldTransform = dmat4(vec4(rotation.x, rotation.y, 0, 0),
+                                    vec4(-rotation.y, rotation.x, 0, 0),
+                                    vec4(0, 0, 1, 0),
+                                    vec4(position.x, position.y, 0, 1));
+            
+            _localTransform = group->getInverseModelMatrix() * _worldTransform;
+            return true;
+        }
+        return false;
     }
 
 #pragma mark - GroupBase

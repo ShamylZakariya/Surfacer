@@ -7,9 +7,6 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-AttachmentAdapter && SvgAttachmentAdapter
-- Svg Group doesn't appear to draw correct BB, or the wrong BB is being sent to draw dispatcher. Repeatable.
-
 OPTIMIZATIONS:
 - core::ip can be threaded
     - http://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency

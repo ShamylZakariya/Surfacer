@@ -129,7 +129,6 @@ namespace {
         util::svg::GroupRef getSvgDoc() const { return _svgDoc; }
 
         void updatePosition(dvec2 position, dvec2 rotation, dmat4 transform) override {
-            CI_LOG_D("position: " << position << " rotation: " << rotation);
             _svgDoc->setPosition(position);
             _svgDoc->setRotation(rotation);
             notifyMoved();
@@ -323,7 +322,8 @@ terrain::WorldRef TerrainAttachmentsTestScenario::testBasicAttachmentAdapter() {
     };
 
     makeDingus(dvec2(5,5));
-    
+    makeDingus(dvec2(5,55));
+
     return world;
 }
 
