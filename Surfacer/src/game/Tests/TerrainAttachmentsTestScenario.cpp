@@ -70,78 +70,57 @@ namespace {
         return pl;
     }
     
-    class AttachmentAdapter : public core::Component {
-    public:
-        AttachmentAdapter(terrain::AttachmentRef attachment):
-                _attachment(attachment),
-                _orphaned(false),
-                _positioned(false) {
-            attachment->onOrphaned.connect(this, &AttachmentAdapter::_onOrphaned);
-        }
-        
-        terrain::AttachmentRef getAttachment() const { return _attachment; }
-        
-        void update(const time_state &timeState) {
-            if (!_orphaned) {
-                const double epsilon = 1e-5;
-                dvec2 position = _attachment->getWorldPosition();
-                dvec2 rotation = _attachment->getWorldRotation();
-                if (!_positioned || lengthSquared(position - _lastPosition) > epsilon || lengthSquared(rotation-_lastRotation) > epsilon) {
-                    _lastPosition = position;
-                    _lastRotation = rotation;
-                    updatePosition(position, rotation, _attachment->getWorldTransform());
-                    _positioned = true;
-                }
-            }
-        }
-        
-        // called when the terrain::Attachment moves, passing world space position/rotation and those two combined into a transform
-        virtual void updatePosition(dvec2 position, dvec2 rotation, dmat4 transform) {}
-        
-        // attachment has been orphaned in the terrain::World.
-        // call to getAttachment() valid for duration of this method, subsequently, this
-        // object should act as a free agent, self terminating or flying away to heaven, whatever
-        virtual void onOrphaned() {}
-        
-    private:
-        
-        void _onOrphaned() {
-            onOrphaned();
-            _orphaned = true;
-            _attachment.reset();
-        }
 
-    private:
-        
-        terrain::AttachmentRef _attachment;
-        bool _orphaned, _positioned;
-        dvec2 _lastPosition, _lastRotation;
-        
-    };
     
-    class SvgAttachmentAdapter : public AttachmentAdapter {
+    class SvgAttachmentAdapter : public terrain::AttachmentAdapter {
     public:
         SvgAttachmentAdapter(terrain::AttachmentRef attachment, util::svg::GroupRef svgDoc):
                 AttachmentAdapter(attachment),
-                _svgDoc(svgDoc)
+                _svgDoc(svgDoc),
+                _lastPosition(0,0),
+                _lastAngle(0),
+                _friction(0.1)
         {}
         
         util::svg::GroupRef getSvgDoc() const { return _svgDoc; }
+        
+        void update(const time_state &timeState) override {
+            AttachmentAdapter::update(timeState);
+            if (isOrphaned()) {
+                double fade = 1 - _friction;
+                _svgDoc->setPosition(_svgDoc->getPosition() + _linearVel * timeState.deltaT);
+                _svgDoc->setAngle(_svgDoc->getAngle() + _angularVel * timeState.deltaT);
+                _svgDoc->setScale(_svgDoc->getScale() * fade);
+                _svgDoc->setOpacity(_svgDoc->getOpacity() * fade);
+                                
+                _linearVel *= fade;
+                _angularVel *= fade;
+                
+                if (_svgDoc->getOpacity() < ALPHA_EPSILON) {
+                    getObject()->setFinished();
+                }
+            }
+        }
 
-        void updatePosition(dvec2 position, dvec2 rotation, dmat4 transform) override {
+        void updatePosition(const time_state &timeState, dvec2 position, dvec2 rotation, dmat4 transform) override {
+            _lastPosition = _svgDoc->getPosition();
+            _lastAngle = _svgDoc->getAngle();
+            
             _svgDoc->setPosition(position);
             _svgDoc->setRotation(rotation);
-            notifyMoved();
+            
+            _linearVel = (position - _lastPosition) / timeState.deltaT;
+            _angularVel = (_svgDoc->getAngle() - _lastAngle) / timeState.deltaT;
         }
         
         void onOrphaned() override {
-            CI_LOG_D("orphaned from " << getAttachment()->getId() << " - self terminating!!!");
-            getObject()->setFinished(true);
         }
 
     private:
       
         util::svg::GroupRef _svgDoc;
+        dvec2 _lastPosition, _linearVel;
+        double _lastAngle, _angularVel, _friction;
         
     };
 }

@@ -152,7 +152,31 @@ namespace terrain {
                     gl::drawSolidRect(Rectf(-len / 2, -radius, +len / 2, +radius));
                 }
             }
-
+        }
+    }
+    
+#pragma mark - AttachmentAdapter
+    
+    AttachmentAdapter::AttachmentAdapter(terrain::AttachmentRef attachment):
+    _attachment(attachment),
+    _orphaned(false),
+    _positioned(false) {
+        attachment->onOrphaned.connect(this, &AttachmentAdapter::_onOrphaned);
+    }
+    
+    void AttachmentAdapter::update(const core::time_state &timeState) {
+        if (!_orphaned) {
+            // only notify for motion above epsilon
+            const dvec2 position = _attachment->getWorldPosition();
+            const dvec2 rotation = _attachment->getWorldRotation();
+            const double epsilon = 1e-5;
+            if (!_positioned || lengthSquared(position - _lastPosition) > epsilon || lengthSquared(rotation-_lastRotation) > epsilon) {
+                _lastPosition = position;
+                _lastRotation = rotation;
+                updatePosition(timeState, position, rotation, _attachment->getWorldTransform());
+                notifyMoved();
+                _positioned = true;
+            }
         }
     }
 

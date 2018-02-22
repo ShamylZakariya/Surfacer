@@ -176,6 +176,48 @@ namespace terrain {
         weak_ptr<MouseCutterComponent> _cutterComponent;
 
     };
+    
+    /**
+     AttachmentAdapter is an adapter for "attaching" a game object to a terrain::Attachment.
+     Subclasses just need to override updatePosition() and onOrphaned(). updatePosition() implementation
+     just needs to set the object's position/angle via whatever's the appropriate means, i.e., in the
+     case of an Svg, you'd set the svg's position and angle.
+     */
+    class AttachmentAdapter : public core::Component {
+    public:
+
+        // create an AttachmentAdapter which monitors the provided attachment
+        AttachmentAdapter(terrain::AttachmentRef attachment);
+        
+        void update(const core::time_state &timeState) override;
+        
+        // called when the terrain::Attachment moves, passing world space position/rotation and those two combined into a transform
+        virtual void updatePosition(const core::time_state &timeState, dvec2 position, dvec2 rotation, dmat4 transform) {}
+        
+        // attachment has been orphaned in the terrain::World.
+        // call to getAttachment() valid for duration of this method, subsequently, this
+        // object should act as a free agent, self terminating or flying away to heaven, whatever
+        virtual void onOrphaned() {}
+        
+        terrain::AttachmentRef getAttachment() const { return _attachment; }
+
+        bool isOrphaned() const { return _orphaned; }
+        
+    private:
+        
+        void _onOrphaned() {
+            onOrphaned();
+            _orphaned = true;
+            _attachment.reset();
+        }
+        
+    private:
+        
+        terrain::AttachmentRef _attachment;
+        bool _orphaned, _positioned;
+        dvec2 _lastPosition, _lastRotation;
+        
+    };
 
 } // namespace terrain
 
