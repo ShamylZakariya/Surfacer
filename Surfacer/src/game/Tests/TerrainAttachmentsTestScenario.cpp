@@ -92,7 +92,7 @@ namespace {
                 _svgDoc->setAngle(_svgDoc->getAngle() + _angularVel * timeState.deltaT);
                 _svgDoc->setScale(_svgDoc->getScale() * fade);
                 _svgDoc->setOpacity(_svgDoc->getOpacity() * fade);
-                                
+                
                 _linearVel *= fade;
                 _angularVel *= fade;
                 

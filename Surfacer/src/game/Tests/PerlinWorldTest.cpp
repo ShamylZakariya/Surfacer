@@ -72,33 +72,6 @@ namespace {
     const terrain::material TerrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
     terrain::material AnchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
 
-#pragma mark -
-    
-    void fill_rect(Channel8u &c, ci::Area region, uint8_t value) {
-        Area clippedRegion(max(region.getX1(), 0), max(region.getY1(), 0), min(region.getX2(), c.getWidth() - 1), min(region.getY2(), c.getHeight() - 1));
-        uint8_t *data = c.getData();
-        int32_t rowBytes = c.getRowBytes();
-        int32_t increment = c.getIncrement();
-        
-        for (int y = clippedRegion.getY1(), yEnd = clippedRegion.getY2(); y <= yEnd; y++) {
-            uint8_t *row = &data[y * rowBytes];
-            for (int x = clippedRegion.getX1(), xEnd = clippedRegion.getX2(); x <= xEnd; x++) {
-                row[x * increment] = value;
-            }
-        }
-    }
-    
-    ci::Channel8u create_simple_test_map() {
-        int size = 32;
-        Channel8u buffer = Channel8u(size, size);
-        fill_rect(buffer, Area(0, 0, size, size), 0);
-        fill_rect(buffer, Area(6, 6, size - 6, size - 6), 255);
-        fill_rect(buffer, Area(12, 12, size - 12, size - 12), 0);
-        fill_rect(buffer, Area(14, 14, size - 14, size - 14), 255);
-        fill_rect(buffer, Area(0, 0, 5, 5), 255);
-        
-        return util::ip::blur(buffer, 2);
-    }
 }
 
 /*
@@ -203,16 +176,14 @@ void PerlinWorldTestScenario::draw(const render_state &state) {
 }
 
 void PerlinWorldTestScenario::drawScreen(const render_state &state) {
-    {
-        gl::ScopedModelMatrix smm;
-        gl::scale(0.25, 0.25, 1);
-        int x = 0;
-        for (auto tex : _isoTexes) {
-            gl::color(ColorA(1, 1, 1, 1));
-            gl::translate(vec3(x, 0, 0));
-            gl::draw(tex);
-            x += tex->getWidth();
-        }
+    gl::ScopedModelMatrix smm;
+    gl::scale(0.25, 0.25, 1);
+    int x = 0;
+    for (auto tex : _isoTexes) {
+        gl::color(ColorA(1, 1, 1, 1));
+        gl::translate(vec3(x, 0, 0));
+        gl::draw(tex);
+        x += tex->getWidth();
     }
 }
 
