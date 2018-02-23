@@ -12,6 +12,9 @@
 #include "TerrainAttachmentsTestScenario.hpp"
 #include "SvgTestScenario.hpp"
 #include "PerlinWorldTest.hpp"
+#include "IPTestsScenario.hpp"
+
+#define SCENARIO IPTestsScenario
 
 class TestsApp : public core::App {
 public:
@@ -28,7 +31,7 @@ public:
 
     virtual void setup() override {
         App::setup();
-        setScenario(make_shared<TerrainAttachmentsTestScenario>());
+        setScenario(make_shared<SCENARIO>());
     }
 
 };

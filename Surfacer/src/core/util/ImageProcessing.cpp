@@ -8,6 +8,7 @@
 #include "ImageProcessing.hpp"
 
 #include <queue>
+#include <thread>
 
 using namespace ci;
 namespace core {
@@ -44,7 +45,40 @@ namespace core {
                         k[i].second /= sum;
                     }
                 }
+                
+                size_t _threads = 0;
+                size_t get_num_threads() {
+                    if (_threads == 0) {
+                        _threads = std::thread::hardware_concurrency();
+                        CI_LOG_D("_threads: " << _threads);
+                    }
+                    return _threads;
+                }
 
+                Area get_thread_working_area(int channelWidth, int channelHeight, size_t threadIdx) {
+                    size_t count = get_num_threads();
+                    return Area(0, static_cast<int>(threadIdx * channelHeight / count), channelWidth, static_cast<int>((threadIdx+1) * channelHeight / count));
+                }
+            }
+
+            void fill(ci::Channel8u &channel, uint8_t value) {
+                Channel8u::Iter it = channel.getIter();
+                
+                while(it.line()) {
+                    while (it.pixel()) {
+                        it.v() = value;
+                    }
+                }
+            }
+            
+            void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value) {
+                Channel8u::Iter it = channel.getIter(rect);
+                
+                while(it.line()) {
+                    while (it.pixel()) {
+                        it.v() = value;
+                    }
+                }
             }
 
 
@@ -171,20 +205,40 @@ namespace core {
                     }
                 }
             }
+            
+            namespace {
+                
+                void t_remap(const Channel8u &src, Channel8u &dst, Area area, uint8_t targetValue, uint8_t newTargetValue, uint8_t defaultValue) {
+                    Channel8u::ConstIter srcIt = src.getIter(area);
+                    Channel8u::Iter dstIt = dst.getIter(area);
+                    
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            dstIt.v() = (srcIt.v() == targetValue ? newTargetValue : defaultValue);
+                        }
+                    }
+                }
+                
+            }
 
             void remap(const Channel8u &src, Channel8u &dst, uint8_t targetValue, uint8_t newTargetValue, uint8_t defaultValue) {
 
                 if (dst.getSize() != src.getSize()) {
                     dst = Channel8u(src.getWidth(), src.getHeight());
                 }
-
-                Channel8u::ConstIter srcIt = src.getIter();
-                Channel8u::Iter dstIt = dst.getIter();
-
-                while (srcIt.line() && dstIt.line()) {
-                    while (srcIt.pixel() && dstIt.pixel()) {
-                        dstIt.v() = srcIt.v() == targetValue ? newTargetValue : defaultValue;
+                
+                const size_t threadCount = get_num_threads();
+                if (threadCount > 1) {
+                    vector<std::thread> threads;
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&t_remap, std::ref(src), std::ref(dst), workingArea, targetValue, newTargetValue, defaultValue));
                     }
+
+                    for(auto &t : threads) { t.join(); }
+
+                } else {
+                    t_remap(src, dst, src.getBounds(), targetValue, newTargetValue, defaultValue);
                 }
             }
       
