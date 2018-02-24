@@ -319,22 +319,43 @@ namespace core {
                     }
                 }
             }
+            
+            namespace {
+
+                void threshold_area(const ci::Channel8u &src, ci::Channel8u &dst, Area area, uint8_t threshV, uint8_t maxV, uint8_t minV) {
+                    Channel8u::ConstIter srcIt = src.getIter(area);
+                    Channel8u::Iter dstIt = dst.getIter(area);
+                    
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            uint8_t v = srcIt.v();
+                            dstIt.v() = v >= threshV ? maxV : minV;
+                        }
+                    }
+                }
+
+            }
 
             void threshold(const ci::Channel8u &src, ci::Channel8u &dst, uint8_t threshV, uint8_t maxV, uint8_t minV) {
 
                 if (dst.getSize() != src.getSize()) {
                     dst = Channel8u(src.getWidth(), src.getHeight());
                 }
-
-                Channel8u::ConstIter srcIt = src.getIter();
-                Channel8u::Iter dstIt = dst.getIter();
-
-                while (srcIt.line() && dstIt.line()) {
-                    while (srcIt.pixel() && dstIt.pixel()) {
-                        uint8_t v = srcIt.v();
-                        dstIt.v() = v >= threshV ? maxV : minV;
+                
+                const size_t threadCount = get_num_threads();
+                if (threadCount > 1) {
+                    vector<std::thread> threads;
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&threshold_area, std::ref(src), std::ref(dst), workingArea, threshV, maxV, minV));
                     }
+                    
+                    for(auto &t : threads) { t.join(); }
+                    
+                } else {
+                    threshold_area(src, dst, src.getBounds(), threshV, maxV, minV);
                 }
+
             }
             
             namespace in_place {
@@ -358,6 +379,36 @@ namespace core {
                         }
                     }
                 }
+                
+                namespace {
+                    void fill_area(ci::Channel8u &channel, Area area, ci::Perlin &noise, double frequency) {
+                        Channel8u::Iter iter = channel.getIter(area);
+                        
+                        while (iter.line()) {
+                            while (iter.pixel()) {
+                                float v = noise.fBm(frequency * iter.x(), frequency * iter.y());
+                                iter.v() = static_cast<uint8_t>(255.f * (v * 0.5f + 0.5f));
+                            }
+                        }
+                    }
+                }
+                
+                void fill(ci::Channel8u &channel, ci::Perlin &noise, double frequency) {
+                    const size_t threadCount = get_num_threads();
+                    if (threadCount > 1) {
+                        vector<std::thread> threads;
+                        for (size_t idx = 0; idx < threadCount; idx++) {
+                            Area workingArea = get_thread_working_area(channel.getWidth(), channel.getHeight(), idx);
+                            threads.emplace_back(std::thread(&fill_area, std::ref(channel), workingArea, std::ref(noise), frequency));
+                        }
+                        
+                        for(auto &t : threads) { t.join(); }
+                        
+                    } else {
+                        fill_area(channel, channel.getBounds(), noise, frequency);
+                    }
+                }
+
 
             }
 

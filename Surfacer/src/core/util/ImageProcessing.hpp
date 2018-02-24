@@ -12,6 +12,7 @@
 #include "MathHelpers.hpp"
 
 #include <cinder/Channel.h>
+#include <cinder/Perlin.h>
 
 
 namespace core {
@@ -81,6 +82,9 @@ namespace core {
                 
                 // fill all pixels of rect in channel with a given value
                 void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value);
+
+                // fill all pixels of channel with noise at a given frequency
+                void fill(ci::Channel8u &channel, ci::Perlin &noise, double frequency);
                 
                 // flood fill into channel starting at `start, where pixels of `targetValue are changed to `newValue - modifies `channel
                 inline void floodfill(ci::Channel8u &channel, ivec2 start, uint8_t targetValue, uint8_t newValue) {
