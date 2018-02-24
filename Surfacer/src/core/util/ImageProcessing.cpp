@@ -261,29 +261,14 @@ namespace core {
                     remap_area(src, dst, src.getBounds(), targetValue, newTargetValue, defaultValue);
                 }
             }
-      
-            void blur(const ci::Channel8u &src, ci::Channel8u &dst, int radius) {
-                //
-                //    Create the kernel and the buffers
-                //
+            
+            namespace {
                 
-                kernel krnl;
-                create_kernel(radius, krnl);
-                const kernel::const_iterator kend = krnl.end();
-                
-                ci::Channel8u horizontalPass(src.getWidth(), src.getHeight());
-                if (dst.getSize() != src.getSize()) {
-                    dst = Channel8u(src.getWidth(), src.getHeight());
-                }
-                
-                //
-                //    Run the horizontal pass
-                //
-                
-                {
-                    Channel8u::ConstIter srcIt = src.getIter();
-                    Channel8u::Iter dstIt = horizontalPass.getIter();
-                    
+                void blur_horizontal(const ci::Channel8u &src, ci::Channel8u &horizontalPass, Area area, const kernel &krnl) {
+                    Channel8u::ConstIter srcIt = src.getIter(area);
+                    Channel8u::Iter dstIt = horizontalPass.getIter(area);
+                    const kernel::const_iterator kend = krnl.end();
+
                     while (srcIt.line() && dstIt.line()) {
                         while (srcIt.pixel() && dstIt.pixel()) {
                             
@@ -298,25 +283,67 @@ namespace core {
                     }
                 }
                 
-                //
-                //    Run the vertical pass
-                //
-                
-                {
-                    Channel8u::Iter srcIt = horizontalPass.getIter();
-                    Channel8u::Iter dstIt = dst.getIter();
-
+                void blur_vertical(const ci::Channel8u &horizontalPass, ci::Channel8u &dst, Area area, const kernel &krnl) {
+                    Channel8u::ConstIter srcIt = horizontalPass.getIter(area);
+                    Channel8u::Iter dstIt = dst.getIter(area);
+                    const kernel::const_iterator kend = krnl.end();
+                    const int lastY = dst.getHeight()-1;
                     while (srcIt.line() && dstIt.line()) {
                         while (srcIt.pixel() && dstIt.pixel()) {
                             double accum = 0;
                             for (kernel::const_iterator k(krnl.begin()); k != kend; ++k) {
-                                accum += srcIt.vClamped(0, k->first) * k->second;
+                                
+                                // clamp our offset to stay between [0,height)
+                                int y = srcIt.y() + k->first;
+                                y = clamp(y, 0, lastY);
+                                int offset = y - srcIt.y();
+
+                                accum += srcIt.v(0, offset) * k->second;
                             }
                             
                             uint8_t v = clamp<uint8_t>(static_cast<uint8_t>(lrint(accum)), 0, 255);
                             dstIt.v() = v;
                         }
                     }
+                }
+                
+            }
+            
+            void blur(const ci::Channel8u &src, ci::Channel8u &dst, int radius) {
+                //
+                //    Create the kernel and the buffers
+                //
+                
+                kernel krnl;
+                create_kernel(radius, krnl);
+                
+                ci::Channel8u horizontalPass(src.getWidth(), src.getHeight());
+                if (dst.getSize() != src.getSize()) {
+                    dst = Channel8u(src.getWidth(), src.getHeight());
+                }
+                
+                const size_t threadCount = get_num_threads();
+                if (threadCount > 1) {
+                    vector<std::thread> threads;
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&blur_horizontal, std::ref(src), std::ref(horizontalPass), workingArea, std::ref(krnl)));
+                    }
+                    
+                    for(auto &t : threads) { t.join(); }
+                    threads.clear();
+
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&blur_vertical, std::ref(horizontalPass), std::ref(dst), workingArea, std::ref(krnl)));
+                    }
+                    
+                    for(auto &t : threads) { t.join(); }
+                    
+                } else {
+                    const auto bounds(src.getBounds());
+                    blur_horizontal(src, horizontalPass, bounds, krnl);
+                    blur_vertical(horizontalPass, dst, bounds, krnl);
                 }
             }
             

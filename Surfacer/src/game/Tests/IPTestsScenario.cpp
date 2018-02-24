@@ -40,13 +40,17 @@ void IPTestsScenario::setup() {
     getStage()->addObject(Object::with("Grid", {grid}));
     
     int s = 256;
-    _channels = vector<Channel8u> {
-        testPerlinNoise(s, s),
-        testRemap(s,s),
-        testDilate(s,s),
-        testErode(s,s),
-        testThreshold(s, s)
-    };
+    {
+        StopWatch suite("IP Suite");
+        _channels = vector<Channel8u> {
+            testBlur(s,s),
+            testRemap(s,s),
+            testDilate(s,s),
+            testErode(s,s),
+            testThreshold(s, s),
+            testPerlinNoise(s, s),
+        };
+    }
     
     const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
     for(Channel8u channel : _channels) {
@@ -166,6 +170,22 @@ ci::Channel8u IPTestsScenario::testPerlinNoise(int width, int height) {
     double frequency = 8.0 / width;
     StopWatch sw("perlin");
     ip::in_place::fill(channel, pn, frequency);
+    
+    return channel;
+}
+
+ci::Channel8u IPTestsScenario::testBlur(int width, int height) {
+    using namespace core::util;
+    Channel8u channel = Channel8u(width, height);
+    
+    ci::Perlin pn(8,123);
+    double frequency = 8.0 / width;
+    ip::in_place::fill(channel, pn, frequency);
+    ip::in_place::threshold(channel);
+    
+    StopWatch sw("blur");
+    channel = ip::blur(channel, 24);
+    
     
     return channel;
 }
