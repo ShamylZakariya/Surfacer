@@ -11,10 +11,10 @@
 #include "TerrainTestScenario.hpp"
 #include "TerrainAttachmentsTestScenario.hpp"
 #include "SvgTestScenario.hpp"
-#include "PerlinWorldTest.hpp"
+#include "PerlinWorldTestScenario.hpp"
 #include "IPTestsScenario.hpp"
 
-#define SCENARIO IPTestsScenario
+#define SCENARIO PerlinWorldTestScenario
 
 class TestsApp : public core::App {
 public:

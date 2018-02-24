@@ -73,7 +73,7 @@
 		638F4DD41F8BCFEA004437E8 /* TerrainTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */; };
 		638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4DA31F8BCF53004437E8 /* TestsApp.cpp */; };
 		639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 639168A71E93E289007FD4FA /* BlendMode.cpp */; };
-		63920BC21FCA7AA80075B468 /* PerlinWorldTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63920BC01FCA7AA80075B468 /* PerlinWorldTest.cpp */; };
+		63920BC21FCA7AA80075B468 /* PerlinWorldTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63920BC01FCA7AA80075B468 /* PerlinWorldTestScenario.cpp */; };
 		63A282731FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63A282741FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
@@ -199,8 +199,8 @@
 		638F4DD61F8BD25F004437E8 /* Precariously-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Precariously-Info.plist"; sourceTree = "<group>"; };
 		639168A61E93E21A007FD4FA /* BlendMode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BlendMode.hpp; sourceTree = "<group>"; };
 		639168A71E93E289007FD4FA /* BlendMode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlendMode.cpp; sourceTree = "<group>"; };
-		63920BC01FCA7AA80075B468 /* PerlinWorldTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerlinWorldTest.cpp; sourceTree = "<group>"; };
-		63920BC11FCA7AA80075B468 /* PerlinWorldTest.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PerlinWorldTest.hpp; sourceTree = "<group>"; };
+		63920BC01FCA7AA80075B468 /* PerlinWorldTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerlinWorldTestScenario.cpp; sourceTree = "<group>"; };
+		63920BC11FCA7AA80075B468 /* PerlinWorldTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PerlinWorldTestScenario.hpp; sourceTree = "<group>"; };
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
 		63A282711FD067E400962F8E /* ImageProcessing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = "<group>"; };
 		63A282721FD067E400962F8E /* ImageProcessing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageProcessing.hpp; sourceTree = "<group>"; };
@@ -566,8 +566,8 @@
 				638F4DA31F8BCF53004437E8 /* TestsApp.cpp */,
 				631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */,
 				631171351FAB72A50098069F /* ParticleSystemTestScenario.hpp */,
-				63920BC01FCA7AA80075B468 /* PerlinWorldTest.cpp */,
-				63920BC11FCA7AA80075B468 /* PerlinWorldTest.hpp */,
+				63920BC01FCA7AA80075B468 /* PerlinWorldTestScenario.cpp */,
+				63920BC11FCA7AA80075B468 /* PerlinWorldTestScenario.hpp */,
 				63B8AF05202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp */,
 				63B8AF06202CA1A70021AC63 /* TerrainAttachmentsTestScenario.hpp */,
 				638BFB1B203F28DE004163A9 /* IPTestsScenario.cpp */,
@@ -753,7 +753,7 @@
 				638F4DB91F8BCFCE004437E8 /* Object.cpp in Sources */,
 				638F4DBA1F8BCFCE004437E8 /* Viewport.cpp in Sources */,
 				638F4DBB1F8BCFCE004437E8 /* InputDispatcher.cpp in Sources */,
-				63920BC21FCA7AA80075B468 /* PerlinWorldTest.cpp in Sources */,
+				63920BC21FCA7AA80075B468 /* PerlinWorldTestScenario.cpp in Sources */,
 				638F4DBC1F8BCFCE004437E8 /* Scenario.cpp in Sources */,
 				638F4DBD1F8BCFCE004437E8 /* BlendMode.cpp in Sources */,
 				638F4DBE1F8BCFCE004437E8 /* Stage.cpp in Sources */,

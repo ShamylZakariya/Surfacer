@@ -5,7 +5,7 @@
 //  Created by Shamyl Zakariya on 11/25/17.
 //
 
-#include "PerlinWorldTest.hpp"
+#include "PerlinWorldTestScenario.hpp"
 
 #include <cinder/Perlin.h>
 
