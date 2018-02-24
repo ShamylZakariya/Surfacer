@@ -51,7 +51,9 @@ public:
 private:
 
     ci::Channel8u testRemap(int width, int height);
-    
+    ci::Channel8u testDilate(int width, int height);
+    ci::Channel8u testErode(int width, int height);
+
 private:
     
     vector<ci::Channel8u> _channels;

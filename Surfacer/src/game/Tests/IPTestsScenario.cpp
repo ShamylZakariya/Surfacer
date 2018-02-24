@@ -39,8 +39,11 @@ void IPTestsScenario::setup() {
     grid->setGridColor(ColorA(1, 1, 1, 0.1));
     getStage()->addObject(Object::with("Grid", {grid}));
     
+    int s = 256;
     _channels = vector<Channel8u> {
-        testRemap(256,256)
+        testRemap(s,s),
+        testDilate(s,s),
+        testErode(s,s)
     };
     
     const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
@@ -107,10 +110,34 @@ ci::Channel8u IPTestsScenario::testRemap(int width, int height) {
     Channel8u channel = Channel8u(width, height);
     
     StopWatch sw("remap");
-    ip::fill(channel, 128);
-    ip::fill(channel, Area(20,20, 60,60), 200);
-    ip::fill(channel, Area(20,height-60, 60,height-20), 64);
+    ip::in_place::fill(channel, 128);
+    ip::in_place::fill(channel, Area(20,20, 60,60), 200);
+    ip::in_place::fill(channel, Area(20,height-60, 60,height-20), 64);
     ip::in_place::remap(channel, 200, 255, 0); // make 200 become 255, everything else 0
     
+    return channel;
+}
+
+ci::Channel8u IPTestsScenario::testDilate(int width, int height) {
+    using namespace core::util;
+    Channel8u channel = Channel8u(width, height);
+    
+    StopWatch sw("dilate");
+    ip::in_place::fill(channel, 0);
+    ip::in_place::fill(channel, Area(width/2 - 20, height/2 - 20, width/2 + 20, height/2+20), 255);
+    channel = ip::dilate(channel, 24);
+    
+    return channel;
+}
+
+ci::Channel8u IPTestsScenario::testErode(int width, int height) {
+    using namespace core::util;
+    Channel8u channel = Channel8u(width, height);
+    
+    StopWatch sw("erode");
+    ip::in_place::fill(channel, 0);
+    ip::in_place::fill(channel, Area(width/2 - 20, height/2 - 20, width/2 + 20, height/2+20), 255);
+    channel = ip::erode(channel, 24);
+
     return channel;
 }

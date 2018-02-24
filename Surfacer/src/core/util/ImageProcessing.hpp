@@ -18,12 +18,6 @@ namespace core {
     namespace util {
         namespace ip {
             
-            // fill all pixels in channel with a given value
-            void fill(ci::Channel8u &channel, uint8_t value);
-
-            // fill all pixels of rect in channel with a given value
-            void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value);
-
             // perform a dilation pass such that each pixel in dst image is the max of the pixels in src kernel for that pixel
             void dilate(const ci::Channel8u &src, ci::Channel8u &dst, int radius);
 
@@ -82,16 +76,12 @@ namespace core {
 
                 // operations which can act on a single channel, in-place, safely
                 
-                // fill all of channel's pixels with a given value
-                inline void fill(ci::Channel8u &channel, uint8_t value) {
-                    ::core::util::ip::fill(channel, value);
-                }
+                // fill all pixels in channel with a given value
+                void fill(ci::Channel8u &channel, uint8_t value);
                 
                 // fill all pixels of rect in channel with a given value
-                inline void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value) {
-                    ::core::util::ip::fill(channel, rect, value);
-                }
-
+                void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value);
+                
                 // flood fill into channel starting at `start, where pixels of `targetValue are changed to `newValue - modifies `channel
                 inline void floodfill(ci::Channel8u &channel, ivec2 start, uint8_t targetValue, uint8_t newValue) {
                     ::core::util::ip::floodfill(channel, channel, start, targetValue, newValue, false);

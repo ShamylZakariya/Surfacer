@@ -60,57 +60,88 @@ namespace core {
                     return Area(0, static_cast<int>(threadIdx * channelHeight / count), channelWidth, static_cast<int>((threadIdx+1) * channelHeight / count));
                 }
             }
-
-            void fill(ci::Channel8u &channel, uint8_t value) {
-                Channel8u::Iter it = channel.getIter();
-                
-                while(it.line()) {
-                    while (it.pixel()) {
-                        it.v() = value;
-                    }
-                }
-            }
             
-            void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value) {
-                Channel8u::Iter it = channel.getIter(rect);
+            namespace {
                 
-                while(it.line()) {
-                    while (it.pixel()) {
-                        it.v() = value;
+                void dilate_area(const ci::Channel8u &src, ci::Channel8u &dst, Area area, int radius) {
+                    Channel8u::ConstIter srcIt = src.getIter(area);
+                    Channel8u::Iter dstIt = dst.getIter(area);
+                    const int endX = src.getWidth() - 1;
+                    const int endY = src.getHeight() - 1;
+                    
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            const int px = srcIt.x();
+                            const int py = srcIt.y();
+                            uint8_t maxValue = 0;
+                            for (int ky = -radius; ky <= radius; ky++) {
+                                if (py + ky < 0 || py + ky > endY) continue;
+                                
+                                for (int kx = -radius; kx <= radius; kx++) {
+                                    if (px + kx < 0 || px + kx > endX) continue;
+                                    
+                                    maxValue = max(maxValue, srcIt.v(kx, ky));
+                                }
+                            }
+                            
+                            dstIt.v() = maxValue;
+                        }
                     }
                 }
-            }
 
+            }
 
             void dilate(const ci::Channel8u &src, ci::Channel8u &dst, int radius) {
 
                 if (dst.getSize() != src.getSize()) {
                     dst = Channel8u(src.getWidth(), src.getHeight());
                 }
+                
+                const size_t threadCount = get_num_threads();
+                if (threadCount > 1) {
+                    vector<std::thread> threads;
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&dilate_area, std::ref(src), std::ref(dst), workingArea, radius));
+                    }
+                    
+                    for(auto &t : threads) { t.join(); }
+                    
+                } else {
+                    dilate_area(src, dst, src.getBounds(), radius);
+                }
 
-                Channel8u::ConstIter srcIt = src.getIter();
-                Channel8u::Iter dstIt = dst.getIter();
-                const int endX = src.getWidth() - 1;
-                const int endY = src.getHeight() - 1;
-
-                while (srcIt.line() && dstIt.line()) {
-                    while (srcIt.pixel() && dstIt.pixel()) {
-                        const int px = srcIt.x();
-                        const int py = srcIt.y();
-                        uint8_t maxValue = 0;
-                        for (int ky = -radius; ky <= radius; ky++) {
-                            if (py + ky < 0 || py + ky > endY) continue;
-
-                            for (int kx = -radius; kx <= radius; kx++) {
-                                if (px + kx < 0 || px + kx > endX) continue;
-
-                                maxValue = max(maxValue, srcIt.v(kx, ky));
+            }
+            
+            namespace {
+                
+                void erode_area(const Channel8u &src, Channel8u &dst, Area area, int radius) {
+                    Channel8u::ConstIter srcIt = src.getIter(area);
+                    Channel8u::Iter dstIt = dst.getIter(area);
+                    
+                    const int endX = src.getWidth() - 1;
+                    const int endY = src.getHeight() - 1;
+                    
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            const int px = srcIt.x();
+                            const int py = srcIt.y();
+                            uint8_t minValue = 255;
+                            for (int ky = -radius; ky <= radius; ky++) {
+                                if (py + ky < 0 || py + ky > endY) continue;
+                                
+                                for (int kx = -radius; kx <= radius; kx++) {
+                                    if (px + kx < 0 || px + kx > endX) continue;
+                                    
+                                    minValue = min(minValue, srcIt.v(kx, ky));
+                                }
                             }
+                            
+                            dstIt.v() = minValue;
                         }
-
-                        dstIt.v() = maxValue;
                     }
                 }
+                
             }
 
             void erode(const Channel8u &src, Channel8u &dst, int radius) {
@@ -119,29 +150,18 @@ namespace core {
                     dst = Channel8u(src.getWidth(), src.getHeight());
                 }
 
-                Channel8u::ConstIter srcIt = src.getIter();
-                Channel8u::Iter dstIt = dst.getIter();
-
-                const int endX = src.getWidth() - 1;
-                const int endY = src.getHeight() - 1;
-
-                while (srcIt.line() && dstIt.line()) {
-                    while (srcIt.pixel() && dstIt.pixel()) {
-                        const int px = srcIt.x();
-                        const int py = srcIt.y();
-                        uint8_t minValue = 255;
-                        for (int ky = -radius; ky <= radius; ky++) {
-                            if (py + ky < 0 || py + ky > endY) continue;
-
-                            for (int kx = -radius; kx <= radius; kx++) {
-                                if (px + kx < 0 || px + kx > endX) continue;
-
-                                minValue = min(minValue, srcIt.v(kx, ky));
-                            }
-                        }
-
-                        dstIt.v() = minValue;
+                const size_t threadCount = get_num_threads();
+                if (threadCount > 1) {
+                    vector<std::thread> threads;
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&erode_area, std::ref(src), std::ref(dst), workingArea, radius));
                     }
+                    
+                    for(auto &t : threads) { t.join(); }
+                    
+                } else {
+                    erode_area(src, dst, src.getBounds(), radius);
                 }
             }
 
@@ -208,7 +228,7 @@ namespace core {
             
             namespace {
                 
-                void t_remap(const Channel8u &src, Channel8u &dst, Area area, uint8_t targetValue, uint8_t newTargetValue, uint8_t defaultValue) {
+                void remap_area(const Channel8u &src, Channel8u &dst, Area area, uint8_t targetValue, uint8_t newTargetValue, uint8_t defaultValue) {
                     Channel8u::ConstIter srcIt = src.getIter(area);
                     Channel8u::Iter dstIt = dst.getIter(area);
                     
@@ -232,13 +252,13 @@ namespace core {
                     vector<std::thread> threads;
                     for (size_t idx = 0; idx < threadCount; idx++) {
                         Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
-                        threads.emplace_back(std::thread(&t_remap, std::ref(src), std::ref(dst), workingArea, targetValue, newTargetValue, defaultValue));
+                        threads.emplace_back(std::thread(&remap_area, std::ref(src), std::ref(dst), workingArea, targetValue, newTargetValue, defaultValue));
                     }
 
                     for(auto &t : threads) { t.join(); }
 
                 } else {
-                    t_remap(src, dst, src.getBounds(), targetValue, newTargetValue, defaultValue);
+                    remap_area(src, dst, src.getBounds(), targetValue, newTargetValue, defaultValue);
                 }
             }
       
@@ -315,6 +335,30 @@ namespace core {
                         dstIt.v() = v >= threshV ? maxV : minV;
                     }
                 }
+            }
+            
+            namespace in_place {
+                
+                void fill(ci::Channel8u &channel, uint8_t value) {
+                    Channel8u::Iter it = channel.getIter();
+                    
+                    while(it.line()) {
+                        while (it.pixel()) {
+                            it.v() = value;
+                        }
+                    }
+                }
+                
+                void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value) {
+                    Channel8u::Iter it = channel.getIter(rect);
+                    
+                    while(it.line()) {
+                        while (it.pixel()) {
+                            it.v() = value;
+                        }
+                    }
+                }
+
             }
 
         }
