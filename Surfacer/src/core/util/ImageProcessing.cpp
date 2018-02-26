@@ -408,7 +408,7 @@ namespace core {
                 }
                 
                 namespace {
-                    void fill_area(ci::Channel8u &channel, Area area, ci::Perlin &noise, double frequency) {
+                    void perlin_area(ci::Channel8u &channel, Area area, ci::Perlin &noise, double frequency) {
                         Channel8u::Iter iter = channel.getIter(area);
                         
                         while (iter.line()) {
@@ -420,21 +420,53 @@ namespace core {
                     }
                 }
                 
-                void fill(ci::Channel8u &channel, ci::Perlin &noise, double frequency) {
+                void perlin(ci::Channel8u &channel, ci::Perlin &noise, double frequency) {
                     const size_t threadCount = get_num_threads();
                     if (threadCount > 1) {
                         vector<std::thread> threads;
                         for (size_t idx = 0; idx < threadCount; idx++) {
                             Area workingArea = get_thread_working_area(channel.getWidth(), channel.getHeight(), idx);
-                            threads.emplace_back(std::thread(&fill_area, std::ref(channel), workingArea, std::ref(noise), frequency));
+                            threads.emplace_back(std::thread(&perlin_area, std::ref(channel), workingArea, std::ref(noise), frequency));
                         }
                         
                         for(auto &t : threads) { t.join(); }
                         
                     } else {
-                        fill_area(channel, channel.getBounds(), noise, frequency);
+                        perlin_area(channel, channel.getBounds(), noise, frequency);
                     }
                 }
+                
+                namespace {
+                    void perlin_abs_thresh_area(ci::Channel8u &channel, Area area, ci::Perlin &noise, double frequency, uint8_t threshold) {
+                        Channel8u::Iter iter = channel.getIter(area);
+                        
+                        while (iter.line()) {
+                            while (iter.pixel()) {
+                                float v = noise.fBm(frequency * iter.x(), frequency * iter.y());
+                                v = abs(v);
+                                uint8_t pv = static_cast<uint8_t>(255.f * abs(v));
+                                iter.v() = pv >= threshold ? 255 : 0;
+                            }
+                        }
+                    }
+                }
+                
+                void perlin_abs_thresh(ci::Channel8u &channel, ci::Perlin &noise, double frequency, uint8_t threshold) {
+                    const size_t threadCount = get_num_threads();
+                    if (threadCount > 1) {
+                        vector<std::thread> threads;
+                        for (size_t idx = 0; idx < threadCount; idx++) {
+                            Area workingArea = get_thread_working_area(channel.getWidth(), channel.getHeight(), idx);
+                            threads.emplace_back(std::thread(&perlin_abs_thresh_area, std::ref(channel), workingArea, std::ref(noise), frequency, threshold));
+                        }
+                        
+                        for(auto &t : threads) { t.join(); }
+                        
+                    } else {
+                        perlin_abs_thresh_area(channel, channel.getBounds(), noise, frequency, threshold);
+                    }
+                }
+
 
 
             }

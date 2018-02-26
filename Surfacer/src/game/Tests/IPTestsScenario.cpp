@@ -49,6 +49,7 @@ void IPTestsScenario::setup() {
             testErode(s,s),
             testThreshold(s, s),
             testPerlinNoise(s, s),
+            testPerlinNoise2(s, s)
         };
     }
     
@@ -169,7 +170,19 @@ ci::Channel8u IPTestsScenario::testPerlinNoise(int width, int height) {
     ci::Perlin pn(8,123);
     double frequency = 8.0 / width;
     StopWatch sw("perlin");
-    ip::in_place::fill(channel, pn, frequency);
+    ip::in_place::perlin(channel, pn, frequency);
+    
+    return channel;
+}
+
+ci::Channel8u IPTestsScenario::testPerlinNoise2(int width, int height) {
+    using namespace core::util;
+    Channel8u channel = Channel8u(width, height);
+    
+    ci::Perlin pn(8,123);
+    double frequency = 8.0 / width;
+    StopWatch sw("perlin_abs_thresh");
+    ip::in_place::perlin_abs_thresh(channel, pn, frequency, 12);
     
     return channel;
 }
@@ -180,7 +193,7 @@ ci::Channel8u IPTestsScenario::testBlur(int width, int height) {
     
     ci::Perlin pn(8,123);
     double frequency = 8.0 / width;
-    ip::in_place::fill(channel, pn, frequency);
+    ip::in_place::perlin(channel, pn, frequency);
     ip::in_place::threshold(channel);
     
     StopWatch sw("blur");

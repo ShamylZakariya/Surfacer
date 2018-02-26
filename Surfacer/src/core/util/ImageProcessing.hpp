@@ -84,7 +84,10 @@ namespace core {
                 void fill(ci::Channel8u &channel, ci::Area rect, uint8_t value);
 
                 // fill all pixels of channel with noise at a given frequency
-                void fill(ci::Channel8u &channel, ci::Perlin &noise, double frequency);
+                void perlin(ci::Channel8u &channel, ci::Perlin &noise, double frequency);
+                
+                // fill all pixels of channel with noise at a given frequency, where the noise is absoluted and thresholded
+                void perlin_abs_thresh(ci::Channel8u &channel, ci::Perlin &noise, double frequency, uint8_t threshold);
                 
                 // flood fill into channel starting at `start, where pixels of `targetValue are changed to `newValue - modifies `channel
                 inline void floodfill(ci::Channel8u &channel, ivec2 start, uint8_t targetValue, uint8_t newValue) {

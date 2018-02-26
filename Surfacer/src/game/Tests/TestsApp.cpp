@@ -14,7 +14,7 @@
 #include "PerlinWorldTestScenario.hpp"
 #include "IPTestsScenario.hpp"
 
-#define SCENARIO PerlinWorldTestScenario
+#define SCENARIO IPTestsScenario
 
 class TestsApp : public core::App {
 public:

@@ -55,6 +55,7 @@ private:
     ci::Channel8u testErode(int width, int height);
     ci::Channel8u testThreshold(int width, int height);
     ci::Channel8u testPerlinNoise(int width, int height);
+    ci::Channel8u testPerlinNoise2(int width, int height);
     ci::Channel8u testBlur(int width, int height);
 
 private:
