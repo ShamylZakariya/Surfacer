@@ -79,7 +79,7 @@ namespace {
                 _svgDoc(svgDoc),
                 _lastPosition(0,0),
                 _lastAngle(0),
-                _friction(0.1)
+                _friction(0.025)
         {}
         
         util::svg::GroupRef getSvgDoc() const { return _svgDoc; }
@@ -301,6 +301,8 @@ terrain::WorldRef TerrainAttachmentsTestScenario::testBasicAttachmentAdapter() {
     };
 
     makeDingus(dvec2(5,5));
+    makeDingus(dvec2(25,5));
+    makeDingus(dvec2(45,5));
     makeDingus(dvec2(5,55));
 
     return world;

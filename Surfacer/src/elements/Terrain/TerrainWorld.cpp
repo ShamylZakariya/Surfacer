@@ -268,20 +268,32 @@ namespace terrain {
     }
 
     /*
-        material _worldMaterial, _anchorMaterial;
-        SpaceAccessRef _space;
-        StaticGroupRef _staticGroup;
-        set<DynamicGroupRef> _dynamicGroups;
-        vector<AnchorRef> _anchors;
-
-        DrawDispatcher _drawDispatcher;
-        ci::gl::GlslProgRef _shader;
+     static size_t _idCounter;
+     
+     material _worldMaterial, _anchorMaterial;
+     core::SpaceAccessRef _space;
+     StaticGroupRef _staticGroup;
+     set <DynamicGroupRef> _dynamicGroups;
+     vector <AnchorRef> _anchors;
+     vector <ElementRef> _elements;
+     set <AttachmentRef> _orphanedAttachments;
+     map <string, ElementRef> _elementsById;
+     
+     DrawDispatcher _drawDispatcher;
+     ci::gl::GlslProgRef _shader;
+     
+     core::ObjectWeakRef _object;
+     
+     // state to speed up adding attachments, to reduce lookup for neighboring attachment addition
+     GroupWeakRef _lastAttachmentGroup;
+     ShapeWeakRef _lastAttachmentShape;
      */
 
     World::World(SpaceAccessRef space, material worldMaterial, material anchorMaterial) :
             _worldMaterial(worldMaterial),
             _anchorMaterial(anchorMaterial),
             _space(space) {
+
         auto vsh = CI_GLSL(150,
                 uniform
                 mat4 ciModelViewProjection;
@@ -732,7 +744,25 @@ namespace terrain {
     
     bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 worldRotation) {
         
-        CI_LOG_D("adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << worldRotation);
+        CI_LOG_D("Adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << worldRotation);
+        
+        //
+        // since attachments tend to be added in spatially near positions, we can test if the last group/shape combo match
+        //
+
+        if (GroupBaseRef lastGroup = _lastAttachmentGroup.lock()) {
+            if (ShapeRef lastShape = _lastAttachmentShape.lock()) {
+                if (lastShape->isLocalPointInside(lastGroup->getInverseModelMatrix() * worldPosition)) {
+                    CI_LOG_D("Able to re-use lastGroup: " << lastGroup->getName() << " and shape: " << lastShape);
+                    addAttachment(attachment, lastGroup, lastShape, worldPosition, worldRotation);
+                    return true;
+                }
+            }
+        }
+
+        //
+        //  OK, looks like we need to do a search
+        //
 
         if (tryAddAttachment(attachment, _staticGroup, worldPosition, worldRotation)) {
             return true;
@@ -757,12 +787,20 @@ namespace terrain {
     }
     
     void World::addAttachment(const AttachmentRef &attachment, const GroupBaseRef &group, const ShapeRef shapeHint, dvec2 worldPosition, dvec2 worldRotation) {
+        CI_ASSERT_MSG(attachment != nullptr, "Expect attachment to be non-null");
+        CI_ASSERT_MSG(group != nullptr, "Expect group to be non-null");
+        CI_ASSERT_MSG(shapeHint != nullptr, "Expect shape hint to be non-null");
+        
         // now set up the attachment and parentage to group
         attachment->configure(group, worldPosition, worldRotation);
         group->addAttachment(attachment);
 
         // record shape hints to speed up future assignment after cuts are performed
         attachment->setShapeHint(shapeHint);
+        
+        // cache the group and shape to speed up calls to addAttachment
+        _lastAttachmentGroup = group;
+        _lastAttachmentShape = shapeHint;
     }
     
     void World::handleOrphanedAttachment(const AttachmentRef &attachment) {

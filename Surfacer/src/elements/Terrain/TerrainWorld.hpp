@@ -413,6 +413,10 @@ namespace terrain {
         ci::gl::GlslProgRef _shader;
 
         core::ObjectWeakRef _object;
+        
+        // state to speed up adding attachments, to reduce lookup for neighboring attachment addition
+        GroupBaseWeakRef _lastAttachmentGroup;
+        ShapeWeakRef _lastAttachmentShape;
     };
     
 #pragma mark - Attachment
