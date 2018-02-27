@@ -22,12 +22,11 @@ namespace precariously {
          Description to build a planet
          */
         struct config {
-            int seed;
 
+            int seed;
             double radius;
             double surfaceSolidity;
 
-            
             config() :
                     seed(12345),
                     radius(500),

@@ -106,18 +106,28 @@ void PerlinWorldTestScenario::setup() {
     getStage()->addObject(Object::with("Grid", {grid}));
 
 
-    auto params = precariously::planet_generation::params(512, _seed).defaultCenteringTransform(4);
-    params.noiseOctaves = 2;
-    params.noiseFrequencyScale = 2;
-    params.pruneFloaters = false;
-    params.surfaceSolidity = _surfaceSolidity;
+    auto params = precariously::planet_generation::params(512).defaultCenteringTransform(4);
+    params.terrain.seed = _seed;
+    params.terrain.noiseOctaves = 2;
+    params.terrain.noiseFrequencyScale = 2;
+    params.terrain.pruneFloaters = false;
+    params.terrain.surfaceSolidity = _surfaceSolidity;
+    params.terrain.material = TerrainMaterial;
     
-    auto result = precariously::planet_generation::generate(params, getStage()->getSpace(), TerrainMaterial, AnchorMaterial);
+    params.anchors.seed = _seed + 1;
+    params.anchors.noiseOctaves = 2;
+    params.anchors.noiseFrequencyScale = 2;
+    params.anchors.surfaceSolidity = _surfaceSolidity;
+    params.anchors.vignetteStart *= 0.5;
+    params.anchors.vignetteEnd *= 0.5;
+    params.anchors.material = AnchorMaterial;
     
-    auto terrain = terrain::TerrainObject::create("Terrain", result.first, DrawLayers::TERRAIN);
+    auto result = precariously::planet_generation::generate(params, getStage()->getSpace());
+    
+    auto terrain = terrain::TerrainObject::create("Terrain", result.world, DrawLayers::TERRAIN);
     getStage()->addObject(terrain);
     
-    _isoSurfaces = vector<Channel8u> { result.second.first, result.second.second };
+    _isoSurfaces = vector<Channel8u> { result.terrainMap, result.anchorMap };
     
     const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
     for(Channel8u isoSurface : _isoSurfaces) {

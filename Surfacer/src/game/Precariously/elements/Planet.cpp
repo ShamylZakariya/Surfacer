@@ -23,18 +23,31 @@ namespace precariously {
         
         const int MAP_RESOLUTION = 512;
     
-        precariously::planet_generation::params create_planet_generation_params(const Planet::config &config, dvec2 worldOrigin, double worldRadius) {
+        precariously::planet_generation::params create_planet_generation_params(const Planet::config &surfaceConfig, const Planet::config &coreConfig, dvec2 worldOrigin, double worldRadius) {
+            
             precariously::planet_generation::params params;
             params.size = MAP_RESOLUTION;
-            params.seed = config.seed;
-            params.surfaceSolidity = config.surfaceSolidity;
-            
+
             //
             // compute a transform to put this at origin with requested radius
             //
-
+            
             double halfSize = params.size / 2;
             params.transform = glm::scale( dvec3(worldRadius / halfSize, worldRadius / halfSize, 1)) * glm::translate(dvec3(worldOrigin.x - halfSize, worldOrigin.y - halfSize, 0));
+
+            params.terrain.enabled = true;
+            params.terrain.seed = surfaceConfig.seed;
+            params.terrain.surfaceSolidity = surfaceConfig.surfaceSolidity;
+            params.terrain.vignetteStart = 0.8;
+            params.terrain.vignetteEnd = 0.99;
+            params.terrain.pruneFloaters = true;
+
+            params.anchors.enabled = true;
+            params.anchors.seed = coreConfig.seed;
+            params.anchors.surfaceSolidity = coreConfig.surfaceSolidity;
+            params.anchors.vignetteStart = 0.3;
+            params.anchors.vignetteEnd = 0.7;
+            
             
             return params;
         }
@@ -59,28 +72,11 @@ namespace precariously {
     }
 
     PlanetRef Planet::create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer) {
-        
-        planet_generation::params surfaceParams = create_planet_generation_params(surfaceConfig, origin, surfaceConfig.radius);
-        planet_generation::params coreParams = create_planet_generation_params(coreConfig, origin, coreConfig.radius);
-        
-        surfaceParams.vignetteStart = 0.9;
-        surfaceParams.vignetteEnd = 1;
-        coreParams.vignetteStart = 0.9;
-        coreParams.vignetteEnd = 1;
-
-        vector<ShapeRef> shapes;
-        vector<AnchorRef> anchors;
-        planet_generation::generate(surfaceParams, shapes);
-        planet_generation::generate(coreParams, anchors);
-
-        if (partitionSize > 0) {
-            shapes = terrain::World::partition(shapes, origin, partitionSize);
-        }
-
-        world->build(shapes, anchors);
+        planet_generation::params params = create_planet_generation_params(surfaceConfig, coreConfig, origin, surfaceConfig.radius);
+        auto result = planet_generation::generate(params, world);
 
         // finally create the Planet
-        return make_shared<Planet>(name, world, drawLayer);
+        return make_shared<Planet>(name, result.world, drawLayer);
     }
 
     Planet::Planet(string name, WorldRef world, int drawLayer) :
