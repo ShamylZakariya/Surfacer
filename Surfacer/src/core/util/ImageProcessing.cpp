@@ -385,6 +385,52 @@ namespace core {
 
             }
             
+            namespace {
+                void vignette_area(const ci::Channel8u &src, ci::Channel8u &dst, Area area, double innerRadius, double outerRadius, uint8_t vignetteColor) {
+                    const int size = min(src.getWidth(), src.getHeight());
+                    const vec2 center(size/2, size/2);
+                    const float outerVignetteRadius = size * 0.5f * outerRadius;
+                    const float innerVignetteRadius = size * 0.5f * innerRadius;
+                    const float innerVignetteRadius2 = innerVignetteRadius * innerVignetteRadius;
+                    const float vignetteThickness = outerVignetteRadius - innerVignetteRadius;
+                    
+                    Channel8u::ConstIter srcIt = src.getIter(area);
+                    Channel8u::Iter dstIt = dst.getIter(area);
+                    while (srcIt.line() && dstIt.line()) {
+                        while (srcIt.pixel() && dstIt.pixel()) {
+                            float radius2 = lengthSquared(vec2(srcIt.getPos()) - center);
+                            if (radius2 > innerVignetteRadius2) {
+                                float radius = sqrt(radius2);
+                                float vignette = 1 - min<float>(((radius - innerVignetteRadius) / vignetteThickness), 1);
+                                float val = static_cast<float>(srcIt.v()) / 255.f;
+                                dstIt.v() = static_cast<uint8_t>(vignette * val * 255);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            void vignette(const ci::Channel8u &src, ci::Channel8u &dst, double innerRadius, double outerRadius, uint8_t vignetteColor) {
+                if (dst.getSize() != src.getSize()) {
+                    dst = Channel8u(src.getWidth(), src.getHeight());
+                }
+                
+                const size_t threadCount = get_num_threads();
+                if (threadCount > 1) {
+                    vector<std::thread> threads;
+                    for (size_t idx = 0; idx < threadCount; idx++) {
+                        Area workingArea = get_thread_working_area(src.getWidth(), src.getHeight(), idx);
+                        threads.emplace_back(std::thread(&vignette_area, std::ref(src), std::ref(dst), workingArea, innerRadius, outerRadius, vignetteColor));
+                    }
+                    
+                    for(auto &t : threads) { t.join(); }
+                    
+                } else {
+                    vignette_area(src, dst, src.getBounds(), innerRadius, outerRadius, vignetteColor);
+                }
+            }
+
+            
             namespace in_place {
                 
                 void fill(ci::Channel8u &channel, uint8_t value) {

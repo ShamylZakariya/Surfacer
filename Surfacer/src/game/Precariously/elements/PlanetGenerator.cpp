@@ -63,15 +63,8 @@ namespace precariously { namespace planet_generation {
         
         {
             ci::Perlin pn(p.noiseOctaves, p.seed);
-            const float frequency = p.noiseFrequencyScale * p.size / 32.f;
-            Channel8u::Iter iter = map.getIter();
-            
-            while (iter.line()) {
-                while (iter.pixel()) {
-                    float noise = pn.fBm(frequency * iter.x() / size, frequency * iter.y() / size);
-                    iter.v() = noise < -0.05 || noise > 0.05 ? 255 : 0;
-                }
-            }
+            const float frequency = p.noiseFrequencyScale / 32.f;
+            core::util::ip::in_place::perlin_abs_thresh(map, pn, frequency, 12);
         }
         
         //
@@ -140,25 +133,7 @@ namespace precariously { namespace planet_generation {
         // circularize the median geometry
         //
         
-        {
-            const float outerVignetteRadius = size * 0.5f * p.vignetteEnd;
-            const float innerVignetteRadius = size * 0.5f * p.vignetteStart;
-            const float innerVignetteRadius2 = innerVignetteRadius * innerVignetteRadius;
-            const float vignetteThickness = outerVignetteRadius - innerVignetteRadius;
-            
-            Channel8u::Iter iter = map.getIter();
-            while (iter.line()) {
-                while (iter.pixel()) {
-                    float radius2 = lengthSquared(vec2(iter.getPos()) - center);
-                    if (radius2 > innerVignetteRadius2) {
-                        float radius = sqrt(radius2);
-                        float vignette = 1 - min<float>(((radius - innerVignetteRadius) / vignetteThickness), 1);
-                        float val = static_cast<float>(iter.v()) / 255.f;
-                        iter.v() = static_cast<uint8>(vignette * val * 255);
-                    }
-                }
-            }
-        }
+        util::ip::in_place::vignette(map, p.vignetteStart, p.vignetteEnd, 0);
         
         return map;
     }

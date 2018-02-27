@@ -37,7 +37,10 @@ namespace core {
             // for every value in src, maxV if pixelV >= threshV else minV
             void threshold(const ci::Channel8u &src, ci::Channel8u &dst, uint8_t threshV = 128, uint8_t maxV = 255, uint8_t minV = 0);
 
-
+            // apply vignette effect to src, into dst, where pixels have vignetteColor applied as pixel radius from center approaches outerRadius
+            void vignette(const ci::Channel8u &src, ci::Channel8u &dst, double innerRadius, double outerRadius, uint8_t vignetteColor = 0);
+            
+            
             // perform a dilation pass such that each pixel in result image is the max of the pixels in the kernel
             inline ci::Channel8u dilate(const ci::Channel8u &src, int size) {
                 ci::Channel8u dst;
@@ -72,6 +75,14 @@ namespace core {
                 ::core::util::ip::threshold(src, dst, threshV, maxV, minV);
                 return dst;
             }
+            
+            // apply vignette effect to src, where pixels have vignetteColor applied as pixel radius from center approaches outerRadius
+            inline ci::Channel8u vignette(const ci::Channel8u &src, double innerRadius, double outerRadius, uint8_t vignetteColor = 0) {
+                ci::Channel8u dst;
+                ::core::util::ip::vignette(src, dst, innerRadius, outerRadius, vignetteColor);
+                return dst;
+            }
+
 
             namespace in_place {
 
@@ -102,6 +113,11 @@ namespace core {
                 // for every value in src, maxV if pixelV >= threshV else minV
                 inline void threshold(ci::Channel8u &channel, uint8_t threshV = 128, uint8_t maxV = 255, uint8_t minV = 0) {
                     ::core::util::ip::threshold(channel, channel, threshV, maxV, minV);
+                }
+                
+                // apply vignette effect to src, where pixels have vignetteColor applied as pixel radius from center approaches outerRadius
+                inline void vignette(ci::Channel8u &src, double innerRadius, double outerRadius, uint8_t vignetteColor = 0) {
+                    ::core::util::ip::vignette(src, src, innerRadius, outerRadius, vignetteColor);
                 }
 
             }
