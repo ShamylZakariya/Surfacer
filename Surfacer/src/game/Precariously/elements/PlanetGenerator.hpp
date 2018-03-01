@@ -101,23 +101,28 @@ namespace precariously { namespace planet_generation {
             // number of possible plantings per unit distance
             double density;
             
+            // if true, hole contours will be included as well as the primary outer contour
+            bool includeHoleContours;
+            
             // id to query later to get the generated attachments
-            size_t id;
+            size_t batchId;
 
-            attachment_params():
+            attachment_params(size_t batchId):
             minUpDot(-1),
             maxUpDot(+1),
             probability(1),
             density(1),
-            id(0)
+            includeHoleContours(true),
+            batchId(batchId)
             {}
             
-            attachment_params(size_t id, double minUpDot, double maxUpDot, double probability, double density):
+            attachment_params(size_t batchId, double minUpDot, double maxUpDot, double probability, double density, bool includeHoleContours):
             minUpDot(minUpDot),
             maxUpDot(maxUpDot),
             probability(probability),
             density(density),
-            id(id)
+            includeHoleContours(includeHoleContours),
+            batchId(batchId)
             {}
 
         };
@@ -165,7 +170,7 @@ namespace precariously { namespace planet_generation {
         terrain::WorldRef world;
         ci::Channel8u terrainMap;
         ci::Channel8u anchorMap;
-        map<size_t,vector<terrain::AttachmentRef>> attachmentsById;
+        map<size_t,vector<terrain::AttachmentRef>> attachmentsByBatchId;
     };
 
     /**

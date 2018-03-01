@@ -15,6 +15,7 @@
 #include "ContourSimplification.hpp"
 #include "ImageProcessing.hpp"
 
+#include "TerrainDetail.hpp"
 #include "TerrainDetail_MarchingSquares.hpp"
 
 using namespace ci;
@@ -45,6 +46,73 @@ namespace precariously { namespace planet_generation {
                 return originalSize - newSize;
             }
             return 0;
+        }
+        
+        double circumference(const PolyLine2d &contour) {
+            double dist = 0;
+            for (size_t i = 0, j = 1, N = contour.size(); i < N; i++, j = (j+1) % N) {
+                const dvec2 a = contour.getPoints()[i];
+                const dvec2 b = contour.getPoints()[j];
+                dist += length(b-a);
+            }
+            return dist;
+        }
+        
+        void get_position_and_derivative(const PolyLine2d &contour, double t, dvec2 &position, dvec2 &derivative) {
+            // this is taken from Cinder's position/derivative getters on contour, but merged so we only do the work once per call
+            // TODO: Optimize by dropping this entirely, just get derivative for eahc segment and walk it.
+            const auto &points = contour.getPoints();
+            if( points.size() <= 1 ) return;
+            if( t >= 1 ) {
+                position = points.back();
+                derivative = points.back() - points[points.size()-2];
+                return;
+            }
+            if( t <= 0 ) {
+                position = points[0];
+                derivative = points[1] - points[0];
+                return;
+            }
+            
+            size_t numSpans = points.size() - 1;
+            size_t span = static_cast<size_t>(math<double>::floor(t * numSpans));
+
+            double lerpT = ( t - span / static_cast<double>(numSpans)) * numSpans;
+            position = points[span] * ( 1 - lerpT ) + points[span+1] * lerpT;
+            derivative = points[span+1] - points[span];
+        }
+        
+        void get_position_and_normal(const PolyLine2d &contour, double t, dvec2 &position, dvec2 &normal) {
+            dvec2 derivative;
+            get_position_and_derivative(contour, t, position, derivative);
+            normal = rotateCCW(normalize(derivative));
+        }
+        
+        // walk perimeter(s) of contour calling visitor
+        // contour: contour to walk
+        // step: distance to increment while walking about perimeter
+        // visitor: the visitor invoked for each step, signature: visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
+        void walk_perimeter(const PolyLine2d &contour, double step, bool isOuterContour, const function<void(dvec2,dvec2,bool)> &visitor) {
+            double len = circumference(contour);
+            for (double d = 0; d <= len; d += step) {
+                dvec2 position, normal;
+                get_position_and_normal(contour, d/len, position, normal);
+                visitor(position, normal, isOuterContour);
+            }
+        }
+        
+        // walk perimeter(s) of shape calling visitor with world space vertices.
+        // shape: shape to walk
+        // step: distance to increment while walking about perimeter
+        // allContours: if true, walks inner ("hole") perimeters as well as primary outer perimeter
+        // visitor: the visitor invoked for each step, signature: visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
+        void walk_shape_perimeter(const terrain::ShapeRef &shape, double step, bool allContours, const function<void(dvec2,dvec2,bool)> &visitor) {
+            walk_perimeter(shape->getOuterContour().world, step, true, visitor);
+            if (allContours) {
+                for(const auto &hole : shape->getHoleContours()) {
+                    walk_perimeter(hole.world, step, false, visitor);
+                }
+            }
         }
     }
     
@@ -172,16 +240,21 @@ namespace precariously { namespace planet_generation {
     result generate(const params &params, terrain::WorldRef world) {
         StopWatch timer("generate");
         
-        vector <terrain::ShapeRef> shapes;
+        world->setWorldMaterial(params.terrain.material);
+        world->setAnchorMaterial(params.anchors.material);
+        
+        vector <terrain::ShapeRef> originalShapes, shapes;
         vector <terrain::AnchorRef> anchors;
         Channel8u terrainMap, anchorMap;
         
         if (params.terrain.enabled) {
-            terrainMap = detail::generate_shapes(params, shapes);
+            terrainMap = detail::generate_shapes(params, originalShapes);
             if (params.terrain.partitionSize > 0) {
                 dvec4 col3 = params.transform[3];
                 dvec2 origin(col3.x, col3.y);
-                shapes = terrain::World::partition(shapes, origin, params.terrain.partitionSize);
+                shapes = terrain::World::partition(originalShapes, origin, params.terrain.partitionSize);
+            } else {
+                shapes = originalShapes;
             }
         }
         
@@ -196,6 +269,25 @@ namespace precariously { namespace planet_generation {
         r.terrainMap = terrainMap;
         r.anchorMap = anchorMap;
         
+        {
+            const double placementNudge = 1e-2;
+            for(const params::attachment_params &ap : params.attachments) {
+                vector <terrain::AttachmentRef> attachments;
+                for(const terrain::ShapeRef &shape : originalShapes) {
+                    walk_shape_perimeter(shape, 1 / ap.density, ap.includeHoleContours, [placementNudge, &attachments, &world](dvec2 position, dvec2 normal, bool isOuterContour){
+                        dvec2 pos = position - normal * placementNudge;
+                        terrain::AttachmentRef attachment = make_shared<terrain::Attachment>();
+                        if (world->addAttachment(attachment, pos, rotateCW(normal))) {
+                            attachment->setTag(attachments.size());
+                            attachments.push_back(attachment);
+                        }
+                    });
+                }
+                CI_LOG_D("Generated " << attachments.size() << " attachments");
+                r.attachmentsByBatchId[ap.batchId] = attachments;
+            }
+        }
+
         return r;
     }
 

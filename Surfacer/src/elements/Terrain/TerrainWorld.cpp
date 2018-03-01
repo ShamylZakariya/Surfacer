@@ -744,7 +744,7 @@ namespace terrain {
     
     bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 worldRotation) {
         
-        CI_LOG_D("Adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << worldRotation);
+//        CI_LOG_D("Adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << worldRotation);
         
         //
         // since attachments tend to be added in spatially near positions, we can test if the last group/shape combo match
@@ -753,7 +753,7 @@ namespace terrain {
         if (GroupBaseRef lastGroup = _lastAttachmentGroup.lock()) {
             if (ShapeRef lastShape = _lastAttachmentShape.lock()) {
                 if (lastShape->isLocalPointInside(lastGroup->getInverseModelMatrix() * worldPosition)) {
-                    CI_LOG_D("Able to re-use lastGroup: " << lastGroup->getName() << " and shape: " << lastShape);
+//                    CI_LOG_D("Able to re-use lastGroup: " << lastGroup->getName() << " and shape: " << lastShape);
                     addAttachment(attachment, lastGroup, lastShape, worldPosition, worldRotation);
                     return true;
                 }
@@ -808,7 +808,7 @@ namespace terrain {
         attachment->_group.reset();
         attachment->_groupUnsafePtr = nullptr;
         attachment->_localTransform = dmat4(); // identity, only world position matters now
-        attachment->onOrphaned();
+        attachment->onOrphaned(attachment->_id, attachment->_tag);
     }
 
     void World::notifyCollisionShapesWillBeDestoyed(vector < cpShape * > shapes) {
@@ -1036,6 +1036,7 @@ namespace terrain {
     
     Attachment::Attachment():
             _id(World::nextId()),
+            _tag(0),
             _groupUnsafePtr(nullptr),
             _finished(false)
     {}

@@ -205,7 +205,7 @@ namespace terrain {
         
     private:
         
-        void _onOrphaned() {
+        void _onOrphaned(size_t id, size_t tag) {
             onOrphaned();
             _orphaned = true;
             _attachment.reset();

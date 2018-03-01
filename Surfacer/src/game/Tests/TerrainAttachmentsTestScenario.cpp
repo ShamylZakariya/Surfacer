@@ -308,23 +308,3 @@ terrain::WorldRef TerrainAttachmentsTestScenario::testBasicAttachmentAdapter() {
     return world;
 }
 
-
-terrain::WorldRef TerrainAttachmentsTestScenario::testComplexSvgLoad() {
-    
-    // load shapes and anchors from SVG
-    vector<terrain::ShapeRef> shapes;
-    vector<terrain::AnchorRef> anchors;
-    vector<terrain::ElementRef> elements;
-    terrain::World::loadSvg(app::loadAsset("svg_tests/complex_world_test.svg"), dmat4(), shapes, anchors, elements, true);
-    
-    // partition
-    auto partitionedShapes = terrain::World::partition(shapes, dvec2(0, 0), 500);
-    
-    // construct
-    const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
-    const terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
-    auto world = make_shared<terrain::World>(getStage()->getSpace(), terrainMaterial, anchorMaterial);
-    world->build(partitionedShapes, anchors, elements);
-    
-    return world;
-}

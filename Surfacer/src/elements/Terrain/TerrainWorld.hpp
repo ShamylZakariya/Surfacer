@@ -321,9 +321,17 @@ namespace terrain {
         core::SpaceAccessRef getSpace() const {
             return _space;
         }
+        
+        void setWorldMaterial(material wm) {
+            _worldMaterial = wm;
+        }
 
         material getWorldMaterial() const {
             return _worldMaterial;
+        }
+
+        void setAnchorMaterial(material am) {
+            _anchorMaterial = am;
         }
 
         material getAnchorMaterial() const {
@@ -368,6 +376,8 @@ namespace terrain {
          */
         bool addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, double angle = 0);
 
+        bool addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 rotation);
+
     protected:
 
         friend class TerrainObject;
@@ -376,7 +386,6 @@ namespace terrain {
 
         friend class DynamicGroup;
         
-        bool addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 rotation);
         
         bool tryAddAttachment(const AttachmentRef &attachment, const GroupBaseRef &group, dvec2 worldPosition, dvec2 worldRotation);
 
@@ -425,7 +434,8 @@ namespace terrain {
     public:
 
         // signal fired when this attachment is orphaned from a group and moved from Group ownership to the World's orphan set
-        core::signals::signal<void()> onOrphaned;
+        // passes attachment's id and tag
+        core::signals::signal<void(size_t,size_t)> onOrphaned;
         
     public:
 
@@ -468,6 +478,12 @@ namespace terrain {
         // return true if this attachment is scheduled to be let go next timestep
         bool isFinished() const { return _finished; }
         
+        // get the assigned tag value for this attachment
+        size_t getTag() const { return _tag; }
+        
+        // set a tag value for this attachment. You can use this to assign custom data, like index or bitmasks, whatever.
+        void setTag(size_t tag) { _tag = tag; }
+        
     private:
         
         friend class World;
@@ -481,7 +497,7 @@ namespace terrain {
         void setShapeHint(const ShapeRef &hint) { _shapeHint = hint; }
         ShapeRef getShapeHint() const { return _shapeHint.lock(); }
         
-        size_t _id;
+        size_t _id, _tag;
         dmat4 _localTransform;
         dmat4 _worldTransform;
         GroupBaseWeakRef _group;

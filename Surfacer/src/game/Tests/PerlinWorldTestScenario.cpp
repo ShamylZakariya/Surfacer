@@ -122,6 +122,8 @@ void PerlinWorldTestScenario::setup() {
     params.anchors.vignetteEnd *= 0.5;
     params.anchors.material = AnchorMaterial;
     
+    params.attachments.push_back(precariously::planet_generation::params::attachment_params(0,0.0,1.0,1.0,1.0,true));
+    
     auto result = precariously::planet_generation::generate(params, getStage()->getSpace());
     
     auto terrain = terrain::TerrainObject::create("Terrain", result.world, DrawLayers::TERRAIN);
@@ -218,6 +220,11 @@ bool PerlinWorldTestScenario::keyDown(const ci::app::KeyEvent &event) {
             CI_LOG_D("_surfaceSolidity: " << _surfaceSolidity);
             reset();
             return true;
+    }
+    
+    if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
+        setRenderMode(RenderMode::mode((int(getRenderMode()) + 1) % RenderMode::COUNT));
+        return true;
     }
 
     return false;
