@@ -612,4 +612,43 @@ bool MouseDelegateComponent::mouseDrag(const ci::app::MouseEvent &event, const i
     return false;
 }
 
+#pragma mark - SvgAttachmentAdapter
+
+SvgAttachmentAdapter::SvgAttachmentAdapter(terrain::AttachmentRef attachment, util::svg::GroupRef svgDoc):
+AttachmentAdapter(attachment),
+_svgDoc(svgDoc),
+_lastPosition(0,0),
+_lastAngle(0),
+_friction(0.025)
+{}
+
+void SvgAttachmentAdapter::update(const time_state &timeState) {
+    AttachmentAdapter::update(timeState);
+    if (isOrphaned()) {
+        double fade = 1 - _friction;
+        _svgDoc->setPosition(_svgDoc->getPosition() + _linearVel * timeState.deltaT);
+        _svgDoc->setAngle(_svgDoc->getAngle() + _angularVel * timeState.deltaT);
+        _svgDoc->setScale(_svgDoc->getScale() * fade);
+        _svgDoc->setOpacity(_svgDoc->getOpacity() * fade);
+        
+        _linearVel *= fade;
+        _angularVel *= fade;
+        
+        if (_svgDoc->getOpacity() < ALPHA_EPSILON) {
+            getObject()->setFinished();
+        }
+    }
+}
+
+void SvgAttachmentAdapter::updatePosition(const time_state &timeState, dvec2 position, dvec2 rotation, dmat4 transform) {
+    _lastPosition = _svgDoc->getPosition();
+    _lastAngle = _svgDoc->getAngle();
+    
+    _svgDoc->setPosition(position);
+    _svgDoc->setRotation(rotation);
+    
+    _linearVel = (position - _lastPosition) / timeState.deltaT;
+    _angularVel = (_svgDoc->getAngle() - _lastAngle) / timeState.deltaT;
+}
+
 

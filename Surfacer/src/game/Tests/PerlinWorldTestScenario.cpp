@@ -66,6 +66,7 @@ namespace {
     namespace DrawLayers {
         enum layer {
             TERRAIN = 1,
+            ATTACHMENTS = 2
         };
     }
 
@@ -122,10 +123,28 @@ void PerlinWorldTestScenario::setup() {
     params.anchors.vignetteEnd *= 0.5;
     params.anchors.material = AnchorMaterial;
     
-    params.attachments.push_back(precariously::planet_generation::params::attachment_params(0,0.0,1.0,1.0,1.0,true));
+    auto ap = precariously::planet_generation::params::perimeter_attachment_params(0);
+    ap.batchId = 0;
+    ap.normalToUpDotTarget = 1;
+    ap.normalToUpDotRange = 1;
+    ap.probability = 0.1;
+    ap.density = 1;
+    ap.includeHoleContours = true;
+    params.attachments.push_back(ap);
+    
     
     auto result = precariously::planet_generation::generate(params, getStage()->getSpace());
     
+    for(auto v : result.attachmentsByBatchId) {
+        for(terrain::AttachmentRef attachment : v.second) {
+            auto svg = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/dingus.svg"), 0.25);
+            getStage()->addObject(Object::with("Dingus", {
+                make_shared<util::svg::SvgDrawComponent>(svg, DrawLayers::ATTACHMENTS),
+                make_shared<SvgAttachmentAdapter>(attachment, svg)
+            }));
+        }
+    }
+
     auto terrain = terrain::TerrainObject::create("Terrain", result.world, DrawLayers::TERRAIN);
     getStage()->addObject(terrain);
     

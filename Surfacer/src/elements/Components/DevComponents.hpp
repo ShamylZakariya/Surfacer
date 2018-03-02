@@ -11,6 +11,7 @@
 
 #include "Core.hpp"
 #include "Terrain.hpp"
+#include "Svg.hpp"
 
 SMART_PTR(WorldCartesianGridDrawComponent);
 
@@ -338,6 +339,24 @@ private:
     MouseMoveHandler _moveHandler;
     MouseDragHandler _dragHandler;
 
+};
+
+class SvgAttachmentAdapter : public terrain::AttachmentAdapter {
+public:
+    SvgAttachmentAdapter(terrain::AttachmentRef attachment, core::util::svg::GroupRef svgDoc);
+    
+    core::util::svg::GroupRef getSvgDoc() const { return _svgDoc; }
+    
+    void update(const core::time_state &timeState) override;
+    
+    void updatePosition(const core::time_state &timeState, dvec2 position, dvec2 rotation, dmat4 transform) override;
+        
+private:
+    
+    core::util::svg::GroupRef _svgDoc;
+    dvec2 _lastPosition, _linearVel;
+    double _lastAngle, _angularVel, _friction;
+    
 };
 
 #endif /* DevComponents_hpp */

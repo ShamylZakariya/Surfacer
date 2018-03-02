@@ -88,12 +88,11 @@ namespace precariously { namespace planet_generation {
         } anchors;
         
         
-        struct attachment_params {
+        struct perimeter_attachment_params {
             
-            // if the dot value of surface normal against local up is between minUpDot and maxUpDot the
-            // probability of a greeble planting will increase by similarity to up. Range [-1,+1]
-            double minUpDot;
-            double maxUpDot;
+            // scale probability by the closeness of the dot of surface normal to local up
+            double normalToUpDotTarget;
+            double normalToUpDotRange;
             
             // dice roll probability of a valid surface point getting a planting. Range [0,+1]
             double probability;
@@ -107,18 +106,18 @@ namespace precariously { namespace planet_generation {
             // id to query later to get the generated attachments
             size_t batchId;
 
-            attachment_params(size_t batchId):
-            minUpDot(-1),
-            maxUpDot(+1),
+            perimeter_attachment_params(size_t batchId):
+            normalToUpDotTarget(1),
+            normalToUpDotRange(1),
             probability(1),
             density(1),
             includeHoleContours(true),
             batchId(batchId)
             {}
             
-            attachment_params(size_t batchId, double minUpDot, double maxUpDot, double probability, double density, bool includeHoleContours):
-            minUpDot(minUpDot),
-            maxUpDot(maxUpDot),
+            perimeter_attachment_params(size_t batchId, double normalToUpDotTarget, double normalToUpDotRange, double probability, double density, bool includeHoleContours):
+            normalToUpDotTarget(normalToUpDotTarget),
+            normalToUpDotRange(normalToUpDotRange),
             probability(probability),
             density(density),
             includeHoleContours(includeHoleContours),
@@ -128,7 +127,7 @@ namespace precariously { namespace planet_generation {
         };
         
         // each attachment_params added will cause an attachment generating pass on the generated terrain;
-        vector<attachment_params> attachments;
+        vector<perimeter_attachment_params> attachments;
         
         params(int size=512):
         size(size)

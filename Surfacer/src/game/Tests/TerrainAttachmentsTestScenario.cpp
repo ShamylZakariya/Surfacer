@@ -70,59 +70,6 @@ namespace {
         return pl;
     }
     
-
-    
-    class SvgAttachmentAdapter : public terrain::AttachmentAdapter {
-    public:
-        SvgAttachmentAdapter(terrain::AttachmentRef attachment, util::svg::GroupRef svgDoc):
-                AttachmentAdapter(attachment),
-                _svgDoc(svgDoc),
-                _lastPosition(0,0),
-                _lastAngle(0),
-                _friction(0.025)
-        {}
-        
-        util::svg::GroupRef getSvgDoc() const { return _svgDoc; }
-        
-        void update(const time_state &timeState) override {
-            AttachmentAdapter::update(timeState);
-            if (isOrphaned()) {
-                double fade = 1 - _friction;
-                _svgDoc->setPosition(_svgDoc->getPosition() + _linearVel * timeState.deltaT);
-                _svgDoc->setAngle(_svgDoc->getAngle() + _angularVel * timeState.deltaT);
-                _svgDoc->setScale(_svgDoc->getScale() * fade);
-                _svgDoc->setOpacity(_svgDoc->getOpacity() * fade);
-                
-                _linearVel *= fade;
-                _angularVel *= fade;
-                
-                if (_svgDoc->getOpacity() < ALPHA_EPSILON) {
-                    getObject()->setFinished();
-                }
-            }
-        }
-
-        void updatePosition(const time_state &timeState, dvec2 position, dvec2 rotation, dmat4 transform) override {
-            _lastPosition = _svgDoc->getPosition();
-            _lastAngle = _svgDoc->getAngle();
-            
-            _svgDoc->setPosition(position);
-            _svgDoc->setRotation(rotation);
-            
-            _linearVel = (position - _lastPosition) / timeState.deltaT;
-            _angularVel = (_svgDoc->getAngle() - _lastAngle) / timeState.deltaT;
-        }
-        
-        void onOrphaned() override {
-        }
-
-    private:
-      
-        util::svg::GroupRef _svgDoc;
-        dvec2 _lastPosition, _linearVel;
-        double _lastAngle, _angularVel, _friction;
-        
-    };
 }
 
 /*

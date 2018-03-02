@@ -92,11 +92,14 @@ namespace precariously { namespace planet_generation {
         // contour: contour to walk
         // step: distance to increment while walking about perimeter
         // visitor: the visitor invoked for each step, signature: visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
-        void walk_perimeter(const PolyLine2d &contour, double step, bool isOuterContour, const function<void(dvec2,dvec2,bool)> &visitor) {
+        void walk_perimeter(const PolyLine2d &contour, double step, double wiggle, ci::Rand &rng, bool isOuterContour, const function<void(dvec2,dvec2,bool)> &visitor) {
+
+            // TODO: Add wiggle to step
+            
             double len = circumference(contour);
             for (double d = 0; d <= len; d += step) {
                 dvec2 position, normal;
-                get_position_and_normal(contour, d/len, position, normal);
+                get_position_and_normal(contour, (d+rng.nextFloat(-wiggle, +wiggle))/len, position, normal);
                 visitor(position, normal, isOuterContour);
             }
         }
@@ -106,11 +109,11 @@ namespace precariously { namespace planet_generation {
         // step: distance to increment while walking about perimeter
         // allContours: if true, walks inner ("hole") perimeters as well as primary outer perimeter
         // visitor: the visitor invoked for each step, signature: visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
-        void walk_shape_perimeter(const terrain::ShapeRef &shape, double step, bool allContours, const function<void(dvec2,dvec2,bool)> &visitor) {
-            walk_perimeter(shape->getOuterContour().world, step, true, visitor);
+        void walk_shape_perimeter(const terrain::ShapeRef &shape, double step, double wiggle, ci::Rand &rng, bool allContours, const function<void(dvec2,dvec2,bool)> &visitor) {
+            walk_perimeter(shape->getOuterContour().world, step, wiggle, rng, true, visitor);
             if (allContours) {
                 for(const auto &hole : shape->getHoleContours()) {
-                    walk_perimeter(hole.world, step, false, visitor);
+                    walk_perimeter(hole.world, step, wiggle, rng, false, visitor);
                 }
             }
         }
@@ -270,16 +273,29 @@ namespace precariously { namespace planet_generation {
         r.anchorMap = anchorMap;
         
         {
+            dvec2 origin = params.transform * dvec2(params.size/2, params.size/2);
+
+            ci::Rand rng;
             const double placementNudge = 1e-2;
-            for(const params::attachment_params &ap : params.attachments) {
+            for(const auto &ap : params.attachments) {
                 vector <terrain::AttachmentRef> attachments;
+                const double step = 1/ ap.density;
+                const double wiggle = step * 0.5;
                 for(const terrain::ShapeRef &shape : originalShapes) {
-                    walk_shape_perimeter(shape, 1 / ap.density, ap.includeHoleContours, [placementNudge, &attachments, &world](dvec2 position, dvec2 normal, bool isOuterContour){
-                        dvec2 pos = position - normal * placementNudge;
-                        terrain::AttachmentRef attachment = make_shared<terrain::Attachment>();
-                        if (world->addAttachment(attachment, pos, rotateCW(normal))) {
-                            attachment->setTag(attachments.size());
-                            attachments.push_back(attachment);
+                    walk_shape_perimeter(shape, step, wiggle, rng, ap.includeHoleContours, [&](dvec2 position, dvec2 normal, bool isOuterContour){
+
+                        // dice roll, scaled by closeness to desired slope
+                        double d = dot(normalize(position - origin), normal);
+                        d = sqrt(1.0 - saturate<double>(abs(d - ap.normalToUpDotTarget) / ap.normalToUpDotRange));
+                        if (rng.nextFloat() < ap.probability * d) {
+                            dvec2 pos = position - normal * placementNudge;
+                            terrain::AttachmentRef attachment = make_shared<terrain::Attachment>();
+                            
+                            // now attempt insertion
+                            if (world->addAttachment(attachment, pos, rotateCW(normal))) {
+                                attachment->setTag(attachments.size());
+                                attachments.push_back(attachment);
+                            }
                         }
                     });
                 }
