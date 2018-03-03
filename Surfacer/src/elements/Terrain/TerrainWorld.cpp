@@ -13,6 +13,7 @@
 #include <cinder/Xml.h>
 
 #include <queue>
+#include <limits>
 
 #include "ContourSimplification.hpp"
 #include "TerrainDetail.hpp"
@@ -1037,6 +1038,7 @@ namespace terrain {
     Attachment::Attachment():
             _id(World::nextId()),
             _tag(0),
+            _lastMovedAtStep(0),
             _groupUnsafePtr(nullptr),
             _finished(false)
     {}
@@ -1075,6 +1077,10 @@ namespace terrain {
                                     vec4(position.x, position.y, 0, 1));
             
             _localTransform = group->getInverseModelMatrix() * _worldTransform;
+            
+            // we need to mark the current time state
+            // TODO: Find a better way to mark Attachment::_lastMovedAtStep that doesn't require locking so many weak_ptr<>
+            _lastMovedAtStep = group->getWorld()->getObject()->getStage()->getTimeState().step;
             return true;
         }
         return false;
@@ -1331,7 +1337,15 @@ namespace terrain {
     void DynamicGroup::step(const time_state &timeState) {
         GroupBase::step(timeState);
 
-        syncToCpBody();
+        const bool didMove = syncToCpBody();
+
+        if (didMove) {
+            // update each attachment's worldTransform
+            for(const AttachmentRef &attachment : _attachments) {
+                attachment->_worldTransform = _modelMatrix * attachment->_localTransform;
+                attachment->_lastMovedAtStep = timeState.step;
+            }
+        }
 
         if (cpBodyIsSleeping(_body)) {
             if (_sleepDuration < 0) {
@@ -1347,10 +1361,6 @@ namespace terrain {
     void DynamicGroup::update(const core::time_state &timeState) {
         GroupBase::update(timeState);
 
-        // update each attachment's worldTransform
-        for(const AttachmentRef &attachment : _attachments) {
-            attachment->_worldTransform = _modelMatrix * attachment->_localTransform;
-        }
     }
     
     ShapeRef DynamicGroup::findShapeContainingLocalPoint(const dvec2 lp) const {
@@ -1544,7 +1554,8 @@ namespace terrain {
         return false;
     }
 
-    void DynamicGroup::syncToCpBody() {
+    bool DynamicGroup::syncToCpBody() {
+        bool moved = false;
         if (!cpBodyIsSleeping(_body)) {
             // extract position and rotation from body and apply to _modelMatrix
             cpVect position = cpBodyGetPosition(_body);
@@ -1553,7 +1564,7 @@ namespace terrain {
 
             // determine if we moved/rotated since last step
             const cpFloat Epsilon = 1e-3;
-            bool moved = (cpvlengthsq(cpvsub(position, _position)) > Epsilon || abs(angle - _angle) > Epsilon);
+            moved = (cpvlengthsq(cpvsub(position, _position)) > Epsilon || abs(angle - _angle) > Epsilon);
             _position = position;
             _angle = angle;
 
@@ -1581,6 +1592,7 @@ namespace terrain {
                 }
             }
         }
+        return moved;
     }
     
 #pragma mark - Drawable

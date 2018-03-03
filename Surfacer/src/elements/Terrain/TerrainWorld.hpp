@@ -484,6 +484,12 @@ namespace terrain {
         // set a tag value for this attachment. You can use this to assign custom data, like index or bitmasks, whatever.
         void setTag(size_t tag) { _tag = tag; }
         
+        // return the step index of the last time this was moved.
+        // this is updated at step() time, so any code monitoring Attachments in update() can
+        // safely say: if (attachment->getStepIndexForLastPositionUpdate() == timeState.step) { /*whatever*/ }
+        // always check for equality, not >=, <= etc.
+        size_t getStepIndexForLastPositionUpdate() const { return _lastMovedAtStep; }
+        
     private:
         
         friend class World;
@@ -497,7 +503,7 @@ namespace terrain {
         void setShapeHint(const ShapeRef &hint) { _shapeHint = hint; }
         ShapeRef getShapeHint() const { return _shapeHint.lock(); }
         
-        size_t _id, _tag;
+        size_t _id, _tag, _lastMovedAtStep;
         dmat4 _localTransform;
         dmat4 _worldTransform;
         GroupBaseWeakRef _group;
@@ -757,7 +763,8 @@ namespace terrain {
 
         bool build(set <ShapeRef> shapes, const GroupBaseRef &parentGroup, double minShapeArea);
 
-        void syncToCpBody();
+        // update position and angle to match underlying cpBody, returning true if we moved
+        bool syncToCpBody();
 
     private:
 
