@@ -159,12 +159,12 @@ inline glm::tvec4<T, P> saturate(const glm::tvec4<T, P> &c) {
 }
 
 template<class T, glm::precision P>
-inline float distanceSquared(const glm::tvec2<T, P> &a, const glm::tvec2<T, P> &b) {
+inline T distanceSquared(const glm::tvec2<T, P> &a, const glm::tvec2<T, P> &b) {
     return length2(b - a);
 }
 
 template<class T, glm::precision P>
-inline float distanceSquared(const glm::tvec3<T, P> &a, const glm::tvec3<T, P> &b) {
+inline T distanceSquared(const glm::tvec3<T, P> &a, const glm::tvec3<T, P> &b) {
     return length2(b - a);
 }
 
@@ -196,6 +196,91 @@ glm::tvec3<T, P> normalize(const glm::tvec3<T, P> &v) {
 template<class T, glm::precision P>
 glm::tvec2<T, P> mid(const glm::tvec2<T, P> &a, const glm::tvec2<T, P> &b) {
     return glm::tvec2<T, P>((a.x + b.x) * T(0.5), (a.y + b.y) * T(0.5));
+}
+
+// component-wise pow()
+
+template<class T, glm::precision P>
+glm::tvec2<T, P> pow(const glm::tvec2<T, P> &x, T y) {
+    return glm::tvec2<T,P>(std::pow(x.x, y), std::pow(x.y, y));
+}
+
+template<class T, glm::precision P>
+glm::tvec3<T, P> pow(const glm::tvec3<T, P> &x, T y) {
+    return glm::tvec2<T,P>(std::pow(x.x, y), std::pow(x.y, y), std::pow(x.z, y));
+}
+
+template<class T, glm::precision P>
+glm::tvec4<T, P> pow(const glm::tvec4<T, P> &x, T y) {
+    return glm::tvec2<T,P>(std::pow(x.x, y), std::pow(x.y, y),std::pow(x.z, y), std::pow(x.w, y));
+}
+
+// component-wise sin()
+
+template<class T, glm::precision P>
+glm::tvec2<T, P> sin(const glm::tvec2<T, P> &x) {
+    return glm::tvec2<T,P>(std::sin(x.x), std::sin(x.y));
+}
+
+template<class T, glm::precision P>
+glm::tvec3<T, P> sin(const glm::tvec3<T, P> &x) {
+    return glm::tvec2<T,P>(std::sin(x.x), std::sin(x.y), std::sin(x.z));
+}
+
+template<class T, glm::precision P>
+glm::tvec4<T, P> sin(const glm::tvec4<T, P> &x) {
+    return glm::tvec2<T,P>(std::sin(x.x), std::sin(x.y), std::sin(x.z), std::sin(x.w));
+}
+
+// component-wise cos()
+
+template<class T, glm::precision P>
+glm::tvec2<T, P> cos(const glm::tvec2<T, P> &x) {
+    return glm::tvec2<T,P>(std::cos(x.x), std::cos(x.y));
+}
+
+template<class T, glm::precision P>
+glm::tvec3<T, P> cos(const glm::tvec3<T, P> &x) {
+    return glm::tvec2<T,P>(std::cos(x.x), std::cos(x.y), std::cos(x.z));
+}
+
+template<class T, glm::precision P>
+glm::tvec4<T, P> cos(const glm::tvec4<T, P> &x) {
+    return glm::tvec2<T,P>(std::cos(x.x), std::cos(x.y), std::cos(x.z), std::cos(x.w));
+}
+
+// component-wise tan()
+
+template<class T, glm::precision P>
+glm::tvec2<T, P> tan(const glm::tvec2<T, P> &x) {
+    return glm::tvec2<T,P>(std::tan(x.x), std::tan(x.y));
+}
+
+template<class T, glm::precision P>
+glm::tvec3<T, P> tan(const glm::tvec3<T, P> &x) {
+    return glm::tvec2<T,P>(std::tan(x.x), std::tan(x.y), std::tan(x.z));
+}
+
+template<class T, glm::precision P>
+glm::tvec4<T, P> tan(const glm::tvec4<T, P> &x) {
+    return glm::tvec2<T,P>(std::tan(x.x), std::tan(x.y), std::tan(x.z), std::tan(x.w));
+}
+
+// component-wise sqrt()
+
+template<class T, glm::precision P>
+glm::tvec2<T, P> sqrt(const glm::tvec2<T, P> &x) {
+    return glm::tvec2<T,P>(std::sqrt(x.x), std::sqrt(x.y));
+}
+
+template<class T, glm::precision P>
+glm::tvec3<T, P> sqrt(const glm::tvec3<T, P> &x) {
+    return glm::tvec2<T,P>(std::sqrt(x.x), std::sqrt(x.y), std::sqrt(x.z));
+}
+
+template<class T, glm::precision P>
+glm::tvec4<T, P> sqrt(const glm::tvec4<T, P> &x) {
+    return glm::tvec2<T,P>(std::sqrt(x.x), std::sqrt(x.y), std::sqrt(x.z), std::sqrt(x.w));
 }
 
 
