@@ -54,15 +54,16 @@ namespace precariously {
     void CloudLayerParticleSimulation::onReady(ObjectRef parent, StageRef stage) {
         _generator.setScale(2 * M_PI);
 
-        // create store, and run simulate() once to populate
+        //
+        // create store, set defult state, and run simulate() once to populate
+        //
         setParticleCount(_config.count);
 
-        // set some invariants and default state
-        double dr = 2 * M_PI / getActiveCount();
         double a = 0;
+        double da = 2 * M_PI / getActiveCount();
         auto state = _state.begin();
         auto physics = _physics.begin();
-        for (size_t i = 0, N = getParticleCount(); i < N; i++, ++state, ++physics, a += dr) {
+        for (size_t i = 0, N = getParticleCount(); i < N; i++, ++state, ++physics, a += da) {
 
             // set up initial physics state
             physics->position = physics->previous_position = physics->home = _config.origin + _config.radius * dvec2(cos(a), sin(a));
@@ -103,8 +104,8 @@ namespace precariously {
             applyGravityDisplacements(timeState);
         }
 
-        const double dr = 2 * M_PI / getActiveCount();
         double a = 0;
+        const double da = 2 * M_PI / getActiveCount();
         const double cloudLayerRadius = _config.radius;
         const double cloudLayerRadius2 = cloudLayerRadius * cloudLayerRadius;
         const double particleRadiusDelta = _config.particle.maxRadius - _config.particle.minRadius;
@@ -120,7 +121,7 @@ namespace precariously {
         auto state = _state.begin();
         const auto end = _state.end();
 
-        for (; state != end; ++state, ++physics, a += dr) {
+        for (; state != end; ++state, ++physics, a += da) {
 
             //
             // simplistic verlet integration
