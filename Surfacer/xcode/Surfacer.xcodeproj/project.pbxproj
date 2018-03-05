@@ -17,6 +17,8 @@
 		00B9955A1B128DF400A5C623 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
 		00B9955B1B128DF400A5C623 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		630873582049A3FE000BCE27 /* PlanetGreebling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630873562049A3FE000BCE27 /* PlanetGreebling.cpp */; };
+		630873592049A3FE000BCE27 /* PlanetGreebling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630873562049A3FE000BCE27 /* PlanetGreebling.cpp */; };
 		631171361FAB72A50098069F /* ParticleSystemTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */; };
 		632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
 		632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
@@ -77,6 +79,7 @@
 		63A282731FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63A282741FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
 		63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A282711FD067E400962F8E /* ImageProcessing.cpp */; };
+		63A5ED13204C9432001BD62E /* EasingTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63A5ED11204C9432001BD62E /* EasingTestScenario.cpp */; };
 		63B8AF07202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63B8AF05202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp */; };
 		63BFD8161E89565600D821E4 /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8141E89565600D821E4 /* Object.cpp */; };
 		63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63BFD8181E89ED2A00D821E4 /* Stage.cpp */; };
@@ -155,6 +158,8 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		630873562049A3FE000BCE27 /* PlanetGreebling.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PlanetGreebling.cpp; sourceTree = "<group>"; };
+		630873572049A3FE000BCE27 /* PlanetGreebling.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PlanetGreebling.hpp; sourceTree = "<group>"; };
 		631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleSystemTestScenario.cpp; sourceTree = "<group>"; };
 		631171351FAB72A50098069F /* ParticleSystemTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ParticleSystemTestScenario.hpp; sourceTree = "<group>"; };
 		632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkHelpers.cpp; sourceTree = "<group>"; };
@@ -177,6 +182,7 @@
 		632623001E7D9A630051ABE2 /* Viewport.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Viewport.hpp; sourceTree = "<group>"; };
 		632623011E7D9A630051ABE2 /* ViewportController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ViewportController.cpp; sourceTree = "<group>"; };
 		632623021E7D9A630051ABE2 /* ViewportController.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ViewportController.hpp; sourceTree = "<group>"; };
+		632CBA21204B181B0008B94D /* Easing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Easing.hpp; sourceTree = "<group>"; };
 		6332FF802020C11700279B7F /* TerrainDetail_MarchingSquares.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainDetail_MarchingSquares.hpp; sourceTree = "<group>"; };
 		6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainDetail_Svg.cpp; sourceTree = "<group>"; };
 		6332FF822020C67700279B7F /* TerrainDetail_Svg.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainDetail_Svg.hpp; sourceTree = "<group>"; };
@@ -204,6 +210,8 @@
 		639DBF5E1E33EA840008D5BF /* NOTES.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = NOTES.md; path = ../NOTES.md; sourceTree = "<group>"; };
 		63A282711FD067E400962F8E /* ImageProcessing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = "<group>"; };
 		63A282721FD067E400962F8E /* ImageProcessing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageProcessing.hpp; sourceTree = "<group>"; };
+		63A5ED11204C9432001BD62E /* EasingTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EasingTestScenario.cpp; sourceTree = "<group>"; };
+		63A5ED12204C9432001BD62E /* EasingTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EasingTestScenario.hpp; sourceTree = "<group>"; };
 		63B8AF05202CA1A70021AC63 /* TerrainAttachmentsTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainAttachmentsTestScenario.cpp; sourceTree = "<group>"; };
 		63B8AF06202CA1A70021AC63 /* TerrainAttachmentsTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainAttachmentsTestScenario.hpp; sourceTree = "<group>"; };
 		63BFD8141E89565600D821E4 /* Object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
@@ -471,6 +479,8 @@
 				63E29EF61F97A87300CAF39E /* CloudLayerParticleSystem.hpp */,
 				6332FF86202378C200279B7F /* PlanetGenerator.cpp */,
 				6332FF87202378C200279B7F /* PlanetGenerator.hpp */,
+				630873562049A3FE000BCE27 /* PlanetGreebling.cpp */,
+				630873572049A3FE000BCE27 /* PlanetGreebling.hpp */,
 			);
 			path = elements;
 			sourceTree = "<group>";
@@ -572,6 +582,8 @@
 				63B8AF06202CA1A70021AC63 /* TerrainAttachmentsTestScenario.hpp */,
 				638BFB1B203F28DE004163A9 /* IPTestsScenario.cpp */,
 				638BFB1C203F28DE004163A9 /* IPTestsScenario.hpp */,
+				63A5ED11204C9432001BD62E /* EasingTestScenario.cpp */,
+				63A5ED12204C9432001BD62E /* EasingTestScenario.hpp */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -592,6 +604,7 @@
 				63F93C371F86F96A00F537CA /* Xml.hpp */,
 				63A282711FD067E400962F8E /* ImageProcessing.cpp */,
 				63A282721FD067E400962F8E /* ImageProcessing.hpp */,
+				632CBA21204B181B0008B94D /* Easing.hpp */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -739,7 +752,9 @@
 				638F4DAB1F8BCFCE004437E8 /* TerrainDetail.cpp in Sources */,
 				638F4DB01F8BCFCE004437E8 /* Svg.cpp in Sources */,
 				63A282751FD067E400962F8E /* ImageProcessing.cpp in Sources */,
+				630873592049A3FE000BCE27 /* PlanetGreebling.cpp in Sources */,
 				638F4DB11F8BCFCE004437E8 /* ChipmunkDebugDraw.cpp in Sources */,
+				63A5ED13204C9432001BD62E /* EasingTestScenario.cpp in Sources */,
 				638F4DB21F8BCFCE004437E8 /* SvgParsing.cpp in Sources */,
 				638F4DB31F8BCFCE004437E8 /* Xml.cpp in Sources */,
 				638F4DB41F8BCFCE004437E8 /* DevComponents.cpp in Sources */,
@@ -791,6 +806,7 @@
 				63F93C521F8714B200F537CA /* ChipmunkHelpers.cpp in Sources */,
 				63F93C531F8714B200F537CA /* Object.cpp in Sources */,
 				63F93C541F8714B200F537CA /* Viewport.cpp in Sources */,
+				630873582049A3FE000BCE27 /* PlanetGreebling.cpp in Sources */,
 				63F93C551F8714B200F537CA /* InputDispatcher.cpp in Sources */,
 				63F93C561F8714B200F537CA /* Scenario.cpp in Sources */,
 				63F93C571F8714B200F537CA /* BlendMode.cpp in Sources */,

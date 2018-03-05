@@ -17,6 +17,10 @@ namespace core {
             
             namespace penner {
                 
+// penner functions make clang angry
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsequenced"
+                
                 /**
                  * Adapted from https://raw.githubusercontent.com/nobutaka/EasingCurvePresets/master/Assets/PennerDoubleAnimation.cs
                  * Changed from C# to C++ templated on type
@@ -286,10 +290,7 @@ namespace core {
                 /// <returns>The correct value.</returns>
                 template<typename T> T SineEaseInOut(T t, T b, T c, T d)
                 {
-                    if ( ( t /= d / 2 ) < 1 )
-                        return c / 2 * ( sin( M_PI * t / 2 ) ) + b;
-                    
-                    return -c / 2 * ( cos( M_PI * --t / 2 ) - 2 ) + b;
+                    return -c/2 * (cos(M_PI*t/d) - 1) + b;
                 }
                 
                 /// <summary>
@@ -603,7 +604,7 @@ namespace core {
                 /// <returns>The correct value.</returns>
                 template<typename T> T BounceEaseIn(T t, T b, T c, T d)
                 {
-                    return c - BounceEaseOut( d - t, 0, c, d ) + b;
+                    return c - BounceEaseOut<T>( d - t, 0, c, d ) + b;
                 }
                 
                 /// <summary>
@@ -618,9 +619,9 @@ namespace core {
                 template<typename T> T BounceEaseInOut(T t, T b, T c, T d)
                 {
                     if ( t < d / 2 )
-                        return BounceEaseIn( t * 2, 0, c, d ) * .5 + b;
+                        return BounceEaseIn<T>( t * 2, 0, c, d ) * .5 + b;
                     else
-                        return BounceEaseOut( t * 2 - d, 0, c, d ) * .5 + c * .5 + b;
+                        return BounceEaseOut<T>( t * 2 - d, 0, c, d ) * .5 + c * .5 + b;
                 }
                 
                 /// <summary>
@@ -699,6 +700,9 @@ namespace core {
                         return BackEaseOut( t * 2, b, c / 2, d );
                     return BackEaseIn( ( t * 2 ) - d, b + c / 2, c / 2, d );
                 }
+                
+#pragma clang diagnostic pop
+                
             } // end namespace penner
             
 #pragma mark - Linear
@@ -783,7 +787,7 @@ namespace core {
             
             template<typename T> T sine_ease_in(T t)
             {
-                return penner::SineEaseIn<T>(t);
+                return penner::SineEaseIn<T>(t,0,1,1);
             }
             
             template<typename T> T sine_ease_in_out(T t)
@@ -815,7 +819,7 @@ namespace core {
             
             template<typename T> T cubic_ease_out_in(T t)
             {
-                return penner::CubicEaseOutIn<T>(1,0,1,1);
+                return penner::CubicEaseOutIn<T>(t,0,1,1);
             }
             
 #pragma mark - Quartic
@@ -893,12 +897,12 @@ namespace core {
             
             template<typename T> T bounce_ease_in(T t)
             {
-                return penner::BounceEaseIn<T>(t);
+                return penner::BounceEaseIn<T>(t,0,1,1);
             }
             
             template<typename T> T bounce_ease_in_out(T t)
             {
-                return penner::BounceEaseInOut<T>(t);
+                return penner::BounceEaseInOut<T>(t,0,1,1);
             }
             
             template<typename T> T bounce_ease_out_in(T t)
@@ -931,4 +935,7 @@ namespace core {
         } // end namespace easing
     } // end namespace util
 } // end namespace core
+
+
 #endif /* Easing_hpp */
+
