@@ -1080,7 +1080,16 @@ namespace terrain {
             
             // we need to mark the current time state
             // TODO: Find a better way to mark Attachment::_lastMovedAtStep that doesn't require locking so many weak_ptr<>
-            _lastMovedAtStep = group->getWorld()->getObject()->getStage()->getTimeState().step;
+            
+            _lastMovedAtStep = 0;
+            if (const auto &world = group->getWorld()) {
+                if (const auto &object = world->getObject()) {
+                    if (const auto &stage = object->getStage()) {
+                        _lastMovedAtStep = stage->getTimeState().step;
+                    }
+                }
+            }
+
             return true;
         }
         return false;
