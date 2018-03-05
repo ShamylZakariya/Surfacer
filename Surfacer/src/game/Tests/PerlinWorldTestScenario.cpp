@@ -9,15 +9,18 @@
 
 #include <cinder/Perlin.h>
 
+#include "ParticleSystem.hpp"
 #include "DevComponents.hpp"
 #include "PerlinNoise.hpp"
 #include "MarchingSquares.hpp"
 #include "ContourSimplification.hpp"
+#include "Terrain.hpp"
 #include "TerrainDetail.hpp"
 #include "TerrainDetail_MarchingSquares.hpp"
 #include "ImageProcessing.hpp"
 
 #include "PlanetGenerator.hpp"
+#include "PlanetGreebling.hpp"
 
 using namespace ci;
 using namespace core;
@@ -66,7 +69,8 @@ namespace {
     namespace DrawLayers {
         enum layer {
             TERRAIN = 1,
-            ATTACHMENTS = 2
+            ATTACHMENTS = 2,
+            GREEBLING = 3
         };
     }
 
@@ -97,16 +101,6 @@ PerlinWorldTestScenario::~PerlinWorldTestScenario() {
 void PerlinWorldTestScenario::setup() {
     setStage(make_shared<Stage>("Perlin World"));
 
-    getStage()->addObject(Object::with("ViewportControlComponent", {
-            make_shared<ManualViewportControlComponent>(getViewportController())
-    }));
-
-    auto grid = WorldCartesianGridDrawComponent::create(1);
-    grid->setFillColor(ColorA(0.2, 0.22, 0.25, 1.0));
-    grid->setGridColor(ColorA(1, 1, 1, 0.1));
-    getStage()->addObject(Object::with("Grid", {grid}));
-
-
     auto params = precariously::planet_generation::params(512).defaultCenteringTransform(4);
     params.terrain.seed = _seed;
     params.terrain.noiseOctaves = 2;
@@ -127,34 +121,59 @@ void PerlinWorldTestScenario::setup() {
     ap.batchId = 0;
     ap.normalToUpDotTarget = 1;
     ap.normalToUpDotRange = 1;
-    ap.probability = 0.1;
+    ap.probability = 0.75;
     ap.density = 1;
     ap.includeHoleContours = true;
     params.attachments.push_back(ap);
     
     
     auto result = precariously::planet_generation::generate(params, getStage()->getSpace());
-    
-    for(auto v : result.attachmentsByBatchId) {
-        for(terrain::AttachmentRef attachment : v.second) {
-            auto svg = util::svg::Group::loadSvgDocument(app::loadAsset("svg_tests/dingus.svg"), 0.25);
-            getStage()->addObject(Object::with("Dingus", {
-                make_shared<util::svg::SvgDrawComponent>(svg, DrawLayers::ATTACHMENTS),
-                make_shared<SvgAttachmentAdapter>(attachment, svg)
-            }));
-        }
-    }
-
     auto terrain = terrain::TerrainObject::create("Terrain", result.world, DrawLayers::TERRAIN);
     getStage()->addObject(terrain);
     
-    _isoSurfaces = vector<Channel8u> { result.terrainMap, result.anchorMap };
-    
-    const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
-    for(Channel8u isoSurface : _isoSurfaces) {
-        _isoTexes.push_back(ci::gl::Texture2d::create(isoSurface, fmt));
+    // debug views of the iso surfaces
+    {
+        _isoSurfaces = vector<Channel8u> { result.terrainMap, result.anchorMap };
+        const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
+        for(Channel8u isoSurface : _isoSurfaces) {
+            _isoTexes.push_back(ci::gl::Texture2d::create(isoSurface, fmt));
+        }
+    }
+
+    // greebling
+    {
+        auto image = loadImage(app::loadAsset("precariously/textures/Explosion.png"));
+        gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
+        
+        precariously::GreeblingParticleSystem::config config;
+        config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
+        config.drawConfig.atlasType = particles::Atlas::TwoByTwo;
+        config.drawConfig.drawLayer = DrawLayers::ATTACHMENTS;
+        
+        for(auto v : result.attachmentsByBatchId) {
+            auto greebles = precariously::GreeblingParticleSystem::create("greeble_" + str(v.first), config, v.second);
+            getStage()->addObject(greebles);
+        }
     }
     
+    auto grid = WorldCartesianGridDrawComponent::create(1);
+    grid->setFillColor(ColorA(0.2, 0.22, 0.25, 1.0));
+    grid->setGridColor(ColorA(1, 1, 1, 0.1));
+    getStage()->addObject(Object::with("Grid", {grid}));
+
+    getStage()->addObject(Object::with("Dragger", {
+        make_shared<MousePickComponent>(ShapeFilters::GRABBABLE),
+        make_shared<MousePickDrawComponent>()
+    }));
+    
+    getStage()->addObject(Object::with("Cutter", {
+        make_shared<terrain::MouseCutterComponent>(terrain, 4),
+        make_shared<terrain::MouseCutterDrawComponent>()
+    }));
+    
+    getStage()->addObject(Object::with("ViewportControlComponent", {
+        make_shared<ManualViewportControlComponent>(getViewportController())
+    }));
 }
 
 void PerlinWorldTestScenario::cleanup() {

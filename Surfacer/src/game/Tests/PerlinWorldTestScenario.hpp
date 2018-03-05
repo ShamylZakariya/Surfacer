@@ -11,15 +11,10 @@
 #include <cinder/Rand.h>
 
 #include "Core.hpp"
-#include "Svg.hpp"
-
-#include "Terrain.hpp"
-#include "ParticleSystem.hpp"
 
 
 using namespace ci;
 using namespace core;
-using namespace particles;
 
 class PerlinWorldTestScenario : public Scenario {
 public:

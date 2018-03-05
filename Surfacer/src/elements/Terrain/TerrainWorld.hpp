@@ -450,7 +450,7 @@ namespace terrain {
         GroupBaseRef getGroup() const { return _group.lock(); }
         
         // return true if this Attachment has become detached from a Group and has become orphaned
-        bool isOrphaned() const { return _group.expired(); }
+        bool isOrphaned() const { return _orphaned; }
 
         // get transform (position/rotation) of this Attachment relative to its parent group
         dmat4 getLocalTransform() const { return _localTransform; }
@@ -477,7 +477,7 @@ namespace terrain {
 
         // return true if this attachment is scheduled to be let go next timestep
         bool isFinished() const { return _finished; }
-        
+                
         // get the assigned tag value for this attachment
         size_t getTag() const { return _tag; }
         
@@ -508,7 +508,7 @@ namespace terrain {
         dmat4 _worldTransform;
         GroupBaseWeakRef _group;
         GroupBase *_groupUnsafePtr;
-        bool _finished;
+        bool _finished, _orphaned;
         
         // shape hint is the shape that "contains" this attachment; used at
         // runtime to speed lookup when terrain destruction requires reassignment

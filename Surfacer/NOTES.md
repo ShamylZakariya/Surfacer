@@ -7,18 +7,11 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-OPTIMIZATIONS:
-- core::ip can be threaded
-    - http://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency
-    algs like split blur, etc can be chunked, giving each thread a subset of the image to work on, say, rows 0->255, 256->512 on a 2-core machine. Just reimplement the operations to take a first and last row, and then if > 1 CPU, spawn N threads, and join.
-
-Explosion effect looks totally wonky in PrecariouslyStage
-	Need to figure out how to make initialDirection variance work better. my variance algo isn't cutting it.
-		Consider creating some kind of emission source object. can be a circle, a cone, etc. it vends initial position and direction
+Why is cutting the static planet geometry so slow? Shape hints don't help enough - maybe we need to be smarter about not doing inside tests for non-modified static geometry?
+Why does particle_state include ::age and ::completion? They appear to only ever be written to, never read. And they belong in per-simulation state.
 
 ## BUGS PRIORITY HIGH
 
-WorldCartesianGridComponent - color of grid not working
 For my sanity I really must make zooming about mouse cursor work again
 
 ## BUGS PRIORITY LOW

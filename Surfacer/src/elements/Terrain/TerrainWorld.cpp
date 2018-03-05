@@ -587,7 +587,7 @@ namespace terrain {
             
             if ((DrawAttachments)) {
                 // render attachments
-                auto groupAttachmentRenderer = [&](const GroupBaseRef &group, float axisSize = 10) {
+                auto groupAttachmentRenderer = [&](const GroupBaseRef &group, float axisSize) {
                     gl::lineWidth(1);
                     if (cpBBIntersects(renderState.viewport->getFrustum(), group->getBB())) {
     
@@ -599,18 +599,13 @@ namespace terrain {
                             gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * right.x, position.y + axisSize * right.y, 0));
                             gl::color(0, 1, 0);
                             gl::drawLine(vec3(position.x, position.y, 0), vec3(position.x + axisSize * up.x, position.y + axisSize * up.y, 0));
-                            
-                            gl::color(1,1,1);
-                            gl::drawStrokedCircle(position, axisSize, 16);
-                            
-                            gl::drawString(str(attachment->getId()), position, Color(1, 1, 1));
                         }
                     }
                 };
                 
-                groupAttachmentRenderer(_staticGroup);
+                groupAttachmentRenderer(_staticGroup, 4 * rScale);
                 for (const auto &dynamicGroup : _dynamicGroups) {
-                    groupAttachmentRenderer(dynamicGroup);
+                    groupAttachmentRenderer(dynamicGroup, 4 * rScale);
                 }
             }
         }
@@ -809,6 +804,7 @@ namespace terrain {
         attachment->_group.reset();
         attachment->_groupUnsafePtr = nullptr;
         attachment->_localTransform = dmat4(); // identity, only world position matters now
+        attachment->_orphaned = true;
         attachment->onOrphaned(attachment->_id, attachment->_tag);
     }
 
@@ -1040,7 +1036,8 @@ namespace terrain {
             _tag(0),
             _lastMovedAtStep(0),
             _groupUnsafePtr(nullptr),
-            _finished(false)
+            _finished(false),
+            _orphaned(false)
     {}
 
     Attachment::~Attachment() {}
