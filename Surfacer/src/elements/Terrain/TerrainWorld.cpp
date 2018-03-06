@@ -1569,33 +1569,35 @@ namespace terrain {
             cpFloat angle = cpBodyGetAngle(_body);
 
             // determine if we moved/rotated since last step
-            const cpFloat Epsilon = 1e-3;
+            const cpFloat Epsilon = 1e-6;
             moved = (cpvlengthsq(cpvsub(position, _position)) > Epsilon || abs(angle - _angle) > Epsilon);
-            _position = position;
-            _angle = angle;
-
-            // dmat4 - column major, each column is a vec4
-            _modelMatrix = dmat4(
-                    vec4(rotation.x, rotation.y, 0, 0),
-                    vec4(-rotation.y, rotation.x, 0, 0),
-                    vec4(0, 0, 1, 0),
-                    vec4(position.x, position.y, 0, 1));
-
-            _inverseModelMatrix = glm::inverse(_modelMatrix);
-
-            // update our world BB
-            _worldBB = cpTransformbBB(getModelTransform(), _modelBB);
-
-            //
-            //	If this shape moved we need to mark our edges as dirty (so world space edges and bounds
-            //	can be correctly recomputed, and we need to notify the draw dispatcher
-            //
             if (moved) {
+                _position = position;
+                _angle = angle;
+
+                // dmat4 - column major, each column is a vec4
+                _modelMatrix = dmat4(
+                        vec4(rotation.x, rotation.y, 0, 0),
+                        vec4(-rotation.y, rotation.x, 0, 0),
+                        vec4(0, 0, 1, 0),
+                        vec4(position.x, position.y, 0, 1));
+
+                _inverseModelMatrix = glm::inverse(_modelMatrix);
+
+                // update our world BB
+                _worldBB = cpTransformbBB(getModelTransform(), _modelBB);
+
+                //
+                //	If this shape moved we need to mark our edges as dirty (so world space edges and bounds
+                //	can be correctly recomputed, and we need to notify the draw dispatcher
+                //
+
                 DrawDispatcher &drawDispatcher = getDrawDispatcher();
                 for (auto &shape : _shapes) {
                     shape->_worldSpaceShapeContourEdgesDirty = true;
                     drawDispatcher.moved(shape);
                 }
+                
             }
         }
         return moved;

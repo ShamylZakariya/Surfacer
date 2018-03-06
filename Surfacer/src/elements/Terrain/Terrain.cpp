@@ -169,7 +169,7 @@ namespace terrain {
             // only notify for motion above epsilon
             const dvec2 position = _attachment->getWorldPosition();
             const dvec2 rotation = _attachment->getWorldRotation();
-            const double epsilon = 1e-5;
+            const double epsilon = 1e-7;
             if (!_positioned || lengthSquared(position - _lastPosition) > epsilon || lengthSquared(rotation-_lastRotation) > epsilon) {
                 _lastPosition = position;
                 _lastRotation = rotation;
