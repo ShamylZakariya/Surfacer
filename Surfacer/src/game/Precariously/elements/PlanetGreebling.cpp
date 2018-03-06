@@ -70,9 +70,9 @@ namespace precariously {
                 state->color = ColorA(1,1,0,1);
                 state->additivity = 0;
                 state->atlasIdx = attachment->getId() % 4;
-                bounds = cpBBExpand(bounds, state->position, radius);
                 didUpdate = true;
             }
+            bounds = cpBBExpand(bounds, state->position, radius);
         }
 
         if (_firstSimulate || didUpdate) {
