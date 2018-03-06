@@ -82,8 +82,6 @@ namespace particles {
         ci::ColorA color;                // color of particle
         double additivity;            // from 0 to 1 where 0 is transparency blending, and 1 is additive blending
         size_t atlasIdx;            // index into the texture atlas
-        seconds_t age;                // age of particle in seconds
-        double completion;            // degree of completion of particle, e.g., if it has a lifespan of 3 seconds and is 1.5 seconds old, completion is 0.5
 
         particle_state() :
                 active(false),
@@ -92,9 +90,7 @@ namespace particles {
                 up(0, 0.5),
                 color(1, 1, 1, 1),
                 additivity(0),
-                atlasIdx(0),
-                age(0),
-                completion(0) {
+                atlasIdx(0) {
         }
 
         // the default copy-ctor and operator= seem to work fine

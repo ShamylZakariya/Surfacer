@@ -347,8 +347,6 @@ namespace particles {
             }
 
             state->atlasIdx = prototype->atlasIdx;
-            state->age = prototype->_age;
-            state->completion = prototype->_completion;
             state->position = prototype->position;
             state->color = color;
             state->additivity = additivity;

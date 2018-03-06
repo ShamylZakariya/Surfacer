@@ -8,7 +8,8 @@ When satellite debris gets out of hand
 ## PRESENTLY
 
 Why is cutting the static planet geometry so slow? Shape hints don't help enough - maybe we need to be smarter about not doing inside tests for non-modified static geometry?
-Why does particle_state include ::age and ::completion? They appear to only ever be written to, never read. And they belong in per-simulation state.
+    - consider, instead of having each Attachment have a shapehint, what if the shape also got a list of attachments? Bidirectional. WHen a cut is performed, we collect the attachments which were associated with the cut shapes and only reparent those. Leave the rest alone, completely.
+    - this has ramifications for dynamic group situations. But I think we re-use shapes with DynamicGroup as well, so we can reuse the shape assignments too?
 
 ## BUGS PRIORITY HIGH
 

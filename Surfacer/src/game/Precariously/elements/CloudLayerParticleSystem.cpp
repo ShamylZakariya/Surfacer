@@ -75,8 +75,6 @@ namespace precariously {
             state->color = _config.particle.color;
             state->additivity = 0;
             state->position = physics->home;
-            state->age = 0;
-            state->completion = 0;
             state->active = true; // always active
         }
 
