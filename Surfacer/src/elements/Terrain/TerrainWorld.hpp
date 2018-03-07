@@ -251,11 +251,11 @@ namespace terrain {
         static void march(const ci::Channel8u isoSurface, const ci::Channel8u anchorIsoSurface, double isoLevel, dmat4 transform, vector <ShapeRef> &shapes, vector <AnchorRef> &anchors);
 
         /**
-         Partitions shapes in `shapes to a grid with origin at partitionOrigin, with chunks of size paritionSize.
+         Partitions shapes in `shapes to a grid, with chunks of size paritionSize.
          The purpose of this is simple: You might have a large stage. You want to divide the geometry of the stage into manageable
          chunks for visibility culling and collision/physics performance.
          */
-        static vector <ShapeRef> partition(const vector <ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize);
+        static vector <ShapeRef> partition(const vector <ShapeRef> &shapes, double partitionSize);
 
         // return a unique ID; used to generate IDs for drawables, groups, etc
         static size_t nextId() {
@@ -399,7 +399,12 @@ namespace terrain {
 
         void setObject(core::ObjectRef object);
 
-        void build(const vector <ShapeRef> &shapes, const map <ShapeRef, GroupBaseRef> &parentage);
+        /**
+         shapes: vector of shapes which were either newly created by a cut or are "neighbors" to cut shapes.
+         parentage: mapping of shapes in `shapes to groups
+         attachmentsToReparent: vector of attachments which were associated with cut shapes, which need new parentage
+         */
+        void build(const vector <ShapeRef> &shapes, const map <ShapeRef, GroupBaseRef> &parentage, vector <AttachmentRef> attachmentsToReparent);
 
         vector <set<ShapeRef>> findShapeGroups(const vector <ShapeRef> &shapes, const map <ShapeRef, GroupBaseRef> &parentage);
 
@@ -490,6 +495,8 @@ namespace terrain {
         // always check for equality, not >=, <= etc.
         size_t getStepIndexForLastPositionUpdate() const { return _lastMovedAtStep; }
         
+        ShapeRef getShapeHint() const { return _shapeHint.lock(); }
+
     private:
         
         friend class World;
@@ -500,8 +507,7 @@ namespace terrain {
         // called by World::addAttachment; returns true iff group != previous _group
         bool configure(const GroupBaseRef &group, dvec2 position, dvec2 rotation);
         
-        void setShapeHint(const ShapeRef &hint) { _shapeHint = hint; }
-        ShapeRef getShapeHint() const { return _shapeHint.lock(); }
+    private:
         
         size_t _id, _tag, _lastMovedAtStep;
         dmat4 _localTransform;
@@ -1170,6 +1176,9 @@ namespace terrain {
 
         TriMeshRef _trimesh;
         ci::gl::VboMeshRef _vboMesh;
+        
+        // the attachments which are anchored by being in this shape's geometry
+        set <AttachmentRef> _attachments;
     };
     
 } // namespace terrain

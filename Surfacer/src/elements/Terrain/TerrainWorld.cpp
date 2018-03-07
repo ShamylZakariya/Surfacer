@@ -213,18 +213,13 @@ namespace terrain {
         anchors = Anchor::fromContours(detail::march(anchorIsoSurface, isoLevel, transform, 0.01));
     }
 
-    vector <ShapeRef> World::partition(const vector <ShapeRef> &shapes, dvec2 partitionOrigin, double partitionSize) {
+    vector <ShapeRef> World::partition(const vector <ShapeRef> &shapes, double partitionSize) {
 
         // first compute the march area
         cpBB bounds = cpBBInvalid;
         for (auto shape : shapes) {
             bounds = cpBBExpand(bounds, shape->getWorldSpaceContourEdgesBB());
         }
-
-        const int marchLeft = static_cast<int>(floor((bounds.l - partitionOrigin.x) / partitionSize));
-        const int marchRight = static_cast<int>(ceil((bounds.r - partitionOrigin.x) / partitionSize));
-        const int marchBottom = static_cast<int>(floor((bounds.b - partitionOrigin.y) / partitionSize));
-        const int marchTop = static_cast<int>(ceil((bounds.t - partitionOrigin.y) / partitionSize));
 
         const dmat4 identity(1);
         cpBB quadBB = cpBBInvalid;
@@ -236,28 +231,26 @@ namespace terrain {
 
         for (auto shape : shapes) {
             dpolygon2 testPolygon = detail::shape_to_dpolygon2(shape);
-
-            for (int marchY = marchBottom; marchY <= marchTop; marchY++) {
-
-                quadBB.b = marchY * partitionSize;
+            
+            for (double marchY = bounds.b; marchY <= bounds.t; marchY += partitionSize) {
+                quadBB.b = marchY;
                 quadBB.t = quadBB.b + partitionSize;
-
-                for (int marchX = marchLeft; marchX <= marchRight; marchX++) {
-                    quadBB.l = marchX * partitionSize;
+                for (double marchX = bounds.l; marchX <= bounds.r; marchX += partitionSize) {
+                    quadBB.l = marchX;
                     quadBB.r = quadBB.l + partitionSize;
-
+                    
                     if (cpBBIntersects(quadBB, shape->getWorldSpaceContourEdgesBB())) {
                         // generate the test quad
                         quad.getPoints()[0] = dvec2(quadBB.l, quadBB.b);
                         quad.getPoints()[1] = dvec2(quadBB.l, quadBB.t);
                         quad.getPoints()[2] = dvec2(quadBB.r, quadBB.t);
                         quad.getPoints()[3] = dvec2(quadBB.r, quadBB.b);
-
+                        
                         auto polygonToIntersect = detail::polyline2d_to_dpolygon2(quad);
-
+                        
                         std::vector<dpolygon2> output;
                         boost::geometry::intersection(testPolygon, polygonToIntersect, output);
-
+                        
                         auto newShapes = detail::dpolygon2_to_shape(output, identity);
                         result.insert(result.end(), newShapes.begin(), newShapes.end());
                     }
@@ -353,7 +346,7 @@ namespace terrain {
         }
 
         // now build
-        build(shapes, map<ShapeRef, GroupBaseRef>());
+        build(shapes, map<ShapeRef, GroupBaseRef>(), vector<AttachmentRef>());
     }
 
     namespace {
@@ -449,10 +442,14 @@ namespace terrain {
 
             //
             //	Perform cut, adding results to affectedShapes and assigning parentage
-            //	so we can apply lin/ang vel to new bodies
+            //	so we can apply lin/ang vel to new bodies.
+            //  While we're at it, gather all attachments which were "attached" to the shapes that were cut.
+            //  note: attachments are actually attached to groups, but they test validity
+            //  by being inside a particular shape.
             //
 
             map <ShapeRef, GroupBaseRef> parentage;
+            vector <AttachmentRef> attachmentsToReparent;
             for (const ShapeRef &shapeToCut : collector.shapes) {
 
                 GroupBaseRef parentGroup = shapeToCut->getGroup();
@@ -464,6 +461,12 @@ namespace terrain {
                 //
 
                 affectedShapes.insert(end(affectedShapes), begin(result), end(result));
+
+                //
+                // collect the attachments; they'll be reparented or orphaned in build()
+                //
+                
+                copy(shapeToCut->_attachments.begin(), shapeToCut->_attachments.end(), back_inserter(attachmentsToReparent));
 
                 //
                 //	Update parentage map for use in build() - maps a shape to its previous parent group
@@ -494,6 +497,7 @@ namespace terrain {
                     _dynamicGroups.erase(dynamic_pointer_cast<DynamicGroup>(parentGroup));
                 }
             }
+            
 
             // let go of strong references
             collector.clear();
@@ -502,7 +506,7 @@ namespace terrain {
             double msa = _worldMaterial.minSurfaceArea;
             _worldMaterial.minSurfaceArea = minSurfaceArea > 0 ? minSurfaceArea : msa;
 
-            build(affectedShapes, parentage);
+            build(affectedShapes, parentage, attachmentsToReparent);
 
             _worldMaterial.minSurfaceArea = msa;
 
@@ -792,8 +796,13 @@ namespace terrain {
         group->addAttachment(attachment);
 
         // record shape hints to speed up future assignment after cuts are performed
-        attachment->setShapeHint(shapeHint);
+        if (ShapeRef previousShapeHint = attachment->_shapeHint.lock()) {
+            previousShapeHint->_attachments.erase(attachment);
+        }
         
+        attachment->_shapeHint = shapeHint;
+        shapeHint->_attachments.insert(attachment);
+
         // cache the group and shape to speed up calls to addAttachment
         _lastAttachmentGroup = group;
         _lastAttachmentShape = shapeHint;
@@ -801,6 +810,12 @@ namespace terrain {
     
     void World::handleOrphanedAttachment(const AttachmentRef &attachment) {
         _orphanedAttachments.insert(attachment);
+ 
+        if (ShapeRef shape = attachment->_shapeHint.lock()) {
+            shape->_attachments.erase(attachment);
+        }
+
+        attachment->_shapeHint.reset();
         attachment->_group.reset();
         attachment->_groupUnsafePtr = nullptr;
         attachment->_localTransform = dmat4(); // identity, only world position matters now
@@ -832,8 +847,7 @@ namespace terrain {
         _object = object;
     }
 
-    void World::build(const vector <ShapeRef> &affectedShapes, const map <ShapeRef, GroupBaseRef> &parentage) {
-
+    void World::build(const vector <ShapeRef> &affectedShapes, const map <ShapeRef, GroupBaseRef> &parentage, vector <AttachmentRef> attachmentsToReparent) {
         const auto self = shared_from_this();
 
         //
@@ -858,7 +872,6 @@ namespace terrain {
         //
 
         auto shapeGroups = findShapeGroups(affectedShapes, parentage);
-        set<AttachmentRef> attachments;
 
         for (const auto &shapeGroup : shapeGroups) {
 
@@ -874,19 +887,6 @@ namespace terrain {
                 }
             }
 
-            //
-            //  We need to migrate any attachments from the groups that are affected by the cut
-            //  TODO: How to handle this cheaply for the static group? Re-adding everything is NOT cheap.
-            //  Maybe attachments should have an associated shape to speed up testing?
-            //
-            
-            if (parentGroup) {
-                for (auto &attachment : parentGroup->getAttachments()) {
-                    attachments.insert(attachment);
-                }
-                parentGroup->clearAttachments();
-            }
-            
             if (isShapeGroupStatic(shapeGroup, parentGroup)) {
                 
                 //
@@ -909,6 +909,18 @@ namespace terrain {
                 }
 
                 //
+                //  Dynamic groups, when cut, always produce new dynamic groups. As such we need to
+                //  reparent all its attachments.
+                //
+
+                if (parentGroup) {
+                    for (auto &attachment : parentGroup->getAttachments()) {
+                        attachmentsToReparent.push_back(attachment);
+                    }
+                    parentGroup->clearAttachments();
+                }
+
+                //
                 //	Build a dynamic group
                 //
 
@@ -922,32 +934,29 @@ namespace terrain {
         //
         // now re-parent all affected attachments
         //
-        for (auto &attachment : attachments) {
+        for (auto &attachment : attachmentsToReparent) {
             
             const dvec2 position = attachment->getWorldPosition();
             const dvec2 rotation = attachment->getWorldRotation();
             bool added = false;
-
-            CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
-
-            // first try our shape hint since this will be the common case
+            
+//            CI_LOG_D("Re-inserting attachment (" << attachment->getId() << ") world position: " << attachment->getWorldPosition() << " rotation: " << attachment->getWorldRotation());
+            
+            // if our shapehint is valid, we don't even need to bother testing since shapes don't ever change
             if (ShapeRef shape = attachment->getShapeHint()) {
-                if (GroupBaseRef group = shape->getGroup()) {
-                    if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
-                        CI_LOG_D("\tAdded via SHAPE HINT");
-                        addAttachment(attachment, group, shape, position, rotation);
-                        added = true;
-                        break;
-                    }
-                }
+                GroupBaseRef group = shape->getGroup();
+//                CI_LOG_D("\tAdded via SHAPE HINT");
+                addAttachment(attachment, group, shape, position, rotation);
+                added = true;
+                break;
             }
-
+            
             // if we didn't add from shape hints, try the affected shapes - one of them might be a new insertion point
             if (!added) {
                 for(auto &shape : affectedShapes) {
                     if (GroupBaseRef group = shape->getGroup()) {
                         if (shape->isLocalPointInside(group->getInverseModelMatrix() * position)) {
-                            CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
+//                            CI_LOG_D("\tAdded via AFFECTED SHAPES LIST");
                             addAttachment(attachment, group, shape, position, rotation);
                             added = true;
                             break;
@@ -955,17 +964,17 @@ namespace terrain {
                     }
                 }
             }
-
+            
             // well, let's do this expensively
             if (!added) {
                 if (!addAttachment(attachment, position, rotation)) {
                     CI_LOG_D("\tOrphaned!");
                     handleOrphanedAttachment(attachment);
+                } else {
+//                    CI_LOG_D("\tAdded via EXPENSIVE SEARCH");
                 }
             }
-            
         }
-
     }
 
     vector <set<ShapeRef>> World::findShapeGroups(const vector <ShapeRef> &affectedShapes, const map <ShapeRef, GroupBaseRef> &parentage) {
@@ -1366,7 +1375,6 @@ namespace terrain {
     
     void DynamicGroup::update(const core::time_state &timeState) {
         GroupBase::update(timeState);
-
     }
     
     ShapeRef DynamicGroup::findShapeContainingLocalPoint(const dvec2 lp) const {

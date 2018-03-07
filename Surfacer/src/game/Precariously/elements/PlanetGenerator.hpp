@@ -140,6 +140,11 @@ namespace precariously { namespace planet_generation {
             this->transform = glm::scale(dvec3(scale, scale, 1)) * glm::translate(dvec3(-size/2, -size/2, 0));
             return *this;
         }
+        
+        // get the origin of whatever planet geometry will be created
+        dvec2 origin() const {
+            return transform * dvec2(size/2, size/2);
+        }
     };
     
     namespace detail {

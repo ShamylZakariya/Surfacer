@@ -253,9 +253,8 @@ namespace precariously { namespace planet_generation {
         if (params.terrain.enabled) {
             terrainMap = detail::generate_shapes(params, originalShapes);
             if (params.terrain.partitionSize > 0) {
-                dvec4 col3 = params.transform[3];
-                dvec2 origin(col3.x, col3.y);
-                shapes = terrain::World::partition(originalShapes, origin, params.terrain.partitionSize);
+                shapes = terrain::World::partition(originalShapes, params.terrain.partitionSize);
+                CI_LOG_D("Partition size of " << params.terrain.partitionSize << " resulted in " << shapes.size() << " partitioned pieces" );
             } else {
                 shapes = originalShapes;
             }
@@ -272,8 +271,12 @@ namespace precariously { namespace planet_generation {
         r.terrainMap = terrainMap;
         r.anchorMap = anchorMap;
         
-        {
-            dvec2 origin = params.transform * dvec2(params.size/2, params.size/2);
+        //
+        // generate attachments
+        //
+
+        if (!params.attachments.empty()) {
+            const dvec2 origin = params.origin();
 
             ci::Rand rng;
             const double placementNudge = 1e-2;

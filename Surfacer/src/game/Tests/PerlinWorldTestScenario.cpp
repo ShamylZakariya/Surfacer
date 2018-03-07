@@ -102,10 +102,12 @@ void PerlinWorldTestScenario::setup() {
     setStage(make_shared<Stage>("Perlin World"));
 
     auto params = precariously::planet_generation::params(512).defaultCenteringTransform(4);
+    
     params.terrain.seed = _seed;
     params.terrain.noiseOctaves = 2;
     params.terrain.noiseFrequencyScale = 2;
     params.terrain.pruneFloaters = false;
+    params.terrain.partitionSize = 100;
     params.terrain.surfaceSolidity = _surfaceSolidity;
     params.terrain.material = TerrainMaterial;
     

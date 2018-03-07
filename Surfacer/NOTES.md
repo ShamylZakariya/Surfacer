@@ -7,10 +7,14 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-Why is cutting the static planet geometry so slow? Shape hints don't help enough - maybe we need to be smarter about not doing inside tests for non-modified static geometry?
-    - consider, instead of having each Attachment have a shapehint, what if the shape also got a list of attachments? Bidirectional. WHen a cut is performed, we collect the attachments which were associated with the cut shapes and only reparent those. Leave the rest alone, completely.
-    - this has ramifications for dynamic group situations. But I think we re-use shapes with DynamicGroup as well, so we can reuse the shape assignments too?
-
+1) DONE ~~partitioning is BROKEN AF (confirm this fixes precariously level load, which is BROKEN AF, showing only core geometry)~~
+2) fast path for reparenting attachments not working as expected (shape hint weak ptr is invalid);
+    kind of makes sense in as much as static terrain is ONE shape, which when cut, dies. partitioning could help, but an alternate approach
+    might be to collect attachments that intersect the actual cut???
+    - consider:
+        - compute two lists of attachments. The current set of ones which need reparenting, and ANOTHER, those which intersected the cut and are guaranteed to be orphaned.
+        - subtract the latter from the former, and the reparenting set can be blindly re-inserted
+    
 ## BUGS PRIORITY HIGH
 
 For my sanity I really must make zooming about mouse cursor work again

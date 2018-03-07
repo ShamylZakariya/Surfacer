@@ -244,7 +244,7 @@ terrain::WorldRef TerrainTestScenario::testDistantTerrain() {
 
 
     vector<terrain::ShapeRef> shapes = {terrain::Shape::fromContour(rect(origin.x - 200, origin.y - 200, origin.x + 200, origin.y + 200))};
-    shapes = terrain::World::partition(shapes, vec2(0, 0), 30);
+    shapes = terrain::World::partition(shapes, 30);
 
     const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
     terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
@@ -399,7 +399,7 @@ terrain::WorldRef TerrainTestScenario::testSimplePartitionedTerrain() {
     auto shapes = terrain::Shape::fromContours(rings);
     //auto shapes = vector<terrain::ShapeRef> { boxShape(vec2(0,0), vec2(500,500)) };
 
-    auto partitionedShapes = terrain::World::partition(shapes, vec2(0, 0), 130);
+    auto partitionedShapes = terrain::World::partition(shapes, 130);
 
     const auto terrainMaterial = terrain::material(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
     terrain::material anchorMaterial(1, 1, COLLISION_SHAPE_RADIUS, ShapeFilters::ANCHOR, CollisionType::ANCHOR, MIN_SURFACE_AREA, ANCHOR_COLOR);
@@ -434,7 +434,7 @@ terrain::WorldRef TerrainTestScenario::testComplexPartitionedTerrainWithAnchors(
     };
 
     auto shapes = terrain::Shape::fromContours(rings);
-    auto partitionedShapes = terrain::World::partition(shapes, vec2(0, 0), 130);
+    auto partitionedShapes = terrain::World::partition(shapes, 130);
 
 
     vector<terrain::AnchorRef> anchors = {
@@ -478,7 +478,7 @@ terrain::WorldRef TerrainTestScenario::testComplexSvgLoad() {
     terrain::World::loadSvg(app::loadAsset("svg_tests/complex_world_test.svg"), dmat4(), shapes, anchors, elements, true);
 
     // partition
-    auto partitionedShapes = terrain::World::partition(shapes, dvec2(0, 0), 500);
+    auto partitionedShapes = terrain::World::partition(shapes, 500);
 
     // construct
     const terrain::material terrainMaterial(1, 0.5, COLLISION_SHAPE_RADIUS, ShapeFilters::TERRAIN, CollisionType::TERRAIN, MIN_SURFACE_AREA, TERRAIN_COLOR);
@@ -513,7 +513,7 @@ terrain::WorldRef TerrainTestScenario::testFail() {
     };
 
     auto shapes = terrain::Shape::fromContours(rings);
-    auto partitionedShapes = terrain::World::partition(shapes, vec2(0, 0), 130);
+    auto partitionedShapes = terrain::World::partition(shapes, 130);
 
 
     vector<terrain::AnchorRef> anchors = {

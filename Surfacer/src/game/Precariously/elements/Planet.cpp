@@ -73,6 +73,13 @@ namespace precariously {
 
     PlanetRef Planet::create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer) {
         planet_generation::params params = create_planet_generation_params(surfaceConfig, coreConfig, origin, surfaceConfig.radius);
+        
+        // this is a bit hokey; we need to copy our materials back to the params for generation
+        // TODO: a refactoring would let us skip this ugliness and let planet_generation create the World itself
+        params.terrain.material = world->getWorldMaterial();
+        params.anchors.material = world->getAnchorMaterial();
+        params.terrain.partitionSize = partitionSize;
+
         auto result = planet_generation::generate(params, world);
 
         // finally create the Planet
