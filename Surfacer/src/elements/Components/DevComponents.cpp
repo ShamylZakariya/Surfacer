@@ -224,7 +224,8 @@ namespace {
 }
 
 void ManualViewportControlComponent::step(const time_state &time) {
-    const double radsPerSec = 10 * M_PI / 180;
+    const bool fast = (isKeyDown(ci::app::KeyEvent::KEY_LSHIFT)||isKeyDown(ci::app::KeyEvent::KEY_RSHIFT));
+    const double radsPerSec = (fast ? 100 : 10) * M_PI / 180;
     if (isKeyDown(ci::app::KeyEvent::KEY_q)) {
         Viewport::look look = _viewportController->getLook();
         look.up = rotate(look.up, -radsPerSec * time.deltaT);
@@ -286,7 +287,8 @@ bool ManualViewportControlComponent::mouseWheel(const ci::app::MouseEvent &event
     const float zoom = _viewportController->getScale(),
             wheelScale = 0.1 * zoom,
             dz = (event.getWheelIncrement() * wheelScale);
-    _viewportController->setScale(zoom + dz);
+    
+    _viewportController->setScale(zoom + dz, dvec2(event.getX(), event.getY()));
 
     return true;
 }
@@ -361,8 +363,7 @@ void TargetTrackingViewportControlComponent::_trackNoSlop(const tracking &t, con
     const ivec2 size = _viewportController->getViewport()->getSize();
     const double scale = min(size.x, size.y) / (2 * t.radius);
 
-    _viewportController->setLook(Viewport::look(t.world, t.up));
-    _viewportController->setScale(scale * _scale);
+    _viewportController->setLook(Viewport::look(t.world, t.up, scale * _scale));
 }
 
 void TargetTrackingViewportControlComponent::_track(const tracking &t, const time_state &time) {

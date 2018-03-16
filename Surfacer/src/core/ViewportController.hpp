@@ -32,11 +32,19 @@ namespace core {
          */
         struct zeno_config {
             double lookTargetFactor, scaleFactor, lookUpFactor;
+            
+            static zeno_config withFactor(double f) {
+                return zeno_config(f,f,f);
+            }
+            
+            static zeno_config none() {
+                return zeno_config(1,1,1);
+            }
 
             zeno_config() :
-                    lookTargetFactor(0.98),
-                    scaleFactor(0.98),
-                    lookUpFactor(0.98) {
+                    lookTargetFactor(0.99),
+                    scaleFactor(0.99),
+                    lookUpFactor(0.99) {
             }
 
             zeno_config(double ltf, double sf, double luf) :
@@ -78,12 +86,16 @@ namespace core {
 
         void setLook(Viewport::look l);
 
+        void setLook(const dvec2 world, const dvec2 up, double scale) {
+            setLook(Viewport::look(world, up, scale));
+        }
+
         void setLook(const dvec2 world, const dvec2 up) {
-            setLook(Viewport::look(world, up));
+            setLook(Viewport::look(world, up, _look.scale));
         }
 
         void setLook(const dvec2 world) {
-            setLook(Viewport::look(world, dvec2(0, 1)));
+            setLook(Viewport::look(world, _look.up, _look.scale));
         }
 
         Viewport::look getLook() const {
@@ -91,22 +103,23 @@ namespace core {
         }
 
         void setScale(double scale);
+        
+        // set the scale, anchoring whatever's under `aboutScreenPoint to remain in same position on the screen.
+        // this is a helper for zooming under mouse cursors
+        void setScale(double scale, dvec2 aboutScreenPoint);
 
         double getScale() const {
-            return _scale;
+            return _look.scale;
         }
 
     protected:
 
-        void _viewportInitiatedChange(const Viewport &vp);
-
-        void _viewportBoundsChanged(const Viewport &vp);
+        void _onViewportPropertyChanged(const Viewport &vp);
 
     private:
 
         ViewportRef _viewport;
         Viewport::look _look;
-        double _scale;
 
         zeno_config _zenoConfig;
         bool _disregardViewportMotion;

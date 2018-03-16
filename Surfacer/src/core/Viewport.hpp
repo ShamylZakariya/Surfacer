@@ -111,20 +111,24 @@ namespace core {
         struct look {
             dvec2 world;
             dvec2 up;
+            double scale;
 
             look() :
                     world(0, 0),
-                    up(0, 1) {
+                    up(0, 1),
+                    scale(1) {
             }
 
-            look(dvec2 w, dvec2 u) :
+            look(dvec2 w, dvec2 u, double s) :
                     world(w),
-                    up(u) {
+                    up(u),
+                    scale(s) {
             }
 
             look(const look &c) :
                     world(c.world),
-                    up(c.up) {
+                    up(c.up),
+                    scale(c.scale) {
             }
         };
 
@@ -161,20 +165,24 @@ namespace core {
         /**
             Set the scale - this effectively zooms in and out of whatever you're looking at
          */
-        void setScale(double z);
+        void setScale(double z) {
+            look l = _look;
+            l.scale = z;
+            setLook(l);
+        }
 
         /**
             get the current scale
          */
         double getScale() const override {
-            return _scale;
+            return _look.scale;
         }
 
         /**
             get the reciprocal of current scale
          */
         double getReciprocalScale() const override {
-            return 1.0 / _scale;
+            return 1.0 / _look.scale;
         }
 
         /**
@@ -183,17 +191,24 @@ namespace core {
         void setLook(const look &l);
 
         /**
+         center viewport on a position in the world, with a given up-vector and scale
+         */
+        void setLook(const dvec2 &world, const dvec2 &up, double scale) {
+            setLook(look(world, up, scale));
+        }
+
+        /**
          center viewport on a position in the world, with a given up-vector
          */
         void setLook(const dvec2 &world, const dvec2 &up) {
-            setLook(look(world, up));
+            setLook(look(world, up, _look.scale));
         }
 
         /**
          center viewport on a position in the world
          */
         void setLook(const dvec2 &world) {
-            setLook(look(world, dvec2(0, 1)));
+            setLook(look(world, _look.up, _look.scale));
         }
 
         look getLook() const {
@@ -263,13 +278,14 @@ namespace core {
         void set();
 
     private:
+        
+        friend class ViewportController;
 
-        void _calcMatrices();
+        void _updateMatrices();
 
     private:
 
         int _width, _height;
-        double _scale;
         look _look;
         dmat4 _viewMatrix, _inverseViewMatrix, _projectionMatrix, _inverseProjectionMatrix, _viewProjectionMatrix, _inverseViewProjectionMatrix;
 

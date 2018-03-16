@@ -13,7 +13,6 @@ namespace core {
     /*
         ViewportRef _viewport;
         Viewport::look _look;
-        double _scale;
 
         zeno_config _zenoConfig;
         bool _disregardViewportMotion;
@@ -27,19 +26,18 @@ namespace core {
 
     void ViewportController::update(const time_state &time) {
         _disregardViewportMotion = true;
-
+        
         const double Rate = 1.0 / time.deltaT;
         Viewport::look look = _viewport->getLook();
-
+        
         const dvec2 lookWorldError = _look.world - look.world;
         const dvec2 lookUpError = _look.up - look.up;
-        const double scaleError = _scale - _viewport->getScale();
-
+        const double scaleError = _look.scale - look.scale;
+        
         look.world = look.world + lookWorldError * std::pow(_zenoConfig.lookTargetFactor, Rate);
         look.up = look.up + lookUpError * std::pow(_zenoConfig.lookUpFactor, Rate);
-        const double newScale = _viewport->getScale() + scaleError * std::pow(_zenoConfig.scaleFactor, Rate);
-
-        _viewport->setScale(newScale);
+        look.scale = look.scale + scaleError * std::pow(_zenoConfig.scaleFactor, Rate);
+        
         _viewport->setLook(look);
 
         _disregardViewportMotion = false;
@@ -52,13 +50,11 @@ namespace core {
         }
         _viewport = vp;
         if (_viewport) {
-            _scale = _viewport->getScale();
             _look = _viewport->getLook();
-            _viewport->onMotion.connect(this, &ViewportController::_viewportInitiatedChange);
-            _viewport->onBoundsChanged.connect(this, &ViewportController::_viewportBoundsChanged);
+            _viewport->onMotion.connect(this, &ViewportController::_onViewportPropertyChanged);
+            _viewport->onBoundsChanged.connect(this, &ViewportController::_onViewportPropertyChanged);
         } else {
-            _scale = 1;
-            _look = {dvec2(0, 0), dvec2(0, 1)};
+            _look = { dvec2(0, 0), dvec2(0, 1), 1 };
         }
     }
 
@@ -74,23 +70,36 @@ namespace core {
     }
 
     void ViewportController::setScale(double scale) {
-        _scale = max(scale, 0.0);
+        _look.scale = max(scale, 0.0);
     }
+    
+    void ViewportController::setScale(double scale, dvec2 aboutScreenPoint) {
+        setScale(scale);
+        _disregardViewportMotion = true;
+
+        
+        // determine where aboutScreenPoint is in worldSpace
+        dvec2 aboutScreenPointWorld = _viewport->screenToWorld(aboutScreenPoint);
+        
+        auto previousLook = _viewport->getLook();
+        _viewport->setLook(_look);
+        
+        dvec2 postScaleAboutScreenPointWorld = _viewport->screenToWorld(aboutScreenPoint);
+        dvec2 delta = postScaleAboutScreenPointWorld - aboutScreenPointWorld;
+        
+        _viewport->setLook(previousLook);
+
+        _look.world -= delta;
+        _disregardViewportMotion = false;
+    }
+
 
 #pragma mark -
 #pragma mark Private
 
-    void ViewportController::_viewportInitiatedChange(const Viewport &vp) {
+    void ViewportController::_onViewportPropertyChanged(const Viewport &vp) {
         if (!_disregardViewportMotion) {
             _look = vp.getLook();
-            _scale = vp.getScale();
-        }
-    }
-
-    void ViewportController::_viewportBoundsChanged(const Viewport &vp) {
-        if (!_disregardViewportMotion) {
-            _look = vp.getLook();
-            _scale = vp.getScale();
         }
     }
 

@@ -7,17 +7,21 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
-1) DONE ~~partitioning is BROKEN AF (confirm this fixes precariously level load, which is BROKEN AF, showing only core geometry)~~
-2) fast path for reparenting attachments not working as expected (shape hint weak ptr is invalid);
+attachments are ostensibly not orphaned, but don't track with cut geometry
+    - build a "cut recorder" which persists cuts to something (JSON?)
+    - build a "cut replayer" which cen execute those cuts
+    - emit ONE attachment, find the one or two cuts which leave it orphaned
+    - VERIFY
+
+fast path for reparenting attachments not working as expected (shape hint weak ptr is invalid);
     kind of makes sense in as much as static terrain is ONE shape, which when cut, dies. partitioning could help, but an alternate approach
     might be to collect attachments that intersect the actual cut???
-    - consider:
+    consider:
         - compute two lists of attachments. The current set of ones which need reparenting, and ANOTHER, those which intersected the cut and are guaranteed to be orphaned.
         - subtract the latter from the former, and the reparenting set can be blindly re-inserted
+        - observe TerrainWorld::417 cpSpaceBBQuery - I might be able to use cpSPace queries to test if attachments are inside the cut volume
     
 ## BUGS PRIORITY HIGH
-
-For my sanity I really must make zooming about mouse cursor work again
 
 ## BUGS PRIORITY LOW
 
