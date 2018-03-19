@@ -31,26 +31,14 @@ namespace core {
 
          */
         struct zeno_config {
-            double lookTargetFactor, scaleFactor, lookUpFactor;
+            double factor;
             
-            static zeno_config withFactor(double f) {
-                return zeno_config(f,f,f);
-            }
-            
-            static zeno_config none() {
-                return zeno_config(1,1,1);
-            }
-
             zeno_config() :
-                    lookTargetFactor(0.99),
-                    scaleFactor(0.99),
-                    lookUpFactor(0.99) {
+                    factor(0.98) {
             }
 
-            zeno_config(double ltf, double sf, double luf) :
-                    lookTargetFactor(ltf),
-                    scaleFactor(sf),
-                    lookUpFactor(luf) {
+            zeno_config(double factor) :
+                    factor(factor) {
             }
 
         };

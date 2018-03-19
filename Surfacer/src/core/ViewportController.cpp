@@ -27,18 +27,23 @@ namespace core {
     void ViewportController::update(const time_state &time) {
         _disregardViewportMotion = true;
         
-        const double Rate = 1.0 / time.deltaT;
-        Viewport::look look = _viewport->getLook();
-        
-        const dvec2 lookWorldError = _look.world - look.world;
-        const dvec2 lookUpError = _look.up - look.up;
-        const double scaleError = _look.scale - look.scale;
-        
-        look.world = look.world + lookWorldError * std::pow(_zenoConfig.lookTargetFactor, Rate);
-        look.up = look.up + lookUpError * std::pow(_zenoConfig.lookUpFactor, Rate);
-        look.scale = look.scale + scaleError * std::pow(_zenoConfig.scaleFactor, Rate);
-        
-        _viewport->setLook(look);
+        if (_zenoConfig.factor < 1) {
+            const double rate = 1.0 / time.deltaT;
+            const double f = std::pow(_zenoConfig.factor, rate);
+            Viewport::look look = _viewport->getLook();
+            
+            const dvec2 lookWorldError = _look.world - look.world;
+            const dvec2 lookUpError = _look.up - look.up;
+            const double scaleError = _look.scale - look.scale;
+            
+            look.world = look.world + lookWorldError * f;
+            look.up = look.up + lookUpError * f;
+            look.scale = look.scale + scaleError * f;
+            
+            _viewport->setLook(look);
+        } else {
+            _viewport->setLook(_look);
+        }        
 
         _disregardViewportMotion = false;
     }
