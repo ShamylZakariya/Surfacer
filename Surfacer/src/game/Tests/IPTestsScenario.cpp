@@ -7,6 +7,7 @@
 
 #include "IPTestsScenario.hpp"
 
+#include "App.hpp"
 #include "DevComponents.hpp"
 #include "ImageProcessing.hpp"
 
@@ -28,6 +29,7 @@ IPTestsScenario::~IPTestsScenario() {
 }
 
 void IPTestsScenario::setup() {
+    getViewportController()->setZenoConfig(ViewportController::zeno_config(0.999));
     setStage(make_shared<Stage>("Image Processing Tests"));
     
     getStage()->addObject(Object::with("ViewportControlComponent", {
@@ -38,24 +40,26 @@ void IPTestsScenario::setup() {
     grid->setFillColor(ColorA(0.2, 0.22, 0.25, 1.0));
     grid->setGridColor(ColorA(1, 1, 1, 0.1));
     getStage()->addObject(Object::with("Grid", {grid}));
-    
-    int s = 256;
-    {
-        StopWatch suite("IP Suite");
-        _channels = vector<Channel8u> {
-            testBlur(s,s),
-            testRemap(s,s),
-            testDilate(s,s),
-            testErode(s,s),
-            testThreshold(s, s),
-            testPerlinNoise(s, s),
-            testPerlinNoise2(s, s)
-        };
-    }
-    
-    const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
-    for(Channel8u channel : _channels) {
-        _channelTextures.push_back(ci::gl::Texture2d::create(channel, fmt));
+
+    if ((true)) {
+        int s = 256;
+        {
+            StopWatch suite("IP Suite");
+            _channels = vector<Channel8u> {
+                testBlur(s,s),
+                testRemap(s,s),
+                testDilate(s,s),
+                testErode(s,s),
+                testThreshold(s, s),
+                testPerlinNoise(s, s),
+                testPerlinNoise2(s, s)
+            };
+        }
+        
+        const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
+        for(Channel8u channel : _channels) {
+            _channelTextures.push_back(ci::gl::Texture2d::create(channel, fmt));
+        }
     }
 }
 
@@ -89,6 +93,23 @@ void IPTestsScenario::draw(const render_state &state) {
 }
 
 void IPTestsScenario::drawScreen(const render_state &state) {
+
+    //
+    // NOTE: we're in screen space, with coordinate system origin at top left
+    //
+    
+    float fps = core::App::get()->getAverageFps();
+    float sps = core::App::get()->getAverageSps();
+    string info = core::strings::format("%.1f %.1f", fps, sps);
+    gl::drawString(info, vec2(10, 10), Color(1, 1, 1));
+    
+    stringstream ss;
+    Viewport::look look = getViewport()->getLook();
+    double scale = getViewport()->getScale();
+    
+    ss << std::setprecision(3) << "look (" << look.world.x << ", " << look.world.y << ") scale: " << scale << " up: (" << look.up.x << ", " << look.up.y << ")";
+    gl::drawString(ss.str(), vec2(10, 40), Color(1, 1, 1));
+
 }
 
 bool IPTestsScenario::keyDown(const ci::app::KeyEvent &event) {
