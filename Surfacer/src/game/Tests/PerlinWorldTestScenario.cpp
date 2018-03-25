@@ -9,6 +9,7 @@
 
 #include <cinder/Perlin.h>
 
+#include "App.hpp"
 #include "ParticleSystem.hpp"
 #include "DevComponents.hpp"
 #include "PerlinNoise.hpp"
@@ -87,11 +88,17 @@ namespace {
  vector<ci::gl::Texture2dRef> _isoTexes;
  vector <segment> _marchSegments;
  vector <polyline> _marchedPolylines;
+ 
+ TerrainCutRecorder _terrainCutRecorder;
+ bool _recordCuts;
+ bool _playingBackRecordedCuts;
 */
 
 PerlinWorldTestScenario::PerlinWorldTestScenario() :
     _seed(1234),
-    _surfaceSolidity(0.5)
+    _surfaceSolidity(0.5),
+    _recordCuts(true),
+    _playingBackRecordedCuts(false)
 {
 }
 
@@ -126,16 +133,17 @@ void PerlinWorldTestScenario::setup() {
     ap.probability = 0.75;
     ap.density = 1;
     ap.includeHoleContours = true;
+
     params.attachments.push_back(ap);
     
     
-    auto result = precariously::planet_generation::generate(params, getStage()->getSpace());
-    auto terrain = terrain::TerrainObject::create("Terrain", result.world, DrawLayers::TERRAIN);
-    getStage()->addObject(terrain);
+    auto terrainGen = precariously::planet_generation::generate(params, getStage()->getSpace());
+    _terrain = terrain::TerrainObject::create("Terrain", terrainGen.world, DrawLayers::TERRAIN);
+    getStage()->addObject(_terrain);
     
     // debug views of the iso surfaces
     {
-        _isoSurfaces = vector<Channel8u> { result.terrainMap, result.anchorMap };
+        _isoSurfaces = vector<Channel8u> { terrainGen.terrainMap, terrainGen.anchorMap };
         const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
         for(Channel8u isoSurface : _isoSurfaces) {
             _isoTexes.push_back(ci::gl::Texture2d::create(isoSurface, fmt));
@@ -152,7 +160,7 @@ void PerlinWorldTestScenario::setup() {
         config.drawConfig.atlasType = particles::Atlas::TwoByTwo;
         config.drawConfig.drawLayer = DrawLayers::ATTACHMENTS;
         
-        for(auto v : result.attachmentsByBatchId) {
+        for(auto v : terrainGen.attachmentsByBatchId) {
             auto greebles = precariously::GreeblingParticleSystem::create("greeble_" + str(v.first), config, v.second);
             getStage()->addObject(greebles);
         }
@@ -168,20 +176,30 @@ void PerlinWorldTestScenario::setup() {
         make_shared<MousePickDrawComponent>()
     }));
     
+    auto cutter = make_shared<terrain::MouseCutterComponent>(_terrain, 4);
     getStage()->addObject(Object::with("Cutter", {
-        make_shared<terrain::MouseCutterComponent>(terrain, 4),
-        make_shared<terrain::MouseCutterDrawComponent>()
+        cutter, make_shared<terrain::MouseCutterDrawComponent>()
     }));
     
+    cutter->onCut.connect(this, &PerlinWorldTestScenario::onCutPerformed);
+
     getStage()->addObject(Object::with("ViewportControlComponent", {
         make_shared<ManualViewportControlComponent>(getViewportController())
     }));
+    
+    auto path = core::App::get()->getAppPath() / "cuts.txt";
+    _terrainCutRecorder = make_shared<TerrainCutRecorder>(path);
+    _recordCuts = true;
+    _playingBackRecordedCuts = false;
 }
 
 void PerlinWorldTestScenario::cleanup() {
-    setStage(nullptr);
+    _terrainCutRecorder.reset();
+    _terrain.reset();
     _isoSurfaces.clear();
     _isoTexes.clear();
+
+    setStage(nullptr);
 }
 
 void PerlinWorldTestScenario::resize(ivec2 size) {
@@ -260,6 +278,19 @@ bool PerlinWorldTestScenario::keyDown(const ci::app::KeyEvent &event) {
             CI_LOG_D("_surfaceSolidity: " << _surfaceSolidity);
             reset();
             return true;
+            
+        case 'c':
+            if (!_terrainCutRecorder->getCuts().empty()) {
+                _playingBackRecordedCuts = true;
+
+                CI_LOG_D("Will play back " << _terrainCutRecorder->getCuts().size() << " recorded cuts");
+                for (const auto &c : _terrainCutRecorder->getCuts()) {
+                    _terrain->getWorld()->cut(c.a, c.b, c.width);
+                }
+                
+                _playingBackRecordedCuts = false;
+            }
+            return true;
     }
     
     if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
@@ -313,3 +344,11 @@ vector <PerlinWorldTestScenario::segment> PerlinWorldTestScenario::testMarch(ci:
 
     return sc.segments;
 }
+
+void PerlinWorldTestScenario::onCutPerformed(dvec2 a, dvec2 b, double radius) {
+    if (_recordCuts && !_playingBackRecordedCuts) {
+        CI_LOG_D("onCutPerformed a: " << a << " b: " << b << " radius: " << radius);
+        _terrainCutRecorder->addCut(a,b,radius);
+        _terrainCutRecorder->save();
+    }
+ }

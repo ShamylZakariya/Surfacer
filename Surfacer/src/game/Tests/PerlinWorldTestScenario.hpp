@@ -12,6 +12,9 @@
 
 #include "Core.hpp"
 
+#include "Terrain.hpp"
+#include "TerrainCutRecorder.hpp"
+
 
 using namespace ci;
 using namespace core;
@@ -57,6 +60,7 @@ private:
 
     vector <polyline> marchToPerimeters(ci::Channel8u &iso, size_t expectedContourCount) const;
     vector <segment> testMarch(ci::Channel8u &iso) const;
+    void onCutPerformed(dvec2 a, dvec2 b, double radius);
 
 private:
 
@@ -67,6 +71,11 @@ private:
     vector<ci::gl::Texture2dRef> _isoTexes;
     vector <segment> _marchSegments;
     vector <polyline> _marchedPolylines;
+    terrain::TerrainObjectRef _terrain;
+        
+    shared_ptr<TerrainCutRecorder> _terrainCutRecorder;
+    bool _recordCuts;
+    bool _playingBackRecordedCuts;
 
 };
 
