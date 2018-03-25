@@ -113,6 +113,11 @@ namespace terrain {
 
     class MouseCutterComponent : public core::InputComponent {
     public:
+        
+        // emitted when a cut is performed, passes start,end,width in world units
+        core::signals::signal<void(dvec2,dvec2,double)> onCut;
+        
+    public:
 
         MouseCutterComponent(terrain::TerrainObjectRef terrain, float radius, int dispatchReceiptIndex = 0);
 

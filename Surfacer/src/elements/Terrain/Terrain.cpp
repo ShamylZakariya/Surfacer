@@ -77,8 +77,7 @@ namespace terrain {
 
 #pragma mark - MouseCutterComponent
 
-    MouseCutterComponent::MouseCutterComponent(terrain::TerrainObjectRef terrain, float radius, int dispatchReceiptIndex)
-            :
+    MouseCutterComponent::MouseCutterComponent(terrain::TerrainObjectRef terrain, float radius, int dispatchReceiptIndex):
             InputComponent(dispatchReceiptIndex),
             _cutting(false),
             _radius(radius),
@@ -88,7 +87,7 @@ namespace terrain {
     bool MouseCutterComponent::mouseDown(const ci::app::MouseEvent &event) {
         _mouseScreen = event.getPos();
         _mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
-
+        
         _cutting = true;
         _cutStart = _cutEnd = _mouseWorld;
 
@@ -100,6 +99,9 @@ namespace terrain {
             if (_terrain) {
                 const float radius = _radius / getStage()->getViewport()->getScale();
                 _terrain->getWorld()->cut(_cutStart, _cutEnd, radius);
+
+                // notify
+                onCut(_cutStart, _cutEnd, radius);
             }
 
             _cutting = false;
