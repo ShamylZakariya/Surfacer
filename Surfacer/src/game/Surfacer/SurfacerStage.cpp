@@ -187,7 +187,7 @@ namespace surfacer {
         terrain::World::loadSvg(svgData, dmat4(scale), shapes, anchors, elements, true);
         if (!shapes.empty()) {
             // partition
-            auto partitionedShapes = terrain::World::partition(shapes, dvec2(0, 0), 500);
+            auto partitionedShapes = terrain::World::partition(shapes, 500);
 
             // construct
             auto world = make_shared<terrain::World>(getSpace(), terrainMaterial, anchorMaterial);

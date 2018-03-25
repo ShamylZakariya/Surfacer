@@ -163,7 +163,7 @@ namespace core {
         }
 
         /**
-            Set the scale - this effectively zooms in and out of whatever you're looking at
+            Set the scale - this effectively zooms in and out of whatever's at the center of the viewport
          */
         void setScale(double z) {
             look l = _look;
@@ -198,14 +198,14 @@ namespace core {
         }
 
         /**
-         center viewport on a position in the world, with a given up-vector
+         center viewport on a position in the world, with a given up-vector, maintaining current scale
          */
         void setLook(const dvec2 &world, const dvec2 &up) {
             setLook(look(world, up, _look.scale));
         }
 
         /**
-         center viewport on a position in the world
+         center viewport on a position in the world, maintaining current up and scale
          */
         void setLook(const dvec2 &world) {
             setLook(look(world, _look.up, _look.scale));
