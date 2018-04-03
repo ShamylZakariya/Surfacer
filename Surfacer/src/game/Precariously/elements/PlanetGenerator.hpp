@@ -100,6 +100,9 @@ namespace precariously { namespace planet_generation {
             // number of possible plantings per unit distance
             double density;
             
+            // if non-zero, attachment generation will end when maxCount is reached
+            size_t maxCount;
+            
             // if true, hole contours will be included as well as the primary outer contour
             bool includeHoleContours;
             
@@ -111,15 +114,17 @@ namespace precariously { namespace planet_generation {
             normalToUpDotRange(1),
             probability(1),
             density(1),
+            maxCount(0),
             includeHoleContours(true),
             batchId(batchId)
             {}
             
-            perimeter_attachment_params(size_t batchId, double normalToUpDotTarget, double normalToUpDotRange, double probability, double density, bool includeHoleContours):
+            perimeter_attachment_params(size_t batchId, double normalToUpDotTarget, double normalToUpDotRange, double probability, double density, size_t maxCount, bool includeHoleContours):
             normalToUpDotTarget(normalToUpDotTarget),
             normalToUpDotRange(normalToUpDotRange),
             probability(probability),
             density(density),
+            maxCount(maxCount),
             includeHoleContours(includeHoleContours),
             batchId(batchId)
             {}

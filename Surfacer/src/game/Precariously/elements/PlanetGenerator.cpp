@@ -88,11 +88,12 @@ namespace precariously { namespace planet_generation {
             normal = rotateCCW(normalize(derivative));
         }
         
-        // walk perimeter(s) of contour calling visitor
+        // walk perimeter(s) of contour calling visitor, returning false if walk was early terminated.
         // contour: contour to walk
         // step: distance to increment while walking about perimeter
-        // visitor: the visitor invoked for each step, signature: visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
-        void walk_perimeter(const PolyLine2d &contour, double step, double wiggle, ci::Rand &rng, bool isOuterContour, const function<void(dvec2,dvec2,bool)> &visitor) {
+        // visitor: the visitor invoked for each step, signature: bool visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
+        // if visitor returns false, walk is terminated
+        bool walk_perimeter(const PolyLine2d &contour, double step, double wiggle, ci::Rand &rng, bool isOuterContour, const function<bool(dvec2,dvec2,bool)> &visitor) {
 
             // TODO: Add wiggle to step
             
@@ -100,20 +101,30 @@ namespace precariously { namespace planet_generation {
             for (double d = 0; d <= len; d += step) {
                 dvec2 position, normal;
                 get_position_and_normal(contour, (d+rng.nextFloat(-wiggle, +wiggle))/len, position, normal);
-                visitor(position, normal, isOuterContour);
+                if (!visitor(position, normal, isOuterContour)) {
+                    return false;
+                }
             }
+            
+            return true;
         }
         
         // walk perimeter(s) of shape calling visitor with world space vertices.
         // shape: shape to walk
         // step: distance to increment while walking about perimeter
         // allContours: if true, walks inner ("hole") perimeters as well as primary outer perimeter
-        // visitor: the visitor invoked for each step, signature: visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
-        void walk_shape_perimeter(const terrain::ShapeRef &shape, double step, double wiggle, ci::Rand &rng, bool allContours, const function<void(dvec2,dvec2,bool)> &visitor) {
-            walk_perimeter(shape->getOuterContour().world, step, wiggle, rng, true, visitor);
+        // visitor: the visitor invoked for each step, signature: bool visitor(dvec2 world, dvec2 contourNormal, bool isOuterContour)
+        // if visitor returns false, walk is terminated
+        void walk_shape_perimeter(const terrain::ShapeRef &shape, double step, double wiggle, ci::Rand &rng, bool allContours, const function<bool(dvec2,dvec2,bool)> &visitor) {
+            if (!walk_perimeter(shape->getOuterContour().world, step, wiggle, rng, true, visitor)) {
+                return;
+            }
+
             if (allContours) {
                 for(const auto &hole : shape->getHoleContours()) {
-                    walk_perimeter(hole.world, step, wiggle, rng, false, visitor);
+                    if (!walk_perimeter(hole.world, step, wiggle, rng, false, visitor)) {
+                        return;
+                    }
                 }
             }
         }
@@ -246,17 +257,17 @@ namespace precariously { namespace planet_generation {
         world->setWorldMaterial(params.terrain.material);
         world->setAnchorMaterial(params.anchors.material);
         
-        vector <terrain::ShapeRef> originalShapes, shapes;
+        vector <terrain::ShapeRef> nonPartitionedShapes, shapes;
         vector <terrain::AnchorRef> anchors;
         Channel8u terrainMap, anchorMap;
         
         if (params.terrain.enabled) {
-            terrainMap = detail::generate_shapes(params, originalShapes);
+            terrainMap = detail::generate_shapes(params, nonPartitionedShapes);
             if (params.terrain.partitionSize > 0) {
-                shapes = terrain::World::partition(originalShapes, params.terrain.partitionSize);
+                shapes = terrain::World::partition(nonPartitionedShapes, params.terrain.partitionSize);
                 CI_LOG_D("Partition size of " << params.terrain.partitionSize << " resulted in " << shapes.size() << " partitioned pieces" );
             } else {
-                shapes = originalShapes;
+                shapes = nonPartitionedShapes;
             }
         }
         
@@ -276,7 +287,9 @@ namespace precariously { namespace planet_generation {
         //
 
         if (!params.attachments.empty()) {
+            
             const dvec2 origin = params.origin();
+            terrain::AttachmentRef attachment;
 
             ci::Rand rng;
             const double placementNudge = 1e-2;
@@ -284,22 +297,33 @@ namespace precariously { namespace planet_generation {
                 vector <terrain::AttachmentRef> attachments;
                 const double step = 1/ ap.density;
                 const double wiggle = step * 0.5;
-                for(const terrain::ShapeRef &shape : originalShapes) {
-                    walk_shape_perimeter(shape, step, wiggle, rng, ap.includeHoleContours, [&](dvec2 position, dvec2 normal, bool isOuterContour){
+                for(const terrain::ShapeRef &shape : nonPartitionedShapes) {
+                    walk_shape_perimeter(shape, step, wiggle, rng, ap.includeHoleContours, [&](dvec2 position, dvec2 normal, bool isOuterContour)->bool {
+                        
+                        // early exit scenario
+                        if (ap.maxCount > 0 && attachments.size() >= ap.maxCount) {
+                            return false;
+                        }
 
                         // dice roll, scaled by closeness to desired slope
                         double d = dot(normalize(position - origin), normal);
                         d = sqrt(1.0 - saturate<double>(abs(d - ap.normalToUpDotTarget) / ap.normalToUpDotRange));
                         if (rng.nextFloat() < ap.probability * d) {
                             dvec2 pos = position - normal * placementNudge;
-                            terrain::AttachmentRef attachment = make_shared<terrain::Attachment>();
+                            
+                            if (!attachment) {
+                                attachment = make_shared<terrain::Attachment>();
+                            }
                             
                             // now attempt insertion
                             if (world->addAttachment(attachment, pos, rotateCW(normal))) {
                                 attachment->setTag(attachments.size());
                                 attachments.push_back(attachment);
+                                attachment.reset();
                             }
                         }
+                        
+                        return true;
                     });
                 }
                 CI_LOG_D("Generated " << attachments.size() << " attachments");
