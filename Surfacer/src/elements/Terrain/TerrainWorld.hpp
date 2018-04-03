@@ -440,7 +440,7 @@ namespace terrain {
 
         // signal fired when this attachment is orphaned from a group and moved from Group ownership to the World's orphan set
         // passes attachment's id and tag
-        core::signals::signal<void(size_t,size_t)> onOrphaned;
+        core::signals::signal<void(size_t /*id*/,size_t /*tag*/)> onOrphaned;
         
     public:
 
@@ -687,10 +687,6 @@ namespace terrain {
         void addShape(ShapeRef shape, double minShapeArea);
 
         void removeShape(ShapeRef shape);
-
-    protected:
-
-        void updateWorldBB();
 
     protected:
         cpBody *_body;
