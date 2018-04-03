@@ -14,6 +14,7 @@
 #include "PerlinWorldTestScenario.hpp"
 #include "IPTestsScenario.hpp"
 #include "EasingTestScenario.hpp"
+#include "ParticleSystemTestScenario.hpp"
 
 #define SCENARIO PerlinWorldTestScenario
 

@@ -20,6 +20,7 @@
 		630873582049A3FE000BCE27 /* PlanetGreebling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630873562049A3FE000BCE27 /* PlanetGreebling.cpp */; };
 		630873592049A3FE000BCE27 /* PlanetGreebling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630873562049A3FE000BCE27 /* PlanetGreebling.cpp */; };
 		631171361FAB72A50098069F /* ParticleSystemTestScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */; };
+		631CBB712066FEFA006D3E31 /* TerrainCutRecorder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 631CBB6E2066FAD0006D3E31 /* TerrainCutRecorder.cpp */; };
 		632623151E7D9A630051ABE2 /* ChipmunkHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */; };
 		632623171E7D9A630051ABE2 /* InputDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F31E7D9A630051ABE2 /* InputDispatcher.cpp */; };
 		632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632622F81E7D9A630051ABE2 /* Scenario.cpp */; };
@@ -162,6 +163,8 @@
 		630873572049A3FE000BCE27 /* PlanetGreebling.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PlanetGreebling.hpp; sourceTree = "<group>"; };
 		631171341FAB72A50098069F /* ParticleSystemTestScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleSystemTestScenario.cpp; sourceTree = "<group>"; };
 		631171351FAB72A50098069F /* ParticleSystemTestScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ParticleSystemTestScenario.hpp; sourceTree = "<group>"; };
+		631CBB6E2066FAD0006D3E31 /* TerrainCutRecorder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TerrainCutRecorder.cpp; sourceTree = "<group>"; };
+		631CBB6F2066FAD0006D3E31 /* TerrainCutRecorder.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainCutRecorder.hpp; sourceTree = "<group>"; };
 		632622EE1E7D9A630051ABE2 /* ChipmunkHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ChipmunkHelpers.cpp; sourceTree = "<group>"; };
 		632622EF1E7D9A630051ABE2 /* ChipmunkHelpers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ChipmunkHelpers.hpp; sourceTree = "<group>"; };
 		632622F01E7D9A630051ABE2 /* Core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Core.hpp; sourceTree = "<group>"; };
@@ -408,6 +411,15 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		631CBB6D2066FAB3006D3E31 /* util */ = {
+			isa = PBXGroup;
+			children = (
+				631CBB6E2066FAD0006D3E31 /* TerrainCutRecorder.cpp */,
+				631CBB6F2066FAD0006D3E31 /* TerrainCutRecorder.hpp */,
+			);
+			path = util;
+			sourceTree = "<group>";
+		};
 		632622EC1E7D9A630051ABE2 /* src */ = {
 			isa = PBXGroup;
 			children = (
@@ -569,6 +581,7 @@
 		63F93C281F86F84F00F537CA /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				631CBB6D2066FAB3006D3E31 /* util */,
 				63F93C2C1F86F84F00F537CA /* SvgTestScenario.cpp */,
 				63F93C291F86F84F00F537CA /* SvgTestScenario.hpp */,
 				63F93C2B1F86F84F00F537CA /* TerrainTestScenario.cpp */,
@@ -687,7 +700,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0900;
+				LastUpgradeCheck = 0930;
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Surfacer" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -742,6 +755,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				631CBB712066FEFA006D3E31 /* TerrainCutRecorder.cpp in Sources */,
 				638F4DD31F8BCFEA004437E8 /* SvgTestScenario.cpp in Sources */,
 				638F4DD41F8BCFEA004437E8 /* TerrainTestScenario.cpp in Sources */,
 				638F4DD51F8BCFEA004437E8 /* TestsApp.cpp in Sources */,
@@ -862,6 +876,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
@@ -898,6 +913,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -936,6 +952,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
@@ -972,6 +989,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -1010,6 +1028,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
@@ -1046,6 +1065,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CHIPMUNK_PATH = "../../vendor/Chipmunk-7.0.1";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -1092,11 +1112,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -1132,11 +1154,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
