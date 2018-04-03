@@ -32,8 +32,8 @@ namespace {
 
     const double COLLISION_SHAPE_RADIUS = 0;
     const double MIN_SURFACE_AREA = 2;
-    const ci::Color TERRAIN_COLOR(1, 0, 1);
-    const ci::Color ANCHOR_COLOR(0, 1, 1);
+    const ci::Color TERRAIN_COLOR(0.3, 0.3, 0.3);
+    const ci::Color ANCHOR_COLOR(0, 0, 0);
 
     namespace CollisionType {
 
@@ -125,32 +125,43 @@ void PerlinWorldTestScenario::setup() {
     params.anchors.vignetteStart *= 0.5;
     params.anchors.vignetteEnd *= 0.5;
     params.anchors.material = AnchorMaterial;
-    
-    auto ap = precariously::planet_generation::params::perimeter_attachment_params(0);
-    ap.batchId = 0;
-    ap.normalToUpDotTarget = 1;
-    ap.normalToUpDotRange = 1;
-    ap.probability = 0.75;
-    ap.density = 1;
-    ap.includeHoleContours = true;
 
-    params.attachments.push_back(ap);
-    
+    if ((true)) {
+        auto ap = precariously::planet_generation::params::perimeter_attachment_params(0);
+        ap.batchId = 0;
+        ap.normalToUpDotTarget = 1;
+        ap.normalToUpDotRange = 1;
+        ap.probability = 0.875;
+        ap.density = 1;
+        ap.includeHoleContours = true;
+        params.attachments.push_back(ap);
+    }
     
     auto terrainGen = precariously::planet_generation::generate(params, getStage()->getSpace());
     _terrain = terrain::TerrainObject::create("Terrain", terrainGen.world, DrawLayers::TERRAIN);
     getStage()->addObject(_terrain);
     
-    // debug views of the iso surfaces
-    {
-        _isoSurfaces = vector<Channel8u> { terrainGen.terrainMap, terrainGen.anchorMap };
-        const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
-        for(Channel8u isoSurface : _isoSurfaces) {
-            _isoTexes.push_back(ci::gl::Texture2d::create(isoSurface, fmt));
-        }
-    }
+    if ((false)) {
+        
+        // we're making a single attachment, for testing
+        terrain::AttachmentRef attachment = make_shared<terrain::Attachment>();
+        dvec2 pos(550.0825,  781.675);
+        // now attempt insertion
 
+        if (terrainGen.world->addAttachment(attachment, pos, dvec2(0,1))) {
+            attachment->setTag(0);
+            terrainGen.attachmentsByBatchId[0].push_back(attachment);
+        } else {
+            CI_LOG_E("Unable to plant test attachment at: " << pos);
+        }
+        
+        _recordCuts = false;
+    }
+    
+    //
     // greebling
+    //
+
     {
         auto image = loadImage(app::loadAsset("precariously/textures/Explosion.png"));
         gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
@@ -161,11 +172,27 @@ void PerlinWorldTestScenario::setup() {
         config.drawConfig.drawLayer = DrawLayers::ATTACHMENTS;
         
         for(auto v : terrainGen.attachmentsByBatchId) {
+            CI_LOG_D("Creating GreeblingParticleSystem to render " << v.second.size() << " greebles");
             auto greebles = precariously::GreeblingParticleSystem::create("greeble_" + str(v.first), config, v.second);
             getStage()->addObject(greebles);
         }
     }
     
+    //
+    // debug views of the iso surfaces
+    //
+    if ((false)) {
+        _isoSurfaces = vector<Channel8u> { terrainGen.terrainMap, terrainGen.anchorMap };
+        const auto fmt = ci::gl::Texture2d::Format().mipmap(false).minFilter(GL_NEAREST).magFilter(GL_NEAREST);
+        for(Channel8u isoSurface : _isoSurfaces) {
+            _isoTexes.push_back(ci::gl::Texture2d::create(isoSurface, fmt));
+        }
+    }
+
+    //
+    // basic scaffolding - grid, mousclick, etc
+    //
+
     auto grid = WorldCartesianGridDrawComponent::create(1);
     grid->setFillColor(ColorA(0.2, 0.22, 0.25, 1.0));
     grid->setGridColor(ColorA(1, 1, 1, 0.1));
@@ -186,6 +213,10 @@ void PerlinWorldTestScenario::setup() {
     getStage()->addObject(Object::with("ViewportControlComponent", {
         make_shared<ManualViewportControlComponent>(getViewportController())
     }));
+    
+    //
+    //  Build terrain cut recorder
+    //
     
     auto path = core::App::get()->getAppPath() / "cuts.txt";
     _terrainCutRecorder = make_shared<TerrainCutRecorder>(path);
@@ -291,13 +322,26 @@ bool PerlinWorldTestScenario::keyDown(const ci::app::KeyEvent &event) {
                 _playingBackRecordedCuts = false;
             }
             return true;
+            
+        case '.':
+            _recordCuts = !_recordCuts;
+            CI_LOG_D("_recordCuts: " << boolalpha << _recordCuts);
+            return true;
     }
     
-    if (event.getCode() == ci::app::KeyEvent::KEY_BACKQUOTE) {
-        setRenderMode(RenderMode::mode((int(getRenderMode()) + 1) % RenderMode::COUNT));
-        return true;
+    switch(event.getCode()) {
+        case ci::app::KeyEvent::KEY_BACKQUOTE: {
+            setRenderMode(RenderMode::mode((int(getRenderMode()) + 1) % RenderMode::COUNT));
+            return true;
+        }
+        case ci::app::KeyEvent::KEY_BACKSPACE: {
+            CI_LOG_D("Clearing cut recorder");
+            _terrainCutRecorder->clearCuts();
+            _terrainCutRecorder->save();
+            return true;
+        }
     }
-
+    
     return false;
 }
 
