@@ -683,20 +683,26 @@ namespace particles {
     }
 
     void ParticleSystemDrawComponent::draw(const render_state &renderState) {
-        auto sim = getSimulation();
-        if (updateParticles(sim)) {
-            gl::ScopedTextureBind tex(_config.textureAtlas, 0);
-            gl::ScopedBlendPremult blender;
-
-            _particlesBatch->draw(_batchDrawStart, _batchDrawCount);
-
-            if (renderState.mode == RenderMode::DEVELOPMENT) {
+        switch(renderState.mode) {
+            case RenderMode::GAME: {
+                auto sim = getSimulation();
+                if (updateParticles(sim)) {
+                    gl::ScopedTextureBind tex(_config.textureAtlas, 0);
+                    gl::ScopedBlendPremult blender;
+                    _particlesBatch->draw(_batchDrawStart, _batchDrawCount);
+                }
+                break;
+            }
+            case RenderMode::DEVELOPMENT:{
                 // draw BB
                 cpBB bb = getBB();
                 const ColorA bbColor(1, 0.2, 1, 0.5);
                 gl::color(bbColor);
                 gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t), 1);
+                break;
             }
+            case RenderMode::COUNT:
+                break;
         }
     }
 
