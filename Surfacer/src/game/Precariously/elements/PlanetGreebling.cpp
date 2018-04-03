@@ -61,18 +61,21 @@ namespace precariously {
         
         for (; state != end; ++state, ++attachments) {
             const auto &attachment = *attachments;
-            bool active = !attachment->isOrphaned();
-            state->active = active;
-            if (active && (_firstSimulate || (attachment->getStepIndexForLastPositionUpdate() == timeState.step))) {
-                state->position = attachment->getWorldPosition();
-                state->right = attachment->getWorldRotation() * radius;
-                state->up = rotateCCW(state->right);
-                state->color = ColorA(1,1,0,1);
-                state->additivity = 0;
-                state->atlasIdx = attachment->getId() % 4;
-                didUpdate = true;
+            bool alive = !attachment->isOrphaned();
+            state->active = alive;
+
+            if (alive) {
+                if (_firstSimulate || (attachment->getStepIndexForLastPositionUpdate() == timeState.step)) {
+                    state->position = attachment->getWorldPosition();
+                    state->right = attachment->getWorldRotation() * radius;
+                    state->up = rotateCCW(state->right);
+                    state->color = ColorA(1,1,1,1);
+                    state->additivity = 0;
+                    state->atlasIdx = attachment->getId() % 4;
+                    didUpdate = true;
+                }
+                bounds = cpBBExpand(bounds, state->position, radius);
             }
-            bounds = cpBBExpand(bounds, state->position, radius);
         }
 
         if (_firstSimulate || didUpdate) {
