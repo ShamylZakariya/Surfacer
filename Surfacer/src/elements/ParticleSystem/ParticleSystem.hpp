@@ -431,6 +431,7 @@ namespace particles {
         struct config : public particles::BaseParticleSystemDrawComponent::config {
             ci::gl::Texture2dRef textureAtlas;
             particles::Atlas::Type atlasType;
+            gl::GlslProgRef shader;
 
             config() :
                     atlasType(particles::Atlas::None) {
@@ -454,15 +455,32 @@ namespace particles {
         void draw(const core::render_state &renderState) override;
 
     protected:
+        
+        virtual gl::GlslProgRef createDefaultShader() const;
+        
+        // write stable values into _particles - these are values that can be written once and never change
+        void writeStableParticleValues(const BaseParticleSimulationRef &sim);
 
         // update _particles store for submitting to GPU - return true iff there are particles to draw
         virtual bool updateParticles(const BaseParticleSimulationRef &sim);
 
         struct particle_vertex {
+            // position of vertex
             vec2 position;
+            // tex coord for vertex
             vec2 texCoord;
+
+            // 2 random values from [-1,+1]; usable to customize a
+            // particle. Each vertex of a single particle will share same random value
+            // and that value will be unchanging across particle lifespan
+            // note: bound to texCoord1 in shader
+            vec2 random;
+            
+            // color for the vertex
             ci::ColorA color;
         };
+        
+    protected:
 
         config _config;
         gl::GlslProgRef _shader;

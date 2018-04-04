@@ -612,61 +612,23 @@ namespace particles {
             BaseParticleSystemDrawComponent(c),
             _config(c),
             _batchDrawStart(0),
-            _batchDrawCount(0) {
-        auto vsh = CI_GLSL(150,
-                uniform
-                mat4 ciModelViewProjection;
-
-                in
-                vec4 ciPosition;
-                in
-                vec2 ciTexCoord0;
-                in
-                vec4 ciColor;
-
-                out
-                vec2 TexCoord;
-                out
-                vec4 Color;
-
-                void main(void) {
-                    gl_Position = ciModelViewProjection * ciPosition;
-                    TexCoord = ciTexCoord0;
-                    Color = ciColor;
-                }
-        );
-
-        auto fsh = CI_GLSL(150,
-                uniform
-                sampler2D uTex0;
-
-                in
-                vec2 TexCoord;
-                in
-                vec4 Color;
-
-                out
-                vec4 oColor;
-
-                void main(void) {
-                    float alpha = round(texture(uTex0, TexCoord).r);
-
-                    // NOTE: additive blending requires premultiplication
-                    oColor.rgb = Color.rgb * alpha;
-                    oColor.a = Color.a * alpha;
-                }
-        );
-
-        _shader = gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
+            _batchDrawCount(0),
+            _shader(c.shader) {
     }
 
     void ParticleSystemDrawComponent::setSimulation(const BaseParticleSimulationRef simulation) {
         BaseParticleSystemDrawComponent::setSimulation(simulation);
+        
+        // if a shader wasn't provided with the config, use the default one
+        if (!_shader) {
+            _shader = createDefaultShader();
+        }
 
         // now build our GPU backing. Note, GL_QUADS is deprecated so we need GL_TRIANGLES, which requires 6 vertices to make a quad
         size_t count = simulation->getParticleCount();
         _particles.resize(count * 6, particle_vertex());
 
+        writeStableParticleValues(simulation);
         updateParticles(simulation);
 
         // create VBO GPU-side which we can stream to
@@ -675,6 +637,7 @@ namespace particles {
         geom::BufferLayout particleLayout;
         particleLayout.append(geom::Attrib::POSITION, 2, sizeof(particle_vertex), offsetof(particle_vertex, position));
         particleLayout.append(geom::Attrib::TEX_COORD_0, 2, sizeof(particle_vertex), offsetof(particle_vertex, texCoord));
+        particleLayout.append(geom::Attrib::TEX_COORD_1, 2, sizeof(particle_vertex), offsetof(particle_vertex, random));
         particleLayout.append(geom::Attrib::COLOR, 4, sizeof(particle_vertex), offsetof(particle_vertex, color));
 
         // pair our layout with vbo.
@@ -683,6 +646,7 @@ namespace particles {
     }
 
     void ParticleSystemDrawComponent::draw(const render_state &renderState) {
+        
         switch(renderState.mode) {
             case RenderMode::GAME: {
                 auto sim = getSimulation();
@@ -705,6 +669,66 @@ namespace particles {
                 break;
         }
     }
+    
+    gl::GlslProgRef ParticleSystemDrawComponent::createDefaultShader() const {
+        auto vsh = CI_GLSL(150,
+                           uniform mat4 ciModelViewProjection;
+                           
+                           in vec4 ciPosition;
+                           in vec2 ciTexCoord0;
+                           in vec2 ciTexCoord1;
+                           in vec4 ciColor;
+                           
+                           out vec2 TexCoord;
+                           out vec2 TexCoord1;
+                           out vec4 Color;
+                           
+                           void main(void) {
+                               gl_Position = ciModelViewProjection * ciPosition;
+                               TexCoord = ciTexCoord0;
+                               TexCoord1 = ciTexCoord1;
+                               Color = ciColor;
+                           }
+                           );
+        
+        auto fsh = CI_GLSL(150,
+                           uniform sampler2D uTex0;
+                           
+                           in vec2 TexCoord;
+                           in vec2 TexCoord1;
+                           in vec4 Color;
+                           
+                           out vec4 oColor;
+                           
+                           void main(void) {
+                               float alpha = round(texture(uTex0, TexCoord).r);
+                               
+                               // NOTE: additive blending requires premultiplication
+                               oColor.rgb = Color.rgb * alpha;
+                               oColor.a = Color.a * alpha;
+                           }
+                           );
+        
+        return gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
+    }
+
+    void ParticleSystemDrawComponent::writeStableParticleValues(const BaseParticleSimulationRef &sim) {
+        auto vertex = _particles.begin();
+        const auto activeCount = sim->getActiveCount();
+        auto stateBegin = sim->getParticleState().begin();
+        auto stateEnd = stateBegin + activeCount;
+        auto rng = ci::Rand();
+
+        for (auto state = stateBegin; state != stateEnd; ++state) {
+            vec2 rand(rng.nextFloat() * 2 - 1, rng.nextFloat() * 2 - 1);
+            vertex->random = rand; ++vertex;
+            vertex->random = rand; ++vertex;
+            vertex->random = rand; ++vertex;
+            vertex->random = rand; ++vertex;
+            vertex->random = rand; ++vertex;
+            vertex->random = rand; ++vertex;
+        }
+    }
 
     bool ParticleSystemDrawComponent::updateParticles(const BaseParticleSimulationRef &sim) {
 
@@ -717,7 +741,7 @@ namespace particles {
 
         vec2 shape[4];
         mat2 rotator;
-        const size_t activeCount = sim->getActiveCount();
+        const auto activeCount = sim->getActiveCount();
         auto vertex = _particles.begin();
         auto stateBegin = sim->getParticleState().begin();
         auto stateEnd = stateBegin + activeCount;
