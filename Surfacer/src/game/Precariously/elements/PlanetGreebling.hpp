@@ -65,6 +65,19 @@ namespace precariously {
         
     };
     
+    class GreeblingParticleSystemDrawComponent : public particles::ParticleSystemDrawComponent {
+    public:
+
+        static shared_ptr<GreeblingParticleSystemDrawComponent> create(config c);
+
+        GreeblingParticleSystemDrawComponent(config c);
+        
+    protected:
+
+        void setShaderUniforms(const core::render_state &renderState) override;
+
+    };
+    
     
     class GreeblingParticleSystem : public particles::BaseParticleSystem {
     public:

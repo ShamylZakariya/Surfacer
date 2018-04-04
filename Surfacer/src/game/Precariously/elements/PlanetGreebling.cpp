@@ -85,6 +85,69 @@ namespace precariously {
         
         _firstSimulate = false;
     }
+
+#pragma mark - GreeblingParticleSystemDrawComponent
+    namespace {
+
+        gl::GlslProgRef greebling_ps_shader() {
+            auto vsh = CI_GLSL(150,
+                               uniform mat4 ciModelViewProjection;
+                               
+                               in vec4 ciPosition;
+                               in vec2 ciTexCoord0;
+                               in vec2 ciTexCoord1;
+                               in vec4 ciColor;
+                               
+                               out vec2 TexCoord;
+                               out vec2 TexCoord1;
+                               out vec4 Color;
+                               
+                               void main(void) {
+                                   gl_Position = ciModelViewProjection * ciPosition;
+                                   TexCoord = ciTexCoord0;
+                                   TexCoord1 = ciTexCoord1;
+                                   Color = ciColor;
+                               }
+                               );
+            
+            auto fsh = CI_GLSL(150,
+                               uniform sampler2D uTex0;
+                               
+                               in vec2 TexCoord;
+                               in vec2 TexCoord1;
+                               in vec4 Color;
+                               
+                               out vec4 oColor;
+                               
+                               void main(void) {
+                                   float alpha = round(texture(uTex0, TexCoord).r);
+                                   
+                                   // NOTE: additive blending requires premultiplication
+                                   oColor.rgb = Color.rgb * alpha;
+                                   oColor.rgb *= vec3(1,0,0);
+                                   oColor.a = Color.a * alpha;
+                               }
+                               );
+            
+            return gl::GlslProg::create(gl::GlslProg::Format().vertex(vsh).fragment(fsh));
+        }
+        
+    }
+    
+    shared_ptr<GreeblingParticleSystemDrawComponent> GreeblingParticleSystemDrawComponent::create(config c) {
+        if (!c.shader) {
+            c.shader = greebling_ps_shader();
+        }
+        return make_shared<GreeblingParticleSystemDrawComponent>(c);
+    }
+
+    GreeblingParticleSystemDrawComponent::GreeblingParticleSystemDrawComponent(config c):
+    ParticleSystemDrawComponent(c)
+    {}
+    
+    void GreeblingParticleSystemDrawComponent::setShaderUniforms(const core::render_state &renderState) {
+        ParticleSystemDrawComponent::setShaderUniforms(renderState);
+    }
     
 #pragma mark - GreeblingParticleSystem
     
@@ -97,7 +160,7 @@ namespace precariously {
     
     GreeblingParticleSystemRef GreeblingParticleSystem::create(string name, const config &c, const vector <terrain::AttachmentRef> &attachments) {
         auto simulation = make_shared<GreeblingParticleSimulation>(c.simulationConfig);
-        auto draw = make_shared<ParticleSystemDrawComponent>(c.drawConfig);
+        auto draw = GreeblingParticleSystemDrawComponent::create(c.drawConfig);
         
         auto gps = make_shared<GreeblingParticleSystem>(name, c);
         gps->addComponent(draw);

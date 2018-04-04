@@ -463,6 +463,9 @@ namespace particles {
 
         // update _particles store for submitting to GPU - return true iff there are particles to draw
         virtual bool updateParticles(const BaseParticleSimulationRef &sim);
+        
+        // called immediately before particle batch is drawn; set your shader uniforms here
+        virtual void setShaderUniforms(const core::render_state &renderState) {}
 
         struct particle_vertex {
             // position of vertex

@@ -653,10 +653,13 @@ namespace particles {
                 if (updateParticles(sim)) {
                     gl::ScopedTextureBind tex(_config.textureAtlas, 0);
                     gl::ScopedBlendPremult blender;
+                    
+                    setShaderUniforms(renderState);
                     _particlesBatch->draw(_batchDrawStart, _batchDrawCount);
                 }
                 break;
             }
+
             case RenderMode::DEVELOPMENT:{
                 // draw BB
                 cpBB bb = getBB();
@@ -665,6 +668,7 @@ namespace particles {
                 gl::drawStrokedRect(Rectf(bb.l, bb.b, bb.r, bb.t), 1);
                 break;
             }
+
             case RenderMode::COUNT:
                 break;
         }
@@ -720,7 +724,7 @@ namespace particles {
         auto rng = ci::Rand();
 
         for (auto state = stateBegin; state != stateEnd; ++state) {
-            vec2 rand(rng.nextFloat() * 2 - 1, rng.nextFloat() * 2 - 1);
+            vec2 rand(rng.nextFloat() * 2.0f - 1.0f, rng.nextFloat() * 2.0f - 1.0f);
             vertex->random = rand; ++vertex;
             vertex->random = rand; ++vertex;
             vertex->random = rand; ++vertex;
