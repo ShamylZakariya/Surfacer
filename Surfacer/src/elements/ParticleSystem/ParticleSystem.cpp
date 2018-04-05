@@ -636,8 +636,10 @@ namespace particles {
 
         geom::BufferLayout particleLayout;
         particleLayout.append(geom::Attrib::POSITION, 2, sizeof(particle_vertex), offsetof(particle_vertex, position));
+        particleLayout.append(geom::Attrib::NORMAL, 2, sizeof(particle_vertex), offsetof(particle_vertex, up));
         particleLayout.append(geom::Attrib::TEX_COORD_0, 2, sizeof(particle_vertex), offsetof(particle_vertex, texCoord));
-        particleLayout.append(geom::Attrib::TEX_COORD_1, 2, sizeof(particle_vertex), offsetof(particle_vertex, random));
+        particleLayout.append(geom::Attrib::TEX_COORD_1, 2, sizeof(particle_vertex), offsetof(particle_vertex, vertexPosition));
+        particleLayout.append(geom::Attrib::TEX_COORD_2, 2, sizeof(particle_vertex), offsetof(particle_vertex, random));
         particleLayout.append(geom::Attrib::COLOR, 4, sizeof(particle_vertex), offsetof(particle_vertex, color));
 
         // pair our layout with vbo.
@@ -680,17 +682,14 @@ namespace particles {
                            
                            in vec4 ciPosition;
                            in vec2 ciTexCoord0;
-                           in vec2 ciTexCoord1;
                            in vec4 ciColor;
                            
                            out vec2 TexCoord;
-                           out vec2 TexCoord1;
                            out vec4 Color;
                            
                            void main(void) {
                                gl_Position = ciModelViewProjection * ciPosition;
                                TexCoord = ciTexCoord0;
-                               TexCoord1 = ciTexCoord1;
                                Color = ciColor;
                            }
                            );
@@ -699,7 +698,6 @@ namespace particles {
                            uniform sampler2D uTex0;
                            
                            in vec2 TexCoord;
-                           in vec2 TexCoord1;
                            in vec4 Color;
                            
                            out vec4 oColor;
@@ -725,12 +723,29 @@ namespace particles {
 
         for (auto state = stateBegin; state != stateEnd; ++state) {
             vec2 rand(rng.nextFloat() * 2.0f - 1.0f, rng.nextFloat() * 2.0f - 1.0f);
-            vertex->random = rand; ++vertex;
-            vertex->random = rand; ++vertex;
-            vertex->random = rand; ++vertex;
-            vertex->random = rand; ++vertex;
-            vertex->random = rand; ++vertex;
-            vertex->random = rand; ++vertex;
+            vertex->random = rand;
+            vertex->vertexPosition = TexCoords[0];
+            ++vertex;
+            
+            vertex->random = rand;
+            vertex->vertexPosition = TexCoords[1];
+            ++vertex;
+            
+            vertex->random = rand;
+            vertex->vertexPosition = TexCoords[2];
+            ++vertex;
+            
+            vertex->random = rand;
+            vertex->vertexPosition = TexCoords[0];
+            ++vertex;
+            
+            vertex->random = rand;
+            vertex->vertexPosition = TexCoords[2];
+            ++vertex;
+            
+            vertex->random = rand;
+            vertex->vertexPosition = TexCoords[3];
+            ++vertex;
         }
     }
 
@@ -756,6 +771,7 @@ namespace particles {
             // Check if particle is active && visible before writing geometry
             if (state->active && state->color.a >= ALPHA_EPSILON) {
 
+
                 shape[0] = state->position - state->right + state->up;
                 shape[1] = state->position + state->right + state->up;
                 shape[2] = state->position + state->right - state->up;
@@ -766,38 +782,45 @@ namespace particles {
                 //	Note, GL_QUADS is deprecated so we have to draw two TRIANGLES
                 //
 
-                ci::ColorA pc = state->color;
-                ci::ColorA additiveColor(pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * (1 - static_cast<float>(state->additivity)));
-                vec2 atlasOffset = AtlasOffsets[state->atlasIdx];
+                const vec2 up = state->up;
+                const ci::ColorA pc = state->color;
+                const ci::ColorA additiveColor(pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * (1 - static_cast<float>(state->additivity)));
+                const vec2 atlasOffset = AtlasOffsets[state->atlasIdx];
 
                 // GL_TRIANGLE
                 vertex->position = shape[0];
+                vertex->up = up;
                 vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
                 ++vertex;
 
                 vertex->position = shape[1];
+                vertex->up = up;
                 vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
                 ++vertex;
 
                 vertex->position = shape[2];
+                vertex->up = up;
                 vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
                 ++vertex;
 
                 // GL_TRIANGLE
                 vertex->position = shape[0];
+                vertex->up = up;
                 vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
                 ++vertex;
 
                 vertex->position = shape[2];
+                vertex->up = up;
                 vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
                 ++vertex;
 
                 vertex->position = shape[3];
+                vertex->up = up;
                 vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
                 ++vertex;
@@ -811,6 +834,7 @@ namespace particles {
                 //
                 for (int i = 0; i < 6; i++) {
                     vertex->position = origin;
+                    vertex->up.x = vertex->up.y = 0;
                     vertex->color = transparent;
                     ++vertex;
                 }

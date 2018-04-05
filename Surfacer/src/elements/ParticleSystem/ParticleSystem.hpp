@@ -469,18 +469,30 @@ namespace particles {
 
         struct particle_vertex {
             // position of vertex
+            // bound to ciPosition (float2)
             vec2 position;
+
+            // world-space up vector of particle, scaled such that length = particle radius
+            // bound to ciNormal (float2)
+            vec2 up;
+
             // tex coord for vertex
+            // bound to ciTexCoord0 (float2)
             vec2 texCoord;
+            
+            // top-left vertex would be (0,1), top right (1,1), bottom left (0,0), bottom right (1,0)
+            // bound to ciTexCoord1 (float2)
+            vec2 vertexPosition;
 
             // 2 random values from [-1,+1]; usable to customize a
             // particle. Each vertex of a single particle will share same random value
             // and that value will be unchanging across particle lifespan
-            // note: bound to texCoord1 in shader
+            // bound to ciTexCoord2 (float2) in shader
             vec2 random;
-            
+
             // color for the vertex
-            ci::ColorA color;
+            // bound to ciColor (float4)
+            ci::ColorA color;            
         };
         
     protected:
