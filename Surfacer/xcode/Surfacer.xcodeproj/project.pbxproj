@@ -31,6 +31,9 @@
 		6332FF852020C67700279B7F /* TerrainDetail_Svg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6332FF812020C67700279B7F /* TerrainDetail_Svg.cpp */; };
 		6332FF88202378C200279B7F /* PlanetGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6332FF86202378C200279B7F /* PlanetGenerator.cpp */; };
 		6332FF89202378C200279B7F /* PlanetGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6332FF86202378C200279B7F /* PlanetGenerator.cpp */; };
+		63597BEB20766F7700B65C2A /* GlslProgLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63597BE920766F7700B65C2A /* GlslProgLoader.cpp */; };
+		63597BEC20766F8F00B65C2A /* GlslProgLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63597BE920766F7700B65C2A /* GlslProgLoader.cpp */; };
+		63597BED20766F9D00B65C2A /* GlslProgLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63597BE920766F7700B65C2A /* GlslProgLoader.cpp */; };
 		638BFB1D203F28DE004163A9 /* IPTestsScenario.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638BFB1B203F28DE004163A9 /* IPTestsScenario.cpp */; };
 		638F4D921F87D4F3004437E8 /* Planet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D901F87D4F3004437E8 /* Planet.cpp */; };
 		638F4D951F87D7BC004437E8 /* PerlinNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 638F4D931F87D7BC004437E8 /* PerlinNoise.cpp */; };
@@ -191,6 +194,8 @@
 		6332FF822020C67700279B7F /* TerrainDetail_Svg.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TerrainDetail_Svg.hpp; sourceTree = "<group>"; };
 		6332FF86202378C200279B7F /* PlanetGenerator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PlanetGenerator.cpp; sourceTree = "<group>"; };
 		6332FF87202378C200279B7F /* PlanetGenerator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PlanetGenerator.hpp; sourceTree = "<group>"; };
+		63597BE920766F7700B65C2A /* GlslProgLoader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GlslProgLoader.cpp; sourceTree = "<group>"; };
+		63597BEA20766F7700B65C2A /* GlslProgLoader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GlslProgLoader.hpp; sourceTree = "<group>"; };
 		638BFB1B203F28DE004163A9 /* IPTestsScenario.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IPTestsScenario.cpp; sourceTree = "<group>"; };
 		638BFB1C203F28DE004163A9 /* IPTestsScenario.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IPTestsScenario.hpp; sourceTree = "<group>"; };
 		638F4D901F87D4F3004437E8 /* Planet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Planet.cpp; sourceTree = "<group>"; };
@@ -618,6 +623,8 @@
 				63A282711FD067E400962F8E /* ImageProcessing.cpp */,
 				63A282721FD067E400962F8E /* ImageProcessing.hpp */,
 				632CBA21204B181B0008B94D /* Easing.hpp */,
+				63597BE920766F7700B65C2A /* GlslProgLoader.cpp */,
+				63597BEA20766F7700B65C2A /* GlslProgLoader.hpp */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -755,6 +762,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63597BED20766F9D00B65C2A /* GlslProgLoader.cpp in Sources */,
 				631CBB712066FEFA006D3E31 /* TerrainCutRecorder.cpp in Sources */,
 				638F4DD31F8BCFEA004437E8 /* SvgTestScenario.cpp in Sources */,
 				638F4DD41F8BCFEA004437E8 /* TerrainTestScenario.cpp in Sources */,
@@ -797,6 +805,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63597BEC20766F8F00B65C2A /* GlslProgLoader.cpp in Sources */,
 				638F4DA21F898602004437E8 /* Background.cpp in Sources */,
 				638F4DA11F897FB7004437E8 /* PrecariouslyConstants.cpp in Sources */,
 				638F4D991F895CE5004437E8 /* TerrainDetail.cpp in Sources */,
@@ -863,6 +872,7 @@
 				632623181E7D9A630051ABE2 /* Scenario.cpp in Sources */,
 				639168A81E93E289007FD4FA /* BlendMode.cpp in Sources */,
 				63BFD81A1E89ED2A00D821E4 /* Stage.cpp in Sources */,
+				63597BEB20766F7700B65C2A /* GlslProgLoader.cpp in Sources */,
 				63F93C0A1F8681E100F537CA /* Entity.cpp in Sources */,
 				63F93C071F86804900F537CA /* App.cpp in Sources */,
 				63F93C271F86F74300F537CA /* SurfacerScenario.cpp in Sources */,

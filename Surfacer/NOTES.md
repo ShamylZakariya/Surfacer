@@ -7,6 +7,15 @@ When satellite debris gets out of hand
 
 ## PRESENTLY
 
+Making the "sway" shader for greebling. 
+    - works
+    - add a uniform 'period' instead of hardcoded 3.14159
+    - make a .glsl file format which has vertex and fragment separated by some kind of token, e.g., \n======\n or 
+    fragment:
+    fragment shader    
+    vertex:
+    vertex shader
+
 - observe TerrainWorld::417 cpSpaceBBQuery - I might be able to use cpSPace queries to test if attachments are inside the cut volume
     
 ## BUGS PRIORITY HIGH

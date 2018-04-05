@@ -16,7 +16,7 @@
 #include "EasingTestScenario.hpp"
 #include "ParticleSystemTestScenario.hpp"
 
-#define SCENARIO ParticleSystemTestScenario
+#define SCENARIO PerlinWorldTestScenario
 
 class TestsApp : public core::App {
 public:
