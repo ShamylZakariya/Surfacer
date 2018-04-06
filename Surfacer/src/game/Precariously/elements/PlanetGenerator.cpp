@@ -293,6 +293,9 @@ namespace precariously { namespace planet_generation {
 
             ci::Rand rng;
             const double placementNudge = 1e-2;
+            const double minPlacementRadius = params.anchors.enabled ? params.anchorOuterRadius() : 0;
+            const double minPlacementRadiusSquared = minPlacementRadius * minPlacementRadius;
+            
             for(const auto &ap : params.attachments) {
                 vector <terrain::AttachmentRef> attachments;
                 const double step = 1/ ap.density;
@@ -300,9 +303,15 @@ namespace precariously { namespace planet_generation {
                 for(const terrain::ShapeRef &shape : nonPartitionedShapes) {
                     walk_shape_perimeter(shape, step, wiggle, rng, ap.includeHoleContours, [&](dvec2 position, dvec2 normal, bool isOuterContour)->bool {
                         
-                        // early exit scenario
+                        // early exit scenario - stop walk completely because we're done
                         if (ap.maxCount > 0 && attachments.size() >= ap.maxCount) {
                             return false;
+                        }
+                        
+                        // check that we're outside the max radius of the anchor geometry - this
+                        // is a cheap test to prevent placing foliage where it will be hidden by anchors
+                        if (distanceSquared(position, origin) < minPlacementRadiusSquared) {
+                            return true;
                         }
 
                         // dice roll, scaled by closeness to desired slope

@@ -150,6 +150,35 @@ namespace precariously { namespace planet_generation {
         dvec2 origin() const {
             return transform * dvec2(size/2, size/2);
         }
+        
+        // return the inner radius of terrain geometry in world coords
+        double terrainInnerRadius() const {
+            dvec2 bitmapCoord(terrain.vignetteStart * size/2 + size/2, size/2);
+            dvec2 worldCoord = transform * bitmapCoord;
+            return distance(worldCoord, origin());
+        }
+
+        // return the outer radius of terrain geometry in world coords
+        double terrainOuterRadius() const {
+            dvec2 bitmapCoord(terrain.vignetteEnd * size/2 + size/2, size/2);
+            dvec2 worldCoord = transform * bitmapCoord;
+            return distance(worldCoord, origin());
+        }
+
+        // return the inner radius of anchor geometry in world coords
+        double anchorInnerRadius() const {
+            dvec2 bitmapCoord(anchors.vignetteStart * size/2 + size/2, size/2);
+            dvec2 worldCoord = transform * bitmapCoord;
+            return distance(worldCoord, origin());
+        }
+        
+        // return the outer radius of anchor geometry in world coords
+        double anchorOuterRadius() const {
+            dvec2 bitmapCoord(anchors.vignetteEnd * size/2 + size/2, size/2);
+            dvec2 worldCoord = transform * bitmapCoord;
+            return distance(worldCoord, origin());
+        }
+
     };
     
     namespace detail {
