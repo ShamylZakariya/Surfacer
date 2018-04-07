@@ -15,6 +15,7 @@ namespace precariously {
     
     GreeblingParticleSimulation::config GreeblingParticleSimulation::config::parse(const util::xml::XmlMultiTree &node) {
         config c;
+        // TODO: Implement parser
         return c;
     }
 
@@ -57,9 +58,10 @@ namespace precariously {
         auto state = _state.begin();
         const auto end = _state.end();
         
-        // TODO: Make radius part of the config, per-texel or whatever
-        const double radius = 1;
         bool didUpdate = false;
+        
+        const size_t numAtlasDetails = _config.atlas_details.size();
+        const config::atlas_detail *atlasDetails = _config.atlas_details.data();
         
         for (; state != end; ++state, ++attachments) {
             const auto &attachment = *attachments;
@@ -67,16 +69,30 @@ namespace precariously {
             state->active = alive;
 
             if (alive) {
+                // only update particle state if particle moved this timestep, (or has never been moved yet)
                 if (_firstSimulate || (attachment->getStepIndexForLastPositionUpdate() == timeState.step)) {
-                    state->position = attachment->getWorldPosition();
-                    state->right = attachment->getWorldRotation() * radius;
+                    
+                    // compute the atlas idx for this particle, and get the info on that idx for radius and offset
+                    state->atlasIdx = attachment->getId() % numAtlasDetails;
+                    config::atlas_detail atlasDetail = atlasDetails[state->atlasIdx];
+
+                    // set right and up vectors for this particle
+                    state->right = attachment->getWorldRotation() * atlasDetail.radius;
                     state->up = rotateCCW(state->right);
-                    state->color = ColorA(1,1,1,1);
+
+                    // move particle to position + offset that moves it such that base touches terrain surface, + per-atlas idx offset
+                    state->position = attachment->getWorldPosition() + (state->up * (0.5 + atlasDetail.upOffset));
+
+                    state->color = atlasDetail.color;
                     state->additivity = 0;
-                    state->atlasIdx = attachment->getId() % 4;
                     didUpdate = true;
+
+                    bounds = cpBBExpand(bounds, state->position, atlasDetail.radius);
+                } else {
+                    // particle didn't move, but we need to include it in the bounds. radius of 2 is a "guess", we could
+                    // also use a zero-radius or a huge radius. I suspect 2 is safe for greebling.
+                    bounds = cpBBExpand(bounds, state->position, 2);
                 }
-                bounds = cpBBExpand(bounds, state->position, radius);
             }
         }
 
@@ -98,19 +114,23 @@ namespace precariously {
     }
 
     GreeblingParticleSystemDrawComponent::GreeblingParticleSystemDrawComponent(config c):
-    ParticleSystemDrawComponent(c)
+    ParticleSystemDrawComponent(c),
+    _config(c)
     {}
     
-    void GreeblingParticleSystemDrawComponent::setShaderUniforms(const core::render_state &renderState) {
-        ParticleSystemDrawComponent::setShaderUniforms(renderState);
+    void GreeblingParticleSystemDrawComponent::setShaderUniforms(const gl::GlslProgRef &program, const core::render_state &renderState) {
+        ParticleSystemDrawComponent::setShaderUniforms(program, renderState);
+        program->uniform("swayPeriod", static_cast<float>(_config.swayPeriod));
+        program->uniform("swayFactor", static_cast<float>(_config.swayFactor));
     }
     
 #pragma mark - GreeblingParticleSystem
     
     GreeblingParticleSystem::config GreeblingParticleSystem::config::parse(const util::xml::XmlMultiTree &node) {
         config c;
-        c.simulationConfig = GreeblingParticleSimulation::config::parse(node.getChild("simulation"));
-        c.drawConfig = ParticleSystemDrawComponent::config::parse(node.getChild("draw"));
+        // TODO: Implement a good XML layout for this
+//        c.simulationConfig = GreeblingParticleSimulation::config::parse(node.getChild("simulation"));
+//        c.drawConfig = ParticleSystemDrawComponent::config::parse(node.getChild("draw"));
         return c;
     }
     

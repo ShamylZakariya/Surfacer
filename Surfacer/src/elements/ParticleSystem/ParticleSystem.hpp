@@ -465,7 +465,7 @@ namespace particles {
         virtual bool updateParticles(const BaseParticleSimulationRef &sim);
         
         // called immediately before particle batch is drawn; set your shader uniforms here
-        virtual void setShaderUniforms(const core::render_state &renderState) {}
+        virtual void setShaderUniforms(const gl::GlslProgRef &program, const core::render_state &renderState) {}
 
         struct particle_vertex {
             // position of vertex

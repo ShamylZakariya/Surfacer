@@ -141,23 +141,6 @@ void PerlinWorldTestScenario::setup() {
     _terrain = terrain::TerrainObject::create("Terrain", terrainGen.world, DrawLayers::TERRAIN);
     getStage()->addObject(_terrain);
     
-    if ((false)) {
-        
-        // we're making a single attachment, for testing
-        terrain::AttachmentRef attachment = make_shared<terrain::Attachment>();
-        dvec2 pos(550.0825,  781.675);
-        // now attempt insertion
-
-        if (terrainGen.world->addAttachment(attachment, pos, dvec2(0,1))) {
-            attachment->setTag(0);
-            terrainGen.attachmentsByBatchId[0].push_back(attachment);
-        } else {
-            CI_LOG_E("Unable to plant test attachment at: " << pos);
-        }
-        
-        _recordCuts = false;
-    }
-    
     //
     // greebling
     //
@@ -167,9 +150,16 @@ void PerlinWorldTestScenario::setup() {
         gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
         
         precariously::GreeblingParticleSystem::config config;
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,0,0,1), 0.25, 0);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,0,1), 0.5,  0);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(0,1,1,1), 0.75, 0);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,0,1,1), 1.00, -0.5);
+        
         config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
         config.drawConfig.atlasType = particles::Atlas::TwoByTwo;
         config.drawConfig.drawLayer = DrawLayers::ATTACHMENTS;
+        config.drawConfig.swayPeriod = 0.5;
+        config.drawConfig.swayFactor = 2;
         
         for(auto v : terrainGen.attachmentsByBatchId) {
             CI_LOG_D("Creating GreeblingParticleSystem to render " << v.second.size() << " greebles");

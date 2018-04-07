@@ -21,7 +21,28 @@ namespace precariously {
     public:
         
         struct config {
-            // nothing, yet!
+            struct atlas_detail {
+                
+                // color for greebles of this atlas idx
+                ci::ColorA color;
+                
+                // radius for greebles of this atlas idx
+                double radius;
+                
+                // offset in terms of radius to push greebles away from having base touching terrain surface.
+                // a value of -0.5 would center greeble's origin on the surface. A value of +0.5 would push greeble up
+                // by half its height above the default surface placement.
+                double upOffset;
+                
+                atlas_detail(ci::ColorA color, double radius, double upOffset = 0):
+                color(color),
+                radius(radius),
+                upOffset(upOffset)
+                {}
+            };
+            
+            // details to apply to greebles of texture atlas [0...N]
+            vector<atlas_detail> atlas_details;
             
             static config parse(const core::util::xml::XmlMultiTree &node);
         };
@@ -67,6 +88,22 @@ namespace precariously {
     
     class GreeblingParticleSystemDrawComponent : public particles::ParticleSystemDrawComponent {
     public:
+        
+        struct config : public particles::ParticleSystemDrawComponent::config {
+
+            // if non-zero, this represents the distance relative to width of the sway of each greeble particle
+            double swayFactor;
+            
+            // period in seconds that a particle sway cycle takes
+            double swayPeriod;
+
+            config():
+            swayFactor(0),
+            swayPeriod(0.5)
+            {}
+        };
+
+    public:
 
         static shared_ptr<GreeblingParticleSystemDrawComponent> create(config c);
 
@@ -74,8 +111,12 @@ namespace precariously {
         
     protected:
 
-        void setShaderUniforms(const core::render_state &renderState) override;
+        void setShaderUniforms(const gl::GlslProgRef &program, const core::render_state &renderState) override;
 
+    protected:
+        
+        config _config;
+    
     };
     
     
@@ -84,11 +125,10 @@ namespace precariously {
         
         struct config {
             GreeblingParticleSimulation::config simulationConfig;
-            particles::ParticleSystemDrawComponent::config drawConfig;
+            GreeblingParticleSystemDrawComponent::config drawConfig;
             
             config()
-            {
-            }
+            {}
             
             static config parse(const core::util::xml::XmlMultiTree &node);
         };

@@ -657,7 +657,7 @@ namespace particles {
                     gl::ScopedTextureBind tex(_config.textureAtlas, 0);
                     gl::ScopedBlendPremult blender;
                     
-                    setShaderUniforms(renderState);
+                    setShaderUniforms(_shader, renderState);
                     _particlesBatch->draw(_batchDrawStart, _batchDrawCount);
                 }
                 break;

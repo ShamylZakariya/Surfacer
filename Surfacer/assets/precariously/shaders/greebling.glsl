@@ -2,6 +2,8 @@ vertex:
 #version 150
 uniform mat4 ciModelViewProjection;
 uniform float ciElapsedSeconds;
+uniform float swayPeriod;
+uniform float swayFactor;
 
 in vec4 ciPosition;
 in vec2 ciNormal;
@@ -25,7 +27,7 @@ void main(void) {
 
     float time = ciElapsedSeconds * (1 + 0.25 * ((Random.y * 2) - 1));
     vec4 right = vec4(Up.y, -Up.x, 0, 0);
-    vec4 wiggle = cos((time + (Random.x * 3.14159)) / 3.14159) * right;
+    vec4 wiggle = cos((time + (Random.x * swayPeriod)) / swayPeriod) * right * swayFactor;
     
     gl_Position = ciModelViewProjection * (ciPosition + wiggle * (1.0-VertexPosition.y));
 }
@@ -47,6 +49,6 @@ void main(void) {
     
     // NOTE: additive blending requires premultiplication
     oColor.rgb = Color.rgb * alpha;
-    oColor.rg *= 0.5 + (Random * 0.5);
+    //oColor.rg *= 0.5 + (Random * 0.5);
     oColor.a = Color.a * alpha;
 }
