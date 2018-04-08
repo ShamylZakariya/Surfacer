@@ -32,7 +32,7 @@ void main(void) {
     vec4 right = vec4(Up.y, -Up.x, 0, 0);    
     vec4 wiggle = cos((time + (Random.x * swayPeriod)) / swayPeriod) * right * swayFactors[ciBoneIndex];
     
-    gl_Position = ciModelViewProjection * (ciPosition + wiggle * (1.0-VertexPosition.y));
+    gl_Position = ciModelViewProjection * (ciPosition + wiggle * VertexPosition.y);
 }
 
 fragment:

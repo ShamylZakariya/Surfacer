@@ -740,10 +740,10 @@ namespace particles {
             if (state->active && state->color.a >= ALPHA_EPSILON) {
 
 
-                shape[0] = state->position - state->right + state->up;
-                shape[1] = state->position + state->right + state->up;
-                shape[2] = state->position + state->right - state->up;
-                shape[3] = state->position - state->right - state->up;
+                shape[0] = state->position - state->right - state->up;
+                shape[1] = state->position + state->right - state->up;
+                shape[2] = state->position + state->right + state->up;
+                shape[3] = state->position - state->right + state->up;
 
                 //
                 //	For each vertex, assign position, color and texture coordinate
