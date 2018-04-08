@@ -92,13 +92,13 @@ namespace precariously {
         struct config : public particles::ParticleSystemDrawComponent::config {
 
             // if non-zero, this represents the distance relative to width of the sway of each greeble particle
-            double swayFactor;
+            // by its atlas index. The size of the vector must == the number of elements implied by the atlas type.
+            vector<float> swayFactorByAtlasIdx;
             
             // period in seconds that a particle sway cycle takes
             double swayPeriod;
 
             config():
-            swayFactor(0),
             swayPeriod(0.5)
             {}
         };

@@ -116,12 +116,14 @@ namespace precariously {
     GreeblingParticleSystemDrawComponent::GreeblingParticleSystemDrawComponent(config c):
     ParticleSystemDrawComponent(c),
     _config(c)
-    {}
+    {
+        CI_ASSERT(c.swayFactorByAtlasIdx.size() == Atlas::ElementCount(c.atlasType));
+    }
     
     void GreeblingParticleSystemDrawComponent::setShaderUniforms(const gl::GlslProgRef &program, const core::render_state &renderState) {
         ParticleSystemDrawComponent::setShaderUniforms(program, renderState);
         program->uniform("swayPeriod", static_cast<float>(_config.swayPeriod));
-        program->uniform("swayFactor", static_cast<float>(_config.swayFactor));
+        program->uniform("swayFactors", _config.swayFactorByAtlasIdx.data(), static_cast<int>(_config.swayFactorByAtlasIdx.size()));
     }
     
 #pragma mark - GreeblingParticleSystem

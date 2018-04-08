@@ -642,6 +642,7 @@ namespace particles {
         particleLayout.append(geom::Attrib::TEX_COORD_1, 2, sizeof(particle_vertex), offsetof(particle_vertex, vertexPosition));
         particleLayout.append(geom::Attrib::TEX_COORD_2, 2, sizeof(particle_vertex), offsetof(particle_vertex, random));
         particleLayout.append(geom::Attrib::COLOR, 4, sizeof(particle_vertex), offsetof(particle_vertex, color));
+        particleLayout.append(geom::Attrib::BONE_INDEX, geom::DataType::FLOAT, 1, sizeof(particle_vertex), offsetof(particle_vertex, atlasIdx));
 
         // pair our layout with vbo.
         auto mesh = gl::VboMesh::create(static_cast<uint32_t>(_particles.size()), GL_TRIANGLES, {{particleLayout, _particlesVbo}});
@@ -752,25 +753,29 @@ namespace particles {
                 const vec2 up = state->up;
                 const ci::ColorA pc = state->color;
                 const ci::ColorA additiveColor(pc.r * pc.a, pc.g * pc.a, pc.b * pc.a, pc.a * (1 - static_cast<float>(state->additivity)));
-                const vec2 atlasOffset = AtlasOffsets[state->atlasIdx];
+                const int atlasIdx = static_cast<int>(state->atlasIdx);
+                const vec2 atlasOffset = AtlasOffsets[atlasIdx];
 
                 // GL_TRIANGLE
                 vertex->position = shape[0];
                 vertex->up = up;
                 vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
+                vertex->atlasIdx = atlasIdx;
                 ++vertex;
 
                 vertex->position = shape[1];
                 vertex->up = up;
                 vertex->texCoord = (TexCoords[1] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
+                vertex->atlasIdx = atlasIdx;
                 ++vertex;
 
                 vertex->position = shape[2];
                 vertex->up = up;
                 vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
+                vertex->atlasIdx = atlasIdx;
                 ++vertex;
 
                 // GL_TRIANGLE
@@ -778,18 +783,21 @@ namespace particles {
                 vertex->up = up;
                 vertex->texCoord = (TexCoords[0] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
+                vertex->atlasIdx = atlasIdx;
                 ++vertex;
 
                 vertex->position = shape[2];
                 vertex->up = up;
                 vertex->texCoord = (TexCoords[2] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
+                vertex->atlasIdx = atlasIdx;
                 ++vertex;
 
                 vertex->position = shape[3];
                 vertex->up = up;
                 vertex->texCoord = (TexCoords[3] * AtlasScaling) + atlasOffset;
                 vertex->color = additiveColor;
+                vertex->atlasIdx = atlasIdx;
                 ++vertex;
 
                 verticesWritten += 6;

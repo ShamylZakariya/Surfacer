@@ -3,7 +3,8 @@ vertex:
 uniform mat4 ciModelViewProjection;
 uniform float ciElapsedSeconds;
 uniform float swayPeriod;
-uniform float swayFactor;
+uniform float swayFactors[4];
+
 
 in vec4 ciPosition;
 in vec2 ciNormal;
@@ -11,12 +12,14 @@ in vec2 ciTexCoord0;
 in vec2 ciTexCoord1;
 in vec2 ciTexCoord2;
 in vec4 ciColor;
+in int ciBoneIndex;
 
 out vec2 Up;
 out vec2 TexCoord;
 out vec2 VertexPosition;
 out vec2 Random;
 out vec4 Color;
+
 
 void main(void) {
     Up = ciNormal.xy;
@@ -26,8 +29,8 @@ void main(void) {
     Color = ciColor;
 
     float time = ciElapsedSeconds * (1 + 0.25 * ((Random.y * 2) - 1));
-    vec4 right = vec4(Up.y, -Up.x, 0, 0);
-    vec4 wiggle = cos((time + (Random.x * swayPeriod)) / swayPeriod) * right * swayFactor;
+    vec4 right = vec4(Up.y, -Up.x, 0, 0);    
+    vec4 wiggle = cos((time + (Random.x * swayPeriod)) / swayPeriod) * right * swayFactors[ciBoneIndex];
     
     gl_Position = ciModelViewProjection * (ciPosition + wiggle * (1.0-VertexPosition.y));
 }
@@ -45,10 +48,10 @@ in vec4 Color;
 out vec4 oColor;
 
 void main(void) {
-    float alpha = round(texture(uTex0, TexCoord).r);
+    vec4 tex = texture(uTex0, TexCoord);
+    tex.a = floor(tex.a);
     
     // NOTE: additive blending requires premultiplication
-    oColor.rgb = Color.rgb * alpha;
-    //oColor.rg *= 0.5 + (Random * 0.5);
-    oColor.a = Color.a * alpha;
+    oColor.rgb = Color.rgb * tex.rgb * tex.a;
+    oColor.a = Color.a * tex.a;
 }

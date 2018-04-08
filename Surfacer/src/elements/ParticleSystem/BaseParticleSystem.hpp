@@ -69,6 +69,8 @@ namespace particles {
         extern const vec2 *AtlasOffsets(Type atlasType);
 
         extern float AtlasScaling(Type atlasType);
+        
+        extern size_t ElementCount(Type atlasType);
 
     }
 

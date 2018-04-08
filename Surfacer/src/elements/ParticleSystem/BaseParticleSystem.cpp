@@ -85,6 +85,18 @@ namespace particles {
     float Atlas::AtlasScaling(Type atlasType) {
         return AtlasScalingByAtlasType[atlasType];
     }
+    
+    size_t Atlas::ElementCount(Type atlasType) {
+        switch (atlasType) {
+            case None:
+                return 1;
+            case TwoByTwo:
+                return 4;
+            case FourByFour:
+                return 16;
+        }
+        return 1;
+    }
 
 
 #pragma mark - BaseParticleSimulation

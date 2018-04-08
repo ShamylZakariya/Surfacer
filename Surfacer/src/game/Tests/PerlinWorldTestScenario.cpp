@@ -146,20 +146,20 @@ void PerlinWorldTestScenario::setup() {
     //
 
     {
-        auto image = loadImage(app::loadAsset("precariously/textures/Explosion.png"));
+        auto image = loadImage(app::loadAsset("precariously/textures/2x2_test.png"));
         gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
         
         precariously::GreeblingParticleSystem::config config;
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,0,0,1), 0.25, 0);
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,0,1), 0.5,  0);
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(0,1,1,1), 0.75, 0);
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,0,1,1), 1.00, -0.5);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 0.25, 0);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 0.5,  0);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 0.75, 0);
+        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 1.00, -0.5);
         
         config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
         config.drawConfig.atlasType = particles::Atlas::TwoByTwo;
         config.drawConfig.drawLayer = DrawLayers::ATTACHMENTS;
         config.drawConfig.swayPeriod = 0.5;
-        config.drawConfig.swayFactor = 2;
+        config.drawConfig.swayFactorByAtlasIdx = { 1.0f, 1.0f, 1.0f, 1.0f };
         
         for(auto v : terrainGen.attachmentsByBatchId) {
             CI_LOG_D("Creating GreeblingParticleSystem to render " << v.second.size() << " greebles");

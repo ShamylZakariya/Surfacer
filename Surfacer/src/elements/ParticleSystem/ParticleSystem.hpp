@@ -492,7 +492,11 @@ namespace particles {
 
             // color for the vertex
             // bound to ciColor (float4)
-            ci::ColorA color;            
+            ci::ColorA color;
+            
+            // atlas index of this particle [0..4]
+            // bound to ciBoneIndex
+            int atlasIdx;
         };
         
     protected:
