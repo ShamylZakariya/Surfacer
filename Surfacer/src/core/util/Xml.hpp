@@ -52,6 +52,8 @@ namespace core {
                 bool hasChild(string name) const;
 
                 XmlMultiTree getChild(string name) const;
+                
+                XmlMultiTree getChild(string name, size_t which) const;
 
                 XmlMultiTree findDescentant(string relativePath) const;
 

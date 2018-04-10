@@ -132,7 +132,7 @@ void PerlinWorldTestScenario::setup() {
         ap.normalToUpDotTarget = 1;
         ap.normalToUpDotRange = 1;
         ap.probability = 0.875;
-        ap.density = 1;
+        ap.density = 2;
         ap.includeHoleContours = true;
         params.attachments.push_back(ap);
     }
@@ -150,16 +150,16 @@ void PerlinWorldTestScenario::setup() {
         gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
         
         precariously::GreeblingParticleSystem::config config;
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 0.25, 0);
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 0.5,  0);
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 0.75, 0);
-        config.simulationConfig.atlas_details.emplace_back(ci::ColorA(1,1,1,1), 1.00, -0.5);
+        config.textureAtlas = gl::Texture2d::create(image, fmt);
+        config.atlasType = particles::Atlas::TwoByTwo;
+        config.drawLayer = DrawLayers::ATTACHMENTS;
         
-        config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
-        config.drawConfig.atlasType = particles::Atlas::TwoByTwo;
-        config.drawConfig.drawLayer = DrawLayers::ATTACHMENTS;
-        config.drawConfig.swayPeriod = 0.5;
-        config.drawConfig.swayFactorByAtlasIdx = { 1.0f, 1.0f, 1.0f, 1.0f };
+        config.greebleDescriptors = {
+            precariously::GreeblingParticleSystem::greeble_descriptor(ci::ColorA(1,1,1,1), 0.25, 0, 1.00, 2.0),
+            precariously::GreeblingParticleSystem::greeble_descriptor(ci::ColorA(1,1,1,1), 0.50, 0, 0.60, 1.0),
+            precariously::GreeblingParticleSystem::greeble_descriptor(ci::ColorA(1,1,1,1), 1.00, 0, 0.25, 0.5),
+            precariously::GreeblingParticleSystem::greeble_descriptor(ci::ColorA(1,1,1,1), 2.00, 0, 0.10, 0.25),
+        };
         
         for(auto v : terrainGen.attachmentsByBatchId) {
             CI_LOG_D("Creating GreeblingParticleSystem to render " << v.second.size() << " greebles");

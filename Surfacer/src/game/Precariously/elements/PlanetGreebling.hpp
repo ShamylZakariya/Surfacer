@@ -42,9 +42,7 @@ namespace precariously {
             };
             
             // details to apply to greebles of texture atlas [0...N]
-            vector<atlas_detail> atlas_details;
-            
-            static config parse(const core::util::xml::XmlMultiTree &node);
+            vector<atlas_detail> atlasDetails;
         };
         
     public:
@@ -96,10 +94,9 @@ namespace precariously {
             vector<float> swayFactorByAtlasIdx;
             
             // period in seconds that a particle sway cycle takes
-            double swayPeriod;
+            vector<float> swayPeriodByAtlasIdx;
 
-            config():
-            swayPeriod(0.5)
+            config()
             {}
         };
 
@@ -122,15 +119,49 @@ namespace precariously {
     
     class GreeblingParticleSystem : public particles::BaseParticleSystem {
     public:
-        
-        struct config {
-            GreeblingParticleSimulation::config simulationConfig;
-            GreeblingParticleSystemDrawComponent::config drawConfig;
+
+        struct greeble_descriptor {
+            ci::ColorA color;
+            double radius;
+            double upOffset;
+            double swayFactor;
+            double swayPeriod;
             
-            config()
+            greeble_descriptor():
+            color(1,1,1,1),
+            radius(1),
+            upOffset(0),
+            swayFactor(0.1),
+            swayPeriod(0.5)
             {}
             
-            static config parse(const core::util::xml::XmlMultiTree &node);
+            greeble_descriptor(ci::ColorA color, double radius, double upOffset, double swayFactor, double swayPeriod):
+            color(color),
+            radius(radius),
+            upOffset(upOffset),
+            swayFactor(swayFactor),
+            swayPeriod(swayPeriod)
+            {}
+        };
+
+        struct config {
+            int attachmentBatchId;
+            int drawLayer;
+            ci::gl::Texture2dRef textureAtlas;
+            particles::Atlas::Type atlasType;
+            vector<greeble_descriptor> greebleDescriptors;
+            
+            config():
+            attachmentBatchId(0),
+            drawLayer(0),
+            atlasType(particles::Atlas::None)
+            {}
+            
+            static boost::optional<config> parse(const core::util::xml::XmlMultiTree &node);
+
+            bool sanityCheck() const;
+            GreeblingParticleSimulation::config createSimulationConfig() const;
+            GreeblingParticleSystemDrawComponent::config createDrawConfig() const;
         };
         
         static GreeblingParticleSystemRef create(std::string name, const config &c, const vector <terrain::AttachmentRef> &attachments);

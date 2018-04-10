@@ -9,6 +9,7 @@
 #include "PrecariouslyStage.hpp"
 
 #include "DevComponents.hpp"
+#include "PlanetGreebling.hpp"
 
 using namespace core;
 
@@ -129,6 +130,18 @@ namespace precariously {
         if (cloudLayerNode) {
             _cloudLayers.push_back(loadCloudLayer(*cloudLayerNode, DrawLayers::EFFECTS));
         }
+        
+        auto greebleSystemsNode = util::xml::findElement(stageNode, "greebleSystems");
+        if (greebleSystemsNode) {
+            for (size_t i = 0;;i++) {
+                auto greebleSystemNode = util::xml::XmlMultiTree(*greebleSystemsNode).getChild("greebleSystem",i);
+                if (!greebleSystemNode) {
+                    break;
+                }
+                
+                loadGreebleSystem(greebleSystemNode);
+            }
+        }
 
         buildExplosionParticleSystem();
 
@@ -248,6 +261,18 @@ namespace precariously {
         auto cl = CloudLayerParticleSystem::create(config);
         addObject(cl);
         return cl;
+    }
+    
+    void PrecariouslyStage::loadGreebleSystem(const util::xml::XmlMultiTree &greebleNode) {
+        auto config = GreeblingParticleSystem::config::parse(greebleNode);
+        if (config) {
+            const auto &attachments = _planet->getAttachments();
+            auto pos = attachments.find(config->attachmentBatchId);
+            if (pos != attachments.end()) {
+                auto greebles = precariously::GreeblingParticleSystem::create("greeble_" + str(config->attachmentBatchId), *config, pos->second);
+                addObject(greebles);
+            }
+        }
     }
 
     void PrecariouslyStage::buildExplosionParticleSystem() {

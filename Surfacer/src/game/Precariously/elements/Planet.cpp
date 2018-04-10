@@ -10,8 +10,6 @@
 #include "TerrainDetail.hpp"
 #include "PerlinNoise.hpp"
 #include "PrecariouslyConstants.hpp"
-#include "PlanetGenerator.hpp"
-
 
 using namespace core;
 using namespace terrain;
@@ -52,6 +50,29 @@ namespace precariously {
             return params;
         }
         
+        precariously::planet_generation::params::perimeter_attachment_params parseAttachmentGenerator(const core::util::xml::XmlMultiTree &node) {
+            precariously::planet_generation::params::perimeter_attachment_params p(0);
+            p.batchId = util::xml::readNumericAttribute<size_t>(node, "batchId", 0);
+            p.normalToUpDotTarget = util::xml::readNumericAttribute<double>(node, "normalToUpDotTarget", 1);
+            p.normalToUpDotRange = util::xml::readNumericAttribute<double>(node, "normalToUpDotRange", 0.75);
+            p.probability = util::xml::readNumericAttribute<double>(node, "probability", 0.5);
+            p.density = util::xml::readNumericAttribute<size_t>(node, "density", 1);
+            p.includeHoleContours = util::xml::readBoolAttribute(node, "includeHoleContours", true);
+            return p;
+        }
+        
+        vector<precariously::planet_generation::params::perimeter_attachment_params> parseAttachmentGenerators(const core::util::xml::XmlMultiTree &node) {
+            vector<precariously::planet_generation::params::perimeter_attachment_params> params;
+            for (size_t i = 0;;i++) {
+                auto generator = node.getChild("generator", i);
+                if (!generator) {
+                    break;
+                }
+                params.push_back(parseAttachmentGenerator(generator));
+            }
+            return params;
+        }
+        
     }
 
     Planet::config Planet::config::parse(core::util::xml::XmlMultiTree configNode) {
@@ -68,10 +89,13 @@ namespace precariously {
         double partitionSize = util::xml::readNumericAttribute<double>(planetNode, "partitionSize", 250);
         config surfaceConfig = config::parse(planetNode.getChild("surface"));
         config coreConfig = config::parse(planetNode.getChild("core"));
-        return create(name, world, surfaceConfig, coreConfig, origin, partitionSize, drawLayer);
+        auto attachmentGenerators = parseAttachmentGenerators(planetNode.getChild("attachmentGenerators"));
+
+        return create(name, world, surfaceConfig, coreConfig, attachmentGenerators, origin, partitionSize, drawLayer);
     }
 
-    PlanetRef Planet::create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer) {
+    PlanetRef Planet::create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, const vector<planet_generation::params::perimeter_attachment_params> &attachments, dvec2 origin, double partitionSize, int drawLayer) {
+        
         planet_generation::params params = create_planet_generation_params(surfaceConfig, coreConfig, origin, surfaceConfig.radius);
         
         // this is a bit hokey; we need to copy our materials back to the params for generation
@@ -79,15 +103,18 @@ namespace precariously {
         params.terrain.material = world->getWorldMaterial();
         params.anchors.material = world->getAnchorMaterial();
         params.terrain.partitionSize = partitionSize;
+        params.attachments = attachments;
 
         auto result = planet_generation::generate(params, world);
 
         // finally create the Planet
-        return make_shared<Planet>(name, result.world, drawLayer);
+        return make_shared<Planet>(name, result.world, result.attachmentsByBatchId, drawLayer);
     }
 
-    Planet::Planet(string name, WorldRef world, int drawLayer) :
-            TerrainObject(name, world, drawLayer) {
+    Planet::Planet(string name, WorldRef world, const map<size_t,vector<terrain::AttachmentRef>> &attachmentsByBatchId, int drawLayer) :
+            TerrainObject(name, world, drawLayer),
+            _attachmentsByBatchId(attachmentsByBatchId)
+    {
     }
 
     Planet::~Planet() {
@@ -95,6 +122,15 @@ namespace precariously {
 
     void Planet::onReady(core::StageRef stage) {
         TerrainObject::onReady(stage);
+    }
+    
+    vector<terrain::AttachmentRef> Planet::getAttachmentsByBatchId(size_t batchId) const {
+        const auto &pos = _attachmentsByBatchId.find(batchId);
+        if (pos != _attachmentsByBatchId.end()) {
+            return pos->second;
+        }
+        
+        return vector<terrain::AttachmentRef>();
     }
 
 #pragma mark - CrackGeometry

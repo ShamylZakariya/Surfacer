@@ -80,6 +80,25 @@ namespace core {
                 }
                 return XmlMultiTree(children);
             }
+            
+            XmlMultiTree XmlMultiTree::getChild(string name, size_t which) const {
+                vector <ci::XmlTree> children;
+                for (auto t : _trees) {
+                    size_t i = 0;
+                    for (const auto &c : t.getChildren()) {
+                        if (c->getTag() == name && i == which) {
+                            children.push_back(*c);
+                        }
+                        i++;
+                    }
+                }
+
+                if (!children.empty()) {
+                    return XmlMultiTree(children);
+                }
+                
+                return XmlMultiTree();
+            }
 
             XmlMultiTree XmlMultiTree::findDescentant(string relativePath) const {
                 vector <XmlTree> descendents;

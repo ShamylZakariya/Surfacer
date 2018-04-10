@@ -10,6 +10,7 @@
 
 #include "Terrain.hpp"
 #include "Xml.hpp"
+#include "PlanetGenerator.hpp"
 
 namespace precariously {
 
@@ -40,11 +41,11 @@ namespace precariously {
 
         static PlanetRef create(string name, terrain::WorldRef world, core::util::xml::XmlMultiTree planetNode, int drawLayer);
 
-        static PlanetRef create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, dvec2 origin, double partitionSize, int drawLayer);
+        static PlanetRef create(string name, terrain::WorldRef world, const config &surfaceConfig, const config &coreConfig, const vector<planet_generation::params::perimeter_attachment_params> &attachments, dvec2 origin, double partitionSize, int drawLayer);
 
     public:
 
-        Planet(string name, terrain::WorldRef world, int drawLayer);
+        Planet(string name, terrain::WorldRef world, const map<size_t,vector<terrain::AttachmentRef>> &attachmentsByBatchId, int drawLayer);
 
         virtual ~Planet();
 
@@ -55,10 +56,15 @@ namespace precariously {
         dvec2 getOrigin() const {
             return _origin;
         }
+        
+        const map<size_t,vector<terrain::AttachmentRef>> &getAttachments() const { return _attachmentsByBatchId; }
+        
+        vector<terrain::AttachmentRef> getAttachmentsByBatchId(size_t batchId) const;
 
     private:
 
         dvec2 _origin;
+        map<size_t,vector<terrain::AttachmentRef>> _attachmentsByBatchId;
 
     };
 

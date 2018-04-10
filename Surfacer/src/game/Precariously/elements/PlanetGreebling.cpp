@@ -13,13 +13,6 @@ using namespace core;
 using namespace particles;
 namespace precariously {
     
-    GreeblingParticleSimulation::config GreeblingParticleSimulation::config::parse(const util::xml::XmlMultiTree &node) {
-        config c;
-        // TODO: Implement parser
-        return c;
-    }
-
-    
     /*
      config _config;
      cpBB _bb;
@@ -60,8 +53,8 @@ namespace precariously {
         
         bool didUpdate = false;
         
-        const size_t numAtlasDetails = _config.atlas_details.size();
-        const config::atlas_detail *atlasDetails = _config.atlas_details.data();
+        const size_t numAtlasDetails = _config.atlasDetails.size();
+        const config::atlas_detail *atlasDetails = _config.atlasDetails.data();
         
         for (; state != end; ++state, ++attachments) {
             const auto &attachment = *attachments;
@@ -117,34 +110,99 @@ namespace precariously {
     ParticleSystemDrawComponent(c),
     _config(c)
     {
-        CI_ASSERT(c.swayFactorByAtlasIdx.size() == Atlas::ElementCount(c.atlasType));
     }
     
     void GreeblingParticleSystemDrawComponent::setShaderUniforms(const gl::GlslProgRef &program, const core::render_state &renderState) {
         ParticleSystemDrawComponent::setShaderUniforms(program, renderState);
-        program->uniform("swayPeriod", static_cast<float>(_config.swayPeriod));
-        program->uniform("swayFactors", _config.swayFactorByAtlasIdx.data(), static_cast<int>(_config.swayFactorByAtlasIdx.size()));
+        program->uniform("swayFactor", _config.swayFactorByAtlasIdx.data(), static_cast<int>(_config.swayFactorByAtlasIdx.size()));
+        program->uniform("swayPeriod", _config.swayPeriodByAtlasIdx.data(), static_cast<int>(_config.swayPeriodByAtlasIdx.size()));
     }
     
 #pragma mark - GreeblingParticleSystem
     
-    GreeblingParticleSystem::config GreeblingParticleSystem::config::parse(const util::xml::XmlMultiTree &node) {
+    boost::optional<GreeblingParticleSystem::config> GreeblingParticleSystem::config::parse(const util::xml::XmlMultiTree &node) {
         config c;
-        // TODO: Implement a good XML layout for this
-//        c.simulationConfig = GreeblingParticleSimulation::config::parse(node.getChild("simulation"));
-//        c.drawConfig = ParticleSystemDrawComponent::config::parse(node.getChild("draw"));
-        return c;
+        c.attachmentBatchId = util::xml::readNumericAttribute<int>(node, "attachmentBatchId", c.attachmentBatchId);
+        c.drawLayer = util::xml::readNumericAttribute<int>(node, "drawLayer", c.drawLayer);
+
+        auto atlasPath = node.getAttribute("textureAtlas");
+        auto image = loadImage(app::loadAsset(*atlasPath));
+        gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
+        c.textureAtlas = gl::Texture2d::create(image, fmt);
+        
+        c.atlasType = particles::Atlas::fromString(node.getAttribute("atlasType").value_or("None"));
+
+        // now load <greeble> children until exhausted
+        for(size_t i = 0;; i++) {
+            auto greeble = node.getChild("greeble", i);
+            if (!greeble) {
+                break;
+            }
+            
+            const ColorA color = util::xml::readColorAttribute(greeble, "color", ColorA(1,1,1,1));
+            const double radius = util::xml::readNumericAttribute<double>(greeble, "radius", 1.0);
+            const double upOffset = util::xml::readNumericAttribute<double>(greeble, "upOffset", 0.0);
+            const double swayFactor = util::xml::readNumericAttribute<double>(greeble, "swayFactor", 0.0);
+            const double swayPeriod = util::xml::readNumericAttribute<double>(greeble, "swayPeriod", 1.0);
+            
+            c.greebleDescriptors.push_back(greeble_descriptor(color, radius, upOffset, swayFactor, swayPeriod));
+        }
+        
+        if (c.sanityCheck()) {
+            return c;
+        }
+        
+        return boost::none;
     }
     
-    GreeblingParticleSystemRef GreeblingParticleSystem::create(string name, const config &c, const vector <terrain::AttachmentRef> &attachments) {
-        auto simulation = make_shared<GreeblingParticleSimulation>(c.simulationConfig);
-        auto draw = GreeblingParticleSystemDrawComponent::create(c.drawConfig);
+    bool GreeblingParticleSystem::config::sanityCheck() const {
+        if (greebleDescriptors.size() != Atlas::ElementCount(atlasType)) {
+            CI_ASSERT_MSG(false, "Expect greebleDescriptors.size() to match atlas count");
+            return false;
+        }
+        return true;
+    }
+
+    GreeblingParticleSimulation::config GreeblingParticleSystem::config::createSimulationConfig() const {
+        GreeblingParticleSimulation::config c;
+        for (const auto &gd : greebleDescriptors) {
+            c.atlasDetails.push_back(GreeblingParticleSimulation::config::atlas_detail(gd.color, gd.radius, gd.upOffset));
+        }
+        return c;
+    }
+
+    GreeblingParticleSystemDrawComponent::config GreeblingParticleSystem::config::createDrawConfig() const {
+        GreeblingParticleSystemDrawComponent::config c;
+        c.textureAtlas = textureAtlas;
+        c.atlasType = atlasType;
+        c.drawLayer = drawLayer;
         
+        for (const auto &gd : greebleDescriptors) {
+            c.swayFactorByAtlasIdx.push_back(gd.swayFactor);
+            c.swayPeriodByAtlasIdx.push_back(gd.swayPeriod);
+        }
+        
+        return c;
+    }
+
+    
+    GreeblingParticleSystemRef GreeblingParticleSystem::create(string name, const config &c, const vector <terrain::AttachmentRef> &attachments) {
+        if (!c.sanityCheck()) {
+            CI_LOG_E("GreeblingParticleSystem::create config didn't pass sanity check.");
+            return nullptr;
+        }
+
+        // create simulation
+        auto simulation = make_shared<GreeblingParticleSimulation>(c.createSimulationConfig());
+        simulation->setAttachments(attachments);
+
+        // create renderer
+        auto draw = GreeblingParticleSystemDrawComponent::create(c.createDrawConfig());
+        
+        // create system and stitch together
         auto gps = make_shared<GreeblingParticleSystem>(name, c);
         gps->addComponent(draw);
         gps->addComponent(simulation);
-        
-        simulation->setAttachments(attachments);
         
         return gps;
     }

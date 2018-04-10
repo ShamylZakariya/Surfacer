@@ -78,6 +78,8 @@ namespace precariously {
         void loadPlanet(XmlTree planetNode);
 
         CloudLayerParticleSystemRef loadCloudLayer(XmlTree cloudLayer, int drawLayer);
+        
+        void loadGreebleSystem(const core::util::xml::XmlMultiTree &greebleNode);
 
         void buildExplosionParticleSystem();
 

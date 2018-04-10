@@ -2,8 +2,8 @@ vertex:
 #version 150
 uniform mat4 ciModelViewProjection;
 uniform float ciElapsedSeconds;
-uniform float swayPeriod;
-uniform float swayFactors[4];
+uniform float swayFactor[4];
+uniform float swayPeriod[4];
 
 
 in vec4 ciPosition;
@@ -28,9 +28,11 @@ void main(void) {
     Random = ciTexCoord2;
     Color = ciColor;
 
+    int atlasIdx = ciBoneIndex;
+    float period = swayPeriod[atlasIdx];
     float time = ciElapsedSeconds * (1 + 0.25 * ((Random.y * 2) - 1));
-    vec4 right = vec4(Up.y, -Up.x, 0, 0);    
-    vec4 wiggle = cos((time + (Random.x * swayPeriod)) / swayPeriod) * right * swayFactors[ciBoneIndex];
+    vec4 right = vec4(Up.y, -Up.x, 0, 0);
+    vec4 wiggle = cos((Random.x * period) + (time / period)) * right * swayFactor[atlasIdx];
     
     gl_Position = ciModelViewProjection * (ciPosition + wiggle * VertexPosition.y);
 }
