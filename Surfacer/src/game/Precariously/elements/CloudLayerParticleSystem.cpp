@@ -150,9 +150,9 @@ namespace precariously {
 
             double angle;
             if (lengthSquared(physics->position - physics->home) > 1e-2) {
-                angle = M_PI_2 + atan2(physics->position.y, physics->position.x);
+                angle = atan2(physics->position.y, physics->position.x) - M_PI_2;
             } else {
-                angle = M_PI_2 + a;
+                angle = a - M_PI_2;
             }
 
             double noise = _generator.noiseUnit(a, noiseYAxis);
