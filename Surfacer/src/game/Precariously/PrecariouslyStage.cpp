@@ -131,7 +131,7 @@ namespace precariously {
             _cloudLayers.push_back(loadCloudLayer(*cloudLayerNode, DrawLayers::EFFECTS));
         }
         
-        auto greebleSystemsNode = util::xml::findElement(stageNode, "greebleSystems");
+        auto greebleSystemsNode = util::xml::findElement(*planetNode, "greebleSystems");
         if (greebleSystemsNode) {
             for (size_t i = 0;;i++) {
                 auto greebleSystemNode = util::xml::XmlMultiTree(*greebleSystemsNode).getChild("greebleSystem",i);

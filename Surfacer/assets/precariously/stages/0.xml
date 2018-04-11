@@ -31,6 +31,44 @@
 				includeHoleContours="true"
 			/>
 		</attachmentGenerators>
+
+		<greebleSystems>
+			<greebleSystem 
+				attachmentBatchId="0"
+				textureAtlas="precariously/textures/2x2_test.png"
+				atlasType="2x2"		
+				>
+				<greeble
+					color="255,255,255,255"
+					radius="1"
+					upOffset="0"
+					swayFactor="0.1"
+					swayPeriod="0.5"
+				/>
+				<greeble
+					color="255,255,255,255"
+					radius="1"
+					upOffset="0"
+					swayFactor="0.1"
+					swayPeriod="0.5"
+				/>
+				<greeble
+					color="255,255,255,255"
+					radius="1"
+					upOffset="0"
+					swayFactor="0.1"
+					swayPeriod="0.5"
+				/>
+				<greeble
+					color="255,255,255,255"
+					radius="1"
+					upOffset="0"
+					swayFactor="0.1"
+					swayPeriod="0.5"
+				/>		
+			</greebleSystem>
+		</greebleSystems>
+				
 	</planet>
 	<cloudLayer id="background">
 		<draw textureAtlas="precariously/textures/CloudTop.png" atlasType="None"/>
@@ -46,40 +84,4 @@
 			<particle minRadius="10" maxRadius="100" minRadiusNoiseValue="0.5" color="255,255,255,255"/>
 		</simulation>
 	</cloudLayer>
-	<greebleSystems>
-		<greebleSystem 
-			attachmentBatchId="0"
-			textureAtlas="precariously/textures/2x2_test.png"
-			atlasType="2x2"		
-			>
-			<greeble
-				color="255,255,255,255"
-				radius="1"
-				upOffset="0"
-				swayFactor="0.1"
-				swayPeriod="0.5"
-			/>
-			<greeble
-				color="255,255,255,255"
-				radius="1"
-				upOffset="0"
-				swayFactor="0.1"
-				swayPeriod="0.5"
-			/>
-			<greeble
-				color="255,255,255,255"
-				radius="1"
-				upOffset="0"
-				swayFactor="0.1"
-				swayPeriod="0.5"
-			/>
-			<greeble
-				color="255,255,255,255"
-				radius="1"
-				upOffset="0"
-				swayFactor="0.1"
-				swayPeriod="0.5"
-			/>		
-		</greebleSystem>
-	</greebleSystems>
 </stage>
