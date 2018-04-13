@@ -574,10 +574,10 @@ namespace particles {
                 size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
                 const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
 
-                dvec2 world, dir;
-                proto.source.apply(_rng, world, dir, world, dir);
+                dvec2 modulatedWorld, modulatedDir;
+                proto.source.apply(_rng, world, normalizedDirOrZero, modulatedWorld, modulatedDir);
 
-                sim->emit(perturb(_rng, proto.prototype, proto.source.variance), world, dir);
+                sim->emit(perturb(_rng, proto.prototype, proto.source.variance), modulatedWorld, modulatedDir);
             }
         }
     }

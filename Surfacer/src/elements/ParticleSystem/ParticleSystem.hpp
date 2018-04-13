@@ -396,7 +396,7 @@ namespace particles {
         /**
          Emit `count particles in the circular volume of `radius about `world
          */
-        void emitBurst(dvec2 world, dvec2 dir, int count = 1);
+        void emitBurst(dvec2 world, dvec2 normalizedDirOrZero, int count = 1);
 
     private:
 
