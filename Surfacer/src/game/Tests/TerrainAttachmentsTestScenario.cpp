@@ -106,7 +106,7 @@ void TerrainAttachmentsTestScenario::setup() {
     });
     
     auto cameraController = Object::with("ViewportControlComponent", {
-        make_shared<ManualViewportControlComponent>(getViewportController())
+        make_shared<MouseViewportControlComponent>(getViewportController())
     });
     
     auto gridDc = WorldCartesianGridDrawComponent::create();

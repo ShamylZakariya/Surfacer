@@ -204,14 +204,14 @@ void WorldCartesianGridDrawComponent::onViewportMotion(const Viewport &vp) {
 }
 
 
-#pragma mark - ManualViewportControlComponent
+#pragma mark - MouseViewportControlComponent
 
 /*
 	vec2 _mouseScreen, _mouseWorld;
 	ViewportControllerRef _viewportController;
 */
 
-ManualViewportControlComponent::ManualViewportControlComponent(ViewportControllerRef viewportController, int dispatchReceiptIndex)
+MouseViewportControlComponent::MouseViewportControlComponent(ViewportControllerRef viewportController, int dispatchReceiptIndex)
         :
         InputComponent(dispatchReceiptIndex),
         _viewportController(viewportController) {
@@ -223,7 +223,7 @@ namespace {
     }
 }
 
-void ManualViewportControlComponent::step(const time_state &time) {
+void MouseViewportControlComponent::step(const time_state &time) {
     const bool fast = (isKeyDown(ci::app::KeyEvent::KEY_LSHIFT)||isKeyDown(ci::app::KeyEvent::KEY_RSHIFT));
     const double radsPerSec = (fast ? 100 : 10) * M_PI / 180;
     if (isKeyDown(ci::app::KeyEvent::KEY_q)) {
@@ -238,7 +238,7 @@ void ManualViewportControlComponent::step(const time_state &time) {
     }
 }
 
-bool ManualViewportControlComponent::mouseDown(const ci::app::MouseEvent &event) {
+bool MouseViewportControlComponent::mouseDown(const ci::app::MouseEvent &event) {
     _mouseScreen = event.getPos();
     _mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 
@@ -258,17 +258,17 @@ bool ManualViewportControlComponent::mouseDown(const ci::app::MouseEvent &event)
     return false;
 }
 
-bool ManualViewportControlComponent::mouseUp(const ci::app::MouseEvent &event) {
+bool MouseViewportControlComponent::mouseUp(const ci::app::MouseEvent &event) {
     return false;
 }
 
-bool ManualViewportControlComponent::mouseMove(const ci::app::MouseEvent &event, const ivec2 &delta) {
+bool MouseViewportControlComponent::mouseMove(const ci::app::MouseEvent &event, const ivec2 &delta) {
     _mouseScreen = event.getPos();
     _mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
     return false;
 }
 
-bool ManualViewportControlComponent::mouseDrag(const ci::app::MouseEvent &event, const ivec2 &delta) {
+bool MouseViewportControlComponent::mouseDrag(const ci::app::MouseEvent &event, const ivec2 &delta) {
     _mouseScreen = event.getPos();
     _mouseWorld = getStage()->getViewport()->screenToWorld(_mouseScreen);
 
@@ -283,7 +283,7 @@ bool ManualViewportControlComponent::mouseDrag(const ci::app::MouseEvent &event,
     return false;
 }
 
-bool ManualViewportControlComponent::mouseWheel(const ci::app::MouseEvent &event) {
+bool MouseViewportControlComponent::mouseWheel(const ci::app::MouseEvent &event) {
     const float zoom = _viewportController->getScale(),
             wheelScale = 0.1 * zoom,
             dz = (event.getWheelIncrement() * wheelScale);
@@ -291,6 +291,81 @@ bool ManualViewportControlComponent::mouseWheel(const ci::app::MouseEvent &event
     _viewportController->setScale(zoom + dz, dvec2(event.getX(), event.getY()));
 
     return true;
+}
+
+#pragma mark - KeyboardViewportControlComponent
+/*
+ core::ViewportControllerRef _viewportController;
+ dvec2 _panRate;
+ double _fastScalar;
+ double _rotateRate;
+ double _scaleRate;
+*/
+KeyboardViewportControlComponent::KeyboardViewportControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex):
+        InputComponent(dispatchReceiptIndex),
+        _viewportController(viewportController),
+        _panRate(10),
+        _fastScalar(10),
+        _rotateRate(10 * M_PI / 180),
+        _scaleRate(1)
+{
+    using namespace ci::app;
+    monitorKeys({
+        KeyEvent::KEY_q,
+        KeyEvent::KEY_e,
+        KeyEvent::KEY_w,
+        KeyEvent::KEY_a,
+        KeyEvent::KEY_s,
+        KeyEvent::KEY_d,
+        KeyEvent::KEY_RIGHTBRACKET,
+        KeyEvent::KEY_LEFTBRACKET
+    });
+}
+
+
+// InputComponent
+void KeyboardViewportControlComponent::step(const core::time_state &time) {
+    using namespace ci::app;
+
+    const bool fast = (isKeyDown(ci::app::KeyEvent::KEY_LSHIFT)||isKeyDown(ci::app::KeyEvent::KEY_RSHIFT));
+    const double scale = (fast ? _fastScalar : 1) * time.deltaT;
+
+    Viewport::look look = _viewportController->getLook();
+    
+    if (isMonitoredKeyDown(KeyEvent::KEY_RIGHTBRACKET)) {
+        look.scale += _scaleRate * scale;
+    }
+
+    if (isMonitoredKeyDown(KeyEvent::KEY_LEFTBRACKET)) {
+        look.scale -= _scaleRate * scale;
+    }
+
+    if (isMonitoredKeyDown(KeyEvent::KEY_q)) {
+        look.up = rotate(look.up, -_rotateRate * scale);
+    }
+    
+    if (isKeyDown(KeyEvent::KEY_e)) {
+        look.up = rotate(look.up, +_rotateRate * scale);
+    }
+    
+    if (isMonitoredKeyDown(KeyEvent::KEY_w)) {
+        look.world.y += (_panRate.y * scale) / look.scale;
+    }
+
+    if (isMonitoredKeyDown(KeyEvent::KEY_s)) {
+        look.world.y -= (_panRate.y * scale) / look.scale;
+    }
+
+    if (isMonitoredKeyDown(KeyEvent::KEY_d)) {
+        look.world.x += (_panRate.x * scale) / look.scale;
+    }
+    
+    if (isMonitoredKeyDown(KeyEvent::KEY_a)) {
+        look.world.x -= (_panRate.x * scale) / look.scale;
+    }
+    
+    _viewportController->setLook(look);
+    _viewportController->setScale(look.scale);
 }
 
 #pragma mark - TargetTrackingViewportController

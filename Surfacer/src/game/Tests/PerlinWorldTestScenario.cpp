@@ -201,7 +201,7 @@ void PerlinWorldTestScenario::setup() {
     cutter->onCut.connect(this, &PerlinWorldTestScenario::onCutPerformed);
 
     getStage()->addObject(Object::with("ViewportControlComponent", {
-        make_shared<ManualViewportControlComponent>(getViewportController())
+        make_shared<MouseViewportControlComponent>(getViewportController())
     }));
     
     //

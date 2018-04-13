@@ -378,7 +378,7 @@ namespace precariously {
         dust.color = { ci::ColorA(0.9, 0.9, 0.9, 1), ci::ColorA(0.9, 0.9, 0.9, 0) };
         
         _dustEmitter = ps->createEmitter();
-        _dustEmitter->add(dust, ParticleEmitter::Source(2, 1, 0.3), 2);
+        _dustEmitter->add(dust, ParticleEmitter::Source(16, 1, 0.7), 2);
     }
 
     void PrecariouslyStage::cullRubble() {

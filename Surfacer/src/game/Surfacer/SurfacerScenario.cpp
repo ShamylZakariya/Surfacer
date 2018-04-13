@@ -34,7 +34,7 @@ namespace surfacer {
 
             // build camera controller, dragger, and cutter, with input dispatch indices 0,1,2 meaning CC gets input first
 
-            auto cc = Object::with("CameraController", {make_shared<ManualViewportControlComponent>(getViewportController(), 0)});
+            auto cc = Object::with("CameraController", {make_shared<MouseViewportControlComponent>(getViewportController(), 0)});
             getStage()->addObject(cc);
 
             auto dragger = Object::with("Dragger", {

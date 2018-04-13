@@ -94,11 +94,14 @@ ParticleSystemTestScenario::~ParticleSystemTestScenario() {
 }
 
 void ParticleSystemTestScenario::setup() {
+
+    getViewportController()->setTrackingConfig(ViewportController::tracking_config(0.99,0.99,1));
+
     setStage(make_shared<Stage>("Particle System Tests"));
 
-    getStage()->addObject(Object::with("ViewportControlComponent", {
-            make_shared<ManualViewportControlComponent>(getViewportController())
-    }));
+    auto keyboardViewportController = make_shared<KeyboardViewportControlComponent>(getViewportController());
+    keyboardViewportController->setPanRate(50);
+    getStage()->addObject(Object::with("ViewportControlComponent", { keyboardViewportController }));
 
     auto grid = WorldCartesianGridDrawComponent::create(1);
     grid->setFillColor(ColorA(0.2, 0.22, 0.25, 1.0));

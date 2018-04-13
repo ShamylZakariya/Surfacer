@@ -99,14 +99,12 @@ namespace terrain {
 
     void DrawDispatcher::add(const DrawableRef &d) {
         if (_all.insert(d).second) {
-            //CI_LOG_D("adding " << d->getId());
             cpSpatialIndexInsert(_index, d.get(), getCPHashValue(d));
         }
     }
 
     void DrawDispatcher::remove(const DrawableRef &d) {
         if (_all.erase(d)) {
-            //CI_LOG_D("removing " << d->getId());
             cpSpatialIndexRemove(_index, d.get(), getCPHashValue(d));
             _collector.remove(d);
         }
@@ -339,8 +337,6 @@ namespace terrain {
         // add all the elements
         _elements.insert(_elements.end(), elements.begin(), elements.end());
         for (auto element : elements) {
-            CI_LOG_D("element: " + element->getId() << " pos: "
-                                                    << (element->getModelMatrix() * element->getModelCentroid()));
             _elementsById[element->getId()] = element;
             _drawDispatcher.add(element);
         }
@@ -753,9 +749,6 @@ namespace terrain {
     }
     
     bool World::addAttachment(const AttachmentRef &attachment, dvec2 worldPosition, dvec2 worldRotation) {
-        
-//        CI_LOG_D("Adding attachment: " << attachment->getId() << " world position: " << worldPosition << " rotation: " << worldRotation);
-        
         //
         // since attachments tend to be added in spatially near positions, we can test if the last group/shape combo match
         //
@@ -763,7 +756,6 @@ namespace terrain {
         if (GroupBaseRef lastGroup = _lastAttachmentGroup.lock()) {
             if (ShapeRef lastShape = _lastAttachmentShape.lock()) {
                 if (lastShape->isLocalPointInside(lastGroup->getInverseModelMatrix() * worldPosition)) {
-//                    CI_LOG_D("Able to re-use lastGroup: " << lastGroup->getName() << " and shape: " << lastShape);
                     addAttachment(attachment, lastGroup, lastShape, worldPosition, worldRotation);
                     return true;
                 }
@@ -979,7 +971,6 @@ namespace terrain {
             // well, let's do this expensively
             if (!added) {
                 if (!addAttachment(attachment, position, rotation)) {
-                    CI_LOG_D("\tOrphaned attachment id: " << attachment->getId() << " tag: " << attachment->getTag());
                     handleOrphanedAttachment(attachment);
                 }
             }

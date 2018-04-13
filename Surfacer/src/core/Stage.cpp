@@ -412,7 +412,7 @@ namespace core {
             _space(cpSpaceNew()),
             _ready(false),
             _paused(false),
-            _time(0, 0, 0),
+            _time(0, 0, 1, 0),
             _name(name),
             _drawDispatcher(make_shared<DrawDispatcher>()),
             _bodyVelocityFunc(cpBodyUpdateVelocity) {

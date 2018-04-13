@@ -122,7 +122,7 @@ void EasingTestScenario::setup() {
     setStage(make_shared<Stage>("Image Processing Tests"));
     
     getStage()->addObject(Object::with("ViewportControlComponent", {
-        make_shared<ManualViewportControlComponent>(getViewportController())
+        make_shared<MouseViewportControlComponent>(getViewportController())
     }));
     
     auto grid = WorldCartesianGridDrawComponent::create(1);

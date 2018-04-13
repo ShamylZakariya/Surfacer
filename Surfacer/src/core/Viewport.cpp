@@ -41,17 +41,16 @@ namespace core {
     }
 
     void Viewport::setLook(const look &l) {
-        if (distanceSquared(l.world, _look.world) > 1e-6 || distanceSquared(l.up, _look.up) > 1e-6 || abs(l.scale - _look.scale) > 1e-6) {
+        
+        double len = glm::length(l.up);
+        dvec2 up = dvec2(0,1);
+        if (len > 1e-4) {
+            up = l.up / len;
+        }
+        
+        if (distanceSquared(l.world, _look.world) > 1e-6 || distanceSquared(up, _look.up) > 1e-6 || abs(l.scale - _look.scale) > 1e-6) {
             _look.world = l.world;
-
-            // normalize up, falling back to (0,1) for invalid
-            double len = glm::length(l.up);
-            if (len > 1e-4) {
-                _look.up = l.up / len;
-            } else {
-                _look.up = dvec2(0, 1);
-            }
-            
+            _look.up = up;
             _look.scale = max<double>(l.scale, MinScale);
 
             // update & notify

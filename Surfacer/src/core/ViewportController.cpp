@@ -12,7 +12,7 @@ namespace core {
 
     /*
         ViewportRef _viewport;
-        Viewport::look _look;
+        Viewport::look _target;
 
         zeno_config _zenoConfig;
         bool _disregardViewportMotion;
@@ -26,24 +26,44 @@ namespace core {
 
     void ViewportController::update(const time_state &time) {
         _disregardViewportMotion = true;
+                
+        const double rate = 1.0 / time.deltaT;
+        Viewport::look look = _viewport->getLook();
         
-        if (_zenoConfig.factor < 1) {
-            const double rate = 1.0 / time.deltaT;
-            const double f = std::pow(_zenoConfig.factor, rate);
-            Viewport::look look = _viewport->getLook();
-            
-            const dvec2 lookWorldError = _look.world - look.world;
-            const dvec2 lookUpError = _look.up - look.up;
-            const double scaleError = _look.scale - look.scale;
-            
-            look.world = look.world + lookWorldError * f;
-            look.up = look.up + lookUpError * f;
-            look.scale = look.scale + scaleError * f;
-            
-            _viewport->setLook(look);
+        const dvec2 lookWorldError = _target.world - look.world;
+        if (lookWorldError.x > 0) {
+            const double f = std::pow(_tracking.positiveX, rate);
+            look.world.x += f * lookWorldError.x;
         } else {
-            _viewport->setLook(_look);
-        }        
+            const double f = std::pow(_tracking.negativeX, rate);
+            look.world.x += f * lookWorldError.x;
+        }
+
+        if (lookWorldError.y > 0) {
+            const double f = std::pow(_tracking.positiveY, rate);
+            look.world.y += f * lookWorldError.y;
+        } else {
+            const double f = std::pow(_tracking.negativeY, rate);
+            look.world.y += f * lookWorldError.y;
+        }
+        
+        {
+            const dvec2 lookUpError = _target.up - look.up;
+            const double f = std::pow(_tracking.up, rate);
+            look.up += f * lookUpError;
+            look.up = normalize(look.up);
+        }
+        
+        const double scaleError = _target.scale - look.scale;
+        if (scaleError > 0) {
+            const double f = std::pow(_tracking.positiveScale, rate);
+            look.scale += f * scaleError;
+        } else {
+            const double f = std::pow(_tracking.negativeScale, rate);
+            look.scale += f * scaleError;
+        }
+        
+        _viewport->setLook(look);
 
         _disregardViewportMotion = false;
     }
@@ -55,27 +75,27 @@ namespace core {
         }
         _viewport = vp;
         if (_viewport) {
-            _look = _viewport->getLook();
+            _target = _viewport->getLook();
             _viewport->onMotion.connect(this, &ViewportController::_onViewportPropertyChanged);
             _viewport->onBoundsChanged.connect(this, &ViewportController::_onViewportPropertyChanged);
         } else {
-            _look = { dvec2(0, 0), dvec2(0, 1), 1 };
+            _target = { dvec2(0, 0), dvec2(0, 1), 1 };
         }
     }
 
     void ViewportController::setLook(const Viewport::look l) {
-        _look.world = l.world;
+        _target.world = l.world;
 
         double len = glm::length(l.up);
         if (len > 1e-3) {
-            _look.up = l.up / len;
+            _target.up = l.up / len;
         } else {
-            _look.up = dvec2(0, 1);
+            _target.up = dvec2(0, 1);
         }
     }
 
     void ViewportController::setScale(double scale) {
-        _look.scale = max(scale, 0.0);
+        _target.scale = max(scale, 0.0);
     }
     
     void ViewportController::setScale(double scale, dvec2 aboutScreenPoint) {
@@ -87,14 +107,14 @@ namespace core {
         dvec2 aboutScreenPointWorld = _viewport->screenToWorld(aboutScreenPoint);
         
         auto previousLook = _viewport->getLook();
-        _viewport->setLook(_look);
+        _viewport->setLook(_target);
         
         dvec2 postScaleAboutScreenPointWorld = _viewport->screenToWorld(aboutScreenPoint);
         dvec2 delta = postScaleAboutScreenPointWorld - aboutScreenPointWorld;
         
         _viewport->setLook(previousLook);
 
-        _look.world -= delta;
+        _target.world -= delta;
         _disregardViewportMotion = false;
     }
 
@@ -104,7 +124,7 @@ namespace core {
 
     void ViewportController::_onViewportPropertyChanged(const Viewport &vp) {
         if (!_disregardViewportMotion) {
-            _look = vp.getLook();
+            _target = vp.getLook();
         }
     }
 

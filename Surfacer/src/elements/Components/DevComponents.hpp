@@ -95,12 +95,12 @@ private:
 
 };
 
-SMART_PTR(ManualViewportControlComponent);
+SMART_PTR(MouseViewportControlComponent);
 
-class ManualViewportControlComponent : public core::InputComponent {
+class MouseViewportControlComponent : public core::InputComponent {
 public:
 
-    ManualViewportControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
+    MouseViewportControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
 
     // InputComponent
     void step(const core::time_state &time) override;
@@ -120,6 +120,39 @@ private:
     vec2 _mouseScreen, _mouseWorld;
     core::ViewportControllerRef _viewportController;
 
+};
+
+SMART_PTR(KeyboardViewportControlComponent);
+
+class KeyboardViewportControlComponent : public core::InputComponent {
+public:
+    
+    KeyboardViewportControlComponent(core::ViewportControllerRef viewportController, int dispatchReceiptIndex = 1000);
+    
+    // InputComponent
+    void step(const core::time_state &time) override;
+    
+    void setPanRate(double panRate) { _panRate = dvec2(panRate,panRate); }
+    void setPanRate(dvec2 panRate) { _panRate = panRate; }
+    dvec2 getPanRate() const { return _panRate; }
+    
+    void setRotateRate(double rotateRate) { _rotateRate = rotateRate; }
+    double getRotateRate() const { return _rotateRate; }
+    
+    void setSaleRate(double scaleRate) { _scaleRate = scaleRate; }
+    double getScaleRate() const { return _scaleRate; }
+    
+    void setFastScalar(double fastScalar) { _fastScalar = fastScalar; }
+    double getFastScalar() const { return _fastScalar; }
+
+private:
+    
+    core::ViewportControllerRef _viewportController;
+    dvec2 _panRate;
+    double _fastScalar;
+    double _rotateRate;
+    double _scaleRate;
+    
 };
 
 SMART_PTR(TargetTrackingViewportControlComponent);

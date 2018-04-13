@@ -22,7 +22,7 @@ void SvgTestScenario::setup() {
     setStage(make_shared<Stage>("Hello Svg"));
 
     auto cameraController = Object::with("ViewportControlComponent", {
-            make_shared<ManualViewportControlComponent>(getViewportController())
+            make_shared<MouseViewportControlComponent>(getViewportController())
     });
 
     auto grid = Object::with("Grid", {WorldCartesianGridDrawComponent::create(1)});

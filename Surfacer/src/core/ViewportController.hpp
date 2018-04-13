@@ -20,26 +20,34 @@ namespace core {
     class ViewportController : public signals::receiver {
     public:
 
-        /**
-            Configurator structor for Zeno control method.
-            There are two fields, panFactor and scaleFactor which are
-            in the range of [0,1], representing the interpolation distance
-            to take from the current viewport value to the controller's set point.
+        struct tracking_config {
+            double positiveY;
+            double negativeY;
+            double positiveX;
+            double negativeX;
+            double up;
+            double positiveScale;
+            double negativeScale;
 
-            A panFactor of 0.9 will, for example, cause the error between the controller
-            set point and the current viewport value to be reduced by 90% each second.
+            tracking_config():
+                positiveY(0.99),
+                negativeY(0.99),
+                positiveX(0.99),
+                negativeX(0.99),
+                up(0.99),
+                positiveScale(1),
+                negativeScale(1)
+            {}
 
-         */
-        struct zeno_config {
-            double factor;
-            
-            zeno_config() :
-                    factor(0.98) {
-            }
-
-            zeno_config(double factor) :
-                    factor(factor) {
-            }
+            tracking_config(double panFactor, double upFactor, double scaleFactor) :
+                positiveY(panFactor),
+                negativeY(panFactor),
+                positiveX(panFactor),
+                negativeX(panFactor),
+                up(upFactor),
+                positiveScale(scaleFactor),
+                negativeScale(scaleFactor)
+            {}
 
         };
 
@@ -60,16 +68,16 @@ namespace core {
 
         void setViewport(ViewportRef vp);
 
-        void setZenoConfig(zeno_config zc) {
-            _zenoConfig = zc;
+        void setTrackingConfig(tracking_config tc) {
+            _tracking = tc;
         }
 
-        zeno_config &getZenoConfig() {
-            return _zenoConfig;
+        tracking_config &getTrackingConfig() {
+            return _tracking;
         }
 
-        const zeno_config &getZenoConfig() const {
-            return _zenoConfig;
+        const tracking_config &getTrackingConfig() const {
+            return _tracking;
         }
 
         void setLook(Viewport::look l);
@@ -79,15 +87,15 @@ namespace core {
         }
 
         void setLook(const dvec2 world, const dvec2 up) {
-            setLook(Viewport::look(world, up, _look.scale));
+            setLook(Viewport::look(world, up, _target.scale));
         }
 
         void setLook(const dvec2 world) {
-            setLook(Viewport::look(world, _look.up, _look.scale));
+            setLook(Viewport::look(world, _target.up, _target.scale));
         }
 
         Viewport::look getLook() const {
-            return _look;
+            return _target;
         }
 
         void setScale(double scale);
@@ -97,7 +105,7 @@ namespace core {
         void setScale(double scale, dvec2 aboutScreenPoint);
 
         double getScale() const {
-            return _look.scale;
+            return _target.scale;
         }
 
     protected:
@@ -107,9 +115,9 @@ namespace core {
     private:
 
         ViewportRef _viewport;
-        Viewport::look _look;
+        Viewport::look _target;
 
-        zeno_config _zenoConfig;
+        tracking_config _tracking;
         bool _disregardViewportMotion;
 
     };
