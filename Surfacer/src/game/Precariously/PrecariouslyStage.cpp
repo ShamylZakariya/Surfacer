@@ -144,6 +144,7 @@ namespace precariously {
         }
 
         buildExplosionParticleSystem();
+        buildDustParticleSystem();
 
         if (true) {
 
@@ -173,6 +174,12 @@ namespace precariously {
 
     void PrecariouslyStage::onReady() {
         Stage::onReady();
+        
+        // respond to TERRAIN|TERRAIN contact
+        addCollisionPostSolveHandler(CollisionType::TERRAIN, CollisionType::TERRAIN, [this](const Stage::collision_type_pair &ctp, const ObjectRef &a, const ObjectRef &b, cpArbiter *arbiter) {
+            this->handleTerrainTerrainContact(arbiter);
+        });
+
     }
 
     void PrecariouslyStage::update(const core::time_state &time) {
@@ -337,6 +344,42 @@ namespace precariously {
         _explosionEmitter->add(smoke, ParticleEmitter::Source(2, 1, 0.3), 2);
         _explosionEmitter->add(spark, ParticleEmitter::Source(1, 1, 0.15), 1);
     }
+    
+    void PrecariouslyStage::buildDustParticleSystem() {
+        using namespace particles;
+        
+        auto image = loadImage(app::loadAsset("precariously/textures/Explosion.png"));
+        gl::Texture2d::Format fmt = gl::Texture2d::Format().mipmap(false);
+        
+        ParticleSystem::config config;
+        config.maxParticleCount = 4096;
+        config.keepSorted = false;
+        config.drawConfig.drawLayer = DrawLayers::EFFECTS;
+        config.drawConfig.textureAtlas = gl::Texture2d::create(image, fmt);
+        config.drawConfig.atlasType = Atlas::TwoByTwo;
+        config.kinematicParticleGravitationLayerMask = GravitationLayers::GLOBAL;
+        
+        auto ps = ParticleSystem::create("Dust ParticleSystem", config);
+        addObject(ps);
+        
+        //
+        // build dust template
+        //
+        
+        particle_prototype dust;
+        dust.atlasIdx = 0;
+        dust.lifespan = 1;
+        dust.radius = {0, 1, 4, 3, 2, 1, 0};
+        dust.damping = {0};
+        dust.additivity = 0;
+        dust.mass = {0};
+        dust.initialVelocity = 20;
+        dust.gravitationLayerMask = GravitationLayers::GLOBAL;
+        dust.color = { ci::ColorA(0.9, 0.9, 0.9, 1), ci::ColorA(0.9, 0.9, 0.9, 0) };
+        
+        _dustEmitter = ps->createEmitter();
+        _dustEmitter->add(dust, ParticleEmitter::Source(2, 1, 0.3), 2);
+    }
 
     void PrecariouslyStage::cullRubble() {
         size_t count = _planet->getWorld()->cullDynamicGroups(128, 0.75);
@@ -376,6 +419,21 @@ namespace precariously {
 
         dvec2 emissionDir = normalize(world - _planet->getOrigin());
         _explosionEmitter->emit(world, emissionDir, 1.0, 140, particles::ParticleEmitter::Sawtooth);
+    }
+    
+    void PrecariouslyStage::handleTerrainTerrainContact(cpArbiter *arbiter) {
+        double totalKE = cpArbiterTotalKE(arbiter);
+        double impulse = cpvlength(cpArbiterTotalImpulse(arbiter));
+        
+        if (impulse > 1 || totalKE > 1) {
+            int count = cpArbiterGetCount(arbiter);
+            cpBody *a = nullptr, *b = nullptr;
+            cpArbiterGetBodies(arbiter, &a, &b);
+            for (int i = 0; i < count; i++) {
+                dvec2 contact = v2(cpArbiterGetPointA(arbiter, i));
+                _dustEmitter->emitBurst(contact, dvec2(0,0), 1);
+            }
+        }
     }
 
 } // namespace surfacer

@@ -83,11 +83,15 @@ namespace precariously {
 
         void buildExplosionParticleSystem();
 
+        void buildDustParticleSystem();
+
         void cullRubble();
 
         void makeSleepersStatic();
 
         void performExplosion(dvec2 world);
+        
+        void handleTerrainTerrainContact(cpArbiter *arbiter);
 
     private:
 
@@ -96,6 +100,7 @@ namespace precariously {
         vector <CloudLayerParticleSystemRef> _cloudLayers;
         core::RadialGravitationCalculatorRef _gravity;
         particles::ParticleEmitterRef _explosionEmitter;
+        particles::ParticleEmitterRef _dustEmitter;
 
     };
 
