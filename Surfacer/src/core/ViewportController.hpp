@@ -9,6 +9,8 @@
 #ifndef ViewportController_hpp
 #define ViewportController_hpp
 
+#include <cinder/Perlin.h>
+
 #include "Signals.hpp"
 #include "TimeState.hpp"
 #include "Viewport.hpp"
@@ -50,6 +52,36 @@ namespace core {
             {}
 
         };
+        
+        struct trauma_config {
+            // max translational shake effect
+            dvec2 shakeTranslation;
+            // max rotational shake effect
+            double shakeRotation;
+            // amount of trauma lost per second (trauma is ranged between [0,1])
+            double traumaDecayRate;
+            // shake is computed as pow(trauma, shakePower), defaults to 2
+            double shakePower;
+            // frequency of shake, higher value is higher frequency of shake
+            double shakeFrequency;
+            
+            trauma_config():
+                    shakeTranslation(10,10),
+                    shakeRotation(5 * M_PI / 180),
+                    traumaDecayRate(1),
+                    shakePower(2),
+                    shakeFrequency(2)
+            {}
+            
+            trauma_config(dvec2 st, double sr, double tdr, double sp, double sf):
+                    shakeTranslation(st),
+                    shakeRotation(sr),
+                    traumaDecayRate(tdr),
+                    shakePower(sp),
+                    shakeFrequency(sf)
+            {}
+
+        };
 
     public:
 
@@ -69,15 +101,15 @@ namespace core {
         void setViewport(ViewportRef vp);
 
         void setTrackingConfig(tracking_config tc) {
-            _tracking = tc;
+            _trackingConfig = tc;
         }
 
         tracking_config &getTrackingConfig() {
-            return _tracking;
+            return _trackingConfig;
         }
 
         const tracking_config &getTrackingConfig() const {
-            return _tracking;
+            return _trackingConfig;
         }
 
         void setLook(Viewport::look l);
@@ -107,6 +139,16 @@ namespace core {
         double getScale() const {
             return _target.scale;
         }
+        
+        void setTraumaConfig(trauma_config tc) {
+            _traumaConfig = tc;
+        }
+        
+        trauma_config &getTraumaConfig() { return _traumaConfig; }
+        const trauma_config &getTraumaConfig() const { return _traumaConfig; }
+        
+        void addTrauma(double t);
+        double getTrauma() const { return _traumaLevel; }
 
     protected:
 
@@ -116,9 +158,12 @@ namespace core {
 
         ViewportRef _viewport;
         Viewport::look _target;
-
-        tracking_config _tracking;
         bool _disregardViewportMotion;
+        
+        tracking_config _trackingConfig;
+        trauma_config _traumaConfig;
+        double _traumaLevel;
+        vector<ci::Perlin> _traumaPerlinNoiseGenerators;
 
     };
 

@@ -95,8 +95,17 @@ ParticleSystemTestScenario::~ParticleSystemTestScenario() {
 
 void ParticleSystemTestScenario::setup() {
 
-    getViewportController()->setTrackingConfig(ViewportController::tracking_config(0.99,0.99,1));
+    auto tracking = ViewportController::tracking_config(0.99,0.99,1);
+    getViewportController()->setTrackingConfig(tracking);
 
+    auto trauma = ViewportController::trauma_config();
+    trauma.shakeTranslation = dvec2(30,30);
+    trauma.shakeRotation = 20 * M_PI / 180;
+    trauma.traumaDecayRate = 1;
+    trauma.shakeFrequency = 3;
+    getViewportController()->setTraumaConfig(trauma);
+    
+    
     setStage(make_shared<Stage>("Particle System Tests"));
 
     auto keyboardViewportController = make_shared<KeyboardViewportControlComponent>(getViewportController());
@@ -150,6 +159,7 @@ void ParticleSystemTestScenario::setup() {
             ->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event) {
                 if (event.isMetaDown()) {
                     _explosionEmitter->emit(world, dvec2(0, 1), 1, 120, ParticleEmitter::Sawtooth);
+                    getViewportController()->addTrauma(0.5);
                 } else {
                     _explosionEmissionId = _explosionEmitter->emit(world, dvec2(0, 1), 120);
                 }
