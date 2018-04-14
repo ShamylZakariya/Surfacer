@@ -17,14 +17,15 @@ namespace core {
      
      tracking_config _trackingConfig;
      trauma_config _traumaConfig;
-     double _traumaLevel;
+     double _traumaLevel, _traumaBaselineLevel;
      vector<ci::Perlin> _traumaPerlinNoiseGenerators;
      */
 
     ViewportController::ViewportController(ViewportRef vp) :
             _viewport(nullptr),
             _disregardViewportMotion(false),
-            _traumaLevel(0)
+            _traumaLevel(0),
+            _traumaBaselineLevel(0)
     {
         setViewport(vp);
         
@@ -76,7 +77,7 @@ namespace core {
         }
         
         // apply trauma shake
-        const double shake = pow(_traumaLevel, _traumaConfig.shakePower);
+        const double shake = getCurrentTraumaShake();
         if (shake > 0) {
             double t = time.time * _traumaConfig.shakeFrequency;
             const double dx = _traumaPerlinNoiseGenerators[0].noise(t) * shake * _traumaConfig.shakeTranslation.x;
@@ -91,8 +92,9 @@ namespace core {
 
         _disregardViewportMotion = false;
         
-        // now decay trauma
+        // now decay trauma and trauma baseline
         _traumaLevel = saturate(_traumaLevel - _traumaConfig.traumaDecayRate * time.deltaT);
+        _traumaBaselineLevel = saturate(_traumaBaselineLevel - _traumaConfig.traumaBaselineDecayRate * time.deltaT);
     }
 
     void ViewportController::setViewport(ViewportRef vp) {
@@ -146,8 +148,13 @@ namespace core {
     }
     
     void ViewportController::addTrauma(double trauma) {
-        _traumaLevel = saturate<double>(_traumaLevel + trauma);
+        _traumaLevel = saturate(_traumaLevel + trauma);
     }
+    
+    void ViewportController::setTraumaBaseline(double tb) {
+        _traumaBaselineLevel = saturate(tb);
+    }
+
 
 #pragma mark -
 #pragma mark Private

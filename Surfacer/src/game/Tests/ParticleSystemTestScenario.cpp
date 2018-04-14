@@ -102,7 +102,7 @@ void ParticleSystemTestScenario::setup() {
     trauma.shakeTranslation = dvec2(30,30);
     trauma.shakeRotation = 20 * M_PI / 180;
     trauma.traumaDecayRate = 1;
-    trauma.shakeFrequency = 3;
+    trauma.shakeFrequency = 8;
     getViewportController()->setTraumaConfig(trauma);
     
     
@@ -159,7 +159,7 @@ void ParticleSystemTestScenario::setup() {
             ->onPress([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event) {
                 if (event.isMetaDown()) {
                     _explosionEmitter->emit(world, dvec2(0, 1), 1, 120, ParticleEmitter::Sawtooth);
-                    getViewportController()->addTrauma(0.5);
+                    getViewportController()->addTrauma(0.75);
                 } else {
                     _explosionEmissionId = _explosionEmitter->emit(world, dvec2(0, 1), 120);
                 }
@@ -167,6 +167,7 @@ void ParticleSystemTestScenario::setup() {
             })
             ->onRelease([this](dvec2 screen, dvec2 world, const ci::app::MouseEvent &event) {
                 _explosionEmitter->cancel(_explosionEmissionId);
+                _explosionEmissionId = 0;
                 return true;
             })
             ->onMove([this](dvec2 screen, dvec2 world, dvec2 deltaScreen, dvec2 deltaWorld, const ci::app::MouseEvent &event) {
@@ -192,6 +193,9 @@ void ParticleSystemTestScenario::step(const time_state &time) {
 }
 
 void ParticleSystemTestScenario::update(const time_state &time) {
+    if (_explosionEmissionId != 0) {
+        getViewportController()->setTraumaBaseline(0.25);
+    }
 }
 
 void ParticleSystemTestScenario::clear(const render_state &state) {
@@ -206,7 +210,7 @@ void ParticleSystemTestScenario::drawScreen(const render_state &state) {
 
     float fps = App::get()->getAverageFps();
     float sps = App::get()->getAverageSps();
-    string info = core::strings::format("%.1f %.1f", fps, sps);
+    string info = core::strings::format("perf: %.1f %.1f", fps, sps);
     gl::drawString(info, vec2(10, 10), Color(1, 1, 1));
 
     stringstream ss;
@@ -214,8 +218,10 @@ void ParticleSystemTestScenario::drawScreen(const render_state &state) {
     double scale = getViewport()->getScale();
 
     ss << std::setprecision(3) << "world (" << look.world.x << ", " << look.world.y << ") scale: " << scale << " up: ("
-       << look.up.x << ", " << look.up.y << ")";
+    << look.up.x << ", " << look.up.y << ") trauma: " << getViewportController()->getCurrentTraumaLevel();
     gl::drawString(ss.str(), vec2(10, 40), Color(1, 1, 1));
+
+    
 
 }
 

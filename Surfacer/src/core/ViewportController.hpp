@@ -60,8 +60,13 @@ namespace core {
             double shakeRotation;
             // amount of trauma lost per second (trauma is ranged between [0,1])
             double traumaDecayRate;
+
+            // amount of trauma baseline lost per second (traumaBaseline is ranged between [0,1])
+            double traumaBaselineDecayRate;
+
             // shake is computed as pow(trauma, shakePower), defaults to 2
             double shakePower;
+
             // frequency of shake, higher value is higher frequency of shake
             double shakeFrequency;
             
@@ -69,14 +74,16 @@ namespace core {
                     shakeTranslation(10,10),
                     shakeRotation(5 * M_PI / 180),
                     traumaDecayRate(1),
+                    traumaBaselineDecayRate(1),
                     shakePower(2),
                     shakeFrequency(2)
             {}
             
-            trauma_config(dvec2 st, double sr, double tdr, double sp, double sf):
+            trauma_config(dvec2 st, double sr, double tdr, double tbdr, double sp, double sf):
                     shakeTranslation(st),
                     shakeRotation(sr),
                     traumaDecayRate(tdr),
+                    traumaBaselineDecayRate(tbdr),
                     shakePower(sp),
                     shakeFrequency(sf)
             {}
@@ -147,8 +154,21 @@ namespace core {
         trauma_config &getTraumaConfig() { return _traumaConfig; }
         const trauma_config &getTraumaConfig() const { return _traumaConfig; }
         
+        // add to the current trauma level. the level will linearly decay at traumaConfig.traumaDecayRate per second
+        // the current trauma level is the current trauma + current trauma baseline
+        // use addTrauma to handle one-shot "events" like an explosion or injury
         void addTrauma(double t);
         double getTrauma() const { return _traumaLevel; }
+
+        // set a baseline trauma level. the level will linearly decay at traumaConfig.traumaBaselineDecayRate per second
+        // the current trauma level is the current trauma + current trauma baseline
+        // use setTraumaBaseline to handle continuous trauma events like an earthquake
+        void setTraumaBaseline(double tb);
+        double getTraumaBaseline() const { return _traumaBaselineLevel; }
+        
+        // get the current trauma + baseline
+        double getCurrentTraumaLevel() const { return saturate(_traumaLevel + _traumaBaselineLevel); }
+        double getCurrentTraumaShake() const { return pow(getCurrentTraumaLevel(), _traumaConfig.shakePower); }
 
     protected:
 
@@ -162,7 +182,7 @@ namespace core {
         
         tracking_config _trackingConfig;
         trauma_config _traumaConfig;
-        double _traumaLevel;
+        double _traumaLevel, _traumaBaselineLevel;
         vector<ci::Perlin> _traumaPerlinNoiseGenerators;
 
     };
