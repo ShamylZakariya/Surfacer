@@ -394,9 +394,13 @@ namespace particles {
         void cancel(emission_id emissionId);
 
         /**
-         Emit `count particles in the circular volume of `radius about `world
+         Emit a single-shot burst of particles.
+         THe particles are emitted at `world, with an initial velocity direction of normalizedDirOrZero.
+         `count particles are emitted, with each having to pass a dice-roll for probability.
+         The particle emitted will be selected from the assigned prototypes, and the Source will be applied to the
+         emission volume and direction, just like any other emission.
          */
-        void emitBurst(dvec2 world, dvec2 normalizedDirOrZero, int count = 1);
+        void emitBurst(dvec2 world, dvec2 normalizedDirOrZero, int count = 1, float probability=1);
 
     private:
 

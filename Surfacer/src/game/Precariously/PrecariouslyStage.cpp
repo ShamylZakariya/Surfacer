@@ -56,8 +56,10 @@ namespace precariously {
     /*
      BackgroundRef _background;
      PlanetRef _planet;
-     CloudLayerParticleSimulation _cloudLayerSimulation;
+     vector <CloudLayerParticleSystemRef> _cloudLayers;
      core::RadialGravitationCalculatorRef _gravity;
+     particles::ParticleEmitterRef _explosionEmitter;
+     particles::ParticleEmitterRef _dustEmitter;
      */
 
     PrecariouslyStage::PrecariouslyStage() :
@@ -382,12 +384,14 @@ namespace precariously {
         dust.damping = {0};
         dust.additivity = 0;
         dust.mass = {0};
-        dust.initialVelocity = 20;
+        dust.initialVelocity = 0;
         dust.gravitationLayerMask = GravitationLayers::GLOBAL;
-        dust.color = { ci::ColorA(0.9, 0.9, 0.9, 1), ci::ColorA(0.9, 0.9, 0.9, 0) };
+        dust.color = { ci::ColorA(0.9, 0.9, 0.9, 1) };
+        
+        auto source = ParticleEmitter::Source(10, 1, 0.5);
         
         _dustEmitter = ps->createEmitter();
-        _dustEmitter->add(dust, ParticleEmitter::Source(16, 1, 0.7), 2);
+        _dustEmitter->add(dust, source);
     }
 
     void PrecariouslyStage::cullRubble() {
@@ -433,8 +437,10 @@ namespace precariously {
     }
     
     void PrecariouslyStage::handleTerrainTerrainContact(cpArbiter *arbiter) {
-        double totalKE = cpArbiterTotalKE(arbiter);
-        double impulse = cpvlength(cpArbiterTotalImpulse(arbiter));
+        const double totalKE = cpArbiterTotalKE(arbiter);
+        const double impulse = cpvlength(cpArbiterTotalImpulse(arbiter));
+        const int emitCount = 1;
+        const float emitProbability = 0.04;
         
         if (impulse > 1 || totalKE > 1) {
             int count = cpArbiterGetCount(arbiter);
@@ -442,7 +448,7 @@ namespace precariously {
             cpArbiterGetBodies(arbiter, &a, &b);
             for (int i = 0; i < count; i++) {
                 dvec2 contact = v2(cpArbiterGetPointA(arbiter, i));
-                _dustEmitter->emitBurst(contact, dvec2(0,0), 1);
+                _dustEmitter->emitBurst(contact, dvec2(0,0), emitCount, emitProbability);
             }
         }
     }

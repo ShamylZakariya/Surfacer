@@ -377,7 +377,7 @@ namespace particles {
 
         // plot position
         if (radius > 0) {
-            outWorld = world + dvec2(rng.nextVec2()) * radius;
+            outWorld = world + (dvec2(rng.nextVec2()) * radius * static_cast<double>(rng.nextFloat()));
         } else {
             outWorld = world;
         }
@@ -566,11 +566,15 @@ namespace particles {
         }
     }
 
-    void ParticleEmitter::emitBurst(dvec2 world, dvec2 normalizedDirOrZero, int count) {
+    void ParticleEmitter::emitBurst(dvec2 world, dvec2 normalizedDirOrZero, int count, float probability) {
         if (ParticleSimulationRef sim = _simulation.lock()) {
             normalizedDirOrZero = safe_normalize(normalizedDirOrZero);
 
             for (int i = 0; i < count; i++) {
+                if (probability < 1 && _rng.nextFloat() > probability) {
+                    continue;
+                }
+                
                 size_t idx = static_cast<size_t>(_rng.nextUint()) % _prototypeLookup.size();
                 const emission_prototype &proto = _prototypes[_prototypeLookup[idx]];
 
