@@ -82,6 +82,15 @@ namespace precariously {
         auto stageNode = root.getChild("stage");
 
         setName(stageNode.getAttribute("name").getValue());
+        
+        //
+        //  Set up viewport trauma effects
+        //
+        
+        auto &traumaConfig = getViewportController()->getTraumaConfig();
+        traumaConfig.shakeTranslation = dvec2(40,40);
+        traumaConfig.shakeRotation = 10 * M_PI / 180;
+        traumaConfig.shakeFrequency = 8;
 
         //
         //	Load some basic stage properties
@@ -419,6 +428,8 @@ namespace precariously {
 
         dvec2 emissionDir = normalize(world - _planet->getOrigin());
         _explosionEmitter->emit(world, emissionDir, 1.0, 140, particles::ParticleEmitter::Sawtooth);
+        
+        getViewportController()->addTrauma(0.5);
     }
     
     void PrecariouslyStage::handleTerrainTerrainContact(cpArbiter *arbiter) {
