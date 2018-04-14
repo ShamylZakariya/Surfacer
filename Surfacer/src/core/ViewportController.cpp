@@ -80,9 +80,10 @@ namespace core {
         const double shake = getCurrentTraumaShake();
         if (shake > 0) {
             double t = time.time * _traumaConfig.shakeFrequency;
-            const double dx = _traumaPerlinNoiseGenerators[0].noise(t) * shake * _traumaConfig.shakeTranslation.x;
-            const double dy = _traumaPerlinNoiseGenerators[1].noise(t) * shake * _traumaConfig.shakeTranslation.y;
-            const double dr = _traumaPerlinNoiseGenerators[2].noise(t) * shake * _traumaConfig.shakeRotation;
+            double scale = 1 / look.scale;
+            const double dx = _traumaPerlinNoiseGenerators[0].noise(t) * shake * _traumaConfig.shakeTranslation.x * scale;
+            const double dy = _traumaPerlinNoiseGenerators[1].noise(t) * shake * _traumaConfig.shakeTranslation.y * scale;
+            const double dr = _traumaPerlinNoiseGenerators[2].noise(t) * shake * _traumaConfig.shakeRotation * scale;
             look.world.x += dx;
             look.world.y += dy;
             look.up = rotate(look.up, dr);
