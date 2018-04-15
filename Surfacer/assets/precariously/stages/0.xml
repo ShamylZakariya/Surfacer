@@ -26,7 +26,7 @@
 				batchId="0"
 				normalToUpDotTarget="1"
 				normalToUpDotRange="1"
-				probability="0.875"
+				probability="0.1"
 				density="1"
 				includeHoleContours="true"
 			/>
@@ -35,35 +35,35 @@
 		<greebleSystems>
 			<greebleSystem 
 				attachmentBatchId="0"
-				textureAtlas="precariously/textures/2x2_test.png"
+				textureAtlas="precariously/textures/Greebling.png"
 				atlasType="2x2"		
 				>
 				<greeble
 					color="255,255,255,255"
-					radius="1"
-					upOffset="0"
+					radius="16"
+					upOffset="0.1"
 					swayFactor="0.1"
 					swayPeriod="0.5"
 				/>
 				<greeble
 					color="255,255,255,255"
-					radius="1"
-					upOffset="0"
+					radius="12"
+					upOffset="0.1"
 					swayFactor="0.1"
 					swayPeriod="0.5"
 				/>
 				<greeble
 					color="255,255,255,255"
-					radius="1"
-					upOffset="0"
+					radius="4"
+					upOffset="0.1"
 					swayFactor="0.1"
 					swayPeriod="0.5"
 				/>
 				<greeble
 					color="255,255,255,255"
-					radius="1"
-					upOffset="0"
-					swayFactor="0.1"
+					radius="16"
+					upOffset="0.1"
+					swayFactor="0"
 					swayPeriod="0.5"
 				/>		
 			</greebleSystem>
