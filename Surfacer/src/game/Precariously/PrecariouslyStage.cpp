@@ -437,18 +437,22 @@ namespace precariously {
     }
     
     void PrecariouslyStage::handleTerrainTerrainContact(cpArbiter *arbiter) {
-        const double totalKE = cpArbiterTotalKE(arbiter);
-        const double impulse = cpvlength(cpArbiterTotalImpulse(arbiter));
-        const int emitCount = 1;
-        const float emitProbability = 0.04;
-        
-        if (impulse > 1 || totalKE > 1) {
-            int count = cpArbiterGetCount(arbiter);
-            cpBody *a = nullptr, *b = nullptr;
-            cpArbiterGetBodies(arbiter, &a, &b);
-            for (int i = 0; i < count; i++) {
-                dvec2 contact = v2(cpArbiterGetPointA(arbiter, i));
-                _dustEmitter->emitBurst(contact, dvec2(0,0), emitCount, emitProbability);
+
+        const float emitProbability = 0.025;
+
+        const int count = cpArbiterGetCount(arbiter);
+        cpBody *a = nullptr, *b = nullptr;
+        cpArbiterGetBodies(arbiter, &a, &b);
+
+        for (int i = 0; i < count; i++) {
+            const cpVect contact = cpArbiterGetPointA(arbiter, i);
+            const dvec2 velA = v2(cpBodyGetVelocityAtWorldPoint(a, contact));
+            const dvec2 velB = v2(cpBodyGetVelocityAtWorldPoint(b, contact));
+            const dvec2 slip = velB - velA;
+            double slipVel = length(slip);
+            if (slipVel > 0.5) {
+                int emitCount = ceil(slipVel);
+                _dustEmitter->emitBurst(v2(contact), dvec2(0,0), emitCount, emitProbability);
             }
         }
     }
