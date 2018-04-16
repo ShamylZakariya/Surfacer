@@ -34,10 +34,14 @@ namespace precariously {
                 // by half its height above the default surface placement.
                 double upOffset;
                 
-                atlas_detail(ci::ColorA color, double radius, double upOffset = 0):
+                // each atlas element receives a probability of (probability / (sum of all atlas_detail.probability)
+                size_t probability;
+                
+                atlas_detail(ci::ColorA color, double radius, double upOffset = 0, int probability = 1):
                 color(color),
                 radius(radius),
-                upOffset(upOffset)
+                upOffset(upOffset),
+                probability(probability)
                 {}
             };
             
@@ -73,6 +77,7 @@ namespace precariously {
 
     protected:
         
+        void setupAtlasIndices();
         void simulate(const core::time_state &time);
 
     protected:
@@ -126,21 +131,24 @@ namespace precariously {
             double upOffset;
             double swayFactor;
             double swayPeriod;
+            size_t probability;
             
             greeble_descriptor():
             color(1,1,1,1),
             radius(1),
             upOffset(0),
             swayFactor(0.1),
-            swayPeriod(0.5)
+            swayPeriod(0.5),
+            probability(1)
             {}
             
-            greeble_descriptor(ci::ColorA color, double radius, double upOffset, double swayFactor, double swayPeriod):
+            greeble_descriptor(ci::ColorA color, double radius, double upOffset, double swayFactor, double swayPeriod, size_t probability):
             color(color),
             radius(radius),
             upOffset(upOffset),
             swayFactor(swayFactor),
-            swayPeriod(swayPeriod)
+            swayPeriod(swayPeriod),
+            probability(probability)
             {}
         };
 

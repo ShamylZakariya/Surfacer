@@ -23,7 +23,8 @@ namespace precariously {
     GreeblingParticleSimulation::GreeblingParticleSimulation(const config &c):
             _config(c),
             _firstSimulate(true)
-    {}
+    {
+    }
     
     void GreeblingParticleSimulation::onReady(core::ObjectRef parent, core::StageRef stage) {
         BaseParticleSimulation::onReady(parent, stage);
@@ -43,6 +44,30 @@ namespace precariously {
     void GreeblingParticleSimulation::setAttachments(const vector <terrain::AttachmentRef> &attachments) {
         _attachments = attachments;
         setParticleCount(_attachments.size());
+        setupAtlasIndices();
+    }
+    
+    void GreeblingParticleSimulation::setupAtlasIndices() {
+        
+        // build index table with entry count biased by atlast probability
+        vector <size_t> atlasIndices;
+        for (size_t i = 0, N = _config.atlasDetails.size(); i < N; i++) {
+            for (size_t j = 0, count = _config.atlasDetails[i].probability; j < count; j++) {
+                atlasIndices.push_back(i);
+            }
+        }
+        
+        // assign atlas index for each greeble particle
+        auto attachments = _attachments.begin();
+        auto state = _state.begin();
+        const auto end = _state.end();
+        
+        for (; state != end; ++state, ++attachments) {
+            const auto &attachment = *attachments;
+            
+            // compute the atlas idx for this particle, and get the info on that idx for radius and offset
+            state->atlasIdx = atlasIndices[attachment->getId() % atlasIndices.size()];
+        }
     }
     
     void GreeblingParticleSimulation::simulate(const core::time_state &timeState) {
@@ -53,7 +78,6 @@ namespace precariously {
         
         bool didUpdate = false;
         
-        const size_t numAtlasDetails = _config.atlasDetails.size();
         const config::atlas_detail *atlasDetails = _config.atlasDetails.data();
         
         for (; state != end; ++state, ++attachments) {
@@ -64,9 +88,8 @@ namespace precariously {
             if (alive) {
                 // only update particle state if particle moved this timestep, (or has never been moved yet)
                 if (_firstSimulate || (attachment->getStepIndexForLastPositionUpdate() == timeState.step)) {
-                    
-                    // compute the atlas idx for this particle, and get the info on that idx for radius and offset
-                    state->atlasIdx = attachment->getId() % numAtlasDetails;
+
+                    // get the atlas info for this particle
                     config::atlas_detail atlasDetail = atlasDetails[state->atlasIdx];
 
                     // set right and up vectors for this particle
@@ -139,13 +162,14 @@ namespace precariously {
                 break;
             }
             
-            const ColorA color = util::xml::readColorAttribute(greeble, "color", ColorA(1,1,1,1));
-            const double radius = util::xml::readNumericAttribute<double>(greeble, "radius", 1.0);
-            const double upOffset = util::xml::readNumericAttribute<double>(greeble, "upOffset", 0.0);
-            const double swayFactor = util::xml::readNumericAttribute<double>(greeble, "swayFactor", 0.0);
-            const double swayPeriod = util::xml::readNumericAttribute<double>(greeble, "swayPeriod", 1.0);
-            
-            c.greebleDescriptors.push_back(greeble_descriptor(color, radius, upOffset, swayFactor, swayPeriod));
+            greeble_descriptor gd;
+            gd.color = util::xml::readColorAttribute(greeble, "color", gd.color);
+            gd.radius = util::xml::readNumericAttribute<double>(greeble, "radius", gd.radius);
+            gd.upOffset = util::xml::readNumericAttribute<double>(greeble, "upOffset", gd.upOffset);
+            gd.swayFactor = util::xml::readNumericAttribute<double>(greeble, "swayFactor", gd.swayFactor);
+            gd.swayPeriod = util::xml::readNumericAttribute<double>(greeble, "swayPeriod", gd.swayPeriod);
+            gd.probability = util::xml::readNumericAttribute<size_t>(greeble, "probability", gd.probability);
+            c.greebleDescriptors.push_back(gd);
         }
         
         if (c.sanityCheck()) {

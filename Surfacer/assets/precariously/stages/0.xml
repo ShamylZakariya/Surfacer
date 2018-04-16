@@ -40,14 +40,14 @@
 				>
 				<greeble
 					color="255,255,255,255"
-					radius="16"
+					radius="8"
 					upOffset="0.1"
 					swayFactor="0.1"
 					swayPeriod="0.5"
 				/>
 				<greeble
 					color="255,255,255,255"
-					radius="12"
+					radius="8"
 					upOffset="0.1"
 					swayFactor="0.1"
 					swayPeriod="0.5"
@@ -61,10 +61,11 @@
 				/>
 				<greeble
 					color="255,255,255,255"
-					radius="16"
+					radius="10"
 					upOffset="0.1"
 					swayFactor="0"
 					swayPeriod="0.5"
+					probability="7"
 				/>		
 			</greebleSystem>
 		</greebleSystems>
